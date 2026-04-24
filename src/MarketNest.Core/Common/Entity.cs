@@ -1,20 +1,19 @@
 namespace MarketNest.Core.Common;
 
 /// <summary>
-/// Base entity with strongly-typed ID and domain event support.
+///     Base entity with strongly-typed ID and domain event support.
 /// </summary>
 public abstract class Entity<TKey> : IEquatable<Entity<TKey>>
 {
-    public TKey Id { get; protected set; } = default!;
-
     private readonly List<IDomainEvent> _domainEvents = [];
+    public TKey Id { get; protected set; } = default!;
     public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
-
-    protected void AddDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
-    public void ClearDomainEvents() => _domainEvents.Clear();
 
     public bool Equals(Entity<TKey>? other) =>
         other is not null && Id is not null && Id.Equals(other.Id);
+
+    protected void AddDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
+    public void ClearDomainEvents() => _domainEvents.Clear();
 
     public override bool Equals(object? obj) => Equals(obj as Entity<TKey>);
     public override int GetHashCode() => Id?.GetHashCode() ?? 0;

@@ -1,7 +1,7 @@
 namespace MarketNest.Core.Common.Persistence;
 
 /// <summary>
-/// Base repository contract. Only for aggregates — queries bypass repositories.
+///     Base repository contract. Only for aggregates — queries bypass repositories.
 /// </summary>
 public interface IBaseRepository<TEntity, TKey>
     where TEntity : Entity<TKey>

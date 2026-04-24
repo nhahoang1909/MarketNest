@@ -5,7 +5,7 @@
 document.addEventListener("alpine:init", () => {
     Alpine.data(
         "multiSelect",
-        ({ options = [], selected = [], name = "tags" } = {}) => ({
+        ({options = [], selected = [], name = "tags"} = {}) => ({
             options,
             selected,
             name,

@@ -1,13 +1,27 @@
+using MediatR;
+
 namespace MarketNest.Core.Common;
 
 /// <summary>
-/// Result monad — the ONLY way to return errors from handlers.
-/// Never throw for business failures.
+///     Result monad — the ONLY way to return errors from handlers.
+///     Never throw for business failures.
 /// </summary>
 public class Result<TValue, TError>
 {
-    private readonly TValue? _value;
     private readonly TError? _error;
+    private readonly TValue? _value;
+
+    protected Result(TValue value)
+    {
+        _value = value;
+        IsSuccess = true;
+    }
+
+    protected Result(TError error)
+    {
+        _error = error;
+        IsSuccess = false;
+    }
 
     public bool IsSuccess { get; }
     public bool IsFailure => !IsSuccess;
@@ -19,9 +33,6 @@ public class Result<TValue, TError>
     public TError Error => IsFailure
         ? _error!
         : throw new InvalidOperationException("Result has no error — check IsFailure first.");
-
-    protected Result(TValue value) { _value = value; IsSuccess = true; }
-    protected Result(TError error) { _error = error; IsSuccess = false; }
 
     public static Result<TValue, TError> Success(TValue value) => new(value);
     public static Result<TValue, TError> Failure(TError error) => new(error);
@@ -43,7 +54,7 @@ public class Result<TValue, TError>
 }
 
 /// <summary>
-/// Convenience static factory for Result with Error type.
+///     Convenience static factory for Result with Error type.
 /// </summary>
 public static class Result
 {
@@ -53,6 +64,6 @@ public static class Result
     public static Result<TValue, Error> Failure<TValue>(Error error)
         => Result<TValue, Error>.Failure(error);
 
-    public static Result<MediatR.Unit, Error> Success()
-        => Success(MediatR.Unit.Value);
+    public static Result<Unit, Error> Success()
+        => Success(Unit.Value);
 }

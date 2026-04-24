@@ -1,46 +1,46 @@
 @* Review card — single review display *@
 @{
-    var reviewerName = ViewData["ReviewerName"]?.ToString() ?? "Anonymous";
-    var reviewerAvatar = ViewData["ReviewerAvatar"]?.ToString();
-    var rating = ViewData["Rating"]?.ToString() ?? "5";
-    var text = ViewData["Text"]?.ToString() ?? "";
-    var date = ViewData["Date"]?.ToString() ?? "";
-    var initials = string.Join("", reviewerName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w =>
-w[0])).ToUpper();
-    var ratingInt = int.TryParse(rating, out var ri) ? ri : 5;
+  var reviewerName = ViewData["ReviewerName"]?.ToString() ?? "Anonymous";
+  var reviewerAvatar = ViewData["ReviewerAvatar"]?.ToString();
+  var rating = ViewData["Rating"]?.ToString() ?? "5";
+  var text = ViewData["Text"]?.ToString() ?? "";
+  var date = ViewData["Date"]?.ToString() ?? "";
+  var initials = string.Join("", reviewerName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w =>
+    w[0])).ToUpper();
+  var ratingInt = int.TryParse(rating, out var ri) ? ri : 5;
 }
 
 <div class="border-b border-gray-100 py-4 last:border-0">
-    <div class="flex items-start gap-3">
-        @if (!string.IsNullOrEmpty(reviewerAvatar))
+  <div class="flex items-start gap-3">
+    @if (!string.IsNullOrEmpty(reviewerAvatar))
+    {
+      <img src="@reviewerAvatar" alt="@reviewerName" class="h-10 w-10 rounded-full object-cover ring-2 ring-white"
+           loading="lazy"/>
+    }
+    else
+    {
+      <span
+        class="h-10 w-10 rounded-full bg-brand-100 text-brand-700 inline-flex items-center justify-center text-sm font-semibold ring-2 ring-white">@initials</span>
+    }
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center justify-between">
+        <span class="font-medium text-gray-900 text-sm">@reviewerName</span>
+        <span class="text-xs text-gray-400">@date</span>
+      </div>
+      <div class="flex items-center gap-0.5 mt-0.5">
+        @for (var i = 0; i < 5; i++)
         {
-            <img src="@reviewerAvatar" alt="@reviewerName" class="h-10 w-10 rounded-full object-cover ring-2 ring-white"
-                 loading="lazy" />
+          <svg class="h-4 w-4 @(i < ratingInt ? "text-yellow-400" : "text-gray-300")" fill="currentColor"
+               viewBox="0 0 20 20">
+            <path
+              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/>
+          </svg>
         }
-        else
-        {
-            <span
-            class="h-10 w-10 rounded-full bg-brand-100 text-brand-700 inline-flex items-center justify-center text-sm font-semibold ring-2 ring-white">@initials</span>
-        }
-        <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between">
-                <span class="font-medium text-gray-900 text-sm">@reviewerName</span>
-                <span class="text-xs text-gray-400">@date</span>
-            </div>
-            <div class="flex items-center gap-0.5 mt-0.5">
-                @for (var i = 0; i < 5; i++)
-                {
-                    <svg class="h-4 w-4 @(i < ratingInt ? "text-yellow-400" : "text-gray-300")" fill="currentColor"
-                         viewBox="0 0 20 20">
-                        <path
-                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
-                    </svg>
-                }
-            </div>
-            @if (!string.IsNullOrEmpty(text))
-            {
-                <p class="mt-2 text-sm text-gray-600 leading-relaxed">@text</p>
-            }
-        </div>
+      </div>
+      @if (!string.IsNullOrEmpty(text))
+      {
+        <p class="mt-2 text-sm text-gray-600 leading-relaxed">@text</p>
+      }
     </div>
+  </div>
 </div>

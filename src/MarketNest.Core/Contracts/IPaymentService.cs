@@ -1,10 +1,11 @@
 using MarketNest.Core.Common;
 using MarketNest.Core.ValueObjects;
+using MediatR;
 
 namespace MarketNest.Core.Contracts;
 
 /// <summary>
-/// Implemented by Payments module; consumed by Orders module.
+///     Implemented by Payments module; consumed by Orders module.
 /// </summary>
 public interface IPaymentService
 {
@@ -14,7 +15,7 @@ public interface IPaymentService
         string paymentMethod,
         CancellationToken ct = default);
 
-    Task<Result<MediatR.Unit, Error>> RefundAsync(
+    Task<Result<Unit, Error>> RefundAsync(
         Guid paymentId,
         Money amount,
         string reason,

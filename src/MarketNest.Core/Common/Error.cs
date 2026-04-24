@@ -1,8 +1,8 @@
 namespace MarketNest.Core.Common;
 
 /// <summary>
-/// Structured error record with domain error code, message, and type.
-/// Error codes use DOMAIN.ENTITY_ERROR format.
+///     Structured error record with domain error code, message, and type.
+///     Error codes use DOMAIN.ENTITY_ERROR format.
 /// </summary>
 public record Error(string Code, string Message, ErrorType Type = ErrorType.Validation)
 {

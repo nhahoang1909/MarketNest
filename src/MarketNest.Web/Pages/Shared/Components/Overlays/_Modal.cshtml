@@ -1,46 +1,47 @@
 @* Modal — pass ModalId, Title, Size (sm/md/lg/xl) via ViewData; body injected via HTMX *@
 @{
-    var modalId = ViewData["ModalId"]?.ToString() ?? "modal";
-    var title = ViewData["Title"]?.ToString() ?? "";
-    var size = ViewData["Size"]?.ToString() ?? "md";
-    var maxW = size switch
-    {
-        "sm" => "max-w-sm",
-        "lg" => "max-w-2xl",
-        "xl" => "max-w-4xl",
-        _ => "max-w-lg"
-    };
+  var modalId = ViewData["ModalId"]?.ToString() ?? "modal";
+  var title = ViewData["Title"]?.ToString() ?? "";
+  var size = ViewData["Size"]?.ToString() ?? "md";
+  var maxW = size switch
+  {
+    "sm" => "max-w-sm",
+    "lg" => "max-w-2xl",
+    "xl" => "max-w-4xl",
+    _ => "max-w-lg"
+  };
 }
 
 <div x-data="{ open: false }" x-show="open" x-on:open-modal-@(modalId).window="open = true"
      x-on:close-modal.window="open = false" x-on:keydown.escape.window="open = false"
      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
-     x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-50 overflow-y-auto"
+     x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-50 overflow-y-auto"
      style="display: none;">
-    <!-- Backdrop -->
-    <div class="fixed inset-0 bg-black/50" @@click="open = false"></div>
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-black/50" @@click="open = false"></div>
 
-    <!-- Panel -->
-    <div class="flex min-h-full items-center justify-center p-4">
-        <div class="relative w-full @maxW rounded-xl bg-white shadow-xl"
-             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100" @@click.outside="open = false">
-            @if (!string.IsNullOrEmpty(title))
-            {
-                <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">@title</h3>
-                    <button type="button" @@click="open = false" class="text-gray-400 hover:text-gray-500">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-            }
-            <div id="@(modalId)-content" class="px-6 py-4">
-                @* Content loaded via HTMX or slot *@
-            </div>
+  <!-- Panel -->
+  <div class="flex min-h-full items-center justify-center p-4">
+    <div class="relative w-full @maxW rounded-xl bg-white shadow-xl"
+         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100" @@click.outside="open = false">
+      @if (!string.IsNullOrEmpty(title))
+      {
+        <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900">@title</h3>
+          <button type="button" @@click="open = false" class="text-gray-400 hover:text-gray-500">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
         </div>
+      }
+      <div id="@(modalId)-content" class="px-6 py-4">
+        @* Content loaded via HTMX or slot *@
+      </div>
     </div>
+  </div>
 </div>

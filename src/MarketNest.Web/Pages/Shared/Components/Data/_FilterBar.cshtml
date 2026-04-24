@@ -1,18 +1,18 @@
 @* Filter bar — pass Filters (List<(string Label, string Value, bool Active)>), TargetUrl, TargetId via ViewData *@
 @{
-    var filters = ViewData["Filters"] as IEnumerable<(string Label, string Value, bool Active)>
-        ?? Enumerable.Empty<(string Label, string Value, bool Active)>();
-    var targetUrl = ViewData["TargetUrl"]?.ToString() ?? "";
-    var targetId = ViewData["TargetId"]?.ToString() ?? "#results";
-    var paramName = ViewData["ParamName"]?.ToString() ?? "filter";
+  var filters = ViewData["Filters"] as IEnumerable<(string Label, string Value, bool Active)>
+                ?? Enumerable.Empty<(string Label, string Value, bool Active)>();
+  var targetUrl = ViewData["TargetUrl"]?.ToString() ?? "";
+  var targetId = ViewData["TargetId"]?.ToString() ?? "#results";
+  var paramName = ViewData["ParamName"]?.ToString() ?? "filter";
 }
 
 <div class="flex flex-wrap gap-2">
-    @foreach (var (label, value, active) in filters)
-    {
-        <button type="button" class="@(active ? "filter-chip-active" : "filter-chip")"
-                hx-get="@(targetUrl)?@(paramName)=@value" hx-target="@targetId" hx-push-url="true">
-            @label
-        </button>
-    }
+  @foreach (var (label, value, active) in filters)
+  {
+    <button type="button" class="@(active ? "filter-chip-active" : "filter-chip")"
+            hx-get="@(targetUrl)?@(paramName)=@value" hx-target="@targetId" hx-push-url="true">
+      @label
+    </button>
+  }
 </div>

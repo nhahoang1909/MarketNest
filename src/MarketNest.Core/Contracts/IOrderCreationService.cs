@@ -1,11 +1,10 @@
 using MarketNest.Core.Common;
 using MarketNest.Core.ValueObjects;
-using MediatR;
 
 namespace MarketNest.Core.Contracts;
 
 /// <summary>
-/// Implemented by Orders module; consumed by Cart module.
+///     Implemented by Orders module; consumed by Cart module.
 /// </summary>
 public interface IOrderCreationService
 {
@@ -17,7 +16,8 @@ public interface IOrderCreationService
 }
 
 /// <summary>
-/// Snapshot of a cart passed between modules (serializable).
+///     Snapshot of a cart passed between modules (serializable).
 /// </summary>
 public record CartSnapshot(Guid BuyerId, IReadOnlyList<CartItemSnapshot> Items, Address ShippingAddress);
+
 public record CartItemSnapshot(Guid VariantId, Guid StoreId, string Title, Money UnitPrice, int Quantity);

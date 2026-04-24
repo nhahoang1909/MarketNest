@@ -1,7 +1,9 @@
+using System.Globalization;
+using FluentValidation;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
+    .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
     .CreateBootstrapLogger();
 
 try
@@ -16,8 +18,9 @@ try
         .Enrich.FromLogContext()
         .Enrich.WithProperty("Application", "MarketNest")
         .Enrich.WithEnvironmentName()
-        .WriteTo.Console()
-        .WriteTo.Seq(context.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341"));
+        .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
+        .WriteTo.Seq(serverUrl: context.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341",
+                     formatProvider: CultureInfo.InvariantCulture));
 
     // ── Services ──────────────────────────────────────────────────────
     builder.Services.AddRazorPages();
@@ -39,7 +42,8 @@ try
     ));
 
     // FluentValidation — discover validators from all module assemblies
-    builder.Services.AddValidatorsFromAssemblies([
+    var validatorAssemblies = new[]
+    {
         typeof(MarketNest.Identity.AssemblyReference).Assembly,
         typeof(MarketNest.Catalog.AssemblyReference).Assembly,
         typeof(MarketNest.Cart.AssemblyReference).Assembly,
@@ -47,7 +51,12 @@ try
         typeof(MarketNest.Payments.AssemblyReference).Assembly,
         typeof(MarketNest.Reviews.AssemblyReference).Assembly,
         typeof(MarketNest.Disputes.AssemblyReference).Assembly,
-    ]);
+    };
+
+    foreach (var assembly in validatorAssemblies)
+    {
+        builder.Services.AddValidatorsFromAssembly(assembly);
+    }
 
     // TODO: Register module DI (each module exposes AddXxxModule extension)
     // builder.Services.AddIdentityModule(builder.Configuration);
@@ -81,16 +90,6 @@ try
     app.MapRazorPages();
     app.MapHealthChecks("/health");
 
-    // ── Database Initialize (dev only) ────────────────────────────────
-    // TODO: Uncomment when DatabaseInitializer is implemented
-    // if (app.Environment.IsDevelopment())
-    // {
-    //     using var scope = app.Services.CreateScope();
-    //     await scope.ServiceProvider
-    //                .GetRequiredService<DatabaseInitializer>()
-    //                .InitializeAsync();
-    // }
-
     app.Run();
 }
 catch (Exception ex)
@@ -102,5 +101,4 @@ finally
     Log.CloseAndFlush();
 }
 
-// Required for WebApplicationFactory in integration tests
 public partial class Program;

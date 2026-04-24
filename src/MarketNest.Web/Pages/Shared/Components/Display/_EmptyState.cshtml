@@ -1,21 +1,21 @@
 @* Empty state — pass Title, Message, ActionUrl, ActionText, Icon via ViewData *@
 @{
-    var title = ViewData["Title"]?.ToString() ?? "Nothing here yet";
-    var message = ViewData["Message"]?.ToString() ?? "Get started by creating your first item.";
-    var actionUrl = ViewData["ActionUrl"]?.ToString();
-    var actionText = ViewData["ActionText"]?.ToString() ?? "Get Started";
+  var title = ViewData["Title"]?.ToString() ?? "Nothing here yet";
+  var message = ViewData["Message"]?.ToString() ?? "Get started by creating your first item.";
+  var actionUrl = ViewData["ActionUrl"]?.ToString();
+  var actionText = ViewData["ActionText"]?.ToString() ?? "Get Started";
 }
 
 <div class="flex flex-col items-center justify-center py-16 text-center">
-    <svg class="mx-auto h-16 w-16 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-         stroke-width="1" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-    </svg>
-    <h3 class="mt-4 text-lg font-semibold text-gray-900">@title</h3>
-    <p class="mt-1 text-sm text-gray-500 max-w-sm">@message</p>
-    @if (!string.IsNullOrEmpty(actionUrl))
-    {
-        <a href="@actionUrl" class="btn-primary mt-6">@actionText</a>
-    }
+  <svg class="mx-auto h-16 w-16 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+       stroke-width="1" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round"
+          d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
+  </svg>
+  <h3 class="mt-4 text-lg font-semibold text-gray-900">@title</h3>
+  <p class="mt-1 text-sm text-gray-500 max-w-sm">@message</p>
+  @if (!string.IsNullOrEmpty(actionUrl))
+  {
+    <a href="@actionUrl" class="btn-primary mt-6">@actionText</a>
+  }
 </div>

@@ -3,7 +3,7 @@
  * Usage: x-data="infiniteScroll({ url: '/api/products', targetId: '#product-list' })"
  */
 document.addEventListener("alpine:init", () => {
-    Alpine.data("infiniteScroll", ({ url = "", targetId = "" } = {}) => ({
+    Alpine.data("infiniteScroll", ({url = "", targetId = ""} = {}) => ({
         page: 1,
         loading: false,
         hasMore: true,
@@ -28,7 +28,7 @@ document.addEventListener("alpine:init", () => {
                             this.loadMore();
                         }
                     },
-                    { rootMargin: "200px" },
+                    {rootMargin: "200px"},
                 );
 
                 this._observer.observe(sentinel);
@@ -48,7 +48,7 @@ document.addEventListener("alpine:init", () => {
 
             try {
                 const response = await fetch(fetchUrl, {
-                    headers: { "HX-Request": "true" },
+                    headers: {"HX-Request": "true"},
                 });
 
                 if (!response.ok) {

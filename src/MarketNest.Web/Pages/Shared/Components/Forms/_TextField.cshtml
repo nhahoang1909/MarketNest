@@ -1,28 +1,28 @@
 @* Text field — pass Label, Name, Placeholder, HelpText, Value, Errors via ViewData *@
 @{
-    var label = ViewData["Label"]?.ToString() ?? "Label";
-    var name = ViewData["Name"]?.ToString() ?? "field";
-    var placeholder = ViewData["Placeholder"]?.ToString() ?? "";
-    var helpText = ViewData["HelpText"]?.ToString();
-    var value = ViewData["Value"]?.ToString() ?? "";
-    var errors = ViewData["Errors"] as IEnumerable<string>;
-    var hasError = errors?.Any() == true;
-    var inputCss = hasError ? "form-input input-error" : "form-input";
+  var label = ViewData["Label"]?.ToString() ?? "Label";
+  var name = ViewData["Name"]?.ToString() ?? "field";
+  var placeholder = ViewData["Placeholder"]?.ToString() ?? "";
+  var helpText = ViewData["HelpText"]?.ToString();
+  var value = ViewData["Value"]?.ToString() ?? "";
+  var errors = ViewData["Errors"] as IEnumerable<string>;
+  var hasError = errors?.Any() == true;
+  var inputCss = hasError ? "form-input input-error" : "form-input";
 }
 
 <div class="space-y-1">
-    <label for="@name" class="form-label">@label</label>
-    <input type="text" id="@name" name="@name" value="@value" placeholder="@placeholder" class="@inputCss"
-           autocomplete="off" />
-    @if (hasError)
+  <label for="@name" class="form-label">@label</label>
+  <input type="text" id="@name" name="@name" value="@value" placeholder="@placeholder" class="@inputCss"
+         autocomplete="off"/>
+  @if (hasError)
+  {
+    @foreach (var error in errors!)
     {
-        @foreach (var error in errors!)
-        {
-            <p class="form-error">@error</p>
-        }
+      <p class="form-error">@error</p>
     }
-    @if (!string.IsNullOrEmpty(helpText))
-    {
-        <p class="form-help">@helpText</p>
-    }
+  }
+  @if (!string.IsNullOrEmpty(helpText))
+  {
+    <p class="form-help">@helpText</p>
+  }
 </div>

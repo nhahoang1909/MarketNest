@@ -1,7 +1,7 @@
 namespace MarketNest.Core.Contracts;
 
 /// <summary>
-/// Implemented by Catalog module; consumed by Payments module for commission rates.
+///     Implemented by Catalog module; consumed by Payments module for commission rates.
 /// </summary>
 public interface IStorefrontReadService
 {

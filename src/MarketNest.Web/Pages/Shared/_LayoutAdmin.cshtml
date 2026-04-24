@@ -1,5 +1,6 @@
 @* Admin panel — Dark Indigo Financial Dashboard *@
 @using Microsoft.AspNetCore.Antiforgery
+@* Admin panel layout — sidebar navigation *@
 @inject IAntiforgery Antiforgery
 @{
     var currentPath  = Context.Request.Path.Value ?? "";
@@ -414,6 +415,8 @@
             </div>
         </template>
     </div>
+  </template>
+</div>
 
     <script>
         document.addEventListener('showToast', function (e) {

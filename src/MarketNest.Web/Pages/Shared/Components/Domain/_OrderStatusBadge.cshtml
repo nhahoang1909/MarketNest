@@ -1,20 +1,20 @@
 @* Order status badge — specialized for order statuses *@
 @{
-    var status = ViewData["Status"]?.ToString() ?? "Unknown";
-    var badgeCss = status.ToLower() switch
-    {
-        "pending payment" or "pending" => "badge badge-yellow",
-        "confirmed" or "paid" => "badge badge-blue",
-        "processing" => "badge badge-blue",
-        "shipped" or "in transit" => "badge badge-purple",
-        "delivered" => "badge badge-green",
-        "completed" => "badge badge-green",
-        "cancelled" => "badge badge-gray",
-        "refunded" => "badge badge-orange",
-        "disputed" => "badge badge-red",
-        "return requested" => "badge badge-orange",
-        _ => "badge badge-gray"
-    };
+  var status = ViewData["Status"]?.ToString() ?? "Unknown";
+  var badgeCss = status.ToLower() switch
+  {
+    "pending payment" or "pending" => "badge badge-yellow",
+    "confirmed" or "paid" => "badge badge-blue",
+    "processing" => "badge badge-blue",
+    "shipped" or "in transit" => "badge badge-purple",
+    "delivered" => "badge badge-green",
+    "completed" => "badge badge-green",
+    "cancelled" => "badge badge-gray",
+    "refunded" => "badge badge-orange",
+    "disputed" => "badge badge-red",
+    "return requested" => "badge badge-orange",
+    _ => "badge badge-gray"
+  };
 }
 
 <span class="@badgeCss">@status</span>

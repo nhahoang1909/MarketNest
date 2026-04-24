@@ -8,7 +8,7 @@ document.addEventListener("alpine:init", () => {
 
         add(message, type = "info", duration = 5000) {
             const id = this._nextId++;
-            this.items.push({ id, message, type, visible: true });
+            this.items.push({id, message, type, visible: true});
 
             if (duration > 0) {
                 setTimeout(() => this.remove(id), duration);

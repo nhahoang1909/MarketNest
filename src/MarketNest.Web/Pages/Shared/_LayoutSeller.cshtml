@@ -1,5 +1,6 @@
 @* Seller dashboard layout — White sidebar with brand orange accents *@
 @using Microsoft.AspNetCore.Antiforgery
+@* Seller dashboard layout — sidebar navigation *@
 @inject IAntiforgery Antiforgery
 @{
     var currentPath  = Context.Request.Path.Value ?? "";
@@ -339,6 +340,8 @@
             </div>
         </template>
     </div>
+  </template>
+</div>
 
     <script>
         document.addEventListener('showToast', function (e) {

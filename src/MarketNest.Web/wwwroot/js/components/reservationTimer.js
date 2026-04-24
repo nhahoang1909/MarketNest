@@ -3,7 +3,7 @@
  * Usage: x-data="reservationTimer({ expiresAt: '2026-04-25T12:00:00Z' })"
  */
 document.addEventListener("alpine:init", () => {
-    Alpine.data("reservationTimer", ({ expiresAt = "" } = {}) => ({
+    Alpine.data("reservationTimer", ({expiresAt = ""} = {}) => ({
         expiresAt,
         remaining: "",
         expired: false,
