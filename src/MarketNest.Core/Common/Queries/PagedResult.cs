@@ -3,7 +3,7 @@ namespace MarketNest.Core.Common.Queries;
 /// <summary>
 /// Standard paged result envelope for list endpoints.
 /// </summary>
-public class PagedResult<T>
+public record PagedResult<T>
 {
     public IReadOnlyList<T> Items { get; init; } = [];
     public int Page { get; init; }

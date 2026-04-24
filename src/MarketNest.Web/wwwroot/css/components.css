@@ -1,0 +1,157 @@
+/*
+ * MarketNest component styles
+ * Tailwind @layer components — import this in your main Tailwind entry point.
+ */
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+@layer components {
+    .btn-primary {
+        @apply inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5
+               text-sm font-semibold text-white shadow-sm
+               hover:bg-brand-700 focus-visible:outline focus-visible:outline-2
+               focus-visible:outline-offset-2 focus-visible:outline-brand-600
+               disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+    }
+
+    .btn-secondary {
+        @apply inline-flex items-center justify-center rounded-lg bg-white px-4 py-2.5
+               text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300
+               hover:bg-gray-50 focus-visible:outline focus-visible:outline-2
+               focus-visible:outline-offset-2 focus-visible:outline-brand-600
+               disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+    }
+
+    .btn-danger {
+        @apply inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2.5
+               text-sm font-semibold text-white shadow-sm
+               hover:bg-red-700 focus-visible:outline focus-visible:outline-2
+               focus-visible:outline-offset-2 focus-visible:outline-red-600
+               disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+    }
+
+    .btn-ghost {
+        @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5
+               text-sm font-semibold text-gray-600
+               hover:bg-gray-100 hover:text-gray-900
+               focus-visible:outline focus-visible:outline-2
+               focus-visible:outline-offset-2 focus-visible:outline-brand-600
+               disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+    }
+
+    /* ── Form elements ─────────────────────────────────────────── */
+    .form-label {
+        @apply block text-sm font-medium text-gray-700;
+    }
+
+    .form-input {
+        @apply block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
+               shadow-sm placeholder:text-gray-400
+               focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500
+               disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
+               transition-colors;
+    }
+
+    .input-error {
+        @apply border-red-300 text-red-900 placeholder:text-red-300
+               focus:border-red-500 focus:ring-red-500;
+    }
+
+    .form-error {
+        @apply text-sm text-red-600 mt-1;
+    }
+
+    .form-help {
+        @apply text-sm text-gray-500 mt-1;
+    }
+
+    /* ── Cards ─────────────────────────────────────────────────── */
+    .card {
+        @apply rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden;
+    }
+
+    .card-header {
+        @apply border-b border-gray-200 px-6 py-4;
+    }
+
+    .card-body {
+        @apply px-4 py-4;
+    }
+
+    /* ── Badges ────────────────────────────────────────────────── */
+    .badge {
+        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+
+    .badge-gray {
+        @apply bg-gray-100 text-gray-700;
+    }
+
+    .badge-blue {
+        @apply bg-blue-100 text-blue-700;
+    }
+
+    .badge-green {
+        @apply bg-green-100 text-green-700;
+    }
+
+    .badge-yellow {
+        @apply bg-yellow-100 text-yellow-800;
+    }
+
+    .badge-red {
+        @apply bg-red-100 text-red-700;
+    }
+
+    .badge-orange {
+        @apply bg-orange-100 text-orange-700;
+    }
+
+    .badge-purple {
+        @apply bg-purple-100 text-purple-700;
+    }
+
+    /* ── Filter chips ──────────────────────────────────────────── */
+    .filter-chip {
+        @apply inline-flex items-center rounded-full border border-gray-300 px-3 py-1.5
+               text-sm text-gray-700 bg-white
+               hover:bg-gray-50 hover:border-gray-400
+               cursor-pointer transition-colors;
+    }
+
+    .filter-chip-active {
+        @apply inline-flex items-center rounded-full border border-brand-500 px-3 py-1.5
+               text-sm text-brand-700 bg-brand-50 font-medium
+               cursor-pointer transition-colors;
+    }
+
+    /* ── Sidebar links ─────────────────────────────────────────── */
+    .sidebar-link {
+        @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
+               text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors;
+    }
+
+    .sidebar-link-active {
+        @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
+               bg-brand-50 text-brand-700 transition-colors;
+    }
+
+    .sidebar-link-dark {
+        @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
+               text-gray-300 hover:bg-gray-700 hover:text-white transition-colors;
+    }
+
+    .sidebar-link-dark-active {
+        @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
+               bg-gray-700 text-white transition-colors;
+    }
+
+    /* ── HTMX indicator ────────────────────────────────────────── */
+    .htmx-indicator {
+        display: none;
+    }
+
+    .htmx-request .htmx-indicator,
+    .htmx-request.htmx-indicator {
+        display: flex;
+    }
+}

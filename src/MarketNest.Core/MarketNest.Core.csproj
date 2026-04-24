@@ -7,8 +7,15 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Azure.Identity" />
         <PackageReference Include="MediatR" />
         <PackageReference Include="FluentValidation" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="OpenTelemetry.Api" />
+        <PackageReference Include="System.Security.Cryptography.Xml" />
     </ItemGroup>
 
 </Project>

@@ -1,0 +1,29 @@
+@* Select field — pass Label, Name, Options (IEnumerable<SelectListItem>), Selected, Errors via ViewData *@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    var label = ViewData["Label"]?.ToString() ?? "Label";
+    var name = ViewData["Name"]?.ToString() ?? "field";
+    var options = ViewData["Options"] as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+    var selected = ViewData["Selected"]?.ToString() ?? "";
+    var errors = ViewData["Errors"] as IEnumerable<string>;
+    var hasError = errors?.Any() == true;
+    var inputCss = hasError ? "form-input input-error" : "form-input";
+}
+
+<div class="space-y-1">
+    <label for="@name" class="form-label">@label</label>
+    <select id="@name" name="@name" class="@inputCss">
+        <option value="">— Select —</option>
+        @foreach (var opt in options)
+        {
+            <option value="@opt.Value" selected="@(opt.Value == selected)">@opt.Text</option>
+        }
+    </select>
+    @if (hasError)
+    {
+        @foreach (var error in errors!)
+        {
+            <p class="form-error">@error</p>
+        }
+    }
+</div>

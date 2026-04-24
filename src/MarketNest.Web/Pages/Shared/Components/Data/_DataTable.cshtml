@@ -1,0 +1,30 @@
+@* Sortable data table — pass TableId, ReloadUrl via ViewData; body via RenderSection/RenderBody *@
+@{
+    var tableId = ViewData["TableId"]?.ToString() ?? "data-table";
+    var reloadUrl = ViewData["ReloadUrl"]?.ToString();
+}
+
+<div id="@tableId" class="overflow-x-auto rounded-lg border border-gray-200">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                @* Column headers rendered by caller *@
+                @if (ViewData["HeaderHtml"] is string headerHtml)
+                {
+                    @Html.Raw(headerHtml)
+                }
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 bg-white"
+               @if (!string.IsNullOrEmpty(reloadUrl))
+               {
+                   <text>hx-get="@reloadUrl" hx-trigger="reload from:body" hx-target="#@tableId tbody"</text>
+               }>
+            @* Row content rendered by caller *@
+            @if (ViewData["BodyHtml"] is string bodyHtml)
+            {
+                @Html.Raw(bodyHtml)
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,66 @@
+@* Pagination — pass CurrentPage, TotalPages, BaseUrl, TargetId via ViewData *@
+@{
+    var currentPage = int.TryParse(ViewData["CurrentPage"]?.ToString(), out var cp) ? cp : 1;
+    var totalPages = int.TryParse(ViewData["TotalPages"]?.ToString(), out var tp) ? tp : 1;
+    var baseUrl = ViewData["BaseUrl"]?.ToString() ?? "?";
+    var targetId = ViewData["TargetId"]?.ToString();
+    var separator = baseUrl.Contains('?') ? "&" : "?";
+
+    int WindowStart() => Math.Max(1, currentPage - 2);
+    int WindowEnd() => Math.Min(totalPages, currentPage + 2);
+}
+
+@if (totalPages > 1)
+{
+    <nav aria-label="Pagination" class="flex items-center justify-center gap-1 mt-6">
+        @* Previous *@
+        @if (currentPage > 1)
+        {
+            <a href="@(baseUrl + separator)page=@(currentPage - 1)"
+                   class="rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100"
+                   hx-get="@(baseUrl + separator)page=@(currentPage - 1)" hx-target="@targetId" hx-push-url="true">
+                ← Prev
+            </a>
+        }
+
+        @* Page numbers *@
+        @if (WindowStart() > 1)
+        {
+            <a href="@(baseUrl + separator)page=1" class="rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100"
+               hx-get="@(baseUrl + separator)page=1" hx-target="@targetId" hx-push-url="true">1</a>
+            @if (WindowStart() > 2)
+            {
+                <span class="px-2 text-gray-400">…</span>
+            }
+        }
+
+        @for (var i = WindowStart(); i <= WindowEnd(); i++)
+        {
+            var active = i == currentPage;
+            <a href="@(baseUrl + separator)page=@i"
+               class="rounded-lg px-3 py-2 text-sm @(active ? "bg-brand-600 text-white font-semibold" : "text-gray-600 hover:bg-gray-100")"
+               hx-get="@(baseUrl + separator)page=@i" hx-target="@targetId" hx-push-url="true">@i</a>
+        }
+
+        @if (WindowEnd() < totalPages)
+        {
+            @if (WindowEnd() < totalPages - 1)
+            {
+                <span class="px-2 text-gray-400">…</span>
+            }
+            <a href="@(baseUrl + separator)page=@totalPages"
+               class="rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100"
+               hx-get="@(baseUrl + separator)page=@totalPages" hx-target="@targetId" hx-push-url="true">@totalPages</a>
+        }
+
+        @* Next *@
+        @if (currentPage < totalPages)
+        {
+            <a href="@(baseUrl + separator)page=@(currentPage + 1)"
+                   class="rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100"
+                   hx-get="@(baseUrl + separator)page=@(currentPage + 1)" hx-target="@targetId" hx-push-url="true">
+                Next →
+            </a>
+        }
+    </nav>
+}

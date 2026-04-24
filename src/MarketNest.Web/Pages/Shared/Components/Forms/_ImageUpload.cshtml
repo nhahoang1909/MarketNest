@@ -1,0 +1,43 @@
+@* Image upload with Alpine.js drag-drop + preview — pass Name, MaxFiles, Accept via ViewData *@
+@{
+    var name = ViewData["Name"]?.ToString() ?? "images";
+    var maxFiles = ViewData["MaxFiles"]?.ToString() ?? "5";
+    var accept = ViewData["Accept"]?.ToString() ?? "image/jpeg,image/png,image/webp";
+}
+
+<div x-data="imageUploader({ maxFiles: @maxFiles })" class="space-y-2">
+    <div class="relative rounded-lg border-2 border-dashed p-6 text-center transition-colors"
+         :class="isDragging ? 'border-brand-500 bg-brand-50' : 'border-gray-300 hover:border-gray-400'"
+        @@dragover.prevent="isDragging = true" @@dragleave.prevent="isDragging = false"
+        @@drop.prevent="handleDrop($event)">
+        <svg class="mx-auto h-10 w-10 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+             stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.338-2.32 3.75 3.75 0 013.287 5.22" />
+        </svg>
+        <p class="mt-2 text-sm text-gray-600">Drag & drop images here, or
+            <label class="cursor-pointer text-brand-600 hover:text-brand-500 font-medium">
+                browse
+                <input type="file" name="@name" accept="@accept" multiple class="sr-only"
+                @@change="handleFiles($event)" />
+            </label>
+        </p>
+        <p class="mt-1 text-xs text-gray-500">PNG, JPG, WebP up to 5 MB each</p>
+    </div>
+
+    <!-- Previews -->
+    <div class="grid grid-cols-4 gap-3" x-show="previews.length > 0">
+        <template x-for="(preview, idx) in previews" :key="idx">
+            <div class="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                <img :src="preview" class="w-full h-full object-cover" />
+                <button type="button" @@click="removeFile(idx)"
+                        class="absolute top-1 right-1 rounded-full bg-red-500 p-0.5 text-white hover:bg-red-600">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </template>
+    </div>
+</div>

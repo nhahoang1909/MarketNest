@@ -1,0 +1,35 @@
+@* Drawer — side panel for mobile nav or detail views *@
+@{
+    var drawerId = ViewData["DrawerId"]?.ToString() ?? "drawer";
+    var title = ViewData["Title"]?.ToString() ?? "";
+    var side = ViewData["Side"]?.ToString() ?? "right"; // left | right
+    var translateClass = side == "left" ? "-translate-x-full" : "translate-x-full";
+}
+
+<div x-data="{ open: false }" x-show="open" x-on:open-drawer-@(drawerId).window="open = true"
+     x-on:close-drawer.window="open = false" x-on:keydown.escape.window="open = false" class="fixed inset-0 z-50"
+     style="display: none;">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black/50" @@click="open = false" x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"></div>
+
+    <!-- Panel -->
+    <div class="fixed inset-y-0 @(side == "left" ? "left-0" : "right-0") w-full max-w-sm bg-white shadow-xl"
+         x-transition:enter="transition ease-out duration-300" x-transition:enter-start="@translateClass"
+         x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-x-0" x-transition:leave-end="@translateClass">
+        <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+            <h2 class="text-lg font-semibold text-gray-900">@title</h2>
+            <button type="button" @@click="open = false" class="text-gray-400 hover:text-gray-500">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div id="@(drawerId)-content" class="overflow-y-auto p-4" style="max-height: calc(100vh - 57px);">
+            @* Content injected via HTMX or slot *@
+        </div>
+    </div>
+</div>

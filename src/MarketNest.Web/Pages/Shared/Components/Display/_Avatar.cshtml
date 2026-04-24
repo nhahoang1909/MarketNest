@@ -1,0 +1,26 @@
+@* Avatar — pass Name, ImageUrl, Size (sm/md/lg) via ViewData *@
+@{
+    var name = ViewData["Name"]?.ToString() ?? "";
+    var imageUrl = ViewData["ImageUrl"]?.ToString();
+    var size = ViewData["Size"]?.ToString() ?? "md";
+    var sizeCss = size switch
+    {
+        "sm" => "h-8 w-8 text-xs",
+        "lg" => "h-14 w-14 text-lg",
+        _ => "h-10 w-10 text-sm"
+    };
+    var initials = string.Join("", (name ?? "?").Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w =>
+w[0])).ToUpper();
+}
+
+@if (!string.IsNullOrEmpty(imageUrl))
+{
+    <img src="@imageUrl" alt="@name" class="@sizeCss rounded-full object-cover ring-2 ring-white" loading="lazy" />
+}
+else
+{
+    <span
+        class="@sizeCss inline-flex items-center justify-center rounded-full bg-brand-100 text-brand-700 font-semibold ring-2 ring-white">
+        @initials
+    </span>
+}

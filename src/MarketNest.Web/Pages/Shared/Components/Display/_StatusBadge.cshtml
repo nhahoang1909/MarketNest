@@ -1,0 +1,25 @@
+@* Status badge — pass Status, ColorMap (optional Dictionary<string,string>) via ViewData *@
+@{
+    var status = ViewData["Status"]?.ToString() ?? "Unknown";
+    var colorMap = ViewData["ColorMap"] as Dictionary<string, string>;
+    var badgeCss = "badge badge-gray";
+    if (colorMap != null && colorMap.TryGetValue(status, out var css))
+    {
+        badgeCss = $"badge {css}";
+    }
+    else
+    {
+        badgeCss = status.ToLower() switch
+        {
+            "active" or "completed" or "approved" or "delivered" => "badge badge-green",
+            "pending" or "processing" => "badge badge-yellow",
+            "cancelled" or "rejected" or "failed" => "badge badge-red",
+            "shipped" or "in transit" => "badge badge-blue",
+            "draft" => "badge badge-gray",
+            "refunded" or "disputed" => "badge badge-orange",
+            _ => "badge badge-gray"
+        };
+    }
+}
+
+<span class="@badgeCss">@status</span>
