@@ -1,9 +1,10 @@
 @import "tailwindcss";
 @import "./components.css";
 
-/* ── MarketNest Brand Theme ──────────────────────────────── */
+/* ── MarketNest Design Tokens ──────────────────────────────── */
 @theme {
-    --color-brand-50: #fef7f0;
+    /* Brand — Warm Orange */
+    --color-brand-50:  #fef7f0;
     --color-brand-100: #fdebd6;
     --color-brand-200: #fad3a8;
     --color-brand-300: #f7b472;
@@ -14,16 +15,77 @@
     --color-brand-800: #9a3912;
     --color-brand-900: #431407;
 
-    --color-surface: #ffffff;
-    --color-surface-muted: #f9fafb;
-    --color-surface-subtle: #f3f4f6;
+    /* Market Green — buyer CTA, prices, success states */
+    --color-market-50:  #f0fdf4;
+    --color-market-100: #dcfce7;
+    --color-market-200: #bbf7d0;
+    --color-market-300: #86efac;
+    --color-market-400: #4ade80;
+    --color-market-500: #22c55e;
+    --color-market-600: #16a34a;
+    --color-market-700: #15803d;
+    --color-market-800: #166534;
+    --color-market-900: #14532d;
 
-    --font-sans: "Inter var", system-ui, sans-serif;
+    /* Indigo — admin sidebar & accents */
+    --color-indigo-50:  #eef2ff;
+    --color-indigo-100: #e0e7ff;
+    --color-indigo-200: #c7d2fe;
+    --color-indigo-300: #a5b4fc;
+    --color-indigo-400: #818cf8;
+    --color-indigo-500: #6366f1;
+    --color-indigo-600: #4f46e5;
+    --color-indigo-700: #4338ca;
+    --color-indigo-800: #3730a3;
+    --color-indigo-900: #312e81;
+    --color-indigo-950: #1e1b4b;
+
+    /* Surfaces */
+    --color-surface:        #ffffff;
+    --color-surface-muted:  #f8fafc;
+    --color-surface-subtle: #f1f5f9;
+    --color-surface-warm:   #fafaf9;
+
+    /* Fonts */
+    --font-sans:    "Plus Jakarta Sans", system-ui, sans-serif;
+    --font-display: "Nunito", system-ui, sans-serif;
+    --font-admin:   "Outfit", system-ui, sans-serif;
+    --font-mono:    "JetBrains Mono", "Fira Code", monospace;
 }
 
-/* ── Base Styles ─────────────────────────────────────────── */
+/* ── Base ──────────────────────────────────────────────────── */
 @layer base {
-    body {
-        @apply bg-surface text-gray-900 font-sans antialiased;
+    *, *::before, *::after {
+        box-sizing: border-box;
     }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply bg-surface text-gray-900 antialiased;
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Admin & Seller layouts use Outfit */
+    body.layout-admin,
+    body.layout-seller {
+        font-family: var(--font-admin);
+        background-color: #f0f2f8;
+    }
+
+    /* Smooth focus rings */
+    :focus-visible {
+        outline: 2px solid var(--color-brand-500);
+        outline-offset: 2px;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 }

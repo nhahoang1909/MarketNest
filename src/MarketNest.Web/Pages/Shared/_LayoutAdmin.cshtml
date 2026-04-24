@@ -1,112 +1,428 @@
-@* Admin panel layout — sidebar navigation *@
+@* Admin panel — Dark Indigo Financial Dashboard *@
 @using Microsoft.AspNetCore.Antiforgery
 @inject IAntiforgery Antiforgery
 @{
-    var currentPath = Context.Request.Path.Value ?? "";
+    var currentPath  = Context.Request.Path.Value ?? "";
     var requestToken = Antiforgery.GetAndStoreTokens(Context);
+    var pageTitle    = ViewData["Title"]?.ToString() ?? "Dashboard";
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi" class="scroll-smooth">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Admin | MarketNest</title>
+    <meta name="theme-color" content="#1e1b4b" />
+    <title>@pageTitle – Admin · MarketNest</title>
+
+    <!-- Font: Outfit (geometric, professional) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <meta name="htmx-config"
           content='{"defaultSwapStyle":"outerHTML","globalViewTransitions":true,"getCacheBusterParam":true}'>
+
+    <!-- Chart.js for dashboard charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.js" defer></script>
+
     <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    @* Alpine stores *@
     <script src="~/js/stores/toastStore.js" defer></script>
     <script src="~/js/stores/authStore.js" defer></script>
-
-    @* App bootstrap + HTMX helpers *@
     <script src="~/js/magic/htmxHelpers.js" defer></script>
     <script src="~/js/app.js" defer></script>
+
+    <!-- Admin-scoped CSS overrides -->
+    <style>
+        body.layout-admin { font-family: 'Outfit', system-ui, sans-serif; }
+
+        /* Sidebar gradient */
+        .admin-sidebar {
+            background: linear-gradient(180deg, #1e1b4b 0%, #1a1642 40%, #16123a 100%);
+        }
+
+        /* Sidebar subtle top glow */
+        .admin-sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(99,102,241,0.6), transparent);
+        }
+
+        /* Number font */
+        .font-data { font-family: 'JetBrains Mono', monospace; }
+
+        /* Stat card gradients */
+        .stat-indigo  { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; }
+        .stat-emerald { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+        .stat-amber   { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .stat-rose    { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); color: white; }
+
+        /* Sidebar active item glow */
+        .sidebar-link-dark-active {
+            box-shadow: 0 0 0 1px rgba(99,102,241,0.3), inset 0 0 12px rgba(99,102,241,0.1);
+        }
+
+        /* Top bar backdrop */
+        .admin-topbar {
+            backdrop-filter: blur(8px);
+            background: rgba(255,255,255,0.95);
+        }
+
+        /* Smooth sidebar scroll */
+        .admin-sidebar nav { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+    </style>
+
+    @await RenderSectionAsync("Head", required: false)
 </head>
 
-<body class="min-h-screen bg-surface-muted" x-data>
+<body class="layout-admin min-h-screen" x-data="{ sidebarOpen: false }" style="background:#f0f2f8;">
     <input type="hidden" name="__RequestVerificationToken" value="@requestToken.RequestToken" />
 
-    <div class="flex">
-        <!-- Sidebar -->
-        <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-gray-900 text-white">
-            <div class="flex items-center h-16 px-6 border-b border-gray-700">
-                <a href="/admin/dashboard" class="text-xl font-bold text-brand-400">MN Admin</a>
-            </div>
-            <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-                <a href="/admin/dashboard"
-                       class="sidebar-link-dark @(currentPath.StartsWith("/admin/dashboard") ? "sidebar-link-dark-active" : "")">
-                    📊 Dashboard
-                </a>
-                <a href="/admin/users"
-                       class="sidebar-link-dark @(currentPath.StartsWith("/admin/users") ? "sidebar-link-dark-active" : "")">
-                    👥 Users
-                </a>
-                <a href="/admin/storefronts"
-                       class="sidebar-link-dark @(currentPath.StartsWith("/admin/storefronts") ? "sidebar-link-dark-active" : "")">
-                    🏪 Storefronts
-                </a>
-                <a href="/admin/disputes"
-                       class="sidebar-link-dark @(currentPath.StartsWith("/admin/disputes") ? "sidebar-link-dark-active" : "")">
-                    ⚖️ Disputes
-                </a>
-                <a href="/admin/config/commission"
-                       class="sidebar-link-dark @(currentPath.StartsWith("/admin/config") ? "sidebar-link-dark-active" : "")">
-                    ⚙️ Configuration
-                </a>
-                <a href="/admin/notifications"
-                       class="sidebar-link-dark @(currentPath.StartsWith("/admin/notifications") ? "sidebar-link-dark-active" : "")">
-                    📬 Notifications
-                </a>
-            </nav>
-        </aside>
-
-        <!-- Main content -->
-        <main class="flex-1 lg:ml-64">
-            <header class="sticky top-0 z-40 bg-white border-b border-gray-200 h-16 flex items-center px-6">
-                <h1 class="text-lg font-semibold text-gray-900">@ViewData["Title"]</h1>
-            </header>
-            <div class="p-6">
-                @RenderBody()
-            </div>
-        </main>
+    <!-- ░░ MOBILE SIDEBAR OVERLAY ░░ -->
+    <div x-show="sidebarOpen"
+         x-cloak
+         @@click="sidebarOpen = false"
+         x-transition:enter="transition duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden">
     </div>
 
-    @await RenderSectionAsync("Scripts", required: false)
+    <!-- ░░ SIDEBAR ░░ -->
+    <aside class="admin-sidebar fixed inset-y-0 left-0 z-50 w-60 flex flex-col
+                  transition-transform duration-300 ease-in-out
+                  -translate-x-full lg:translate-x-0"
+           :class="{ 'translate-x-0': sidebarOpen, '-translate-x-full': !sidebarOpen }"
+           x-cloak>
 
-    @* Toast notification container *@
-    <div class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2" x-data x-cloak>
-        <template x-for="toast in $store.toast.items" :key="toast.id">
-            <div x-show="toast.visible" x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-2"
-                 :class="{
-                'bg-green-50 border-green-400 text-green-800': toast.type === 'success',
-                'bg-red-50 border-red-400 text-red-800': toast.type === 'error',
-                'bg-yellow-50 border-yellow-400 text-yellow-800': toast.type === 'warning',
-                'bg-blue-50 border-blue-400 text-blue-800': toast.type === 'info'
-                }" class="px-4 py-3 rounded-lg border shadow-lg max-w-sm">
-                <div class="flex items-center justify-between gap-2">
-                    <span x-text="toast.message" class="text-sm"></span>
-                    <button @@click="$store.toast.dismiss(toast.id)"
-                    class="text-current opacity-50 hover:opacity-100">&times;</button>
+        <!-- Logo -->
+        <div class="flex items-center h-[60px] px-5 shrink-0">
+            <a href="/admin/dashboard" class="flex items-baseline gap-0.5 group">
+                <span class="text-xl font-black text-white leading-none"
+                      style="font-family:'Outfit',sans-serif; letter-spacing:-0.5px">
+                    Market
+                </span>
+                <span class="text-xl font-black text-indigo-300 leading-none group-hover:text-indigo-200 transition-colors"
+                      style="font-family:'Outfit',sans-serif; letter-spacing:-0.5px">
+                    Nest
+                </span>
+                <span class="ml-1.5 text-[9px] font-bold uppercase tracking-widest text-indigo-400 bg-indigo-400/10
+                             px-1.5 py-0.5 rounded-full border border-indigo-400/20">
+                    ADMIN
+                </span>
+            </a>
+        </div>
+
+        <!-- Nav -->
+        <nav class="flex-1 px-3 py-3 overflow-y-auto space-y-0.5">
+
+            <!-- Overview section -->
+            <p class="sidebar-section-label mt-2">Tổng quan</p>
+
+            <a href="/admin/dashboard"
+               class="sidebar-link-dark @(currentPath.StartsWith("/admin/dashboard") ? "sidebar-link-dark-active" : "")">
+                <!-- Chart icon -->
+                <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+
+            <!-- Users & Stores section -->
+            <p class="sidebar-section-label mt-4">Quản lý</p>
+
+            <a href="/admin/users"
+               class="sidebar-link-dark @(currentPath.StartsWith("/admin/users") ? "sidebar-link-dark-active" : "")">
+                <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/>
+                </svg>
+                <span>Người dùng</span>
+            </a>
+
+            <a href="/admin/storefronts"
+               class="sidebar-link-dark @(currentPath.StartsWith("/admin/storefronts") ? "sidebar-link-dark-active" : "")">
+                <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z"/>
+                </svg>
+                <span>Cửa hàng</span>
+            </a>
+
+            <!-- Operations section -->
+            <p class="sidebar-section-label mt-4">Vận hành</p>
+
+            <a href="/admin/disputes"
+               class="sidebar-link-dark @(currentPath.StartsWith("/admin/disputes") ? "sidebar-link-dark-active" : "")">
+                <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.991Z"/>
+                </svg>
+                <span>Khiếu nại</span>
+                @* Badge for pending disputes — rendered server-side *@
+                @if (ViewData["PendingDisputes"] is int pd && pd > 0)
+                {
+                    <span class="ml-auto text-[10px] font-bold bg-rose-500 text-white px-1.5 py-0.5 rounded-full">
+                        @pd
+                    </span>
+                }
+            </a>
+
+            <a href="/admin/notifications"
+               class="sidebar-link-dark @(currentPath.StartsWith("/admin/notifications") ? "sidebar-link-dark-active" : "")">
+                <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
+                </svg>
+                <span>Thông báo</span>
+            </a>
+
+            <!-- System section -->
+            <p class="sidebar-section-label mt-4">Hệ thống</p>
+
+            <a href="/admin/config/commission"
+               class="sidebar-link-dark @(currentPath.StartsWith("/admin/config") ? "sidebar-link-dark-active" : "")">
+                <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                </svg>
+                <span>Cấu hình</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar footer — admin user info -->
+        <div class="shrink-0 px-3 py-4 border-t border-white/10">
+            <div class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                     style="background:linear-gradient(135deg,#6366f1,#4f46e5)">
+                    A
                 </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold text-white truncate" x-text="$store.auth.displayName ?? 'Admin'"></p>
+                    <p class="text-[10px] text-indigo-300">Super Admin</p>
+                </div>
+                <a href="/auth/login" title="Đăng xuất"
+                   class="opacity-50 hover:opacity-100 transition-opacity">
+                    <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ░░ MAIN WRAPPER ░░ -->
+    <div class="lg:ml-60 flex flex-col min-h-screen">
+
+        <!-- ░ TOP BAR ░ -->
+        <header class="admin-topbar sticky top-0 z-40 border-b border-slate-200/80
+                       flex items-center h-[60px] px-4 sm:px-6 gap-4">
+
+            <!-- Mobile hamburger -->
+            <button @@click="sidebarOpen = !sidebarOpen"
+                    class="lg:hidden btn-icon text-slate-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+                </svg>
+            </button>
+
+            <!-- Breadcrumb / page title -->
+            <div class="flex items-center gap-2 min-w-0">
+                <a href="/admin/dashboard" class="text-slate-400 hover:text-slate-600 transition-colors text-sm">
+                    Admin
+                </a>
+                <svg class="w-3.5 h-3.5 text-slate-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
+                </svg>
+                <span class="text-sm font-semibold text-slate-800 truncate">@pageTitle</span>
+            </div>
+
+            <!-- Spacer -->
+            <div class="flex-1"></div>
+
+            <!-- Global search (admin) -->
+            <div class="hidden md:flex items-center">
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+                         fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z"/>
+                    </svg>
+                    <input type="text" placeholder="Tìm kiếm..."
+                           class="pl-9 pr-4 py-2 w-52 text-sm rounded-lg border border-slate-200
+                                  bg-slate-50 focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100
+                                  focus:outline-none transition-all duration-150 placeholder:text-slate-400" />
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div x-data="{ open: false }" class="relative">
+                <button @@click="open = !open"
+                        class="btn-icon text-slate-600 relative">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
+                    </svg>
+                    <!-- Notification dot -->
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+                </button>
+
+                <div x-show="open"
+                     @@click.away="open = false"
+                     x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 scale-95 translate-y-1"
+                     x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden origin-top-right">
+                    <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-slate-900">Thông báo</h3>
+                        <button class="text-xs text-indigo-600 font-medium hover:text-indigo-800">Đánh dấu tất cả đã đọc</button>
+                    </div>
+                    <div class="py-2 max-h-72 overflow-y-auto">
+                        <div class="px-4 py-3 hover:bg-slate-50 transition-colors flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-slate-900">Khiếu nại mới chờ xử lý</p>
+                                <p class="text-xs text-slate-500 mt-0.5">3 khiếu nại chưa được giải quyết</p>
+                                <p class="text-[10px] text-slate-400 mt-1">5 phút trước</p>
+                            </div>
+                            <span class="w-2 h-2 bg-rose-500 rounded-full shrink-0 mt-1.5"></span>
+                        </div>
+                        <div class="px-4 py-3 hover:bg-slate-50 transition-colors flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-slate-900">Người bán mới đăng ký</p>
+                                <p class="text-xs text-slate-500 mt-0.5">12 người bán đang chờ phê duyệt</p>
+                                <p class="text-[10px] text-slate-400 mt-1">1 giờ trước</p>
+                            </div>
+                            <span class="w-2 h-2 bg-indigo-500 rounded-full shrink-0 mt-1.5"></span>
+                        </div>
+                    </div>
+                    <div class="border-t border-slate-100 px-4 py-2.5 text-center">
+                        <a href="/admin/notifications" class="text-sm text-indigo-600 font-medium hover:text-indigo-800 transition-colors">
+                            Xem tất cả
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin avatar -->
+            <div x-data="{ open: false }" class="relative">
+                <button @@click="open = !open"
+                        class="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-slate-100 transition-colors">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                         style="background:linear-gradient(135deg,#6366f1,#4f46e5)">
+                        A
+                    </div>
+                    <div class="hidden sm:block text-left">
+                        <p class="text-xs font-semibold text-slate-800" x-text="$store.auth.displayName ?? 'Admin'"></p>
+                        <p class="text-[10px] text-slate-500">Super Admin</p>
+                    </div>
+                    <svg class="w-3.5 h-3.5 text-slate-400 hidden sm:block" :class="{'rotate-180': open}"
+                         fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+                    </svg>
+                </button>
+
+                <div x-show="open" @@click.away="open = false" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 origin-top-right">
+                    <a href="/account/settings" class="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
+                        </svg>
+                        Hồ sơ
+                    </a>
+                    <a href="/" class="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
+                        </svg>
+                        Trang chủ
+                    </a>
+                    <div class="border-t border-slate-100 mt-1 pt-1">
+                        <button @@click="$store.auth.logout()"
+                                class="flex items-center gap-2.5 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25"/>
+                            </svg>
+                            Đăng xuất
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ░ PAGE CONTENT ░ -->
+        <main class="flex-1 p-5 sm:p-6">
+            @RenderBody()
+        </main>
+
+        <!-- ░ FOOTER ░ -->
+        <footer class="px-6 py-3 border-t border-slate-200/80 flex items-center justify-between">
+            <span class="text-xs text-slate-400">
+                &copy; @DateTime.UtcNow.Year MarketNest Admin · v1.0.0
+            </span>
+            <a href="/" class="text-xs text-slate-400 hover:text-indigo-600 transition-colors">
+                Về trang chủ
+            </a>
+        </footer>
+    </div>
+
+    <!-- ░░ TOASTS ░░ -->
+    <div class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-sm pointer-events-none" x-data x-cloak>
+        <template x-for="toast in $store.toast.items" :key="toast.id">
+            <div x-show="toast.visible"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 :class="{
+                     'border-emerald-300 bg-emerald-50 text-emerald-900': toast.type === 'success',
+                     'border-red-300 bg-red-50 text-red-900':             toast.type === 'error',
+                     'border-amber-300 bg-amber-50 text-amber-900':       toast.type === 'warning',
+                     'border-indigo-300 bg-indigo-50 text-indigo-900':    toast.type === 'info'
+                 }"
+                 class="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg">
+                <span x-text="toast.message" class="text-sm font-medium flex-1"></span>
+                <button @@click="$store.toast.dismiss(toast.id)" class="opacity-50 hover:opacity-100 transition-opacity">&times;</button>
             </div>
         </template>
     </div>
 
     <script>
         document.addEventListener('showToast', function (e) {
-        const { message, type } = e.detail ?? {};
-        if (message && window.Alpine) {
-        Alpine.store('toast').show(message, type ?? 'info');
-        }
+            const { message, type } = e.detail ?? {};
+            if (message && window.Alpine) Alpine.store('toast').show(message, type ?? 'info');
         });
     </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 
 </html>
