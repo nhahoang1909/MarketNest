@@ -1,28 +1,28 @@
 @* TextArea — pass Label, Name, Placeholder, HelpText, Value, Rows, Errors via ViewData *@
 @{
-    var label = ViewData["Label"]?.ToString() ?? "Label";
-    var name = ViewData["Name"]?.ToString() ?? "field";
-    var placeholder = ViewData["Placeholder"]?.ToString() ?? "";
-    var helpText = ViewData["HelpText"]?.ToString();
-    var value = ViewData["Value"]?.ToString() ?? "";
-    var rows = ViewData["Rows"]?.ToString() ?? "4";
-    var errors = ViewData["Errors"] as IEnumerable<string>;
-    var hasError = errors?.Any() == true;
-    var inputCss = hasError ? "form-input input-error" : "form-input";
+  var label = ViewData["Label"]?.ToString() ?? "Label";
+  var name = ViewData["Name"]?.ToString() ?? "field";
+  var placeholder = ViewData["Placeholder"]?.ToString() ?? "";
+  var helpText = ViewData["HelpText"]?.ToString();
+  var value = ViewData["Value"]?.ToString() ?? "";
+  var rows = ViewData["Rows"]?.ToString() ?? "4";
+  var errors = ViewData["Errors"] as IEnumerable<string>;
+  var hasError = errors?.Any() == true;
+  var inputCss = hasError ? "form-input input-error" : "form-input";
 }
 
 <div class="space-y-1">
-    <label for="@name" class="form-label">@label</label>
-    <textarea id="@name" name="@name" placeholder="@placeholder" rows="@rows" class="@inputCss">@value</textarea>
-    @if (hasError)
+  <label for="@name" class="form-label">@label</label>
+  <textarea id="@name" name="@name" placeholder="@placeholder" rows="@rows" class="@inputCss">@value</textarea>
+  @if (hasError)
+  {
+    @foreach (var error in errors!)
     {
-        @foreach (var error in errors!)
-        {
-            <p class="form-error">@error</p>
-        }
+      <p class="form-error">@error</p>
     }
-    @if (!string.IsNullOrEmpty(helpText))
-    {
-        <p class="form-help">@helpText</p>
-    }
+  }
+  @if (!string.IsNullOrEmpty(helpText))
+  {
+    <p class="form-help">@helpText</p>
+  }
 </div>

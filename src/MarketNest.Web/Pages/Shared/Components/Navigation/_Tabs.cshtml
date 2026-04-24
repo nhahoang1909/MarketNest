@@ -1,21 +1,21 @@
 @* Tabs — pass Tabs (List<(string Id, string Label)>), ActiveTab via ViewData *@
 @{
-    var tabs = ViewData["Tabs"] as IEnumerable<(string Id, string Label)>
-        ?? Enumerable.Empty<(string Id, string Label)>();
-    var activeTab = ViewData["ActiveTab"]?.ToString() ?? "";
-    var tabList = tabs.ToList();
+  var tabs = ViewData["Tabs"] as IEnumerable<(string Id, string Label)>
+             ?? Enumerable.Empty<(string Id, string Label)>();
+  var activeTab = ViewData["ActiveTab"]?.ToString() ?? "";
+  var tabList = tabs.ToList();
 }
 
 <div x-data="{ activeTab: '@activeTab' }" class="border-b border-gray-200">
-    <nav class="-mb-px flex gap-4" aria-label="Tabs">
-        @foreach (var tab in tabList)
-        {
-            <button type="button" @@click="activeTab = '@tab.Id'" :class="activeTab === '@tab.Id'
+  <nav class="-mb-px flex gap-4" aria-label="Tabs">
+    @foreach (var tab in tabList)
+    {
+      <button type="button" @@click="activeTab = '@tab.Id'" :class="activeTab === '@tab.Id'
                 ? 'border-brand-500 text-brand-600'
                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'"
-                    class="whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium transition-colors">
-                @tab.Label
-            </button>
-        }
-    </nav>
+              class="whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium transition-colors">
+        @tab.Label
+      </button>
+    }
+  </nav>
 </div>

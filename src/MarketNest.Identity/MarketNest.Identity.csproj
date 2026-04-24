@@ -6,23 +6,32 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\MarketNest.Core\MarketNest.Core.csproj" />
+        <ProjectReference Include="..\MarketNest.Core\MarketNest.Core.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Azure.Identity" />
-        <PackageReference Include="MediatR" />
-        <PackageReference Include="FluentValidation" />
-        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+        <PackageReference Include="Azure.Identity"/>
+        <PackageReference Include="MediatR"/>
+        <PackageReference Include="FluentValidation"/>
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions"/>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
-        <PackageReference Include="OpenTelemetry.Api" />
-        <PackageReference Include="StackExchange.Redis" />
-        <PackageReference Include="System.Security.Cryptography.Xml" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"/>
+        <PackageReference Include="OpenTelemetry.Api"/>
+        <PackageReference Include="StackExchange.Redis"/>
+        <PackageReference Include="System.Security.Cryptography.Xml"/>
     </ItemGroup>
-
+    <ItemGroup>
+        <Folder Include="Application\Commands\"/>
+        <Folder Include="Application\Queries\"/>
+        <Folder Include="Application\Validators\"/>
+        <Folder Include="Domain\Entities"/>
+        <Folder Include="Domain\Enums"/>
+        <Folder Include="Domain\Events"/>
+        <Folder Include="Infrastructure\Persistence"/>
+        <Folder Include="Infrastructure\Repositories"/>
+    </ItemGroup>
 </Project>

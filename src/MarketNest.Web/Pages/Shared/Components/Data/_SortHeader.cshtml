@@ -1,43 +1,44 @@
 @* Sortable column header — pass Label, Field, CurrentSort, CurrentDir, TargetUrl, TargetId via ViewData *@
 @{
-    var label = ViewData["Label"]?.ToString() ?? "Column";
-    var field = ViewData["Field"]?.ToString() ?? "id";
-    var currentSort = ViewData["CurrentSort"]?.ToString() ?? "";
-    var currentDir = ViewData["CurrentDir"]?.ToString() ?? "asc";
-    var targetUrl = ViewData["TargetUrl"]?.ToString() ?? "";
-    var targetId = ViewData["TargetId"]?.ToString() ?? "#data-table";
+  var label = ViewData["Label"]?.ToString() ?? "Column";
+  var field = ViewData["Field"]?.ToString() ?? "id";
+  var currentSort = ViewData["CurrentSort"]?.ToString() ?? "";
+  var currentDir = ViewData["CurrentDir"]?.ToString() ?? "asc";
+  var targetUrl = ViewData["TargetUrl"]?.ToString() ?? "";
+  var targetId = ViewData["TargetId"]?.ToString() ?? "#data-table";
 
-    var isActive = field == currentSort;
-    var nextDir = isActive && currentDir == "asc" ? "desc" : "asc";
-    var separator = targetUrl.Contains('?') ? "&" : "?";
-    var sortUrl = $"{targetUrl}{separator}sort={field}&dir={nextDir}";
+  var isActive = field == currentSort;
+  var nextDir = isActive && currentDir == "asc" ? "desc" : "asc";
+  var separator = targetUrl.Contains('?') ? "&" : "?";
+  var sortUrl = $"{targetUrl}{separator}sort={field}&dir={nextDir}";
 }
 
-<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-    hx-get="@sortUrl" hx-target="@targetId" hx-push-url="true">
-    <div class="flex items-center gap-1">
-        <span>@label</span>
-        @if (isActive)
-        {
-            @if (currentDir == "asc")
-            {
-                <svg class="h-4 w-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                </svg>
-            }
-            else
-            {
-                <svg class="h-4 w-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-            }
-        }
-        else
-        {
-            <svg class="h-4 w-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-            </svg>
-        }
-    </div>
+<th
+  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+  hx-get="@sortUrl" hx-target="@targetId" hx-push-url="true">
+  <div class="flex items-center gap-1">
+    <span>@label</span>
+    @if (isActive)
+    {
+      @if (currentDir == "asc")
+      {
+        <svg class="h-4 w-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+        </svg>
+      }
+      else
+      {
+        <svg class="h-4 w-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      }
+    }
+    else
+    {
+      <svg class="h-4 w-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+      </svg>
+    }
+  </div>
 </th>

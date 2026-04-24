@@ -7,35 +7,35 @@
 @layer components {
     .btn-primary {
         @apply inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5
-               text-sm font-semibold text-white shadow-sm
-               hover:bg-brand-700 focus-visible:outline focus-visible:outline-2
-               focus-visible:outline-offset-2 focus-visible:outline-brand-600
-               disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+        text-sm font-semibold text-white shadow-sm
+        hover:bg-brand-700 focus-visible:outline focus-visible:outline-2
+        focus-visible:outline-offset-2 focus-visible:outline-brand-600
+        disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
     }
 
     .btn-secondary {
         @apply inline-flex items-center justify-center rounded-lg bg-white px-4 py-2.5
-               text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300
-               hover:bg-gray-50 focus-visible:outline focus-visible:outline-2
-               focus-visible:outline-offset-2 focus-visible:outline-brand-600
-               disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+        text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300
+        hover:bg-gray-50 focus-visible:outline focus-visible:outline-2
+        focus-visible:outline-offset-2 focus-visible:outline-brand-600
+        disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
     }
 
     .btn-danger {
         @apply inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2.5
-               text-sm font-semibold text-white shadow-sm
-               hover:bg-red-700 focus-visible:outline focus-visible:outline-2
-               focus-visible:outline-offset-2 focus-visible:outline-red-600
-               disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+        text-sm font-semibold text-white shadow-sm
+        hover:bg-red-700 focus-visible:outline focus-visible:outline-2
+        focus-visible:outline-offset-2 focus-visible:outline-red-600
+        disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
     }
 
     .btn-ghost {
         @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5
-               text-sm font-semibold text-gray-600
-               hover:bg-gray-100 hover:text-gray-900
-               focus-visible:outline focus-visible:outline-2
-               focus-visible:outline-offset-2 focus-visible:outline-brand-600
-               disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+        text-sm font-semibold text-gray-600
+        hover:bg-gray-100 hover:text-gray-900
+        focus-visible:outline focus-visible:outline-2
+        focus-visible:outline-offset-2 focus-visible:outline-brand-600
+        disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
     }
 
     /* ── Form elements ─────────────────────────────────────────── */
@@ -45,15 +45,15 @@
 
     .form-input {
         @apply block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
-               shadow-sm placeholder:text-gray-400
-               focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500
-               disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
-               transition-colors;
+        shadow-sm placeholder:text-gray-400
+        focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500
+        disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
+        transition-colors;
     }
 
     .input-error {
         @apply border-red-300 text-red-900 placeholder:text-red-300
-               focus:border-red-500 focus:ring-red-500;
+        focus:border-red-500 focus:ring-red-500;
     }
 
     .form-error {
@@ -113,36 +113,36 @@
     /* ── Filter chips ──────────────────────────────────────────── */
     .filter-chip {
         @apply inline-flex items-center rounded-full border border-gray-300 px-3 py-1.5
-               text-sm text-gray-700 bg-white
-               hover:bg-gray-50 hover:border-gray-400
-               cursor-pointer transition-colors;
+        text-sm text-gray-700 bg-white
+        hover:bg-gray-50 hover:border-gray-400
+        cursor-pointer transition-colors;
     }
 
     .filter-chip-active {
         @apply inline-flex items-center rounded-full border border-brand-500 px-3 py-1.5
-               text-sm text-brand-700 bg-brand-50 font-medium
-               cursor-pointer transition-colors;
+        text-sm text-brand-700 bg-brand-50 font-medium
+        cursor-pointer transition-colors;
     }
 
     /* ── Sidebar links ─────────────────────────────────────────── */
     .sidebar-link {
         @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
-               text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors;
+        text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors;
     }
 
     .sidebar-link-active {
         @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
-               bg-brand-50 text-brand-700 transition-colors;
+        bg-brand-50 text-brand-700 transition-colors;
     }
 
     .sidebar-link-dark {
         @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
-               text-gray-300 hover:bg-gray-700 hover:text-white transition-colors;
+        text-gray-300 hover:bg-gray-700 hover:text-white transition-colors;
     }
 
     .sidebar-link-dark-active {
         @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
-               bg-gray-700 text-white transition-colors;
+        bg-gray-700 text-white transition-colors;
     }
 
     /* ── HTMX indicator ────────────────────────────────────────── */

@@ -3,7 +3,7 @@
  * Usage: x-data="starRating({ value: 0 })"
  */
 document.addEventListener("alpine:init", () => {
-    Alpine.data("starRating", ({ value = 0 } = {}) => ({
+    Alpine.data("starRating", ({value = 0} = {}) => ({
         value: value,
         hover: 0,
 

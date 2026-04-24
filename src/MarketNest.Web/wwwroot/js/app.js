@@ -45,7 +45,7 @@ document.addEventListener("alpine:init", () => {
      */
     Alpine.magic("date", () => (isoString, options) => {
         if (!isoString) return "";
-        const defaults = { year: "numeric", month: "short", day: "numeric" };
+        const defaults = {year: "numeric", month: "short", day: "numeric"};
         return new Date(isoString).toLocaleDateString(
             undefined,
             options ?? defaults,
@@ -63,15 +63,15 @@ document.addEventListener("alpine:init", () => {
         );
 
         const intervals = [
-            { label: "year", seconds: 31536000 },
-            { label: "month", seconds: 2592000 },
-            { label: "week", seconds: 604800 },
-            { label: "day", seconds: 86400 },
-            { label: "hour", seconds: 3600 },
-            { label: "minute", seconds: 60 },
+            {label: "year", seconds: 31536000},
+            {label: "month", seconds: 2592000},
+            {label: "week", seconds: 604800},
+            {label: "day", seconds: 86400},
+            {label: "hour", seconds: 3600},
+            {label: "minute", seconds: 60},
         ];
 
-        for (const { label, seconds: s } of intervals) {
+        for (const {label, seconds: s} of intervals) {
             const count = Math.floor(seconds / s);
             if (count >= 1) {
                 return `${count} ${label}${count !== 1 ? "s" : ""} ago`;

@@ -28,7 +28,7 @@
 
     // ── Toast show ────────────────────────────────────────────────
     document.body.addEventListener("toastShow", (event) => {
-        const { message, type, duration } = event.detail ?? {};
+        const {message, type, duration} = event.detail ?? {};
         if (window.Alpine && message) {
             Alpine.store("toasts").add(
                 message,

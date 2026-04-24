@@ -3,7 +3,7 @@
  * Usage: x-data="imageUploader({ maxFiles: 5 })"
  */
 document.addEventListener("alpine:init", () => {
-    Alpine.data("imageUploader", ({ maxFiles = 5 } = {}) => ({
+    Alpine.data("imageUploader", ({maxFiles = 5} = {}) => ({
         files: [],
         previews: [],
         isDragging: false,

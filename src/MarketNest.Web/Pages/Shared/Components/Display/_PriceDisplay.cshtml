@@ -1,20 +1,25 @@
 @* Price display — pass Price, CompareAtPrice, Currency via ViewData *@
 @{
-    var price = ViewData["Price"]?.ToString() ?? "0.00";
-    var compareAtPrice = ViewData["CompareAtPrice"]?.ToString();
-    var currency = ViewData["Currency"]?.ToString() ?? "$";
-    var hasDiscount = !string.IsNullOrEmpty(compareAtPrice)
-        && decimal.TryParse(compareAtPrice, out var cap)
-        && decimal.TryParse(price, out var p)
-        && cap > p;
-    var discountPct = hasDiscount ? (int)Math.Round((1 - p / cap) * 100) : 0;
+  var price = ViewData["Price"]?.ToString() ?? "0.00";
+  var compareAtPrice = ViewData["CompareAtPrice"]?.ToString();
+  var currency = ViewData["Currency"]?.ToString() ?? "$";
+
+  var priceValue = decimal.Zero;
+  var compareValue = decimal.Zero;
+  var hasDiscount =
+    !string.IsNullOrEmpty(compareAtPrice) &&
+    decimal.TryParse(price, out priceValue) &&
+    decimal.TryParse(compareAtPrice, out compareValue) &&
+    compareValue > priceValue;
+
+  var discountPct = hasDiscount ? (int)Math.Round((1 - priceValue / compareValue) * 100) : 0;
 }
 
 <div class="flex items-center gap-2 flex-wrap">
-    <span class="text-lg font-bold text-brand-600">@currency@price</span>
-    @if (hasDiscount)
-    {
-        <span class="text-sm text-gray-400 line-through">@currency@compareAtPrice</span>
-        <span class="badge badge-red text-xs">-@discountPct%</span>
-    }
+  <span class="text-lg font-bold text-brand-600">@currency@price</span>
+  @if (hasDiscount)
+  {
+    <span class="text-sm text-gray-400 line-through">@currency@compareAtPrice</span>
+    <span class="badge badge-red text-xs">-@discountPct%</span>
+  }
 </div>

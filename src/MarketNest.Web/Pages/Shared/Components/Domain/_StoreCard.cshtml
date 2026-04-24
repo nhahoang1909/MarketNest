@@ -1,34 +1,34 @@
 @* Store card — storefront grid card *@
 @{
-    var storeName = ViewData["StoreName"]?.ToString() ?? "Store";
-    var storeUrl = ViewData["StoreUrl"]?.ToString() ?? "#";
-    var logoUrl = ViewData["LogoUrl"]?.ToString();
-    var description = ViewData["Description"]?.ToString() ?? "";
-    var productCount = ViewData["ProductCount"]?.ToString() ?? "0";
-    var rating = ViewData["Rating"]?.ToString() ?? "0";
-    var initials = string.Join("", storeName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w =>
-w[0])).ToUpper();
+  var storeName = ViewData["StoreName"]?.ToString() ?? "Store";
+  var storeUrl = ViewData["StoreUrl"]?.ToString() ?? "#";
+  var logoUrl = ViewData["LogoUrl"]?.ToString();
+  var description = ViewData["Description"]?.ToString() ?? "";
+  var productCount = ViewData["ProductCount"]?.ToString() ?? "0";
+  var rating = ViewData["Rating"]?.ToString() ?? "0";
+  var initials = string.Join("", storeName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w =>
+    w[0])).ToUpper();
 }
 
 <a href="@storeUrl" class="card group hover:shadow-md transition-shadow block">
-    <div class="card-body flex items-start gap-4">
-        @if (!string.IsNullOrEmpty(logoUrl))
-        {
-            <img src="@logoUrl" alt="@storeName" class="h-14 w-14 rounded-lg object-cover flex-shrink-0" loading="lazy" />
-        }
-        else
-        {
-            <span
-            class="h-14 w-14 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center text-lg font-bold flex-shrink-0">@initials</span>
-        }
-        <div class="min-w-0 flex-1">
-            <h3 class="font-semibold text-gray-900 truncate group-hover:text-brand-600 transition-colors">@storeName
-            </h3>
-            <p class="text-sm text-gray-500 line-clamp-2 mt-0.5">@description</p>
-            <div class="flex items-center gap-3 mt-2 text-sm text-gray-500">
-                <span class="flex items-center gap-1"><span class="text-yellow-400">★</span> @rating</span>
-                <span>@productCount products</span>
-            </div>
-        </div>
+  <div class="card-body flex items-start gap-4">
+    @if (!string.IsNullOrEmpty(logoUrl))
+    {
+      <img src="@logoUrl" alt="@storeName" class="h-14 w-14 rounded-lg object-cover flex-shrink-0" loading="lazy"/>
+    }
+    else
+    {
+      <span
+        class="h-14 w-14 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center text-lg font-bold flex-shrink-0">@initials</span>
+    }
+    <div class="min-w-0 flex-1">
+      <h3 class="font-semibold text-gray-900 truncate group-hover:text-brand-600 transition-colors">@storeName
+      </h3>
+      <p class="text-sm text-gray-500 line-clamp-2 mt-0.5">@description</p>
+      <div class="flex items-center gap-3 mt-2 text-sm text-gray-500">
+        <span class="flex items-center gap-1"><span class="text-yellow-400">★</span> @rating</span>
+        <span>@productCount products</span>
+      </div>
     </div>
+  </div>
 </a>

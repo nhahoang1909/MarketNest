@@ -5,7 +5,7 @@
 document.addEventListener("alpine:init", () => {
     Alpine.data(
         "datePicker",
-        ({ value = "", minDate = "", maxDate = "" } = {}) => ({
+        ({value = "", minDate = "", maxDate = ""} = {}) => ({
             value,
             minDate,
             maxDate,
@@ -20,14 +20,14 @@ document.addEventListener("alpine:init", () => {
                 this.value = date;
                 this._formatDisplay();
                 this.open = false;
-                this.$dispatch("date-change", { value: date });
+                this.$dispatch("date-change", {value: date});
             },
 
             clear() {
                 this.value = "";
                 this.displayValue = "";
                 this.open = false;
-                this.$dispatch("date-change", { value: "" });
+                this.$dispatch("date-change", {value: ""});
             },
 
             _formatDisplay() {

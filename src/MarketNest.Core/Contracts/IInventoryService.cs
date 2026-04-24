@@ -4,7 +4,7 @@ using MediatR;
 namespace MarketNest.Core.Contracts;
 
 /// <summary>
-/// Implemented by Catalog module; consumed by Orders and Cart modules.
+///     Implemented by Catalog module; consumed by Orders and Cart modules.
 /// </summary>
 public interface IInventoryService
 {

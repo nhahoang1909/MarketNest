@@ -7,22 +7,22 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\MarketNest.Web\MarketNest.Web.csproj" />
+        <ProjectReference Include="..\..\src\MarketNest.Web\MarketNest.Web.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" />
-        <PackageReference Include="xunit" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+        <PackageReference Include="xunit"/>
         <PackageReference Include="xunit.runner.visualstudio">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="FluentAssertions" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-        <PackageReference Include="Testcontainers" />
-        <PackageReference Include="Testcontainers.PostgreSql" />
-        <PackageReference Include="Testcontainers.Redis" />
-        <PackageReference Include="Respawn" />
+        <PackageReference Include="FluentAssertions"/>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing"/>
+        <PackageReference Include="Testcontainers"/>
+        <PackageReference Include="Testcontainers.PostgreSql"/>
+        <PackageReference Include="Testcontainers.Redis"/>
+        <PackageReference Include="Respawn"/>
     </ItemGroup>
 
 </Project>

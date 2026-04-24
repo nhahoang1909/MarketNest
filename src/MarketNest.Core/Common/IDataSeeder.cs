@@ -1,7 +1,7 @@
 namespace MarketNest.Core.Common;
 
 /// <summary>
-/// Data seeder contract. Seeders run in Order priority at startup.
+///     Data seeder contract. Seeders run in Order priority at startup.
 /// </summary>
 public interface IDataSeeder
 {

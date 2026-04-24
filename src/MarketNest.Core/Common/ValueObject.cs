@@ -1,17 +1,17 @@
 namespace MarketNest.Core.Common;
 
 /// <summary>
-/// Value object base — equality by structural value, not identity.
+///     Value object base — equality by structural value, not identity.
 /// </summary>
 public abstract class ValueObject : IEquatable<ValueObject>
 {
-    protected abstract IEnumerable<object?> GetEqualityComponents();
-
     public bool Equals(ValueObject? other)
     {
         if (other is null || other.GetType() != GetType()) return false;
         return GetEqualityComponents().SequenceEqual(other.GetEqualityComponents());
     }
+
+    protected abstract IEnumerable<object?> GetEqualityComponents();
 
     public override bool Equals(object? obj) => Equals(obj as ValueObject);
 

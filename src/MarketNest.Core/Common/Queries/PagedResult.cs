@@ -1,7 +1,7 @@
 namespace MarketNest.Core.Common.Queries;
 
 /// <summary>
-/// Standard paged result envelope for list endpoints.
+///     Standard paged result envelope for list endpoints.
 /// </summary>
 public record PagedResult<T>
 {
