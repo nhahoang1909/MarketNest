@@ -1,157 +1,384 @@
 /*
- * MarketNest component styles
- * Tailwind @layer components — import this in your main Tailwind entry point.
+ * MarketNest Component Library
+ * Two aesthetic systems:
+ *   1. Fresh Market  — buyer, guest, seller storefront
+ *   2. Admin Dark    — admin dashboard, seller dashboard
  */
 
-/* ── Buttons ───────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════
+   BUTTONS
+   ══════════════════════════════════════════════════════════════ */
 @layer components {
+
+    /* Primary — market green (buyer actions) */
     .btn-primary {
-        @apply inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5
-        text-sm font-semibold text-white shadow-sm
-        hover:bg-brand-700 focus-visible:outline focus-visible:outline-2
-        focus-visible:outline-offset-2 focus-visible:outline-brand-600
-        disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+        @apply inline-flex items-center justify-center gap-2 rounded-xl
+               bg-market-600 px-5 py-2.5
+               text-sm font-semibold text-white shadow-sm
+               hover:bg-market-700 active:scale-[0.98]
+               focus-visible:outline focus-visible:outline-2
+               focus-visible:outline-offset-2 focus-visible:outline-market-600
+               disabled:opacity-50 disabled:cursor-not-allowed
+               transition-all duration-150;
     }
 
+    /* Brand orange — secondary actions */
+    .btn-brand {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl
+               bg-brand-500 px-5 py-2.5
+               text-sm font-semibold text-white shadow-sm
+               hover:bg-brand-600 active:scale-[0.98]
+               focus-visible:outline focus-visible:outline-2
+               focus-visible:outline-offset-2 focus-visible:outline-brand-500
+               disabled:opacity-50 disabled:cursor-not-allowed
+               transition-all duration-150;
+    }
+
+    /* Secondary — outlined */
     .btn-secondary {
-        @apply inline-flex items-center justify-center rounded-lg bg-white px-4 py-2.5
-        text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300
-        hover:bg-gray-50 focus-visible:outline focus-visible:outline-2
-        focus-visible:outline-offset-2 focus-visible:outline-brand-600
-        disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+        @apply inline-flex items-center justify-center gap-2 rounded-xl
+               bg-white px-5 py-2.5
+               text-sm font-semibold text-gray-800 shadow-sm
+               ring-1 ring-inset ring-gray-300
+               hover:bg-gray-50 active:scale-[0.98]
+               focus-visible:outline focus-visible:outline-2
+               focus-visible:outline-offset-2 focus-visible:outline-brand-600
+               disabled:opacity-50 disabled:cursor-not-allowed
+               transition-all duration-150;
     }
 
+    /* Danger */
     .btn-danger {
-        @apply inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2.5
-        text-sm font-semibold text-white shadow-sm
-        hover:bg-red-700 focus-visible:outline focus-visible:outline-2
-        focus-visible:outline-offset-2 focus-visible:outline-red-600
-        disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+        @apply inline-flex items-center justify-center gap-2 rounded-xl
+               bg-red-600 px-5 py-2.5
+               text-sm font-semibold text-white shadow-sm
+               hover:bg-red-700 active:scale-[0.98]
+               focus-visible:outline focus-visible:outline-2
+               focus-visible:outline-offset-2 focus-visible:outline-red-600
+               disabled:opacity-50 disabled:cursor-not-allowed
+               transition-all duration-150;
     }
 
+    /* Ghost */
     .btn-ghost {
-        @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5
-        text-sm font-semibold text-gray-600
-        hover:bg-gray-100 hover:text-gray-900
-        focus-visible:outline focus-visible:outline-2
-        focus-visible:outline-offset-2 focus-visible:outline-brand-600
-        disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+        @apply inline-flex items-center justify-center gap-2 rounded-xl
+               px-5 py-2.5
+               text-sm font-semibold text-gray-600
+               hover:bg-gray-100 hover:text-gray-900 active:scale-[0.98]
+               focus-visible:outline focus-visible:outline-2
+               focus-visible:outline-offset-2 focus-visible:outline-brand-600
+               disabled:opacity-50 disabled:cursor-not-allowed
+               transition-all duration-150;
     }
 
-    /* ── Form elements ─────────────────────────────────────────── */
+    /* Admin indigo button */
+    .btn-admin {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg
+               bg-indigo-600 px-4 py-2
+               text-sm font-medium text-white
+               hover:bg-indigo-700 active:scale-[0.98]
+               focus-visible:outline focus-visible:outline-2
+               focus-visible:outline-offset-2 focus-visible:outline-indigo-500
+               disabled:opacity-50 disabled:cursor-not-allowed
+               transition-all duration-150;
+    }
+
+    /* Icon-only button */
+    .btn-icon {
+        @apply inline-flex items-center justify-center rounded-lg
+               w-9 h-9 text-gray-500
+               hover:bg-gray-100 hover:text-gray-900
+               transition-all duration-150;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       FORM ELEMENTS
+       ══════════════════════════════════════════════════════════ */
+
     .form-label {
-        @apply block text-sm font-medium text-gray-700;
+        @apply block text-sm font-medium text-gray-700 mb-1;
     }
 
     .form-input {
-        @apply block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
-        shadow-sm placeholder:text-gray-400
-        focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500
-        disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
-        transition-colors;
+        @apply block w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm
+               bg-white shadow-sm placeholder:text-gray-400
+               focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100
+               disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
+               transition-all duration-150;
+    }
+
+    .form-input-admin {
+        @apply block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm
+               bg-white placeholder:text-slate-400
+               focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100
+               disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed
+               transition-all duration-150;
     }
 
     .input-error {
-        @apply border-red-300 text-red-900 placeholder:text-red-300
-        focus:border-red-500 focus:ring-red-500;
+        @apply border-red-300 bg-red-50 text-red-900 placeholder:text-red-300
+               focus:border-red-400 focus:ring-red-100;
     }
 
     .form-error {
-        @apply text-sm text-red-600 mt-1;
+        @apply text-xs text-red-600 mt-1 flex items-center gap-1;
     }
 
     .form-help {
-        @apply text-sm text-gray-500 mt-1;
+        @apply text-xs text-gray-500 mt-1;
     }
 
-    /* ── Cards ─────────────────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════════
+       CARDS
+       ══════════════════════════════════════════════════════════ */
+
+    /* Buyer-side card */
     .card {
-        @apply rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden;
+        @apply rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden
+               transition-shadow duration-200 hover:shadow-md;
     }
 
     .card-header {
-        @apply border-b border-gray-200 px-6 py-4;
+        @apply border-b border-gray-100 px-6 py-4;
     }
 
     .card-body {
-        @apply px-4 py-4;
+        @apply px-6 py-5;
     }
 
-    /* ── Badges ────────────────────────────────────────────────── */
+    /* Admin flat card */
+    .card-admin {
+        @apply rounded-xl bg-white border border-slate-100 shadow-sm overflow-hidden;
+    }
+
+    .card-admin-header {
+        @apply border-b border-slate-100 px-5 py-3.5 flex items-center justify-between;
+    }
+
+    .card-admin-body {
+        @apply px-5 py-4;
+    }
+
+    /* Stat / metric card for dashboards */
+    .stat-card {
+        @apply relative rounded-xl overflow-hidden p-5
+               flex flex-col gap-3;
+    }
+
+    .stat-card-value {
+        @apply text-2xl font-bold tracking-tight;
+        font-family: var(--font-mono);
+    }
+
+    .stat-card-label {
+        @apply text-xs font-semibold uppercase tracking-widest opacity-75;
+    }
+
+    .stat-card-change {
+        @apply text-xs font-medium flex items-center gap-1;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       PRODUCT CARD (buyer-side)
+       ══════════════════════════════════════════════════════════ */
+
+    .product-card {
+        @apply rounded-2xl bg-white border border-gray-100 overflow-hidden
+               flex flex-col
+               transition-all duration-200
+               hover:shadow-lg hover:-translate-y-0.5;
+    }
+
+    .product-card-image {
+        @apply w-full aspect-square object-cover bg-gray-50;
+    }
+
+    .product-card-body {
+        @apply p-4 flex flex-col gap-1.5 flex-1;
+    }
+
+    .product-card-title {
+        @apply text-sm font-semibold text-gray-900 line-clamp-2 leading-snug;
+    }
+
+    .product-card-price {
+        @apply text-lg font-bold text-market-700;
+        font-family: var(--font-mono);
+    }
+
+    .product-card-original {
+        @apply text-xs text-gray-400 line-through;
+        font-family: var(--font-mono);
+    }
+
+    .product-card-store {
+        @apply text-xs text-gray-500;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       BADGES
+       ══════════════════════════════════════════════════════════ */
+
     .badge {
-        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+        @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
     }
 
-    .badge-gray {
-        @apply bg-gray-100 text-gray-700;
+    .badge-gray   { @apply bg-gray-100 text-gray-700; }
+    .badge-blue   { @apply bg-blue-50 text-blue-700; }
+    .badge-green  { @apply bg-market-50 text-market-700; }
+    .badge-yellow { @apply bg-amber-50 text-amber-700; }
+    .badge-red    { @apply bg-red-50 text-red-700; }
+    .badge-orange { @apply bg-brand-50 text-brand-700; }
+    .badge-purple { @apply bg-purple-50 text-purple-700; }
+    .badge-indigo { @apply bg-indigo-50 text-indigo-700; }
+
+    /* ══════════════════════════════════════════════════════════
+       CHIPS (filter / category)
+       ══════════════════════════════════════════════════════════ */
+
+    .category-chip {
+        @apply inline-flex items-center gap-1.5 rounded-full border border-gray-200
+               px-4 py-1.5 text-sm font-medium text-gray-600 bg-white
+               hover:border-market-400 hover:text-market-700 hover:bg-market-50
+               cursor-pointer whitespace-nowrap transition-all duration-150;
     }
 
-    .badge-blue {
-        @apply bg-blue-100 text-blue-700;
+    .category-chip-active {
+        @apply inline-flex items-center gap-1.5 rounded-full
+               px-4 py-1.5 text-sm font-semibold whitespace-nowrap
+               bg-market-600 text-white border border-market-600
+               cursor-pointer transition-all duration-150;
     }
 
-    .badge-green {
-        @apply bg-green-100 text-green-700;
-    }
-
-    .badge-yellow {
-        @apply bg-yellow-100 text-yellow-800;
-    }
-
-    .badge-red {
-        @apply bg-red-100 text-red-700;
-    }
-
-    .badge-orange {
-        @apply bg-orange-100 text-orange-700;
-    }
-
-    .badge-purple {
-        @apply bg-purple-100 text-purple-700;
-    }
-
-    /* ── Filter chips ──────────────────────────────────────────── */
     .filter-chip {
-        @apply inline-flex items-center rounded-full border border-gray-300 px-3 py-1.5
-        text-sm text-gray-700 bg-white
-        hover:bg-gray-50 hover:border-gray-400
-        cursor-pointer transition-colors;
+        @apply inline-flex items-center rounded-full border border-gray-300
+               px-3 py-1.5 text-sm text-gray-700 bg-white
+               hover:bg-gray-50 hover:border-gray-400
+               cursor-pointer transition-colors;
     }
 
     .filter-chip-active {
-        @apply inline-flex items-center rounded-full border border-brand-500 px-3 py-1.5
-        text-sm text-brand-700 bg-brand-50 font-medium
-        cursor-pointer transition-colors;
+        @apply inline-flex items-center rounded-full border border-brand-500
+               px-3 py-1.5 text-sm text-brand-700 bg-brand-50 font-medium
+               cursor-pointer transition-colors;
     }
 
-    /* ── Sidebar links ─────────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════════
+       SIDEBAR NAV — Buyer/Seller (white sidebar)
+       ══════════════════════════════════════════════════════════ */
+
     .sidebar-link {
-        @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
-        text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors;
+        @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
+               text-gray-600 hover:bg-gray-50 hover:text-gray-900
+               transition-all duration-150;
     }
 
     .sidebar-link-active {
-        @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
-        bg-brand-50 text-brand-700 transition-colors;
+        @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold
+               bg-brand-50 text-brand-700
+               transition-all duration-150;
     }
 
+    /* Admin sidebar — dark indigo */
     .sidebar-link-dark {
-        @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
-        text-gray-300 hover:bg-gray-700 hover:text-white transition-colors;
+        @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
+               text-slate-300 hover:bg-white/10 hover:text-white
+               transition-all duration-150;
     }
 
     .sidebar-link-dark-active {
-        @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
-        bg-gray-700 text-white transition-colors;
+        @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold
+               bg-white/15 text-white
+               transition-all duration-150;
     }
 
-    /* ── HTMX indicator ────────────────────────────────────────── */
-    .htmx-indicator {
-        display: none;
+    /* Sidebar section label */
+    .sidebar-section-label {
+        @apply px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500;
     }
+
+    /* ══════════════════════════════════════════════════════════
+       ANNOUNCEMENT / PROMO BAR
+       ══════════════════════════════════════════════════════════ */
+
+    .promo-bar {
+        @apply relative bg-market-600 text-white text-sm py-2.5 px-4 text-center;
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 50%, #166534 100%);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       SEARCH
+       ══════════════════════════════════════════════════════════ */
+
+    .search-pill {
+        @apply flex items-stretch rounded-full overflow-hidden
+               border-2 border-transparent
+               bg-gray-100 focus-within:bg-white
+               focus-within:border-market-400 focus-within:shadow-md
+               transition-all duration-200;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       AVATAR
+       ══════════════════════════════════════════════════════════ */
+
+    .avatar {
+        @apply inline-flex items-center justify-center rounded-full
+               font-bold text-white shrink-0 select-none;
+        background: linear-gradient(135deg, #f97316, #ea5f0c);
+    }
+
+    .avatar-sm  { @apply w-8 h-8 text-xs; }
+    .avatar-md  { @apply w-9 h-9 text-sm; }
+    .avatar-lg  { @apply w-11 h-11 text-base; }
+
+    /* ══════════════════════════════════════════════════════════
+       HTMX INDICATOR
+       ══════════════════════════════════════════════════════════ */
+
+    .htmx-indicator { display: none; }
 
     .htmx-request .htmx-indicator,
-    .htmx-request.htmx-indicator {
-        display: flex;
+    .htmx-request.htmx-indicator { display: flex; }
+
+    /* ══════════════════════════════════════════════════════════
+       SKELETON LOADER
+       ══════════════════════════════════════════════════════════ */
+
+    .skeleton {
+        @apply rounded-lg bg-gray-200 animate-pulse;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       TABLE (admin)
+       ══════════════════════════════════════════════════════════ */
+
+    .admin-table {
+        @apply w-full text-sm;
+    }
+
+    .admin-table thead th {
+        @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider
+               text-slate-500 bg-slate-50 border-b border-slate-100;
+    }
+
+    .admin-table tbody tr {
+        @apply border-b border-slate-50 hover:bg-slate-50/60 transition-colors;
+    }
+
+    .admin-table tbody td {
+        @apply px-4 py-3 text-slate-700;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       DIVIDER
+       ══════════════════════════════════════════════════════════ */
+
+    .divider {
+        @apply border-t border-gray-100 my-2;
+    }
+
+    .divider-dark {
+        @apply border-t border-white/10 my-2;
     }
 }
