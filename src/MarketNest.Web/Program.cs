@@ -1,5 +1,6 @@
 using System.Globalization;
 using FluentValidation;
+using MarketNest.Web.Infrastructure;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -69,6 +70,14 @@ try
     // builder.Services.AddNotificationsModule(builder.Configuration);
     // builder.Services.AddAdminModule(builder.Configuration);
 
+    // ── Database: auto-migrate + seed ─────────────────────────────────
+    // TODO: Replace DbContext with MarketNestDbContext once created
+    // builder.Services.AddDatabaseInitializer<MarketNestDbContext>(
+    //     typeof(MarketNest.Identity.AssemblyReference).Assembly,
+    //     typeof(MarketNest.Catalog.AssemblyReference).Assembly,
+    //     typeof(MarketNest.Orders.AssemblyReference).Assembly
+    // );
+
     // ── Build ─────────────────────────────────────────────────────────
     var app = builder.Build();
 
@@ -89,6 +98,10 @@ try
 
     app.MapRazorPages();
     app.MapHealthChecks("/health");
+
+    // ── Initialize database: migrate + seed ───────────────────────────
+    await app.Services.GetRequiredService<DatabaseInitializer>()
+        .InitializeAsync();
 
     app.Run();
 }
