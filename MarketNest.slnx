@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MarketNest.Admin/MarketNest.Admin.csproj" />
+    <Project Path="src/MarketNest.Cart/MarketNest.Cart.csproj" />
+    <Project Path="src/MarketNest.Catalog/MarketNest.Catalog.csproj" />
+    <Project Path="src/MarketNest.Core/MarketNest.Core.csproj" />
+    <Project Path="src/MarketNest.Disputes/MarketNest.Disputes.csproj" />
+    <Project Path="src/MarketNest.Identity/MarketNest.Identity.csproj" />
+    <Project Path="src/MarketNest.Notifications/MarketNest.Notifications.csproj" />
+    <Project Path="src/MarketNest.Orders/MarketNest.Orders.csproj" />
+    <Project Path="src/MarketNest.Payments/MarketNest.Payments.csproj" />
+    <Project Path="src/MarketNest.Reviews/MarketNest.Reviews.csproj" />
+    <Project Path="src/MarketNest.Web/MarketNest.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MarketNest.ArchitectureTests/MarketNest.ArchitectureTests.csproj" />
+    <Project Path="tests/MarketNest.IntegrationTests/MarketNest.IntegrationTests.csproj" />
+    <Project Path="tests/MarketNest.UnitTests/MarketNest.UnitTests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MarketNest.Core</RootNamespace>
+        <Description>Shared kernel: base entities, value objects, CQRS contracts, Result pattern,
+            cross-module interfaces.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MediatR" />
+        <PackageReference Include="FluentValidation" />
+    </ItemGroup>
+
+</Project>

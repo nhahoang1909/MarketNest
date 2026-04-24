@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+/* ── MarketNest Brand Theme ──────────────────────────────── */
+@theme {
+    --color-brand-50: #fef7f0;
+    --color-brand-100: #fdebd6;
+    --color-brand-200: #fad3a8;
+    --color-brand-300: #f7b472;
+    --color-brand-400: #f9923a;
+    --color-brand-500: #f97316;
+    --color-brand-600: #ea5f0c;
+    --color-brand-700: #c2470c;
+    --color-brand-800: #9a3912;
+    --color-brand-900: #431407;
+
+    --color-surface: #ffffff;
+    --color-surface-muted: #f9fafb;
+    --color-surface-subtle: #f3f4f6;
+
+    --font-sans: "Inter var", system-ui, sans-serif;
+}
+
+/* ── Base Styles ─────────────────────────────────────────── */
+@layer base {
+    body {
+        @apply bg-surface text-gray-900 font-sans antialiased;
+    }
+}

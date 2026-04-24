@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: marketnest_test
+          POSTGRES_USER: mn
+          POSTGRES_PASSWORD: mn_secret
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Unit Tests
+        run: dotnet test tests/MarketNest.UnitTests --no-build --configuration Release --logger "trx;LogFileName=unit-results.trx"
+
+      - name: Architecture Tests
+        run: dotnet test tests/MarketNest.ArchitectureTests --no-build --configuration Release --logger "trx;LogFileName=arch-results.trx"
+
+      - name: Integration Tests
+        run: dotnet test tests/MarketNest.IntegrationTests --no-build --configuration Release --logger "trx;LogFileName=integration-results.trx"
+        env:
+          ConnectionStrings__Default: "Host=localhost;Database=marketnest_test;Username=mn;Password=mn_secret"
+          Redis__ConnectionString: "localhost:6379"
+
+  docker-build:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t marketnest:${{ github.sha }} .
+
+      - name: Push to GHCR
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker tag marketnest:${{ github.sha }} ghcr.io/${{ github.repository }}:${{ github.sha }}
+          docker tag marketnest:${{ github.sha }} ghcr.io/${{ github.repository }}:latest
+          docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}:latest

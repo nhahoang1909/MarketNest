@@ -1,0 +1,45 @@
+# ── .NET ──────────────────────────────────────────────────
+bin/
+obj/
+publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+*.nupkg
+*.snupkg
+
+# ── IDE ───────────────────────────────────────────────────
+.idea/
+*.swp
+*~
+.vscode/settings.json
+
+# ── Node / Frontend ──────────────────────────────────────
+node_modules/
+src/MarketNest.Web/wwwroot/css/site.css
+
+# ── Secrets & Environment ─────────────────────────────────
+*.env
+.env.*
+appsettings.Production.json
+appsettings.Secrets.json
+**/user-secrets/
+
+# ── Docker ────────────────────────────────────────────────
+infra/nginx/certs/*.pem
+infra/nginx/certs/*.key
+
+# ── OS ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Logs ──────────────────────────────────────────────────
+logs/
+*.log
+
+# ── Test Results ──────────────────────────────────────────
+TestResults/
+*.trx
+coverage/

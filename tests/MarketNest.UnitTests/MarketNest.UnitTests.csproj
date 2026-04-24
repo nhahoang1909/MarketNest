@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MarketNest.UnitTests</RootNamespace>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\MarketNest.Core\MarketNest.Core.csproj" />
+        <ProjectReference Include="..\..\src\MarketNest.Identity\MarketNest.Identity.csproj" />
+        <ProjectReference Include="..\..\src\MarketNest.Catalog\MarketNest.Catalog.csproj" />
+        <ProjectReference Include="..\..\src\MarketNest.Cart\MarketNest.Cart.csproj" />
+        <ProjectReference Include="..\..\src\MarketNest.Orders\MarketNest.Orders.csproj" />
+        <ProjectReference Include="..\..\src\MarketNest.Payments\MarketNest.Payments.csproj" />
+        <ProjectReference Include="..\..\src\MarketNest.Reviews\MarketNest.Reviews.csproj" />
+        <ProjectReference Include="..\..\src\MarketNest.Disputes\MarketNest.Disputes.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="FluentAssertions" />
+        <PackageReference Include="NSubstitute" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <RootNamespace>MarketNest.Web</RootNamespace>
+        <Description>ASP.NET Core host: Razor Pages, middleware, composition root.</Description>
+    </PropertyGroup>
+
+    <ItemGroup Label="Module References">
+        <ProjectReference Include="..\MarketNest.Core\MarketNest.Core.csproj" />
+        <ProjectReference Include="..\MarketNest.Identity\MarketNest.Identity.csproj" />
+        <ProjectReference Include="..\MarketNest.Catalog\MarketNest.Catalog.csproj" />
+        <ProjectReference Include="..\MarketNest.Cart\MarketNest.Cart.csproj" />
+        <ProjectReference Include="..\MarketNest.Orders\MarketNest.Orders.csproj" />
+        <ProjectReference Include="..\MarketNest.Payments\MarketNest.Payments.csproj" />
+        <ProjectReference Include="..\MarketNest.Reviews\MarketNest.Reviews.csproj" />
+        <ProjectReference Include="..\MarketNest.Disputes\MarketNest.Disputes.csproj" />
+        <ProjectReference Include="..\MarketNest.Notifications\MarketNest.Notifications.csproj" />
+        <ProjectReference Include="..\MarketNest.Admin\MarketNest.Admin.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Label="Infrastructure Packages">
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="StackExchange.Redis" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    </ItemGroup>
+
+    <ItemGroup Label="Observability">
+        <PackageReference Include="Serilog.AspNetCore" />
+        <PackageReference Include="Serilog.Sinks.Console" />
+        <PackageReference Include="Serilog.Sinks.Seq" />
+        <PackageReference Include="Serilog.Enrichers.Environment" />
+        <PackageReference Include="Serilog.Enrichers.Thread" />
+        <PackageReference Include="Serilog.Expressions" />
+        <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" />
+        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    </ItemGroup>
+
+    <ItemGroup Label="Validation">
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    </ItemGroup>
+
+</Project>
