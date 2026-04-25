@@ -1,11 +1,12 @@
 @* Admin panel — Ink & Accent Design System *@
 @using Microsoft.AspNetCore.Antiforgery
+@using MarketNest.Web.Infrastructure
 @* Admin panel layout — sidebar navigation *@
 @inject IAntiforgery Antiforgery
 @{
     var currentPath  = Context.Request.Path.Value ?? "";
     var requestToken = Antiforgery.GetAndStoreTokens(Context);
-    var pageTitle    = ViewData["Title"]?.ToString() ?? "Dashboard";
+    var pageTitle    = ViewData["Title"]?.ToString() ?? AppConstants.Defaults.FallbackPageTitle;
 }
 <!DOCTYPE html>
 <html lang="@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName" class="scroll-smooth">
@@ -13,15 +14,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1A1F1B" />
-    <title>@pageTitle – Admin · MarketNest</title>
+    <meta name="theme-color" content="@AppConstants.Colors.Ink" />
+    <title>@pageTitle – Admin · @AppConstants.AppName</title>
 
-    <!-- Fonts: Fraunces (display) + Geist (UI) + Geist Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-sans/style.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-mono/style.css" rel="stylesheet" />
+    <!-- Fonts: Playfair Display (display) + DM Sans (UI) + JetBrains Mono -->
+    <link rel="preconnect" href="@AppConstants.Fonts.GoogleFontsOrigin" />
+    <link rel="preconnect" href="@AppConstants.Fonts.GoogleFontsStaticOrigin" crossorigin />
+    <link href="@AppConstants.Fonts.DisplayCdn" rel="stylesheet" />
+    <link href="@AppConstants.Fonts.SansCdn" rel="stylesheet" />
+    <link href="@AppConstants.Fonts.MonoCdn" rel="stylesheet" />
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <meta name="htmx-config"
@@ -40,42 +41,42 @@
 
     <!-- Admin-scoped CSS overrides -->
     <style>
-        body.layout-admin { font-family: 'Geist', system-ui, sans-serif; }
+        body.layout-admin { font-family: @AppConstants.Fonts.Admin; }
 
-        /* Sidebar solid ink background */
+        /* Sidebar — House Green */
         .admin-sidebar {
-            background: #1A1F1B;
+            background: #1E3932;
         }
 
-        /* Sidebar subtle top glow */
+        /* Sidebar subtle top glow — Starbucks green */
         .admin-sidebar::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(200,242,92,0.4), transparent);
+            background: linear-gradient(90deg, transparent, rgba(0,117,74,0.4), transparent);
         }
 
         /* Number font */
-        .mn-mono { font-family: 'Geist Mono', monospace; }
+        .mn-mono { font-family: @AppConstants.Fonts.MonoShort; }
 
-        /* Stat card gradients */
-        .stat-forest  { background: linear-gradient(135deg, #1F3A2E 0%, #163024 100%); color: white; }
-        .stat-accent  { background: linear-gradient(135deg, #C8F25C 0%, #a8d44a 100%); color: #1A1F1B; }
-        .stat-mustard { background: linear-gradient(135deg, #E8B547 0%, #d4a23c 100%); color: #1A1F1B; }
-        .stat-ink     { background: linear-gradient(135deg, #1A1F1B 0%, #2a3130 100%); color: white; }
+        /* Stat card gradients — Starbucks green tiers */
+        .stat-forest  { background: linear-gradient(135deg, #1E3932 0%, #162d28 100%); color: white; }
+        .stat-accent  { background: linear-gradient(135deg, #00754A 0%, #006241 100%); color: white; }
+        .stat-mustard { background: linear-gradient(135deg, #cba258 0%, #b58a3a 100%); color: #1E3932; }
+        .stat-ink     { background: linear-gradient(135deg, #1E3932 0%, #2b5148 100%); color: white; }
 
-        /* Sidebar active item glow */
+        /* Sidebar active item glow — green accent */
         .sidebar-link-dark-active {
-            box-shadow: 0 0 0 1px rgba(200,242,92,0.25), inset 0 0 12px rgba(200,242,92,0.08);
-            background: rgba(200,242,92,0.1);
-            color: #C8F25C;
+            box-shadow: 0 0 0 1px rgba(0,117,74,0.25), inset 0 0 12px rgba(0,117,74,0.08);
+            background: rgba(0,117,74,0.1);
+            color: #00754A;
         }
 
         /* Top bar backdrop */
         .admin-topbar {
             backdrop-filter: blur(8px);
-            background: rgba(255,255,255,0.95);
+            background: rgba(255,255,255,0.92);
         }
 
         /* Smooth sidebar scroll */
@@ -112,7 +113,7 @@
     @await RenderSectionAsync("Head", required: false)
 </head>
 
-<body class="layout-admin min-h-screen" x-data="{ sidebarOpen: false }" style="background:#f0f2f0;">
+<body class="layout-admin min-h-screen" x-data="{ sidebarOpen: false }" style="background:#f2f0eb;">
     <input type="hidden" name="__RequestVerificationToken" value="@requestToken.RequestToken" />
 
     <!-- ░░ MOBILE SIDEBAR OVERLAY ░░ -->
@@ -137,18 +138,18 @@
 
         <!-- Logo -->
         <div class="flex items-center h-[60px] px-5 shrink-0">
-            <a href="/admin/dashboard" class="flex items-center gap-2 group">
+            <a href="@AppRoutes.Admin.Dashboard" class="flex items-center gap-2 group">
                 <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                     style="background:#C8F25C">
+                     style="background:@AppConstants.Colors.Accent">
                     <span class="font-bold text-sm italic"
-                          style="font-family:'Fraunces',serif; color:#1A1F1B">m</span>
+                          style="font-family:@AppConstants.Fonts.DisplayShort; color:@AppConstants.Colors.Ink">m</span>
                 </div>
                 <span class="text-lg font-semibold text-white tracking-tight leading-none"
-                      style="font-family:'Geist',sans-serif">
-                    MarketNest
+                      style="font-family:@AppConstants.Fonts.SansShort">
+                    @AppConstants.AppName
                 </span>
                 <span class="ml-0.5 text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full border"
-                      style="color:#C8F25C; background:rgba(200,242,92,0.1); border-color:rgba(200,242,92,0.2)">
+                      style="color:@AppConstants.Colors.Accent; background:rgba(0,117,74,0.1); border-color:rgba(0,117,74,0.2)">
                     ADMIN
                 </span>
             </a>
@@ -160,8 +161,8 @@
             <!-- Overview section -->
             <p class="sidebar-section-label mt-2">@SharedLocalizer["Admin.Section.Overview"]</p>
 
-            <a href="/admin/dashboard"
-               class="sidebar-link-dark @(currentPath.StartsWith("/admin/dashboard") ? "sidebar-link-dark-active" : "")">
+            <a href="@AppRoutes.Admin.Dashboard"
+               class="sidebar-link-dark @(currentPath.StartsWith(AppRoutes.Admin.Dashboard) ? "sidebar-link-dark-active" : "")">
                 <!-- Chart icon -->
                 <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -173,8 +174,8 @@
             <!-- Users & Stores section -->
             <p class="sidebar-section-label mt-4">@SharedLocalizer["Admin.Section.Management"]</p>
 
-            <a href="/admin/users"
-               class="sidebar-link-dark @(currentPath.StartsWith("/admin/users") ? "sidebar-link-dark-active" : "")">
+            <a href="@AppRoutes.Admin.Users"
+               class="sidebar-link-dark @(currentPath.StartsWith(AppRoutes.Admin.Users) ? "sidebar-link-dark-active" : "")">
                 <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                           d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/>
@@ -182,8 +183,8 @@
                 <span>@SharedLocalizer["Admin.Nav.Users"]</span>
             </a>
 
-            <a href="/admin/storefronts"
-               class="sidebar-link-dark @(currentPath.StartsWith("/admin/storefronts") ? "sidebar-link-dark-active" : "")">
+            <a href="@AppRoutes.Admin.Storefronts"
+               class="sidebar-link-dark @(currentPath.StartsWith(AppRoutes.Admin.Storefronts) ? "sidebar-link-dark-active" : "")">
                 <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                           d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z"/>
@@ -194,8 +195,8 @@
             <!-- Operations section -->
             <p class="sidebar-section-label mt-4">@SharedLocalizer["Admin.Section.Operations"]</p>
 
-            <a href="/admin/disputes"
-               class="sidebar-link-dark @(currentPath.StartsWith("/admin/disputes") ? "sidebar-link-dark-active" : "")">
+            <a href="@AppRoutes.Admin.Disputes"
+               class="sidebar-link-dark @(currentPath.StartsWith(AppRoutes.Admin.Disputes) ? "sidebar-link-dark-active" : "")">
                 <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                           d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.991Z"/>
@@ -210,8 +211,8 @@
                 }
             </a>
 
-            <a href="/admin/notifications"
-               class="sidebar-link-dark @(currentPath.StartsWith("/admin/notifications") ? "sidebar-link-dark-active" : "")">
+            <a href="@AppRoutes.Admin.Notifications"
+               class="sidebar-link-dark @(currentPath.StartsWith(AppRoutes.Admin.Notifications) ? "sidebar-link-dark-active" : "")">
                 <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                           d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
@@ -222,8 +223,8 @@
             <!-- System section -->
             <p class="sidebar-section-label mt-4">@SharedLocalizer["Admin.Section.System"]</p>
 
-            <a href="/admin/config/commission"
-               class="sidebar-link-dark @(currentPath.StartsWith("/admin/config") ? "sidebar-link-dark-active" : "")">
+            <a href="@AppRoutes.Admin.ConfigCommission"
+               class="sidebar-link-dark @(currentPath.StartsWith(AppRoutes.Admin.ConfigPrefix) ? "sidebar-link-dark-active" : "")">
                 <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                           d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/>
@@ -237,14 +238,14 @@
         <div class="shrink-0 px-3 py-4 border-t border-white/10">
             <div class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
                 <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                     style="background:#C8F25C; color:#1A1F1B">
+                     style="background:@AppConstants.Colors.Accent; color:@AppConstants.Colors.Ink">
                     A
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-xs font-semibold text-white truncate" x-text="$store.user.name ?? 'Admin'"></p>
-                    <p class="text-[10px]" style="color:#C8F25C">Super Admin</p>
+                    <p class="text-xs font-semibold text-white truncate" x-text="$store.user.name ?? '@AppConstants.Defaults.FallbackUserName'"></p>
+                    <p class="text-[10px]" style="color:@AppConstants.Colors.Accent">@AppConstants.Roles.SuperAdmin</p>
                 </div>
-                <a href="/auth/login" title="@SharedLocalizer["Auth.Logout"]"
+                <a href="@AppRoutes.Auth.Login" title="@SharedLocalizer["Auth.Logout"]"
                    class="opacity-50 hover:opacity-100 transition-opacity">
                     <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -272,7 +273,7 @@
 
             <!-- Breadcrumb / page title -->
             <div class="flex items-center gap-2 min-w-0">
-                <a href="/admin/dashboard" class="text-slate-400 hover:text-slate-600 transition-colors text-sm">
+                <a href="@AppRoutes.Admin.Dashboard" class="text-slate-400 hover:text-slate-600 transition-colors text-sm">
                     Admin
                 </a>
                 <svg class="w-3.5 h-3.5 text-slate-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -322,7 +323,7 @@
                      class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden origin-top-right">
                     <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
                         <h3 class="text-sm font-semibold text-slate-900">@SharedLocalizer["Admin.Notifications.Title"]</h3>
-                        <button class="text-xs font-medium hover:opacity-80" style="color:#1F3A2E">@SharedLocalizer["Admin.Notifications.MarkAllRead"]</button>
+                        <button class="text-xs font-medium hover:opacity-80" style="color:@AppConstants.Colors.Forest">@SharedLocalizer["Admin.Notifications.MarkAllRead"]</button>
                     </div>
                     <div class="py-2 max-h-72 overflow-y-auto">
                         <div class="px-4 py-3 hover:bg-slate-50 transition-colors flex gap-3">
@@ -341,7 +342,7 @@
                         <div class="px-4 py-3 hover:bg-slate-50 transition-colors flex gap-3">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
                                  style="background:rgba(31,58,46,0.1)">
-                                <svg class="w-4 h-4" style="color:#1F3A2E" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4" style="color:@AppConstants.Colors.Forest" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
                                 </svg>
                             </div>
@@ -354,7 +355,7 @@
                         </div>
                     </div>
                     <div class="border-t border-slate-100 px-4 py-2.5 text-center">
-                        <a href="/admin/notifications" class="text-sm font-medium transition-colors" style="color:#1F3A2E">
+                        <a href="@AppRoutes.Admin.Notifications" class="text-sm font-medium transition-colors" style="color:@AppConstants.Colors.Forest">
                             @SharedLocalizer["Admin.Notifications.ViewAll"]
                         </a>
                     </div>
@@ -366,12 +367,12 @@
                 <button @@click="open = !open"
                         class="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-slate-100 transition-colors">
                     <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                         style="background:#C8F25C; color:#1A1F1B">
+                         style="background:@AppConstants.Colors.Accent; color:@AppConstants.Colors.Ink">
                         A
                     </div>
                     <div class="hidden sm:block text-left">
-                        <p class="text-xs font-semibold text-slate-800" x-text="$store.user.name ?? 'Admin'"></p>
-                        <p class="text-[10px] text-slate-500">Super Admin</p>
+                        <p class="text-xs font-semibold text-slate-800" x-text="$store.user.name ?? '@AppConstants.Defaults.FallbackUserName'"></p>
+                        <p class="text-[10px] text-slate-500">@AppConstants.Roles.SuperAdmin</p>
                     </div>
                     <svg class="w-3.5 h-3.5 text-slate-400 hidden sm:block" :class="{'rotate-180': open}"
                          fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -386,13 +387,13 @@
                      x-transition:leave="transition ease-in duration-100"
                      x-transition:leave-end="opacity-0 scale-95"
                      class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 origin-top-right">
-                    <a href="/account/settings" class="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                    <a href="@AppRoutes.Account.Settings" class="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
                         <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
                         </svg>
                         @SharedLocalizer["User.Profile"]
                     </a>
-                    <a href="/" class="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                    <a href="@AppRoutes.Home" class="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
                         <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
                         </svg>
@@ -419,9 +420,9 @@
         <!-- ░ FOOTER ░ -->
         <footer class="px-6 py-3 border-t border-slate-200/80 flex items-center justify-between">
             <span class="text-xs text-slate-400">
-                &copy; @DateTime.UtcNow.Year @SharedLocalizer["Admin.Footer"] · v1.0.0
+                &copy; @DateTime.UtcNow.Year @SharedLocalizer["Admin.Footer"] · @AppConstants.AppVersion
             </span>
-            <a href="/" class="text-xs text-slate-400 hover:text-ink-700 transition-colors">
+            <a href="@AppRoutes.Home" class="text-xs text-slate-400 hover:text-ink-700 transition-colors">
                 @SharedLocalizer["Footer.BackToHome"]
             </a>
         </footer>

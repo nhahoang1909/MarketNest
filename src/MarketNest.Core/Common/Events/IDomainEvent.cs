@@ -9,5 +9,5 @@ namespace MarketNest.Core.Common;
 public interface IDomainEvent : INotification
 {
     Guid EventId => Guid.NewGuid();
-    DateTime OccurredAt => DateTime.UtcNow;
+    DateTimeOffset OccurredAt => DateTimeOffset.UtcNow;
 }

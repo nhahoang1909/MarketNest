@@ -1,4 +1,5 @@
 @page "/auth/register"
+@using MarketNest.Web.Infrastructure
 @model RegisterModel
 @{
   ViewData["Title"] = "Tao tai khoan";
@@ -14,14 +15,14 @@
           <div class="w-12 h-12 rounded-full bg-ink-700 flex items-center justify-center">
             <span class="text-accent-400 font-bold text-lg italic" style="font-family:'Fraunces',serif">m</span>
           </div>
-          <span class="text-lg font-semibold text-ink-700 tracking-tight">MarketNest</span>
+          <span class="text-lg font-semibold text-ink-700 tracking-tight">@AppConstants.AppName</span>
         </div>
 
         <!-- Heading -->
         <h1 class="mn-h4 text-center">Tao tai khoan</h1>
 
         <!-- Form -->
-        <form method="post" class="space-y-4" x-data="{ showPassword: false, showConfirm: false, role: 'buyer' }">
+        <form method="post" class="space-y-4" x-data="{ showPassword: false, showConfirm: false, role: '@AppConstants.Roles.Buyer' }">
           @Html.AntiForgeryToken()
 
           <!-- Full name -->
@@ -90,7 +91,7 @@
             <input type="hidden" name="Role" :value="role" />
             <div class="grid grid-cols-2 gap-3">
               <!-- Buyer card -->
-              <button type="button" @@click="role = 'buyer'" :class="role === 'buyer'
+              <button type="button" @@click="role = '@AppConstants.Roles.Buyer'" :class="role === '@AppConstants.Roles.Buyer'
                 ? 'border-ink-700 bg-ink-700/5 ring-2 ring-ink-700/20'
                 : 'border-ink-200 hover:border-ink-300'"
                       class="flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all duration-150 cursor-pointer">
@@ -103,7 +104,7 @@
                 <span class="text-xs text-ink-400">Mua sam san pham</span>
               </button>
               <!-- Seller card -->
-              <button type="button" @@click="role = 'seller'" :class="role === 'seller'
+              <button type="button" @@click="role = '@AppConstants.Roles.Seller'" :class="role === '@AppConstants.Roles.Seller'
                 ? 'border-ink-700 bg-ink-700/5 ring-2 ring-ink-700/20'
                 : 'border-ink-200 hover:border-ink-300'"
                       class="flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all duration-150 cursor-pointer">
@@ -143,7 +144,7 @@
         <!-- Login link -->
         <p class="text-sm text-ink-500 text-center">
           Da co tai khoan?
-          <a href="/auth/login"
+          <a href="@AppRoutes.Auth.Login"
              class="font-semibold text-ink-700 hover:text-accent-600 underline underline-offset-2 transition-colors">
             Dang nhap
           </a>

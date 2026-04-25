@@ -1,10 +1,441 @@
 @page
 @model ErrorModel
 @{
-  ViewData["Title"] = "Error";
+    Layout = null;
 }
 
-<div class="text-center py-20">
-  <h1 class="text-2xl font-bold text-red-600">An error occurred</h1>
-  <p class="text-gray-600 mt-4">Request ID: @Model.RequestId</p>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@AppConstants.ErrorPage.PageTitle</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        .err-page {
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            padding: 28px 40px;
+            gap: 0;
+            background: #f4f1ec;
+            color: #1a1a1a;
+            font-family: var(--font-sans, sans-serif);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .err-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(26, 26, 26, 0.55);
+        }
+        .err-bar .err-mark {
+            color: #1a1a1a;
+            letter-spacing: 0.18em;
+        }
+        .err-bar nav { display: flex; gap: 28px; }
+        .err-bar nav a {
+            color: rgba(26, 26, 26, 0.55);
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+        .err-bar nav a:hover { color: #1a1a1a; }
+        .err-footer {
+            border-top: 1px solid rgba(26, 26, 26, 0.14);
+            padding-top: 18px;
+            margin-top: 24px;
+        }
+        .err-footer .err-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .err-footer .err-pulse {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: oklch(0.55 0.16 32);
+            box-shadow: 0 0 0 0 oklch(0.55 0.16 32);
+            animation: err-pulse 1.6s ease-out infinite;
+        }
+        @@keyframes err-pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(180, 60, 30, 0.55); }
+            70%  { box-shadow: 0 0 0 9px rgba(180, 60, 30, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(180, 60, 30, 0); }
+        }
+
+        /* Hero */
+        .err-main {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            align-items: center;
+            gap: 56px;
+            padding: 48px 0;
+            max-width: 1080px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Left column */
+        .err-copy .err-eyebrow {
+            font-size: 12px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: rgba(26, 26, 26, 0.55);
+            margin: 0 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .err-eyebrow .err-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: oklch(0.55 0.16 32);
+            display: inline-block;
+        }
+        .err-copy h1 {
+            font-family: var(--font-sans, sans-serif);
+            font-weight: 300;
+            font-size: clamp(96px, 18vw, 220px);
+            line-height: 0.9;
+            letter-spacing: -0.04em;
+            margin: 0 0 18px;
+            color: #1a1a1a;
+            position: relative;
+            display: inline-block;
+        }
+        /* Subtle RGB-split glitch on the numeral */
+        .err-glitch {
+            position: relative;
+            display: inline-block;
+        }
+        .err-glitch::before,
+        .err-glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+        }
+        .err-glitch::before {
+            color: oklch(0.62 0.14 32 / 0.55);
+            animation: err-shiftA 4.2s steps(1, end) infinite;
+        }
+        .err-glitch::after {
+            color: oklch(0.55 0.10 230 / 0.45);
+            animation: err-shiftB 4.2s steps(1, end) infinite;
+        }
+        @@keyframes err-shiftA {
+            0%, 92%, 100% { transform: translate(0,0); opacity: 0; }
+            93%  { transform: translate(-2px, 0); opacity: 1; }
+            95%  { transform: translate( 3px, 1px); opacity: 1; }
+            97%  { transform: translate(-1px,-1px); opacity: 1; }
+            99%  { transform: translate( 0, 0); opacity: 0; }
+        }
+        @@keyframes err-shiftB {
+            0%, 92%, 100% { transform: translate(0,0); opacity: 0; }
+            93%  { transform: translate( 2px, 0); opacity: 1; }
+            95%  { transform: translate(-3px,-1px); opacity: 1; }
+            97%  { transform: translate( 1px, 1px); opacity: 1; }
+            99%  { transform: translate( 0, 0); opacity: 0; }
+        }
+
+        .err-copy h2 {
+            font-family: var(--font-display, serif);
+            font-weight: 400;
+            font-size: clamp(20px, 2.4vw, 28px);
+            line-height: 1.25;
+            letter-spacing: -0.01em;
+            margin: 0 0 14px;
+            max-width: 28ch;
+            text-wrap: balance;
+        }
+        .err-copy p {
+            font-weight: 400;
+            font-size: 15px;
+            line-height: 1.55;
+            color: rgba(26, 26, 26, 0.55);
+            margin: 0 0 28px;
+            max-width: 42ch;
+            text-wrap: pretty;
+        }
+        .err-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .err-btn {
+            appearance: none;
+            border: 1px solid #1a1a1a;
+            background: #1a1a1a;
+            color: #f4f1ec;
+            font: inherit;
+            font-size: 13px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 12px 20px;
+            border-radius: 999px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+        }
+        .err-btn:hover { transform: translateY(-1px); }
+        .err-btn.err-ghost {
+            background: transparent;
+            color: #1a1a1a;
+        }
+        .err-btn.err-ghost:hover { background: #1a1a1a; color: #f4f1ec; }
+        .err-btn .err-arrow {
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+        .err-btn:hover .err-arrow { transform: translateX(3px); }
+        .err-btn .err-spin {
+            display: inline-block;
+            transition: transform 0.6s ease;
+        }
+        .err-btn:hover .err-spin { transform: rotate(180deg); }
+
+        /* Reference id */
+        .err-ref {
+            margin-top: 22px;
+            font-family: var(--font-mono, monospace);
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            color: rgba(26, 26, 26, 0.55);
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+        .err-ref span b {
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+
+        /* Right column — broken-signal stage */
+        .err-stage-wrap { display: grid; place-items: center; }
+        .err-stage {
+            width: 360px;
+            height: 360px;
+            position: relative;
+        }
+        .err-stage svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        /* Outer rings */
+        .err-whirl, .err-whirl-rev, .err-whirl-fast {
+            transform-origin: 100px 100px;
+        }
+        .err-whirl     { animation: err-spin    3.6s linear infinite; }
+        .err-whirl-rev { animation: err-spinRev 5.2s linear infinite; }
+        .err-whirl-fast{ animation: err-spin    2.2s linear infinite; }
+        .err-arc {
+            fill: none;
+            stroke: #1a1a1a;
+            stroke-linecap: round;
+        }
+        .err-tick { fill: #1a1a1a; }
+        @@keyframes err-spin    { to { transform: rotate(360deg); } }
+        @@keyframes err-spinRev { to { transform: rotate(-360deg); } }
+
+        /* Signal panel */
+        .err-panel {
+            fill: #f4f1ec;
+            stroke: #1a1a1a;
+            stroke-width: 1.1;
+        }
+        .err-grid-line {
+            stroke: #1a1a1a;
+            stroke-opacity: 0.10;
+            stroke-width: 0.5;
+        }
+        .err-trace {
+            fill: none;
+            stroke: #1a1a1a;
+            stroke-width: 1.4;
+            stroke-linejoin: round;
+            stroke-linecap: round;
+        }
+        .err-trace.err-flat {
+            stroke: oklch(0.55 0.16 32);
+            stroke-width: 1.6;
+        }
+        .err-flatline-pulse {
+            fill: oklch(0.55 0.16 32);
+            animation: err-pulseDot 1.6s ease-in-out infinite;
+        }
+        @@keyframes err-pulseDot {
+            0%, 100% { opacity: 0.35; }
+            50%      { opacity: 1; }
+        }
+
+        .err-coord {
+            position: absolute;
+            bottom: -34px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-family: var(--font-mono, monospace);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            color: rgba(26, 26, 26, 0.55);
+        }
+        .err-coord b { color: oklch(0.55 0.16 32); font-weight: 500; }
+
+        /* Scanline overlay */
+        .err-scanlines {
+            position: absolute;
+            inset: 18% 14%;
+            pointer-events: none;
+            background-image: repeating-linear-gradient(
+                to bottom,
+                rgba(26,26,26,0.05) 0 1px,
+                transparent 1px 4px
+            );
+            mix-blend-mode: multiply;
+            opacity: 0.6;
+            border-radius: 2px;
+        }
+
+        @@media (max-width: 760px) {
+            .err-main {
+                grid-template-columns: 1fr;
+                gap: 32px;
+                padding: 24px 0;
+            }
+            .err-page { padding: 20px; }
+            .err-stage { width: 280px; height: 280px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="err-page">
+
+        <header class="err-bar">
+            <div class="err-mark">@AppConstants.AppName.ToUpperInvariant()</div>
+            <nav>
+                <a href="@AppRoutes.Home">Home</a>
+                <a href="@AppRoutes.Shop">Shop</a>
+                <a href="@AppRoutes.Search">Search</a>
+            </nav>
+        </header>
+
+        <main class="err-main">
+            <!-- Left: copy -->
+            <section class="err-copy">
+                <p class="err-eyebrow"><span class="err-dot"></span> @AppConstants.ErrorPage.Eyebrow</p>
+                <h1><span class="err-glitch" data-text="@AppConstants.ErrorPage.StatusCode">@AppConstants.ErrorPage.StatusCode</span></h1>
+                <h2>@AppConstants.ErrorPage.Heading</h2>
+                <p>@AppConstants.ErrorPage.Description</p>
+                <div class="err-actions">
+                    <a href="javascript:void(0)" class="err-btn" id="err-retry">@AppConstants.ErrorPage.TryAgain <span class="err-spin">↻</span></a>
+                    <a href="@AppRoutes.Home" class="err-btn err-ghost">@AppConstants.NotFoundPage.BackToHome <span class="err-arrow">→</span></a>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.RequestId))
+                {
+                    <div class="err-ref">
+                        <span>REF <b>@Model.RequestId</b></span>
+                        <span>TIME <b>@Model.Timestamp</b></span>
+                    </div>
+                }
+            </section>
+
+            <!-- Right: signal stage -->
+            <section class="err-stage-wrap">
+                <div class="err-stage">
+                    <!-- Whirl rings -->
+                    <svg viewBox="0 0 200 200" aria-hidden="true">
+                        <g class="err-whirl-rev">
+                            <circle cx="100" cy="100" r="92" class="err-arc" stroke-width="1.2" stroke-opacity="0.55" stroke-dasharray="120 70 28 360" />
+                            <circle cx="100" cy="100" r="92" class="err-arc" stroke-width="1.2" stroke-opacity="0.18" stroke-dasharray="2 6" />
+                            <circle class="err-tick" cx="192" cy="100" r="2.2" />
+                            <circle class="err-tick" cx="8" cy="100" r="1.4" fill-opacity="0.55" />
+                        </g>
+                        <g class="err-whirl">
+                            <circle cx="100" cy="100" r="84" class="err-arc" stroke-width="0.9" stroke-opacity="0.85" stroke-dasharray="60 22 14 30 6 360" />
+                        </g>
+                        <g class="err-whirl-fast">
+                            <circle cx="100" cy="100" r="78" class="err-arc" stroke-width="0.7" stroke-opacity="0.4" stroke-dasharray="34 14 8 360" />
+                            <circle cx="100" cy="100" r="78" class="err-arc" stroke-width="0.7" stroke-opacity="0.18" stroke-dasharray="1.5 5" />
+                        </g>
+                    </svg>
+
+                    <!-- Signal panel -->
+                    <svg viewBox="0 0 200 200">
+                        <!-- panel -->
+                        <rect class="err-panel" x="36" y="64" width="128" height="72" rx="3" />
+
+                        <!-- grid -->
+                        <g>
+                            <line class="err-grid-line" x1="36"  y1="82"  x2="164" y2="82"  />
+                            <line class="err-grid-line" x1="36"  y1="100" x2="164" y2="100" />
+                            <line class="err-grid-line" x1="36"  y1="118" x2="164" y2="118" />
+                            <line class="err-grid-line" x1="68"  y1="64"  x2="68"  y2="136" />
+                            <line class="err-grid-line" x1="100" y1="64"  x2="100" y2="136" />
+                            <line class="err-grid-line" x1="132" y1="64"  x2="132" y2="136" />
+                        </g>
+
+                        <!-- Trace: a couple of normal beats, then flatline -->
+                        <path class="err-trace"
+                              d="M 36 100
+                                 L 50 100 L 54 100 L 56 90 L 58 110 L 60 96 L 62 100
+                                 L 78 100 L 82 100 L 84 88  L 86 112 L 88 96  L 90 100
+                                 L 108 100" />
+                        <!-- Flatline section -->
+                        <path class="err-trace err-flat"
+                              d="M 108 100 L 164 100" />
+                        <!-- Pulsing dot at the end of the flatline -->
+                        <circle class="err-flatline-pulse" cx="160" cy="100" r="2.6" />
+                    </svg>
+
+                    <div class="err-scanlines"></div>
+
+                    <div class="err-coord">@AppConstants.ErrorPage.SignalLabel <b>@AppConstants.ErrorPage.SignalStatus</b> · @AppConstants.ErrorPage.RetryLabel <span id="err-countdown">@AppConstants.ErrorPage.RetryCountdownSeconds</span>s</div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="err-bar err-footer">
+            <div>© @AppConstants.AppName @AppConstants.CopyrightYear</div>
+            <div class="err-status"><span class="err-pulse"></span> @AppConstants.ErrorPage.FooterStatus</div>
+        </footer>
+
+    </div>
+
+    <script>
+        (function () {
+            // Auto-retry countdown
+            var cdEl = document.getElementById('err-countdown');
+            var n = @AppConstants.ErrorPage.RetryCountdownSeconds;
+            setInterval(function () {
+                n = n <= 1 ? @AppConstants.ErrorPage.RetryCountdownSeconds : n - 1;
+                cdEl.textContent = n;
+            }, 1000);
+
+            // Retry button
+            document.getElementById('err-retry').addEventListener('click', function (e) {
+                e.preventDefault();
+                var spin = e.currentTarget.querySelector('.err-spin');
+                spin.style.transition = 'transform 0.8s ease';
+                spin.style.transform = 'rotate(720deg)';
+                setTimeout(function () { location.reload(); }, 600);
+            });
+        })();
+    </script>
+</body>
+</html>

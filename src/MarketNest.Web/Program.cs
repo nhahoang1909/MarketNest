@@ -1,8 +1,13 @@
 using System.Globalization;
 using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
+using MarketNest.Core.Common.Events;
+using MarketNest.Core.Contracts;
 using MarketNest.Core.Logging;
 using MarketNest.Web.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Localization;
+using Scalar.AspNetCore;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -19,10 +24,11 @@ try
     builder.Host.UseSerilog((context, loggerConfig) => loggerConfig
         .ReadFrom.Configuration(context.Configuration)
         .Enrich.FromLogContext()
-        .Enrich.WithProperty("Application", "MarketNest")
+        .Enrich.WithProperty(AppConstants.SerilogApplicationProperty, AppConstants.AppName)
         .Enrich.WithEnvironmentName()
         .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
-        .WriteTo.Seq(serverUrl: context.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341",
+        .WriteTo.Seq(serverUrl: context.Configuration[AppConstants.SeqServerUrlKey]
+                         ?? throw new InvalidOperationException($"Configuration key '{AppConstants.SeqServerUrlKey}' is not set. Add it to appsettings.json."),
                      formatProvider: CultureInfo.InvariantCulture));
 
     // ── Services ──────────────────────────────────────────────────────
@@ -33,19 +39,44 @@ try
     builder.Services.AddAntiforgery();
     builder.Services.AddHealthChecks();
 
+    // OpenAPI documentation (replaces Swagger)
+    builder.Services.AddOpenApi(AppConstants.OpenApi.DocumentName, options =>
+    {
+        options.AddDocumentTransformer((document, _, _) =>
+        {
+            document.Info = new()
+            {
+                Title = AppConstants.OpenApi.Title,
+                Version = AppConstants.OpenApi.Version,
+                Description = AppConstants.OpenApi.Description,
+            };
+            return Task.CompletedTask;
+        });
+    });
+
+    // Auto-generate docs/api-contract.md from OpenAPI spec (dev only)
+    builder.Services.AddHttpClient();
+    builder.Services.AddHostedService<ApiContractGenerator>();
+
     // MediatR — scan all module assemblies
-    builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
-        typeof(MarketNest.Core.Common.Entity<>).Assembly,
-        typeof(MarketNest.Identity.AssemblyReference).Assembly,
-        typeof(MarketNest.Catalog.AssemblyReference).Assembly,
-        typeof(MarketNest.Cart.AssemblyReference).Assembly,
-        typeof(MarketNest.Orders.AssemblyReference).Assembly,
-        typeof(MarketNest.Payments.AssemblyReference).Assembly,
-        typeof(MarketNest.Reviews.AssemblyReference).Assembly,
-        typeof(MarketNest.Disputes.AssemblyReference).Assembly,
-        typeof(MarketNest.Notifications.AssemblyReference).Assembly,
-        typeof(MarketNest.Admin.AssemblyReference).Assembly
-    ));
+    builder.Services.AddMediatR(cfg =>
+    {
+        cfg.RegisterServicesFromAssemblies(
+            typeof(MarketNest.Core.Common.Entity<>).Assembly,
+            typeof(MarketNest.Auditing.AssemblyReference).Assembly,
+            typeof(MarketNest.Identity.AssemblyReference).Assembly,
+            typeof(MarketNest.Catalog.AssemblyReference).Assembly,
+            typeof(MarketNest.Cart.AssemblyReference).Assembly,
+            typeof(MarketNest.Orders.AssemblyReference).Assembly,
+            typeof(MarketNest.Payments.AssemblyReference).Assembly,
+            typeof(MarketNest.Reviews.AssemblyReference).Assembly,
+            typeof(MarketNest.Disputes.AssemblyReference).Assembly,
+            typeof(MarketNest.Notifications.AssemblyReference).Assembly,
+            typeof(MarketNest.Admin.AssemblyReference).Assembly);
+
+        // Auditing pipeline behavior — records [Audited] commands automatically
+        cfg.AddOpenBehavior(typeof(MarketNest.Auditing.Infrastructure.AuditBehavior<,>));
+    });
 
     // FluentValidation — discover validators from all module assemblies
     var validatorAssemblies = new[]
@@ -66,6 +97,19 @@ try
 
     // IAppLogger<T> — open-generic registration, resolved per class
     builder.Services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
+
+    // IEventBus — Phase 1: in-process via MediatR; Phase 3: swap to MassTransitEventBus
+    builder.Services.AddSingleton<IEventBus, InProcessEventBus>();
+
+    // ── Auditing Module ──────────────────────────────────────────────
+    builder.Services.AddScoped<MarketNest.Auditing.Infrastructure.AuditableInterceptor>();
+    builder.Services.AddModuleDbContext<MarketNest.Auditing.Infrastructure.AuditingDbContext>(opts =>
+        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
+    builder.Services.AddScoped<IAuditService, MarketNest.Auditing.Infrastructure.AuditService>();
+
+    // IUserTimeZoneProvider — resolves user's time zone and date format from HTTP context
+    builder.Services.AddHttpContextAccessor();
+    builder.Services.AddScoped<IUserTimeZoneProvider, HttpContextUserTimeZoneProvider>();
 
     // TODO: Register module DI (each module exposes AddXxxModule extension)
     // builder.Services.AddIdentityModule(builder.Configuration);
@@ -97,25 +141,40 @@ try
     var app = builder.Build();
 
     // ── Middleware Pipeline ───────────────────────────────────────────
+    app.UseExceptionHandler(AppRoutes.Error);
+
     if (!app.Environment.IsDevelopment())
     {
-        app.UseExceptionHandler(AppRoutes.Error);
         app.UseHsts();
+    }
+
+    app.UseStatusCodePagesWithReExecute(AppRoutes.NotFound);
+
+    // ── OpenAPI + Scalar (interactive API docs) ─────────────────────
+    app.MapOpenApi();
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapScalarApiReference(options =>
+        {
+            options.WithTitle(AppConstants.OpenApi.Title);
+            options.WithTheme(ScalarTheme.BluePlanet);
+            options.WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+        });
     }
 
     app.UseHttpsRedirection();
     app.UseStaticFiles();
 
     // ── Localization ─────────────────────────────────────────────────
-    var supportedCultures = new[] { "en", "vi" };
+    var supportedCultures = AppConstants.Cultures.Supported;
     app.UseRequestLocalization(options =>
     {
-        options.SetDefaultCulture("en");
+        options.SetDefaultCulture(AppConstants.Cultures.Default);
         options.AddSupportedCultures(supportedCultures);
         options.AddSupportedUICultures(supportedCultures);
         options.RequestCultureProviders =
         [
-            new CookieRequestCultureProvider { CookieName = ".MarketNest.Culture" },
+            new CookieRequestCultureProvider { CookieName = AppConstants.Cultures.CookieName },
             new AcceptLanguageHeaderRequestCultureProvider()
         ];
     });
@@ -134,14 +193,19 @@ try
     app.MapHealthChecks(AppRoutes.Health);
 
     // ── Language switch endpoint ──────────────────────────────────────
-    app.MapPost(AppRoutes.Api.SetLanguage, (HttpContext context, string culture, string? returnUrl) =>
+    app.MapPost(AppRoutes.Api.SetLanguage, (HttpContext context, [FromForm] string culture, [FromForm] string? returnUrl) =>
     {
-        if (culture is not ("en" or "vi")) culture = "en";
+        if (culture is not (AppConstants.Cultures.English or AppConstants.Cultures.Vietnamese))
+            culture = AppConstants.Cultures.Default;
         context.Response.Cookies.Append(
-            ".MarketNest.Culture",
+            AppConstants.Cultures.CookieName,
             CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
-            new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), IsEssential = true });
-        return Results.LocalRedirect(returnUrl ?? "/");
+            new CookieOptions
+            {
+                Expires = DateTimeOffset.UtcNow.AddYears(AppConstants.Cookies.CultureExpirationYears),
+                IsEssential = true
+            });
+        return Results.LocalRedirect(returnUrl ?? AppRoutes.Home);
     }).DisableAntiforgery();
 
     // ── Initialize database: migrate + seed ───────────────────────────

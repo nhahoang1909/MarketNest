@@ -1,8 +1,9 @@
 @page "/admin/dashboard"
-@model IndexModel
+@using MarketNest.Core.Common
+@model MarketNest.Web.Pages.Admin.Dashboard.IndexModel
 @{
   Layout = "_LayoutAdmin";
-  ViewData["Title"] = "Dashboard";
+  ViewData["Title"] = AppConstants.Defaults.FallbackPageTitle;
 }
 
 <!-- KPI stat cards -->
@@ -12,7 +13,7 @@
     <div class="flex items-center justify-between mb-3">
       <span class="text-xs font-medium uppercase tracking-wider" style="color:rgba(255,255,255,0.5);">Tong GMV</span>
       <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-            style="background:rgba(200,242,92,0.15); color:#C8F25C;">+18%</span>
+            style="background:rgba(0,117,74,0.15); color:@AppConstants.Colors.Accent;">+18%</span>
     </div>
     <p class="text-2xl font-bold mn-mono text-white">156.200.000d</p>
     <p class="text-xs mt-1" style="color:rgba(255,255,255,0.4);">Tong gia tri giao dich</p>
@@ -23,32 +24,32 @@
     <div class="flex items-center justify-between mb-3">
       <span class="text-xs font-medium uppercase tracking-wider" style="color:rgba(255,255,255,0.5);">Nguoi dung</span>
       <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-            style="background:rgba(200,242,92,0.15); color:#C8F25C;">+56</span>
+            style="background:rgba(0,117,74,0.15); color:@AppConstants.Colors.Accent;">+56</span>
     </div>
     <p class="text-2xl font-bold mn-mono text-white">1,234</p>
     <p class="text-xs mt-1" style="color:rgba(255,255,255,0.4);">Tong nguoi dung</p>
   </div>
 
   <!-- Don hang -->
-  <div class="rounded-2xl p-5" style="background:#f0fbc4;">
+  <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.AccentBg;">
     <div class="flex items-center justify-between mb-3">
-      <span class="text-xs font-medium uppercase tracking-wider" style="color:#3d5a00;">Don hang</span>
+      <span class="text-xs font-medium uppercase tracking-wider" style="color:@AppConstants.Colors.AccentDarker;">Don hang</span>
       <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-            style="background:rgba(61,90,0,0.1); color:#3d5a00;">+127</span>
+            style="background:rgba(0,79,52,0.1); color:@AppConstants.Colors.AccentDarker;">+127</span>
     </div>
-    <p class="text-2xl font-bold mn-mono" style="color:#2d4400;">3,456</p>
-    <p class="text-xs mt-1" style="color:#5c8a00;">Tong don hang</p>
+    <p class="text-2xl font-bold mn-mono" style="color:@AppConstants.Colors.AccentDeep;">3,456</p>
+    <p class="text-xs mt-1" style="color:@AppConstants.Colors.AccentMuted;">Tong don hang</p>
   </div>
 
   <!-- Khieu nai cho -->
-  <div class="rounded-2xl p-5" style="background:#fef9ee;">
+  <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.WarningBg;">
     <div class="flex items-center justify-between mb-3">
-      <span class="text-xs font-medium uppercase tracking-wider" style="color:#92400e;">Khieu nai cho</span>
+      <span class="text-xs font-medium uppercase tracking-wider" style="color:@AppConstants.Colors.WarningText;">Khieu nai cho</span>
       <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
             style="background:rgba(239,68,68,0.1); color:#ef4444;">+3</span>
     </div>
-    <p class="text-2xl font-bold mn-mono" style="color:#78350f;">12</p>
-    <p class="text-xs mt-1" style="color:#b45309;">Can xu ly</p>
+    <p class="text-2xl font-bold mn-mono" style="color:@AppConstants.Colors.WarningTextDark;">12</p>
+    <p class="text-xs mt-1" style="color:@AppConstants.Colors.WarningBorder;">Can xu ly</p>
   </div>
 </div>
 
@@ -61,16 +62,16 @@
     </div>
     <div class="flex gap-1">
       <button @@click="period = '7d'" :class="period === '7d' ? 'text-white' : 'text-slate-500 hover:bg-slate-100'"
-      :style="period === '7d' ? 'background:#1A1F1B' : ''"
+      :style="period === '7d' ? 'background:#1E3932' : ''"
       class="px-3 py-1 text-xs font-medium rounded-lg transition-colors">7 ngay</button>
       <button @@click="period = '30d'" :class="period === '30d' ? 'text-white' : 'text-slate-500 hover:bg-slate-100'"
-      :style="period === '30d' ? 'background:#1A1F1B' : ''"
+      :style="period === '30d' ? 'background:#1E3932' : ''"
       class="px-3 py-1 text-xs font-medium rounded-lg transition-colors">30 ngay</button>
       <button @@click="period = '90d'" :class="period === '90d' ? 'text-white' : 'text-slate-500 hover:bg-slate-100'"
-      :style="period === '90d' ? 'background:#1A1F1B' : ''"
+      :style="period === '90d' ? 'background:#1E3932' : ''"
       class="px-3 py-1 text-xs font-medium rounded-lg transition-colors">90 ngay</button>
       <button @@click="period = '1y'" :class="period === '1y' ? 'text-white' : 'text-slate-500 hover:bg-slate-100'"
-      :style="period === '1y' ? 'background:#1A1F1B' : ''"
+      :style="period === '1y' ? 'background:#1E3932' : ''"
       class="px-3 py-1 text-xs font-medium rounded-lg transition-colors">1 nam</button>
     </div>
   </div>
@@ -154,7 +155,7 @@
     <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm">
       <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
         <h2 class="text-base font-semibold text-slate-900">Nguoi dung moi</h2>
-        <a href="/admin/users" class="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors">Xem tat
+        <a href="@AppRoutes.Admin.Users" class="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors">Xem tat
           ca &rarr;</a>
         </div>
         <div class="overflow-x-auto">
@@ -173,18 +174,18 @@
             <tbody class="divide-y divide-slate-50">
               @{
                 var users = new[] {
-                            new { Name = "Nguyen Van A", Email = "nguyenvana@email.com", Initial = "A", Color = "#3b82f6", Role = "Buyer",
-          RoleBadge = "background:#dbeafe; color:#1e40af;", Status = "Active", Date = "25/04/2026" },
-                            new { Name = "Tran Thi B", Email = "tranthib@email.com", Initial = "B", Color = "#ec4899", Role = "Seller",
-          RoleBadge = "background:#f0fbc4; color:#3d5a00;", Status = "Active", Date = "24/04/2026" },
-                            new { Name = "Le Van C", Email = "levanc@email.com", Initial = "C", Color = "#8b5cf6", Role = "Buyer",
-          RoleBadge = "background:#dbeafe; color:#1e40af;", Status = "Active", Date = "23/04/2026" },
-                            new { Name = "Pham Thi D", Email = "phamthid@email.com", Initial = "D", Color = "#f59e0b", Role = "Seller",
-          RoleBadge = "background:#f0fbc4; color:#3d5a00;", Status = "Active", Date = "22/04/2026" },
-                            new { Name = "Hoang Van E", Email = "hoangvane@email.com", Initial = "E", Color = "#10b981", Role = "Admin",
-          RoleBadge = "background:#d1fae5; color:#065f46;", Status = "Active", Date = "20/04/2026" },
-                            new { Name = "Vo Thi F", Email = "vothif@email.com", Initial = "F", Color = "#6366f1", Role = "Buyer",
-          RoleBadge = "background:#dbeafe; color:#1e40af;", Status = "Suspended", Date = "18/04/2026" }
+                            new { Name = "Nguyen Van A", Email = "nguyenvana@email.com", Initial = "A", Color = "#3b82f6", Role = EntityStatusNames.Buyer,
+          RoleBadge = $"background:{AppConstants.Colors.BadgeBuyerBg}; color:{AppConstants.Colors.BadgeBuyerText};", Status = EntityStatusNames.Active, Date = "25/04/2026" },
+                            new { Name = "Tran Thi B", Email = "tranthib@email.com", Initial = "B", Color = "#ec4899", Role = EntityStatusNames.Seller,
+          RoleBadge = $"background:{AppConstants.Colors.BadgeSellerBg}; color:{AppConstants.Colors.BadgeSellerText};", Status = EntityStatusNames.Active, Date = "24/04/2026" },
+                            new { Name = "Le Van C", Email = "levanc@email.com", Initial = "C", Color = "#8b5cf6", Role = EntityStatusNames.Buyer,
+          RoleBadge = $"background:{AppConstants.Colors.BadgeBuyerBg}; color:{AppConstants.Colors.BadgeBuyerText};", Status = EntityStatusNames.Active, Date = "23/04/2026" },
+                            new { Name = "Pham Thi D", Email = "phamthid@email.com", Initial = "D", Color = "#f59e0b", Role = EntityStatusNames.Seller,
+          RoleBadge = $"background:{AppConstants.Colors.BadgeSellerBg}; color:{AppConstants.Colors.BadgeSellerText};", Status = EntityStatusNames.Active, Date = "22/04/2026" },
+                            new { Name = "Hoang Van E", Email = "hoangvane@email.com", Initial = "E", Color = "#10b981", Role = EntityStatusNames.Admin,
+          RoleBadge = $"background:{AppConstants.Colors.BadgeAdminBg}; color:{AppConstants.Colors.BadgeAdminText};", Status = EntityStatusNames.Active, Date = "20/04/2026" },
+                            new { Name = "Vo Thi F", Email = "vothif@email.com", Initial = "F", Color = "#6366f1", Role = EntityStatusNames.Buyer,
+          RoleBadge = $"background:{AppConstants.Colors.BadgeBuyerBg}; color:{AppConstants.Colors.BadgeBuyerText};", Status = EntityStatusNames.Suspended, Date = "18/04/2026" }
                         };
                 foreach (var u in users)
                 {
@@ -199,15 +200,15 @@
                       <span class="text-[11px] px-2 py-0.5 rounded-full font-medium" style="@u.RoleBadge">@u.Role</span>
                     </td>
                     <td class="px-4 py-3">
-                      @if (u.Status == "Active")
+                      @if (u.Status == EntityStatusNames.Active)
                       {
                         <span class="text-[11px] px-2 py-0.5 rounded-full font-medium"
-                              style="background:#dcfce7; color:#166534;">Active</span>
+                              style="background:@AppConstants.Colors.BadgeActiveBg; color:@AppConstants.Colors.BadgeActiveText;">@EntityStatusNames.Active</span>
                       }
                       else
                       {
                         <span class="text-[11px] px-2 py-0.5 rounded-full font-medium"
-                              style="background:#fef2f2; color:#991b1b;">Suspended</span>
+                              style="background:@AppConstants.Colors.BadgeSuspendedBg; color:@AppConstants.Colors.BadgeSuspendedText;">@EntityStatusNames.Suspended</span>
                       }
                     </td>
                     <td class="px-4 py-3 text-xs text-slate-500">@u.Date</td>

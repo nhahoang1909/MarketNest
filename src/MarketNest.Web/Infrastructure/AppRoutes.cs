@@ -12,6 +12,7 @@ public static class AppRoutes
     public const string Search = "/search";
     public const string SearchSuggestions = "/search/suggestions";
     public const string Error = "/Error";
+    public const string NotFound = "/not-found";
     public const string Health = "/health";
 
     // ── Auth ──────────────────────────────────────────────────────────
@@ -19,6 +20,7 @@ public static class AppRoutes
     {
         public const string Login = "/auth/login";
         public const string Register = "/auth/register";
+        public const string ForgotPassword = "/auth/forgot-password";
 
         public static string RegisterSeller => $"{Register}?role=seller";
     }
@@ -27,6 +29,8 @@ public static class AppRoutes
     public static class Api
     {
         public const string SetLanguage = "/api/set-language";
+        public const string OpenApiDoc = "/openapi";
+        public const string ScalarDocs = "/scalar";
     }
 
     // ── Account ──────────────────────────────────────────────────────
@@ -41,7 +45,39 @@ public static class AppRoutes
     // ── Seller ───────────────────────────────────────────────────────
     public static class Seller
     {
+        public const string Prefix = "/seller";
         public const string Dashboard = "/seller/dashboard";
+        public const string Storefront = "/seller/storefront";
+        public const string Products = "/seller/products";
+        public const string Orders = "/seller/orders";
+        public const string Payouts = "/seller/payouts";
+        public const string Reviews = "/seller/reviews";
+        public const string Disputes = "/seller/disputes";
+    }
+
+    // ── Admin ────────────────────────────────────────────────────────
+    public static class Admin
+    {
+        public const string Prefix = "/admin";
+        public const string Dashboard = "/admin/dashboard";
+        public const string Users = "/admin/users";
+        public const string Storefronts = "/admin/storefronts";
+        public const string Disputes = "/admin/disputes";
+        public const string Notifications = "/admin/notifications";
+        public const string ConfigPrefix = "/admin/config";
+        public const string ConfigCommission = "/admin/config/commission";
+    }
+
+    // ── Checkout ─────────────────────────────────────────────────────
+    public static class Checkout
+    {
+        public const string Index = "/checkout";
+    }
+
+    // ── Orders ───────────────────────────────────────────────────────
+    public static class OrderPages
+    {
+        public static string Confirmation(Guid orderId) => $"/orders/{orderId}/confirmation";
     }
 
     // ── Shop query helpers ───────────────────────────────────────────
@@ -66,15 +102,32 @@ public static class AppRoutes
         Cart,
         Search,
         Error,
+        NotFound,
         Health,
         Auth.Login,
         Auth.Register,
+        Auth.ForgotPassword,
         Account.Settings,
         Account.Orders,
         Account.Wishlist,
         Account.Disputes,
         Seller.Dashboard,
+        Seller.Storefront,
+        Seller.Products,
+        Seller.Orders,
+        Seller.Payouts,
+        Seller.Reviews,
+        Seller.Disputes,
+        Admin.Dashboard,
+        Admin.Users,
+        Admin.Storefronts,
+        Admin.Disputes,
+        Admin.Notifications,
+        Admin.ConfigPrefix,
+        Checkout.Index,
         Api.SetLanguage,
+        Api.OpenApiDoc,
+        Api.ScalarDocs,
     };
 
     /// <summary>

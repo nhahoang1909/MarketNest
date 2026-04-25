@@ -10,29 +10,29 @@ public static class ValidatorExtensions
     public static IRuleBuilderOptions<T, string> MustBeSlug<T>(this IRuleBuilder<T, string> rule)
         => rule
             .NotEmpty()
-            .Matches(@"^[a-z0-9-]{3,50}$")
-            .WithMessage("Must be 3-50 lowercase letters, numbers, or hyphens");
+            .Matches(DomainConstants.Validation.SlugPattern)
+            .WithMessage(DomainConstants.Validation.SlugErrorMessage);
 
     public static IRuleBuilderOptions<T, decimal> MustBePositiveMoney<T>(this IRuleBuilder<T, decimal> rule)
         => rule
             .GreaterThan(0)
-            .WithMessage("Amount must be greater than 0")
-            .LessThanOrEqualTo(999_999.99m)
-            .WithMessage("Amount exceeds maximum allowed value");
+            .WithMessage(DomainConstants.Validation.MoneyPositiveMessage)
+            .LessThanOrEqualTo(DomainConstants.Validation.MaxMoneyAmount)
+            .WithMessage(DomainConstants.Validation.MoneyMaxMessage);
 
     public static IRuleBuilderOptions<T, string> MustBeValidEmail<T>(this IRuleBuilder<T, string> rule)
         => rule
             .NotEmpty()
             .EmailAddress()
-            .MaximumLength(254);
+            .MaximumLength(DomainConstants.Validation.MaxEmailLength);
 
     public static IRuleBuilderOptions<T, Guid> MustBeValidId<T>(this IRuleBuilder<T, Guid> rule)
         => rule
             .NotEqual(Guid.Empty)
-            .WithMessage("ID cannot be empty");
+            .WithMessage(DomainConstants.Validation.IdEmptyMessage);
 
     public static IRuleBuilderOptions<T, int> MustBeValidQuantity<T>(this IRuleBuilder<T, int> rule)
         => rule
-            .InclusiveBetween(1, 99)
-            .WithMessage("Quantity must be between 1 and 99");
+            .InclusiveBetween(DomainConstants.Validation.MinQuantity, DomainConstants.Validation.MaxQuantity)
+            .WithMessage(DomainConstants.Validation.QuantityRangeMessage);
 }

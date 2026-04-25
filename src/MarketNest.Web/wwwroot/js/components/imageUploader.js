@@ -2,8 +2,10 @@
  * Image uploader Alpine.js component
  * Usage: x-data="imageUploader({ maxFiles: 5 })"
  */
+import { ImageUploadConfig } from "../constants.js";
+
 document.addEventListener("alpine:init", () => {
-    Alpine.data("imageUploader", ({maxFiles = 5} = {}) => ({
+    Alpine.data("imageUploader", ({maxFiles = ImageUploadConfig.DEFAULT_MAX_FILES} = {}) => ({
         files: [],
         previews: [],
         isDragging: false,
@@ -18,7 +20,7 @@ document.addEventListener("alpine:init", () => {
         handleDrop(event) {
             this.isDragging = false;
             const newFiles = Array.from(event.dataTransfer.files).filter((f) =>
-                f.type.startsWith("image/"),
+                f.type.startsWith(ImageUploadConfig.IMAGE_MIME_PREFIX),
             );
             this._addFiles(newFiles);
         },

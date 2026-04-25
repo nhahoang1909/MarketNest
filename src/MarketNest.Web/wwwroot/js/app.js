@@ -8,6 +8,8 @@
  *   3. This file (defer)
  */
 
+import { CurrencyDefaults, TimeIntervals, TimerConfig, DisplayStrings } from "./constants.js";
+
 // ── Stores ────────────────────────────────────────────────────────
 import "./stores/cart.js";
 import "./stores/toasts.js";
@@ -31,11 +33,11 @@ document.addEventListener("alpine:init", () => {
      * $currency(amount, currency) — format a number as currency
      * Usage: <span x-text="$currency(29.99)"></span>
      */
-    Alpine.magic("currency", () => (amount, currency = "USD") => {
-        return new Intl.NumberFormat("en-US", {
+    Alpine.magic("currency", () => (amount, currency = CurrencyDefaults.CURRENCY) => {
+        return new Intl.NumberFormat(CurrencyDefaults.LOCALE, {
             style: "currency",
             currency,
-            minimumFractionDigits: 2,
+            minimumFractionDigits: CurrencyDefaults.MIN_FRACTION_DIGITS,
         }).format(amount ?? 0);
     });
 
@@ -59,16 +61,16 @@ document.addEventListener("alpine:init", () => {
     Alpine.magic("timeAgo", () => (isoString) => {
         if (!isoString) return "";
         const seconds = Math.floor(
-            (Date.now() - new Date(isoString).getTime()) / 1000,
+            (Date.now() - new Date(isoString).getTime()) / TimerConfig.MS_PER_SECOND,
         );
 
         const intervals = [
-            {label: "year", seconds: 31536000},
-            {label: "month", seconds: 2592000},
-            {label: "week", seconds: 604800},
-            {label: "day", seconds: 86400},
-            {label: "hour", seconds: 3600},
-            {label: "minute", seconds: 60},
+            {label: "year", seconds: TimeIntervals.YEAR},
+            {label: "month", seconds: TimeIntervals.MONTH},
+            {label: "week", seconds: TimeIntervals.WEEK},
+            {label: "day", seconds: TimeIntervals.DAY},
+            {label: "hour", seconds: TimeIntervals.HOUR},
+            {label: "minute", seconds: TimeIntervals.MINUTE},
         ];
 
         for (const {label, seconds: s} of intervals) {
@@ -77,6 +79,6 @@ document.addEventListener("alpine:init", () => {
                 return `${count} ${label}${count !== 1 ? "s" : ""} ago`;
             }
         }
-        return "just now";
+        return DisplayStrings.JUST_NOW;
     });
 });

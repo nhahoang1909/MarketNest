@@ -7,6 +7,7 @@
 
     <ItemGroup Label="Module References">
         <ProjectReference Include="..\MarketNest.Core\MarketNest.Core.csproj"/>
+        <ProjectReference Include="..\MarketNest.Auditing\MarketNest.Auditing.csproj"/>
         <ProjectReference Include="..\MarketNest.Identity\MarketNest.Identity.csproj"/>
         <ProjectReference Include="..\MarketNest.Catalog\MarketNest.Catalog.csproj"/>
         <ProjectReference Include="..\MarketNest.Cart\MarketNest.Cart.csproj"/>
@@ -47,5 +48,23 @@
     <ItemGroup Label="Validation">
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions"/>
     </ItemGroup>
+
+    <ItemGroup Label="API Documentation">
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+        <PackageReference Include="Scalar.AspNetCore"/>
+    </ItemGroup>
+
+    <ItemGroup Label="Local Config Files">
+      <None Include=".env" />
+      <None Include=".env.example" />
+      <None Include=".gitignore" />
+      <None Include="docker-compose.yml" />
+      <None Include="docker-compose.prod.yml" />
+      <None Include="Dockerfile" />
+      <None Include="package.json" />
+      <None Include="package-lock.json" />
+    </ItemGroup>
+
+
 
 </Project>
