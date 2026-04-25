@@ -21,8 +21,8 @@
           San thuong mai dien tu da nguoi ban — noi ket noi nhung san pham doc dao tu cac nha ban hang doc lap.
         </p>
         <div class="mt-8 flex flex-wrap gap-4 justify-center lg:justify-start">
-          <a href="/shop" class="btn-primary btn-lg">Mua sam ngay</a>
-          <a href="/auth/register?role=seller" class="btn-ghost btn-lg">Tro thanh nguoi ban</a>
+          <a href="@AppRoutes.Shop" class="btn-primary btn-lg">Mua sam ngay</a>
+          <a href="@AppRoutes.Auth.RegisterSeller" class="btn-ghost btn-lg">Tro thanh nguoi ban</a>
         </div>
       </div>
 
@@ -54,56 +54,56 @@
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
       <!-- Category cards -->
-      <a href="/shop?category=fashion"
+      <a href="@AppRoutes.ShopQuery.Category("fashion")"
          class="group block rounded-2xl p-6 bg-lilac-100 hover:bg-lilac-200 transition-colors">
         <span class="text-3xl block mb-3">&#x1F457;</span>
         <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Thoi trang</h3>
         <p class="text-sm text-ink-400 mt-1">1.245 san pham</p>
       </a>
 
-      <a href="/shop?category=home"
+      <a href="@AppRoutes.ShopQuery.Category("home")"
          class="group block rounded-2xl p-6 bg-mustard-100 hover:bg-mustard-200 transition-colors">
         <span class="text-3xl block mb-3">&#x1F3E0;</span>
         <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Nha cua</h3>
         <p class="text-sm text-ink-400 mt-1">893 san pham</p>
       </a>
 
-      <a href="/shop?category=ceramics"
+      <a href="@AppRoutes.ShopQuery.Category("ceramics")"
          class="group block rounded-2xl p-6 bg-accent-100 hover:bg-accent-200 transition-colors">
         <span class="text-3xl block mb-3">&#x1F3FA;</span>
         <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Gom &amp; Thu cong</h3>
         <p class="text-sm text-ink-400 mt-1">672 san pham</p>
       </a>
 
-      <a href="/shop?category=audio"
+      <a href="@AppRoutes.ShopQuery.Category("audio")"
          class="group block rounded-2xl p-6 bg-info-100 hover:bg-info-200 transition-colors">
         <span class="text-3xl block mb-3">&#x1F3B5;</span>
         <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Am thanh</h3>
         <p class="text-sm text-ink-400 mt-1">314 san pham</p>
       </a>
 
-      <a href="/shop?category=stationery"
+      <a href="@AppRoutes.ShopQuery.Category("stationery")"
          class="group block rounded-2xl p-6 bg-warn-100 hover:bg-warn-200 transition-colors">
         <span class="text-3xl block mb-3">&#x270F;&#xFE0F;</span>
         <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Van phong pham</h3>
         <p class="text-sm text-ink-400 mt-1">528 san pham</p>
       </a>
 
-      <a href="/shop?category=kitchen"
+      <a href="@AppRoutes.ShopQuery.Category("kitchen")"
          class="group block rounded-2xl p-6 bg-danger-100 hover:bg-danger-200 transition-colors">
         <span class="text-3xl block mb-3">&#x1F373;</span>
         <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Nha bep</h3>
         <p class="text-sm text-ink-400 mt-1">456 san pham</p>
       </a>
 
-      <a href="/shop?category=lighting"
+      <a href="@AppRoutes.ShopQuery.Category("lighting")"
          class="group block rounded-2xl p-6 bg-mustard-50 hover:bg-mustard-100 transition-colors">
         <span class="text-3xl block mb-3">&#x1F4A1;</span>
         <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Den &amp; Anh sang</h3>
         <p class="text-sm text-ink-400 mt-1">287 san pham</p>
       </a>
 
-      <a href="/shop?category=garden"
+      <a href="@AppRoutes.ShopQuery.Category("garden")"
          class="group block rounded-2xl p-6 bg-success-100 hover:bg-success-200 transition-colors">
         <span class="text-3xl block mb-3">&#x1F33F;</span>
         <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Vuon &amp; Cay</h3>
@@ -220,7 +220,7 @@
       <p class="text-accent-800 mb-6 leading-relaxed">
         Tham gia cong dong nguoi ban tren MarketNest va tiep can hang trieu nguoi mua tiem nang.
       </p>
-      <a href="/auth/register?role=seller" class="btn-primary self-start bg-ink-700 text-cream-100 hover:bg-ink-800">
+      <a href="@AppRoutes.Auth.RegisterSeller" class="btn-primary self-start bg-ink-700 text-cream-100 hover:bg-ink-800">
         Mo gian hang mien phi
       </a>
     </div>
