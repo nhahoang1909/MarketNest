@@ -115,6 +115,9 @@ try
     // ── Admin Module (tests) ─────────────────────────────────────────
     builder.Services.AddModuleDbContext<MarketNest.Admin.Infrastructure.AdminDbContext>(opts =>
         opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
+    // Read context — NoTracking, no migrations
+    builder.Services.AddDbContext<MarketNest.Admin.Infrastructure.AdminReadDbContext>(opts =>
+        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
 
     // IUserTimeZoneProvider — resolves user's time zone and date format from HTTP context
     builder.Services.AddHttpContextAccessor();
