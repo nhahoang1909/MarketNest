@@ -5,10 +5,10 @@ using System.Diagnostics.CodeAnalysis;
     Justification = "IDomainEventHandler is an explicit domain pattern name.",
     Scope = "type", Target = "~T:MarketNest.Core.Common.Events.IDomainEventHandler`1")]
 
-// Error is the project-wide error type; renaming would cascade across every module.
-[assembly: SuppressMessage("Naming", "CA1716:Identifiers should not match keywords",
-    Justification = "Error is the intentional domain type name used consistently across all modules.",
-    Scope = "type", Target = "~T:MarketNest.Core.Common.Error")]
+// IIntegrationEventHandler intentionally ends in "EventHandler" — it IS a handler for integration events.
+[assembly: SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix",
+    Justification = "IIntegrationEventHandler is an explicit domain pattern name (ADR-008).",
+    Scope = "type", Target = "~T:MarketNest.Core.Common.Events.IIntegrationEventHandler`1")]
 
 // Static factory methods on Result<TValue,TError> — callers use the non-generic Result static class;
 // these methods are needed internally for Map/MapAsync chaining.

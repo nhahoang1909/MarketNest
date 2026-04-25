@@ -8,8 +8,8 @@ namespace MarketNest.Core.Common.Queries;
 /// </summary>
 public abstract record PagedQuery
 {
-    public int Page { get; init; } = 1;
-    public int PageSize { get; init; } = 20;
+    public int Page { get; init; } = DomainConstants.Pagination.MinPage;
+    public int PageSize { get; init; } = DomainConstants.Pagination.DefaultPageSize;
     public string? SortBy { get; init; }
     public bool SortDesc { get; init; }
     public string? Search { get; init; }
@@ -18,8 +18,9 @@ public abstract record PagedQuery
 
     public virtual IEnumerable<ValidationFailure> Validate()
     {
-        if (Page < 1) yield return new ValidationFailure(nameof(Page), "Page must be >= 1");
-        if (PageSize is < 1 or > 100)
-            yield return new ValidationFailure(nameof(PageSize), "PageSize must be between 1 and 100");
+        if (Page < DomainConstants.Pagination.MinPage)
+            yield return new ValidationFailure(nameof(Page), DomainConstants.ErrorMessages.PageMustBePositive);
+        if (PageSize is < DomainConstants.Pagination.MinPageSize or > DomainConstants.Pagination.MaxPageSize)
+            yield return new ValidationFailure(nameof(PageSize), DomainConstants.ErrorMessages.PageSizeRange);
     }
 }

@@ -2,14 +2,153 @@
 @model IndexModel
 @{
   Layout = "_LayoutAdmin";
-  ViewData["Title"] = "Users Management";
+  ViewData["Title"] = "Nguoi dung";
 }
 
-<h1 class="text-2xl font-bold text-gray-900 mb-6">@ViewData["Title"]</h1>
-
-<!-- TODO: Implement Users Management page -->
-<div class="card">
-  <div class="card-body">
-    <p class="text-gray-500">This page is under construction.</p>
+<!-- Header -->
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <h1 class="text-2xl font-bold text-slate-900">Nguoi dung</h1>
+  <div class="flex items-center gap-3">
+    <div class="relative">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
+           stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z" />
+      </svg>
+      <input type="text" placeholder="Tim kiem nguoi dung..."
+             class="pl-9 pr-4 py-2.5 w-56 text-sm rounded-xl border border-slate-200 bg-white focus:border-slate-400 focus:ring-2 focus:ring-accent-400/20 focus:outline-none transition-all" />
+    </div>
+    <button
+      class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+      </svg>
+      Xuat CSV
+    </button>
   </div>
 </div>
+
+<!-- Filter pills -->
+<div class="flex flex-wrap items-center gap-2 mb-5" x-data="{ filter: 'all' }">
+  <button @@click="filter = 'all'"
+    :class="filter === 'all' ? 'text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+    :style="filter === 'all' ? 'background:#1E3932' : ''"
+    class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
+    Tat ca
+  </button>
+  <button @@click="filter = 'buyer'"
+    :class="filter === 'buyer' ? 'text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+    :style="filter === 'buyer' ? 'background:#1E3932' : ''"
+    class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
+    Nguoi mua
+  </button>
+  <button @@click="filter = 'seller'"
+    :class="filter === 'seller' ? 'text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+    :style="filter === 'seller' ? 'background:#1E3932' : ''"
+    class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
+    Nguoi ban
+  </button>
+  <button @@click="filter = 'admin'"
+    :class="filter === 'admin' ? 'text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+    :style="filter === 'admin' ? 'background:#1E3932' : ''"
+    class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
+    Admin
+  </button>
+</div>
+
+<!-- Users table -->
+<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="admin-table w-full text-sm">
+      <thead>
+        <tr class="border-b border-slate-100">
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Avatar</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ten</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Vai tro</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Trang thai</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ngay tham gia</th>
+          <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Thao tac</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        @{
+          var allUsers = new[] {
+                        new { Name = "Nguyen Van A", Email = "nguyenvana@email.com", Initial = "A", Color = "#3b82f6", Role = "Buyer",
+        RoleBadge = "background:#dbeafe; color:#1e40af;", Status = "Active", Date = "25/04/2026" },
+                        new { Name = "Tran Thi B", Email = "tranthib@email.com", Initial = "B", Color = "#ec4899", Role = "Seller",
+        RoleBadge = "background:#f0fbc4; color:#3d5a00;", Status = "Active", Date = "24/04/2026" },
+                        new { Name = "Le Van C", Email = "levanc@email.com", Initial = "C", Color = "#8b5cf6", Role = "Buyer", RoleBadge
+        = "background:#dbeafe; color:#1e40af;", Status = "Active", Date = "23/04/2026" },
+                        new { Name = "Pham Thi D", Email = "phamthid@email.com", Initial = "D", Color = "#f59e0b", Role = "Seller",
+        RoleBadge = "background:#f0fbc4; color:#3d5a00;", Status = "Active", Date = "22/04/2026" },
+                        new { Name = "Hoang Van E", Email = "hoangvane@email.com", Initial = "E", Color = "#10b981", Role = "Admin",
+        RoleBadge = "background:#d1fae5; color:#065f46;", Status = "Active", Date = "20/04/2026" },
+                        new { Name = "Vo Thi F", Email = "vothif@email.com", Initial = "F", Color = "#6366f1", Role = "Buyer", RoleBadge
+        = "background:#dbeafe; color:#1e40af;", Status = "Suspended", Date = "18/04/2026" },
+                        new { Name = "Dang Van G", Email = "dangvang@email.com", Initial = "G", Color = "#ef4444", Role = "Seller",
+        RoleBadge = "background:#f0fbc4; color:#3d5a00;", Status = "Active", Date = "16/04/2026" },
+                        new { Name = "Bui Thi H", Email = "buithih@email.com", Initial = "H", Color = "#14b8a6", Role = "Buyer",
+        RoleBadge = "background:#dbeafe; color:#1e40af;", Status = "Active", Date = "14/04/2026" },
+                        new { Name = "Ngo Van I", Email = "ngovani@email.com", Initial = "I", Color = "#f97316", Role = "Buyer",
+        RoleBadge = "background:#dbeafe; color:#1e40af;", Status = "Suspended", Date = "12/04/2026" },
+                        new { Name = "Do Thi K", Email = "dothik@email.com", Initial = "K", Color = "#a855f7", Role = "Seller",
+        RoleBadge = "background:#f0fbc4; color:#3d5a00;", Status = "Active", Date = "10/04/2026" }
+                    };
+          foreach (var u in allUsers)
+          {
+            <tr class="hover:bg-slate-50/50 transition-colors">
+              <td class="px-4 py-3">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                     style="background:@u.Color;">@u.Initial</div>
+              </td>
+              <td class="px-4 py-3 font-medium text-slate-900">@u.Name</td>
+              <td class="px-4 py-3 text-slate-500 text-xs">@u.Email</td>
+              <td class="px-4 py-3">
+                <span class="text-[11px] px-2 py-0.5 rounded-full font-medium" style="@u.RoleBadge">@u.Role</span>
+              </td>
+              <td class="px-4 py-3">
+                @if (u.Status == "Active")
+                {
+                  <span class="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                        style="background:#dcfce7; color:#166534;">Active</span>
+                }
+                else
+                {
+                  <span class="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                        style="background:#fef2f2; color:#991b1b;">Suspended</span>
+                }
+              </td>
+              <td class="px-4 py-3 text-xs text-slate-500">@u.Date</td>
+              <td class="px-4 py-3 text-right">
+                <a href="#" class="text-xs font-medium transition-colors hover:opacity-80" style="color:#1F3A2E;">Chi
+                  tiet</a>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
+      <p class="text-xs text-slate-500">Hien thi <span class="font-semibold">1-10</span> trong <span
+        class="font-semibold">1,234</span> nguoi dung</p>
+        <div class="flex items-center gap-1">
+          <button disabled
+                  class="px-3 py-1.5 text-xs font-medium text-slate-400 bg-slate-50 rounded-lg cursor-not-allowed">Truoc</button>
+          <button class="px-3 py-1.5 text-xs font-medium text-white rounded-lg" style="background:#1E3932;">1</button>
+          <button
+          class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">2</button>
+          <button
+          class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">3</button>
+          <span class="px-2 text-slate-400 text-xs">...</span>
+          <button
+          class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">124</button>
+          <button
+          class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Sau</button>
+        </div>
+      </div>
+    </div>

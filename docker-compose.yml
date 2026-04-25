@@ -4,9 +4,18 @@ services:
         build: .
         ports: ["5000:8080"]
         environment:
-            - ASPNETCORE_ENVIRONMENT=Development
-            - ConnectionStrings__Default=Host=postgres;Database=marketnest;Username=mn;Password=mn_secret
-            - Redis__ConnectionString=redis:6379
+            - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+            - ConnectionStrings__DefaultConnection=${CONNECTION_STRINGS__DEFAULTCONNECTION}
+            - Redis__ConnectionString=${REDIS_CONNECTION_STRING}
+            - Jwt__Secret=${JWT_SECRET}
+            - Jwt__Issuer=${JWT_ISSUER}
+            - Jwt__Audience=${JWT_AUDIENCE}
+            - Jwt__AccessTokenExpirationMinutes=${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES}
+            - Jwt__RefreshTokenExpirationDays=${JWT_REFRESH_TOKEN_EXPIRATION_DAYS}
+            - Seq__ServerUrl=${SEQ_SERVER_URL}
+            - Smtp__Host=${SMTP_HOST}
+            - Smtp__Port=${SMTP_PORT}
+            - RabbitMq__ConnectionString=${RABBITMQ_CONNECTION_STRING}
         depends_on:
             postgres: { condition: service_healthy }
             redis: { condition: service_started }
@@ -16,14 +25,14 @@ services:
     postgres:
         image: postgres:16-alpine
         environment:
-            POSTGRES_DB: marketnest
-            POSTGRES_USER: mn
-            POSTGRES_PASSWORD: mn_secret
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
         ports: ["5432:5432"]
         volumes:
             - pg_data:/var/lib/postgresql/data
         healthcheck:
-            test: ["CMD", "pg_isready", "-U", "mn"]
+            test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
             interval: 5s
             retries: 5
 
@@ -40,8 +49,8 @@ services:
             - "5672:5672"
             - "15672:15672"
         environment:
-            RABBITMQ_DEFAULT_USER: mn
-            RABBITMQ_DEFAULT_PASS: mn_secret
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
 
     mailhog:
         image: mailhog/mailhog

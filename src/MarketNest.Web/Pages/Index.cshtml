@@ -1,15 +1,228 @@
 @page
 @model IndexModel
 @{
-  ViewData["Title"] = "Home";
+  ViewData["Title"] = "Trang chủ";
 }
 
-<div class="text-center py-20">
-  <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to MarketNest</h1>
-  <p class="text-lg text-gray-600 mb-8">A multi-vendor marketplace — discover unique products from independent
-    sellers.</p>
-  <a href="/search"
-     class="inline-block bg-brand-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-brand-600 transition">
-    Browse Products
-  </a>
-</div>
+<!-- ░░ HERO ░░ -->
+<section class="bg-cream-100 overflow-hidden">
+  <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+    <div class="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+
+      <!-- Left: headline + CTAs -->
+      <div class="flex-1 text-center lg:text-left">
+        <h1 class="mn-display font-display text-ink-800 leading-[1.05] tracking-tight"
+            style="font-size: clamp(56px, 7vw, 112px);">
+          Khám phá<br class="hidden sm:block" />
+          thế giới<br class="hidden sm:block" />
+          mua sắm
+        </h1>
+        <p class="mt-6 text-lg text-ink-400 max-w-md mx-auto lg:mx-0">
+          Sàn thương mại điện tử đa người bán — nơi kết nối những sản phẩm độc đáo từ các nhà bán hàng độc lập.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-4 justify-center lg:justify-start">
+          <a href="@AppRoutes.Shop" class="btn-primary btn-lg">Mua sắm ngay</a>
+          <a href="@AppRoutes.Auth.RegisterSeller" class="btn-ghost btn-lg">Trở thành người bán</a>
+        </div>
+      </div>
+
+      <!-- Right: featured product card -->
+      <div class="flex-1 flex justify-center lg:justify-end">
+        <div class="relative w-full max-w-[420px]">
+          <div class="absolute inset-0 bg-accent-200 rounded-3xl -rotate-3 scale-[1.04]"></div>
+          <div class="product-card relative z-10 overflow-hidden rounded-3xl shadow-xl">
+            <div class="product-card-image bg-lilac-200 h-[320px] flex items-center justify-center">
+              <span class="text-6xl">&#x1F3A8;</span>
+            </div>
+            <div class="product-card-body p-5">
+              <p class="product-card-title text-ink-700 font-semibold text-lg">Bộ gốm sứ thủ công</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono text-xl mt-1">890.000&#8363;</p>
+              <p class="text-sm text-ink-400 mt-1">bởi <span class="font-medium text-ink-600">Gốm Bát Tràng</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ░░ CATEGORIES ░░ -->
+<section class="bg-surface py-16 lg:py-24" x-data>
+  <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+    <p class="mn-eyebrow text-accent-600 mb-2">DANH MỤC</p>
+    <h2 class="mn-h2 text-ink-800 mb-10">Khám phá theo danh mục</h2>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+      <!-- Category cards -->
+      <a href="@AppRoutes.ShopQuery.Category("fashion")"
+         class="group block rounded-2xl p-6 bg-lilac-100 hover:bg-lilac-200 transition-colors">
+        <span class="text-3xl block mb-3">&#x1F457;</span>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Thời trang</h3>
+        <p class="text-sm text-ink-400 mt-1">1.245 sản phẩm</p>
+      </a>
+
+      <a href="@AppRoutes.ShopQuery.Category("home")"
+         class="group block rounded-2xl p-6 bg-mustard-100 hover:bg-mustard-200 transition-colors">
+        <span class="text-3xl block mb-3">&#x1F3E0;</span>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Nhà cửa</h3>
+        <p class="text-sm text-ink-400 mt-1">893 sản phẩm</p>
+      </a>
+
+      <a href="@AppRoutes.ShopQuery.Category("ceramics")"
+         class="group block rounded-2xl p-6 bg-accent-100 hover:bg-accent-200 transition-colors">
+        <span class="text-3xl block mb-3">&#x1F3FA;</span>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Gốm &amp; Thủ công</h3>
+        <p class="text-sm text-ink-400 mt-1">672 sản phẩm</p>
+      </a>
+
+      <a href="@AppRoutes.ShopQuery.Category("audio")"
+         class="group block rounded-2xl p-6 bg-info-100 hover:bg-info-200 transition-colors">
+        <span class="text-3xl block mb-3">&#x1F3B5;</span>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Âm thanh</h3>
+        <p class="text-sm text-ink-400 mt-1">314 sản phẩm</p>
+      </a>
+
+      <a href="@AppRoutes.ShopQuery.Category("stationery")"
+         class="group block rounded-2xl p-6 bg-warn-100 hover:bg-warn-200 transition-colors">
+        <span class="text-3xl block mb-3">&#x270F;&#xFE0F;</span>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Văn phòng phẩm</h3>
+        <p class="text-sm text-ink-400 mt-1">528 sản phẩm</p>
+      </a>
+
+      <a href="@AppRoutes.ShopQuery.Category("kitchen")"
+         class="group block rounded-2xl p-6 bg-danger-100 hover:bg-danger-200 transition-colors">
+        <span class="text-3xl block mb-3">&#x1F373;</span>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Nhà bếp</h3>
+        <p class="text-sm text-ink-400 mt-1">456 sản phẩm</p>
+      </a>
+
+      <a href="@AppRoutes.ShopQuery.Category("lighting")"
+         class="group block rounded-2xl p-6 bg-mustard-50 hover:bg-mustard-100 transition-colors">
+        <span class="text-3xl block mb-3">&#x1F4A1;</span>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Đèn &amp; Ánh sáng</h3>
+        <p class="text-sm text-ink-400 mt-1">287 sản phẩm</p>
+      </a>
+
+      <a href="@AppRoutes.ShopQuery.Category("garden")"
+         class="group block rounded-2xl p-6 bg-success-100 hover:bg-success-200 transition-colors">
+        <span class="text-3xl block mb-3">&#x1F33F;</span>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Vườn &amp; Cây</h3>
+        <p class="text-sm text-ink-400 mt-1">391 sản phẩm</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ░░ FEATURED BENTO GRID ░░ -->
+<section class="bg-cream-100 py-16 lg:py-24">
+  <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+    <p class="mn-eyebrow text-accent-600 mb-2">NỔI BẬT</p>
+    <h2 class="mn-h2 text-ink-800 mb-10">Sản phẩm được yêu thích</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-6 auto-rows-[260px]">
+      <!-- Large card: spans 1 col, 2 rows -->
+      <div class="product-card md:row-span-2 rounded-2xl overflow-hidden flex flex-col">
+        <div class="product-card-image bg-forest-200 flex-1 flex items-center justify-center">
+          <span class="text-7xl">&#x1F9F6;</span>
+        </div>
+        <div class="product-card-body p-4">
+          <p class="product-card-title text-ink-700 font-semibold">Khăn lụa tơ tằm Hội An</p>
+          <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">1.250.000&#8363;</p>
+          <p class="text-xs text-ink-400 mt-0.5">Lụa Hội An</p>
+        </div>
+      </div>
+
+      <!-- Row 1: 3 small cards -->
+      <div class="product-card rounded-2xl overflow-hidden flex flex-col">
+        <div class="product-card-image bg-lilac-200 flex-1 flex items-center justify-center">
+          <span class="text-4xl">&#x1F3B6;</span>
+        </div>
+        <div class="product-card-body p-4">
+          <p class="product-card-title text-ink-700 font-semibold text-sm">Loa gỗ bluetooth</p>
+          <p class="product-card-price text-accent-600 font-bold mn-mono text-sm mt-0.5">750.000&#8363;</p>
+          <p class="text-xs text-ink-400">Woodsound VN</p>
+        </div>
+      </div>
+
+      <div class="product-card rounded-2xl overflow-hidden flex flex-col">
+        <div class="product-card-image bg-mustard-200 flex-1 flex items-center justify-center">
+          <span class="text-4xl">&#x1F56F;&#xFE0F;</span>
+        </div>
+        <div class="product-card-body p-4">
+          <p class="product-card-title text-ink-700 font-semibold text-sm">Nến thơm handmade</p>
+          <p class="product-card-price text-accent-600 font-bold mn-mono text-sm mt-0.5">180.000&#8363;</p>
+          <p class="text-xs text-ink-400">Aroma Craft</p>
+        </div>
+      </div>
+
+      <div class="product-card rounded-2xl overflow-hidden flex flex-col">
+        <div class="product-card-image bg-accent-200 flex-1 flex items-center justify-center">
+          <span class="text-4xl">&#x1F33F;</span>
+        </div>
+        <div class="product-card-body p-4">
+          <p class="product-card-title text-ink-700 font-semibold text-sm">Chậu cây mini macrame</p>
+          <p class="product-card-price text-accent-600 font-bold mn-mono text-sm mt-0.5">220.000&#8363;</p>
+          <p class="text-xs text-ink-400">Green Corner</p>
+        </div>
+      </div>
+
+      <!-- Row 2: 3 small cards -->
+      <div class="product-card rounded-2xl overflow-hidden flex flex-col">
+        <div class="product-card-image bg-info-200 flex-1 flex items-center justify-center">
+          <span class="text-4xl">&#x1F4D6;</span>
+        </div>
+        <div class="product-card-body p-4">
+          <p class="product-card-title text-ink-700 font-semibold text-sm">Sổ tay da thủ công</p>
+          <p class="product-card-price text-accent-600 font-bold mn-mono text-sm mt-0.5">350.000&#8363;</p>
+          <p class="text-xs text-ink-400">Leather Art VN</p>
+        </div>
+      </div>
+
+      <div class="product-card rounded-2xl overflow-hidden flex flex-col">
+        <div class="product-card-image bg-danger-100 flex-1 flex items-center justify-center">
+          <span class="text-4xl">&#x2615;</span>
+        </div>
+        <div class="product-card-body p-4">
+          <p class="product-card-title text-ink-700 font-semibold text-sm">Bộ pha cà phê pour-over</p>
+          <p class="product-card-price text-accent-600 font-bold mn-mono text-sm mt-0.5">480.000&#8363;</p>
+          <p class="text-xs text-ink-400">Cafe Tools SG</p>
+        </div>
+      </div>
+
+      <div class="product-card rounded-2xl overflow-hidden flex flex-col">
+        <div class="product-card-image bg-warn-200 flex-1 flex items-center justify-center">
+          <span class="text-4xl">&#x1F3A8;</span>
+        </div>
+        <div class="product-card-body p-4">
+          <p class="product-card-title text-ink-700 font-semibold text-sm">Tranh in risograph</p>
+          <p class="product-card-price text-accent-600 font-bold mn-mono text-sm mt-0.5">290.000&#8363;</p>
+          <p class="text-xs text-ink-400">Riso Saigon</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ░░ EDITORIAL ░░ -->
+<section class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 min-h-[340px]">
+    <!-- Left: dark quote -->
+    <div class="bg-ink-700 rounded-3xl p-10 lg:p-14 flex flex-col justify-center">
+      <p class="font-display text-cream-100 text-2xl lg:text-3xl leading-relaxed italic">
+        "Mỗi sản phẩm đều mang trong mình một câu chuyện — từ bàn tay người thợ đến ngôi nhà của bạn."
+      </p>
+      <p class="mt-6 text-cream-400 text-sm">— Đội ngũ MarketNest</p>
+    </div>
+
+    <!-- Right: accent CTA -->
+    <div class="bg-accent-400 rounded-3xl p-10 lg:p-14 flex flex-col justify-center">
+      <h3 class="mn-h3 text-accent-900 mb-3">Bạn có sản phẩm độc đáo?</h3>
+      <p class="text-accent-800 mb-6 leading-relaxed">
+        Tham gia cộng đồng người bán trên MarketNest và tiếp cận hàng triệu người mua tiềm năng.
+      </p>
+      <a href="@AppRoutes.Auth.RegisterSeller" class="btn-primary self-start bg-ink-700 text-cream-100 hover:bg-ink-800">
+        Mở gian hàng miễn phí
+      </a>
+    </div>
+  </div>
+</section>

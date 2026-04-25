@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0,
+      Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0,
+      Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Navigation -->
+  <data name="Nav.Home" xml:space="preserve"><value>Trang chủ</value></data>
+  <data name="Nav.Shop" xml:space="preserve"><value>Duyệt</value></data>
+  <data name="Nav.Cart" xml:space="preserve"><value>Giỏ hàng</value></data>
+  <data name="Nav.Orders" xml:space="preserve"><value>Đơn hàng</value></data>
+  <data name="Nav.Search.Placeholder" xml:space="preserve"><value>Tìm kiếm sản phẩm...</value></data>
+  <data name="Nav.Search" xml:space="preserve"><value>Tìm kiếm</value></data>
+  <data name="Nav.Wishlist" xml:space="preserve"><value>Yêu thích</value></data>
+  <data name="Nav.ThemeToggle" xml:space="preserve"><value>Đổi giao diện</value></data>
+  <data name="Nav.SwitchLanguage" xml:space="preserve"><value>Đổi ngôn ngữ</value></data>
+
+  <!-- Auth -->
+  <data name="Auth.Login" xml:space="preserve"><value>Đăng nhập</value></data>
+  <data name="Auth.Logout" xml:space="preserve"><value>Đăng xuất</value></data>
+  <data name="Auth.LoggedInAs" xml:space="preserve"><value>Đăng nhập với</value></data>
+  <data name="Auth.Register" xml:space="preserve"><value>Đăng ký</value></data>
+  <data name="Auth.RegisterSeller" xml:space="preserve"><value>Đăng ký bán</value></data>
+
+  <!-- User menu -->
+  <data name="User.Account" xml:space="preserve"><value>Tài khoản</value></data>
+  <data name="User.MyOrders" xml:space="preserve"><value>Đơn hàng của tôi</value></data>
+  <data name="User.SellerDashboard" xml:space="preserve"><value>Kênh bán hàng</value></data>
+  <data name="User.Profile" xml:space="preserve"><value>Hồ sơ</value></data>
+  <data name="User.Settings" xml:space="preserve"><value>Cài đặt</value></data>
+
+  <!-- Footer -->
+  <data name="Footer.Description" xml:space="preserve"><value>Sàn thương mại điện tử đa người bán — nơi kết nối người mua và người bán trên toàn quốc.</value></data>
+  <data name="Footer.Newsletter.Placeholder" xml:space="preserve"><value>Email của bạn</value></data>
+  <data name="Footer.Newsletter.Subscribe" xml:space="preserve"><value>Đăng ký</value></data>
+  <data name="Footer.Shopping" xml:space="preserve"><value>Mua sắm</value></data>
+  <data name="Footer.Shopping.AllProducts" xml:space="preserve"><value>Tất cả sản phẩm</value></data>
+  <data name="Footer.Shopping.NewArrivals" xml:space="preserve"><value>Hàng mới về</value></data>
+  <data name="Footer.Shopping.Bestsellers" xml:space="preserve"><value>Bán chạy nhất</value></data>
+  <data name="Footer.Shopping.OnSale" xml:space="preserve"><value>Đang giảm giá</value></data>
+  <data name="Footer.Selling" xml:space="preserve"><value>Bán hàng</value></data>
+  <data name="Footer.Selling.SellerChannel" xml:space="preserve"><value>Kênh bán hàng</value></data>
+  <data name="Footer.Selling.RegisterSeller" xml:space="preserve"><value>Đăng ký bán</value></data>
+  <data name="Footer.Selling.CommissionPolicy" xml:space="preserve"><value>Chính sách hoa hồng</value></data>
+  <data name="Footer.Selling.SellerGuide" xml:space="preserve"><value>Hướng dẫn người bán</value></data>
+  <data name="Footer.Support" xml:space="preserve"><value>Hỗ trợ</value></data>
+  <data name="Footer.Support.HelpCenter" xml:space="preserve"><value>Trung tâm trợ giúp</value></data>
+  <data name="Footer.Support.ReturnPolicy" xml:space="preserve"><value>Chính sách hoàn trả</value></data>
+  <data name="Footer.Support.Disputes" xml:space="preserve"><value>Khiếu nại</value></data>
+  <data name="Footer.Support.Contact" xml:space="preserve"><value>Liên hệ</value></data>
+  <data name="Footer.Terms" xml:space="preserve"><value>Điều khoản</value></data>
+  <data name="Footer.Privacy" xml:space="preserve"><value>Bảo mật</value></data>
+  <data name="Footer.Cookies" xml:space="preserve"><value>Cookie</value></data>
+  <data name="Footer.Copyright" xml:space="preserve"><value>Dự án học tập.</value></data>
+  <data name="Footer.BackToHome" xml:space="preserve"><value>Về trang chủ</value></data>
+
+  <!-- Admin sidebar -->
+  <data name="Admin.Section.Overview" xml:space="preserve"><value>Tổng quan</value></data>
+  <data name="Admin.Section.Management" xml:space="preserve"><value>Quản lý</value></data>
+  <data name="Admin.Section.Operations" xml:space="preserve"><value>Vận hành</value></data>
+  <data name="Admin.Section.System" xml:space="preserve"><value>Hệ thống</value></data>
+  <data name="Admin.Nav.Dashboard" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="Admin.Nav.Users" xml:space="preserve"><value>Người dùng</value></data>
+  <data name="Admin.Nav.Storefronts" xml:space="preserve"><value>Cửa hàng</value></data>
+  <data name="Admin.Nav.Disputes" xml:space="preserve"><value>Khiếu nại</value></data>
+  <data name="Admin.Nav.Notifications" xml:space="preserve"><value>Thông báo</value></data>
+  <data name="Admin.Nav.Config" xml:space="preserve"><value>Cấu hình</value></data>
+  <data name="Admin.Notifications.Title" xml:space="preserve"><value>Thông báo</value></data>
+  <data name="Admin.Notifications.MarkAllRead" xml:space="preserve"><value>Đánh dấu tất cả đã đọc</value></data>
+  <data name="Admin.Notifications.NewDisputes" xml:space="preserve"><value>Khiếu nại mới chờ xử lý</value></data>
+  <data name="Admin.Notifications.UnresolvedDisputes" xml:space="preserve"><value>{0} khiếu nại chưa được giải quyết</value></data>
+  <data name="Admin.Notifications.NewSellers" xml:space="preserve"><value>Người bán mới đăng ký</value></data>
+  <data name="Admin.Notifications.PendingSellers" xml:space="preserve"><value>{0} người bán đang chờ phê duyệt</value></data>
+  <data name="Admin.Notifications.ViewAll" xml:space="preserve"><value>Xem tất cả</value></data>
+  <data name="Admin.Notifications.MinutesAgo" xml:space="preserve"><value>{0} phút trước</value></data>
+  <data name="Admin.Notifications.HoursAgo" xml:space="preserve"><value>{0} giờ trước</value></data>
+  <data name="Admin.Footer" xml:space="preserve"><value>MarketNest Admin</value></data>
+
+  <!-- Seller sidebar -->
+  <data name="Seller.Nav.Dashboard" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="Seller.Nav.Storefront" xml:space="preserve"><value>Cửa hàng</value></data>
+  <data name="Seller.Nav.Products" xml:space="preserve"><value>Sản phẩm</value></data>
+  <data name="Seller.Nav.Orders" xml:space="preserve"><value>Đơn hàng</value></data>
+  <data name="Seller.Nav.Payouts" xml:space="preserve"><value>Thanh toán</value></data>
+  <data name="Seller.Nav.Reviews" xml:space="preserve"><value>Đánh giá</value></data>
+  <data name="Seller.Nav.Disputes" xml:space="preserve"><value>Khiếu nại</value></data>
+  <data name="Seller.Nav.Settings" xml:space="preserve"><value>Cài đặt</value></data>
+  <data name="Seller.Breadcrumb" xml:space="preserve"><value>Kênh bán hàng</value></data>
+  <data name="Seller.BackToShop" xml:space="preserve"><value>Về trang mua sắm</value></data>
+  <data name="Seller.Stats.Today" xml:space="preserve"><value>Hôm nay</value></data>
+  <data name="Seller.Stats.Orders" xml:space="preserve"><value>đơn hàng</value></data>
+  <data name="Seller.Stats.Revenue" xml:space="preserve"><value>Doanh thu</value></data>
+  <data name="Seller.Stats.Today.Label" xml:space="preserve"><value>hôm nay</value></data>
+  <data name="Seller.Footer" xml:space="preserve"><value>Kênh bán hàng</value></data>
+  <data name="Seller.Footer.BackToShop" xml:space="preserve"><value>Về trang mua sắm</value></data>
+  <data name="Seller.User.Account" xml:space="preserve"><value>Tài khoản</value></data>
+  <data name="Seller.User.MyOrders" xml:space="preserve"><value>Đơn của tôi</value></data>
+
+</root>

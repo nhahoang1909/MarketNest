@@ -1,15 +1,129 @@
 @page "/seller/products"
 @model IndexModel
 @{
-  Layout = "_LayoutSeller";
-  ViewData["Title"] = "Product List";
+    Layout = "_LayoutSeller";
+    ViewData["Title"] = "San pham";
 }
 
-<h1 class="text-2xl font-bold text-gray-900 mb-6">@ViewData["Title"]</h1>
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">San pham</h1>
+    <a href="/seller/products/create" class="btn-accent inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors"
+       style="background:#00754A; color:#ffffff;">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Them san pham
+    </a>
+</div>
 
-<!-- TODO: Implement Product List page -->
-<div class="card">
-  <div class="card-body">
-    <p class="text-gray-500">This page is under construction.</p>
-  </div>
+<!-- Filters -->
+<div class="flex flex-wrap items-center gap-3 mb-5">
+    <div class="relative flex-1 min-w-[200px] max-w-sm">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z"/>
+        </svg>
+        <input type="text" placeholder="Tim kiem san pham..."
+               class="form-input w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-gray-200 bg-white focus:border-gray-400 focus:ring-2 focus:ring-accent-400/20 focus:outline-none transition-all" />
+    </div>
+    <select class="form-input px-3 py-2.5 text-sm rounded-xl border border-gray-200 bg-white focus:border-gray-400 focus:outline-none transition-all">
+        <option>Tat ca</option>
+        <option>Dang ban</option>
+        <option>Nhap</option>
+        <option>Het hang</option>
+    </select>
+    <select class="form-input px-3 py-2.5 text-sm rounded-xl border border-gray-200 bg-white focus:border-gray-400 focus:outline-none transition-all">
+        <option>Tat ca danh muc</option>
+        <option>Thoi trang</option>
+        <option>Phu kien</option>
+        <option>Giay dep</option>
+        <option>Tui xach</option>
+    </select>
+</div>
+
+<!-- Products table -->
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="admin-table w-full text-sm">
+            <thead>
+                <tr class="border-b border-gray-100">
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hinh anh</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ten san pham</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Gia</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ton kho</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Da ban</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trang thai</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tac</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                @{
+                    var products = new[] {
+                        new { Name = "Ao thun cotton premium", Price = "350.000d", Stock = 85, MaxStock = 100, Sold = 156, Status = "active" },
+                        new { Name = "Tui xach da handmade", Price = "1.250.000d", Stock = 12, MaxStock = 50, Sold = 98, Status = "active" },
+                        new { Name = "Giay sneaker Urban", Price = "890.000d", Stock = 34, MaxStock = 60, Sold = 72, Status = "active" },
+                        new { Name = "Vong tay bac thu cong", Price = "450.000d", Stock = 8, MaxStock = 40, Sold = 64, Status = "active" },
+                        new { Name = "Quan jeans slim fit", Price = "520.000d", Stock = 0, MaxStock = 30, Sold = 45, Status = "outofstock" },
+                        new { Name = "Kinh mat thoi trang", Price = "280.000d", Stock = 23, MaxStock = 50, Sold = 38, Status = "active" },
+                        new { Name = "Non bucket hat", Price = "180.000d", Stock = 5, MaxStock = 40, Sold = 28, Status = "draft" },
+                        new { Name = "That lung da bo", Price = "320.000d", Stock = 15, MaxStock = 30, Sold = 19, Status = "draft" }
+                    };
+
+                    foreach (var p in products)
+                    {
+                        var stockPct = p.MaxStock > 0 ? (double)p.Stock / p.MaxStock * 100 : 0;
+                        var stockColor = stockPct > 50 ? "#22c55e" : stockPct > 20 ? "#eab308" : "#ef4444";
+                        var (badgeStyle, badgeText) = p.Status switch {
+                            "active" => ("background:#dcfce7; color:#166534;", "Dang ban"),
+                            "draft" => ("background:#fef9c3; color:#854d0e;", "Nhap"),
+                            _ => ("background:#fef2f2; color:#991b1b;", "Het hang")
+                        };
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="px-4 py-3">
+                                <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M18 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3Z"/>
+                                    </svg>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 font-medium text-gray-900">@p.Name</td>
+                            <td class="px-4 py-3 mn-mono text-right text-gray-800">@p.Price</td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="mn-mono text-sm text-gray-700">@p.Stock</span>
+                                    <div class="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full" style="width:@(stockPct)%; background:@stockColor;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 mn-mono text-right text-gray-600">@p.Sold</td>
+                            <td class="px-4 py-3">
+                                <span class="text-[11px] px-2 py-0.5 rounded-full font-medium" style="@badgeStyle">@badgeText</span>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <a href="/seller/products/edit" class="px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">Sua</a>
+                                    <button class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+        <p class="text-xs text-gray-500">Hien thi <span class="font-semibold">1-8</span> trong <span class="font-semibold">8</span> san pham</p>
+        <div class="flex items-center gap-1">
+            <button disabled class="px-3 py-1.5 text-xs font-medium text-gray-400 bg-gray-50 rounded-lg cursor-not-allowed">Truoc</button>
+            <button class="px-3 py-1.5 text-xs font-medium text-white rounded-lg" style="background:#1e293b;">1</button>
+            <button disabled class="px-3 py-1.5 text-xs font-medium text-gray-400 bg-gray-50 rounded-lg cursor-not-allowed">Sau</button>
+        </div>
+    </div>
 </div>

@@ -1,0 +1,100 @@
+@page "/admin/products"
+@model MarketNest.Web.Pages.Admin.Products.IndexModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Kiem duyet san pham";
+}
+
+<!-- Header -->
+<div class="flex items-center gap-3 mb-6">
+    <h1 class="text-2xl font-bold text-slate-900">Kiem duyet san pham</h1>
+    <span class="text-xs font-semibold px-2.5 py-1 rounded-full"
+          style="background:rgba(239,68,68,0.1); color:#ef4444;">5 cho duyet</span>
+</div>
+
+<!-- Moderation cards -->
+<div class="space-y-4">
+    @{
+        var pendingProducts = new[] {
+            new { Name = "Ao khoac da lon", Seller = "Shop Thoi Trang VN", Price = "1.850.000d", Category = "Thoi trang", Date =
+   "25/04/2026", Color = "#3b82f6" },
+            new { Name = "Giay chay bo Nike Air", Seller = "Sneaker House", Price = "2.450.000d", Category = "Giay dep", Date =
+    "24/04/2026", Color = "#10b981" },
+            new { Name = "Tui deo cheo canvas", Seller = "Handmade Store", Price = "350.000d", Category = "Phu kien", Date =
+   "23/04/2026", Color = "#ec4899" },
+            new { Name = "Dong ho thong minh", Seller = "Tech Zone", Price = "3.200.000d", Category = "Dien tu", Date =
+ "22/04/2026", Color = "#8b5cf6" },
+            new { Name = "Kinh ram Polarized", Seller = "Style Corner", Price = "680.000d", Category = "Phu kien", Date =
+   "21/04/2026", Color = "#f59e0b" }
+        };
+
+        int cardIdx = 0;
+        foreach (var p in pendingProducts)
+        {
+            var alpineId = $"card{cardIdx}";
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6" x-data="{ showReject: false }">
+                <div class="flex flex-col sm:flex-row gap-5">
+                    <!-- Product image placeholder -->
+                    <div class="w-[120px] h-[120px] rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+                        <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M18 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3Z" />
+                        </svg>
+                    </div>
+
+                    <!-- Product info -->
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-base font-semibold text-slate-900 mb-2">@p.Name</h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                            <div>
+                                <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Nguoi ban
+                                </p>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white"
+                                         style="background:@p.Color;">@p.Seller[0]</div>
+                                    <span class="text-slate-700 font-medium text-xs">@p.Seller</span>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Gia</p>
+                                <p class="mn-mono font-semibold text-slate-800">@p.Price</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Danh muc
+                                </p>
+                                <p class="text-slate-700">@p.Category</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Ngay gui
+                                </p>
+                                <p class="text-slate-500 text-xs">@p.Date</p>
+                            </div>
+                        </div>
+
+                        <!-- Reject reason (hidden by default) -->
+                        <div x-show="showReject" x-cloak x-transition class="mt-4">
+                            <label class="text-xs font-medium text-slate-600 block mb-1.5">Ly do tu choi</label>
+                            <textarea rows="3" placeholder="Nhap ly do tu choi san pham..."
+                                      class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 bg-white focus:border-slate-400 focus:ring-2 focus:ring-red-400/20 focus:outline-none transition-all resize-none"></textarea>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="mt-4 flex items-center gap-2">
+                            <button @@click="showReject = !showReject"
+                                :class="showReject ? 'bg-red-600 text-white' : 'bg-white text-red-600 border border-red-200 hover:bg-red-50'"
+                                class="px-4 py-2 text-sm font-semibold rounded-xl transition-colors">
+                                <span x-text="showReject ? 'Xac nhan tu choi' : 'Tu choi'"></span>
+                            </button>
+                            <button class="px-4 py-2 text-sm font-semibold rounded-xl transition-colors"
+                                    style="background:#00754A; color:#ffffff;">
+                                Phe duyet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            cardIdx++;
+        }
+    }
+</div>

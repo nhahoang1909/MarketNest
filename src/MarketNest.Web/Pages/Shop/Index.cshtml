@@ -1,14 +1,288 @@
-@page "/shop/{slug}"
+@page "/shop/{slug?}"
 @model IndexModel
 @{
-  ViewData["Title"] = "Storefront Page";
+  ViewData["Title"] = "Cua hang";
 }
 
-<h1 class="text-2xl font-bold text-gray-900 mb-6">@ViewData["Title"]</h1>
+<div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+  <div class="flex flex-col lg:flex-row gap-8">
 
-<!-- TODO: Implement Storefront Page page -->
-<div class="card">
-  <div class="card-body">
-    <p class="text-gray-500">This page is under construction.</p>
+    <!-- ░░ SIDEBAR ░░ -->
+    <aside class="w-full lg:w-64 shrink-0" x-data="{ priceMin: '', priceMax: '' }">
+      <div class="lg:sticky lg:top-[82px] space-y-6">
+
+        <!-- Category filter -->
+        <div class="card p-5">
+          <h3 class="mn-h5 text-ink-700 mb-4">Danh muc</h3>
+          <div class="space-y-2.5">
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox"
+                     class="form-checkbox rounded border-ink-300 text-accent-500 focus:ring-accent-400" />
+              <span class="text-sm text-ink-600 group-hover:text-ink-800">Thoi trang</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox"
+                     class="form-checkbox rounded border-ink-300 text-accent-500 focus:ring-accent-400" />
+              <span class="text-sm text-ink-600 group-hover:text-ink-800">Nha cua</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox"
+                     class="form-checkbox rounded border-ink-300 text-accent-500 focus:ring-accent-400" />
+              <span class="text-sm text-ink-600 group-hover:text-ink-800">Dien tu</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox"
+                     class="form-checkbox rounded border-ink-300 text-accent-500 focus:ring-accent-400" />
+              <span class="text-sm text-ink-600 group-hover:text-ink-800">Lam dep</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox"
+                     class="form-checkbox rounded border-ink-300 text-accent-500 focus:ring-accent-400" />
+              <span class="text-sm text-ink-600 group-hover:text-ink-800">The thao</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox"
+                     class="form-checkbox rounded border-ink-300 text-accent-500 focus:ring-accent-400" />
+              <span class="text-sm text-ink-600 group-hover:text-ink-800">Sach</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Price range -->
+        <div class="card p-5">
+          <h3 class="mn-h5 text-ink-700 mb-4">Khoang gia</h3>
+          <div class="flex items-center gap-2">
+            <input type="number" x-model="priceMin" placeholder="Tu" class="form-input w-full text-sm" />
+            <span class="text-ink-400">-</span>
+            <input type="number" x-model="priceMax" placeholder="Den" class="form-input w-full text-sm" />
+          </div>
+          <p class="text-xs text-ink-400 mt-2">Don vi: VND</p>
+        </div>
+
+        <!-- Rating filter -->
+        <div class="card p-5">
+          <h3 class="mn-h5 text-ink-700 mb-4">Danh gia</h3>
+          <div class="space-y-2.5">
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox"
+                     class="form-checkbox rounded border-ink-300 text-accent-500 focus:ring-accent-400" />
+              <span class="text-sm text-ink-600 group-hover:text-ink-800">
+                <span class="text-mustard-500">&#9733;&#9733;&#9733;&#9733;</span>
+                tro len
+              </span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox"
+                     class="form-checkbox rounded border-ink-300 text-accent-500 focus:ring-accent-400" />
+              <span class="text-sm text-ink-600 group-hover:text-ink-800">
+                <span class="text-mustard-500">&#9733;&#9733;&#9733;</span>
+                tro len
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <button class="btn-primary w-full">Ap dung bo loc</button>
+      </div>
+    </aside>
+
+    <!-- ░░ MAIN CONTENT ░░ -->
+    <div class="flex-1 min-w-0">
+      <!-- Top bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <p class="text-sm text-ink-500">Hien thi <span class="font-semibold text-ink-700">1 - 12</span> trong <span
+          class="font-semibold text-ink-700">248</span> san pham</p>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-ink-500">Sap xep:</label>
+            <select class="form-input text-sm py-1.5 pr-8 min-w-[160px]">
+              <option>Moi nhat</option>
+              <option>Gia thap - cao</option>
+              <option>Gia cao - thap</option>
+              <option>Ban chay</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Product grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
+          <!-- Product 1 -->
+          <a href="@AppRoutes.ShopQuery.Product("gom-bat-trang", Guid.Parse("00000000-0000-0000-0000-000000000001"))"
+             class="product-card rounded-2xl overflow-hidden group">
+            <div
+              class="product-card-image bg-lilac-200 h-[220px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span class="text-5xl">&#x1F3FA;</span>
+            </div>
+            <div class="product-card-body p-4">
+              <p class="product-card-title text-ink-700 font-semibold">Binh gom men ngoc</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">450.000&#8363;</p>
+              <p class="text-xs text-ink-400 mt-0.5">Gom Bat Trang</p>
+            </div>
+          </a>
+
+          <!-- Product 2 -->
+          <a href="@AppRoutes.ShopQuery.Product("woodsound", Guid.Parse("00000000-0000-0000-0000-000000000002"))"
+             class="product-card rounded-2xl overflow-hidden group">
+            <div
+              class="product-card-image bg-mustard-200 h-[220px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span class="text-5xl">&#x1F3B6;</span>
+            </div>
+            <div class="product-card-body p-4">
+              <p class="product-card-title text-ink-700 font-semibold">Loa go bluetooth mini</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">750.000&#8363;</p>
+              <p class="text-xs text-ink-400 mt-0.5">Woodsound VN</p>
+            </div>
+          </a>
+
+          <!-- Product 3 -->
+          <a href="@AppRoutes.ShopQuery.Product("lua-hoi-an", Guid.Parse("00000000-0000-0000-0000-000000000003"))"
+             class="product-card rounded-2xl overflow-hidden group">
+            <div
+              class="product-card-image bg-accent-200 h-[220px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span class="text-5xl">&#x1F9E3;</span>
+            </div>
+            <div class="product-card-body p-4">
+              <p class="product-card-title text-ink-700 font-semibold">Khan lua to tam</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">1.250.000&#8363;</p>
+              <p class="text-xs text-ink-400 mt-0.5">Lua Hoi An</p>
+            </div>
+          </a>
+
+          <!-- Product 4 -->
+          <a href="#" class="product-card rounded-2xl overflow-hidden group">
+            <div
+              class="product-card-image bg-forest-200 h-[220px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span class="text-5xl">&#x1F33F;</span>
+            </div>
+            <div class="product-card-body p-4">
+              <p class="product-card-title text-ink-700 font-semibold">Chau cay macrame</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">220.000&#8363;</p>
+              <p class="text-xs text-ink-400 mt-0.5">Green Corner</p>
+            </div>
+          </a>
+
+          <!-- Product 5 -->
+          <a href="#" class="product-card rounded-2xl overflow-hidden group">
+            <div
+              class="product-card-image bg-info-200 h-[220px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span class="text-5xl">&#x1F4D6;</span>
+            </div>
+            <div class="product-card-body p-4">
+              <p class="product-card-title text-ink-700 font-semibold">So tay da thu cong</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">350.000&#8363;</p>
+              <p class="text-xs text-ink-400 mt-0.5">Leather Art VN</p>
+            </div>
+          </a>
+
+          <!-- Product 6 -->
+          <a href="#" class="product-card rounded-2xl overflow-hidden group">
+            <div
+              class="product-card-image bg-danger-100 h-[220px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span class="text-5xl">&#x2615;</span>
+            </div>
+            <div class="product-card-body p-4">
+              <p class="product-card-title text-ink-700 font-semibold">Bo pha ca phe pour-over</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">480.000&#8363;</p>
+              <p class="text-xs text-ink-400 mt-0.5">Cafe Tools SG</p>
+            </div>
+          </a>
+
+          <!-- Product 7 -->
+          <a href="#" class="product-card rounded-2xl overflow-hidden group">
+            <div
+              class="product-card-image bg-warn-200 h-[220px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span class="text-5xl">&#x1F56F;&#xFE0F;</span>
+            </div>
+            <div class="product-card-body p-4">
+              <p class="product-card-title text-ink-700 font-semibold">Nen thom lavender</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">180.000&#8363;</p>
+              <p class="text-xs text-ink-400 mt-0.5">Aroma Craft</p>
+            </div>
+          </a>
+
+          <!-- Product 8 -->
+          <a href="#" class="product-card rounded-2xl overflow-hidden group">
+            <div
+              class="product-card-image bg-lilac-100 h-[220px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span class="text-5xl">&#x1F3A8;</span>
+            </div>
+            <div class="product-card-body p-4">
+              <p class="product-card-title text-ink-700 font-semibold">Tranh in risograph A4</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">290.000&#8363;</p>
+              <p class="text-xs text-ink-400 mt-0.5">Riso Saigon</p>
+            </div>
+          </a>
+
+          <!-- Product 9 -->
+          <a href="#" class="product-card rounded-2xl overflow-hidden group">
+            <div
+              class="product-card-image bg-cream-200 h-[220px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span class="text-5xl">&#x1F45C;</span>
+            </div>
+            <div class="product-card-body p-4">
+              <p class="product-card-title text-ink-700 font-semibold">Tui xach vai canvas</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">320.000&#8363;</p>
+              <p class="text-xs text-ink-400 mt-0.5">Saigon Tote</p>
+            </div>
+          </a>
+
+          <!-- Product 10 -->
+          <a href="#" class="product-card rounded-2xl overflow-hidden group">
+            <div
+              class="product-card-image bg-accent-100 h-[220px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span class="text-5xl">&#x1F4A1;</span>
+            </div>
+            <div class="product-card-body p-4">
+              <p class="product-card-title text-ink-700 font-semibold">Den ban go walnut</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">890.000&#8363;</p>
+              <p class="text-xs text-ink-400 mt-0.5">Wood Light Co</p>
+            </div>
+          </a>
+
+          <!-- Product 11 -->
+          <a href="#" class="product-card rounded-2xl overflow-hidden group">
+            <div
+              class="product-card-image bg-forest-100 h-[220px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span class="text-5xl">&#x1F331;</span>
+            </div>
+            <div class="product-card-body p-4">
+              <p class="product-card-title text-ink-700 font-semibold">Terrarium mini</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">165.000&#8363;</p>
+              <p class="text-xs text-ink-400 mt-0.5">Green Corner</p>
+            </div>
+          </a>
+
+          <!-- Product 12 -->
+          <a href="#" class="product-card rounded-2xl overflow-hidden group">
+            <div
+              class="product-card-image bg-mustard-100 h-[220px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span class="text-5xl">&#x1F457;</span>
+            </div>
+            <div class="product-card-body p-4">
+              <p class="product-card-title text-ink-700 font-semibold">Ao thun cotton huu co</p>
+              <p class="product-card-price text-accent-600 font-bold mn-mono mt-1">395.000&#8363;</p>
+              <p class="text-xs text-ink-400 mt-0.5">Organic Wear VN</p>
+            </div>
+          </a>
+        </div>
+
+        <!-- Pagination -->
+        <nav class="flex items-center justify-center gap-1.5 mt-10" aria-label="Phan trang">
+          <button class="btn-ghost btn-sm px-3 opacity-50 cursor-not-allowed" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
+          </button>
+          <button class="btn-primary btn-sm min-w-[36px]">1</button>
+          <button class="btn-ghost btn-sm min-w-[36px]">2</button>
+          <button class="btn-ghost btn-sm min-w-[36px]">3</button>
+          <span class="text-ink-400 px-1">...</span>
+          <button class="btn-ghost btn-sm min-w-[36px]">21</button>
+          <button class="btn-ghost btn-sm px-3">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </div>
   </div>
-</div>
