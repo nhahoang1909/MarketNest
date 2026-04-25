@@ -7,6 +7,9 @@ using MarketNest.Core.Logging;
 using MarketNest.Web.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Localization;
+using MarketNest.Core.BackgroundJobs;
+using MarketNest.Web.BackgroundJobs;
+using MarketNest.Web.Hosting;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -37,6 +40,8 @@ try
         .AddViewLocalization()
         .AddDataAnnotationsLocalization();
     builder.Services.AddAntiforgery();
+    // Register controllers for module APIs
+    builder.Services.AddControllers();
     builder.Services.AddHealthChecks();
 
     // OpenAPI documentation (replaces Swagger)
@@ -107,6 +112,10 @@ try
         opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
     builder.Services.AddScoped<IAuditService, MarketNest.Auditing.Infrastructure.AuditService>();
 
+    // ── Admin Module (tests) ─────────────────────────────────────────
+    builder.Services.AddModuleDbContext<MarketNest.Admin.Infrastructure.AdminDbContext>(opts =>
+        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
+
     // IUserTimeZoneProvider — resolves user's time zone and date format from HTTP context
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<IUserTimeZoneProvider, HttpContextUserTimeZoneProvider>();
@@ -121,6 +130,13 @@ try
     // builder.Services.AddDisputesModule(builder.Configuration);
     // builder.Services.AddNotificationsModule(builder.Configuration);
     // builder.Services.AddAdminModule(builder.Configuration);
+
+    // Background jobs: registry + execution store + hosted runner (Phase 1)
+    builder.Services.AddSingleton<IJobRegistry, ServiceCollectionJobRegistry>();
+    builder.Services.AddScoped<IJobExecutionStore, NpgsqlJobExecutionStore>();
+    // Example/demo job registration — modules should register their own jobs instead
+    builder.Services.AddSingleton<IBackgroundJob, MarketNest.Web.BackgroundJobs.Test.TestTimerJob>();
+    builder.Services.AddHostedService<JobRunnerHostedService>();
 
     // ── Database: auto-migrate + seed ─────────────────────────────────
     // TODO: Register module DbContexts as they are created:
@@ -190,6 +206,7 @@ try
     app.UseAntiforgery();
 
     app.MapRazorPages();
+    app.MapControllers();
     app.MapHealthChecks(AppRoutes.Health);
 
     // ── Language switch endpoint ──────────────────────────────────────

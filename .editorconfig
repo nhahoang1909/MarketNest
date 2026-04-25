@@ -21,6 +21,16 @@ dotnet_diagnostic.CA1727.severity = none
 # CA1716: Identifiers should not match keywords — only relevant for multi-language public libraries.
 dotnet_diagnostic.CA1716.severity = none
 
+# Allow flat layer-level namespaces (folder-per-feature is allowed).
+# Some IDEs or analyzers emit a diagnostic when namespace does not match folder path.
+# This project intentionally uses layer-level namespaces (e.g., MarketNest.Admin.Application)
+# irrespective of deeper folder organization (Modules/Account/Commands). Suppress common
+# namespace-folder mismatch diagnostics here. If your IDE does not recognize these IDs,
+# you may need to adjust your local analyzer settings.
+dotnet_diagnostic.IDE0051.severity = none
+dotnet_diagnostic.IDE0079.severity = none
+dotnet_diagnostic.SA1200.severity = none
+
 # C# code style
 dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = false

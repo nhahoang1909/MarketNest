@@ -5,7 +5,8 @@
       "Bash(claude plugin *)",
       "Bash(dotnet build *)",
       "Bash(pip install *)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(xargs grep *)"
     ]
   }
 }

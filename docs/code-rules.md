@@ -267,6 +267,46 @@ Sub-folders (e.g., `Commands/`, `Queries/`, `Entities/`, `Persistence/`) are for
 
 **Rule**: When creating a new file, always use the layer-level namespace (`MarketNest.<Module>.Application`, `MarketNest.<Module>.Domain`, or `MarketNest.<Module>.Infrastructure`). Never append folder names beyond the layer.
 
+### Module sub-folder layout and mapping
+
+Modules often contain feature-level sub-folders to organize code (for example `Modules/Account`, `Modules/Product`). This repository uses a folder-per-feature layout for developer ergonomics but retains the flat layer-level namespace convention.
+
+Example folder structure (allowed):
+
+```
+src/MarketNest.Admin/
+  Common/
+  Modules/
+    Account/
+      Commands/
+      CommandHandlers/
+      QueryHandlers/
+      DomainEventHandlers/
+      IntegrationEventHandlers/
+  Infrastructure/
+    Persistence/
+    Messaging/
+  Application/
+  Domain/
+```
+
+Mapping rule (important):
+- Files under `src/MarketNest.Admin/Modules/Account/Commands/` or `.../CommandHandlers/` should use the layer-level namespace `MarketNest.Admin.Application` — do NOT include `Account` or `Commands` in the namespace.
+- Files under `src/MarketNest.Admin/Domain/Entities/` should use `MarketNest.Admin.Domain`.
+- Files under `src/MarketNest.Admin/Infrastructure/Persistence/` should use `MarketNest.Admin.Infrastructure`.
+
+Examples:
+- File: `src/MarketNest.Admin/Modules/Account/Commands/CreateAccountCommand.cs`
+  - Namespace: `namespace MarketNest.Admin.Application;`
+- File: `src/MarketNest.Admin/Modules/Account/CommandHandlers/CreateAccountCommandHandler.cs`
+  - Namespace: `namespace MarketNest.Admin.Application;`
+- File: `src/MarketNest.Admin/Domain/Entities/Account.cs`
+  - Namespace: `namespace MarketNest.Admin.Domain;`
+- File: `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs`
+  - Namespace: `namespace MarketNest.Admin.Infrastructure;`
+
+Note on tooling: some analyzers or IDE rules require file-path-to-namespace correspondence and may emit warnings when namespaces do not match folder hierarchy. These warnings are benign for this project because we intentionally decouple folder layout from namespaces for module-level clarity. If your IDE flags these as warnings, either adjust your local analyzer settings or ignore them — do not change namespaces to include folder names. If CI contains rules that enforce folder-based namespaces, coordinate with the team to update the rule to accept layer-level namespaces.
+
 ### 2.8 Date & Time — Always Use `DateTimeOffset`
 
 All date/time fields in entities, value objects, events, DTOs, and configuration **must** use `DateTimeOffset`, never `DateTime`. This ensures timezone information is always preserved and supports user-configurable time zone and format preferences.
