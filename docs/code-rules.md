@@ -108,6 +108,55 @@ public class PlaceOrderCommandHandler(
 var repo = serviceProvider.GetService<IOrderRepository>(); // anti-pattern
 ```
 
+### 2.5 No Magic Strings / Magic Numbers
+```csharp
+// ❌ Magic strings — hard to refactor, easy to mistype
+if (order.Status == "Shipped") { }
+var key = $"marketnest:cart:{userId}";
+Response.Headers["HX-Redirect"] = "/orders/detail";
+
+// ✅ Use enums for finite sets of values
+public enum OrderStatus { Pending, Confirmed, Processing, Shipped, Delivered, Completed, Cancelled }
+if (order.Status == OrderStatus.Shipped) { }
+
+// ✅ Use constants for string/numeric literals
+public static class RedisKeys
+{
+    private const string Prefix = "marketnest";
+    public static string Cart(Guid userId) => $"{Prefix}:cart:{userId}";
+    public static string RefreshToken(string tokenId) => $"{Prefix}:refresh:{tokenId}";
+}
+
+// ✅ Use constants for route paths and configuration keys
+public static class Routes
+{
+    public const string OrderDetail = "/orders/detail";
+    public const string AdminDashboard = "/admin/dashboard";
+}
+
+// ❌ Magic numbers — unexplained numeric literals
+if (retryCount > 3) { }
+var commission = total * 0.05m;
+Thread.Sleep(5000);
+
+// ✅ Named constants with clear intent
+public static class PolicyConstants
+{
+    public const int MaxRetryAttempts = 3;
+    public const decimal DefaultCommissionRate = 0.05m;
+    public const int RetryDelayMilliseconds = 5000;
+}
+
+// ✅ Also acceptable: well-named configuration options bound from appsettings
+public record CommissionOptions
+{
+    public const string SectionName = "Commission";
+    public decimal DefaultRate { get; init; } = 0.05m;
+}
+```
+
+**Rule**: Every string literal used more than once and every "unexplained" number **must** be extracted to a `const`, `static readonly`, enum, or configuration option. Exceptions: `0`, `1`, `-1`, `string.Empty`, and obvious boolean comparisons.
+
 ---
 
 ## 3. Domain Layer Rules
@@ -366,4 +415,5 @@ Before merging:
 - [ ] New business rules have unit tests
 - [ ] New API endpoints have integration tests
 - [ ] No secrets in code or committed config files
+- [ ] No magic strings or magic numbers — all extracted to constants/enums (see §2.5)
 - [ ] Logging uses structured templates (no interpolation)

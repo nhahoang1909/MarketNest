@@ -21,8 +21,10 @@ node_modules/
 src/MarketNest.Web/wwwroot/css/site.css
 
 # ── Secrets & Environment ─────────────────────────────────
-*.env
-.env.*
+.env
+.env.local
+.env.production
+!.env.example
 appsettings.Production.json
 appsettings.Secrets.json
 **/user-secrets/

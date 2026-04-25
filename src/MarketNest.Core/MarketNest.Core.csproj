@@ -11,12 +11,22 @@
         <PackageReference Include="Azure.Identity"/>
         <PackageReference Include="MediatR"/>
         <PackageReference Include="FluentValidation"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore"/>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="OpenTelemetry.Api"/>
         <PackageReference Include="System.Security.Cryptography.Xml"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+            <_Parameter1>MarketNest.Web</_Parameter1>
+        </AssemblyAttribute>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+            <_Parameter1>MarketNest.UnitTests</_Parameter1>
+        </AssemblyAttribute>
     </ItemGroup>
 
     <ItemGroup>
