@@ -30,5 +30,13 @@ document.addEventListener("alpine:init", () => {
                 }
             }
         },
+
+        logout() {
+            this.isAuthenticated = false;
+            this.id = null;
+            this.name = "";
+            this.role = "guest";
+            window.location.href = "/auth/login";
+        },
     });
 });

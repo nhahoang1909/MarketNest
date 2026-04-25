@@ -5,133 +5,117 @@
     var currentPath  = Context.Request.Path.Value ?? "";
 }
 <!DOCTYPE html>
-<html lang="vi" class="scroll-smooth">
+<html lang="vi" class="scroll-smooth" x-data="{ theme: localStorage.getItem('mn-theme') || 'light' }"
+      :data-theme="theme">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#16a34a" />
+    <meta name="theme-color" content="#1a1f1b" />
     <title>@ViewData["Title"] - MarketNest</title>
 
-    <!-- Fonts: Nunito (brand) + Plus Jakarta Sans (body) -->
+    <!-- Fonts: Fraunces (display) + Geist (UI) + Geist Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-sans/style.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-mono/style.css" rel="stylesheet" />
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 
     <!-- HTMX -->
     <meta name="htmx-config"
           content='{"defaultSwapStyle":"outerHTML","globalViewTransitions":true,"getCacheBusterParam":true}'>
-    <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+    <script src="https://unpkg.com/htmx.org@@2.0.4" defer></script>
 
     <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@@3.x.x/dist/cdn.min.js"></script>
 
-    <!-- Alpine stores -->
-    <script src="~/js/stores/toastStore.js" defer></script>
-    <script src="~/js/stores/cartStore.js" defer></script>
-    <script src="~/js/stores/authStore.js" defer></script>
-
-    <!-- Alpine components -->
+    <!-- Alpine stores & components -->
+    <script src="~/js/stores/toasts.js" defer></script>
+    <script src="~/js/stores/cart.js" defer></script>
+    <script src="~/js/stores/user.js" defer></script>
     <script src="~/js/components/searchBar.js" defer></script>
-
-    <!-- App bootstrap -->
     <script src="~/js/magic/htmxHelpers.js" defer></script>
     <script src="~/js/app.js" defer></script>
 
     @await RenderSectionAsync("Head", required: false)
 </head>
 
-<body class="min-h-screen flex flex-col bg-surface-warm" x-data>
+<body class="min-h-screen flex flex-col bg-cream-100" x-data>
     <input type="hidden" name="__RequestVerificationToken" value="@requestToken.RequestToken" />
 
-    <!-- ░░ PROMO BAR ░░ -->
-    <div x-data="{ visible: !sessionStorage.getItem('promo-dismissed') }"
-         x-show="visible"
-         x-transition:leave="transition duration-200"
-         x-transition:leave-start="opacity-100 max-h-10"
-         x-transition:leave-end="opacity-0 max-h-0"
-         class="promo-bar">
-        <span>
-            🚀 <strong>Miễn phí vận chuyển</strong> cho đơn hàng trên 500.000₫ &nbsp;·&nbsp;
-            Dùng mã <span class="font-mono bg-white/20 px-1.5 py-0.5 rounded text-xs tracking-wide">WELCOME10</span>
-            để giảm thêm 10%
-        </span>
-        <button @@click="visible = false; sessionStorage.setItem('promo-dismissed', '1')"
-                class="absolute right-4 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100 transition-opacity text-lg leading-none"
-                aria-label="Đóng thông báo">
-            &times;
-        </button>
-    </div>
-
-    <!-- ░░ MAIN HEADER ░░ -->
-    <header class="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <!-- ░░ HEADER ░░ -->
+    <header class="sticky top-0 z-50 bg-surface border-b border-ink-100/60"
+            style="backdrop-filter: blur(12px); background: rgba(255,255,255,0.92);">
         <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center gap-4 lg:gap-8 h-[68px]">
+            <div class="flex items-center gap-4 lg:gap-8 h-[64px]">
 
                 <!-- Logo -->
-                <a href="/" class="shrink-0 flex items-center gap-1">
-                    <span class="text-2xl font-black text-brand-500 leading-none"
-                          style="font-family:'Nunito',sans-serif; letter-spacing:-0.5px">
-                        Market
-                    </span>
-                    <span class="text-2xl font-black text-market-600 leading-none"
-                          style="font-family:'Nunito',sans-serif; letter-spacing:-0.5px">
-                        Nest
+                <a href="/" class="shrink-0 flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-ink-700 flex items-center justify-center">
+                        <span class="text-accent-400 font-bold text-sm italic"
+                              style="font-family:'Fraunces',serif">m</span>
+                    </div>
+                    <span class="text-lg font-semibold text-ink-700 tracking-tight hidden sm:block">
+                        MarketNest
                     </span>
                 </a>
 
                 <!-- Search (desktop) -->
-                <div class="hidden md:flex flex-1 max-w-2xl" x-data="searchBar()">
-                    <form action="/search" method="get" class="search-pill w-full">
-                        <!-- Category dropdown -->
-                        <select name="cat"
-                                class="shrink-0 bg-transparent border-r border-gray-200 px-4 text-sm text-gray-600 focus:outline-none cursor-pointer h-full">
-                            <option value="">Tất cả</option>
-                            <option value="food">Thực phẩm</option>
-                            <option value="fashion">Thời trang</option>
-                            <option value="electronics">Điện tử</option>
-                            <option value="home">Nhà cửa</option>
-                            <option value="beauty">Làm đẹp</option>
-                        </select>
-
-                        <!-- Text input -->
+                <div class="hidden md:flex flex-1 max-w-xl relative" x-data="searchBar()">
+                    <form action="/search" method="get" class="w-full relative">
+                        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-300 pointer-events-none"
+                             fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z"/>
+                        </svg>
                         <input type="text" name="q" x-model="query"
-                               placeholder="Tìm kiếm sản phẩm, thương hiệu..."
-                               class="flex-1 bg-transparent px-4 py-2.5 text-sm text-gray-900
-                                      placeholder:text-gray-400 focus:outline-none"
+                               placeholder="Tìm kiếm sản phẩm..."
+                               class="w-full h-[42px] pl-11 pr-4 text-sm rounded-full
+                                      border border-ink-200 bg-cream-50
+                                      focus:bg-surface focus:border-ink-700 focus:ring-0 focus:outline-none
+                                      placeholder:text-ink-300 transition-all duration-200"
                                hx-get="/search/suggestions"
                                hx-trigger="keyup changed delay:350ms"
                                hx-target="#search-suggestions" />
-
-                        <!-- Submit -->
-                        <button type="submit"
-                                class="shrink-0 bg-market-600 hover:bg-market-700 active:bg-market-800
-                                       text-white px-5 rounded-r-full transition-colors duration-150
-                                       flex items-center justify-center">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5"
-                                 viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z"/>
-                            </svg>
-                        </button>
                     </form>
-
-                    <!-- Suggestions dropdown -->
                     <div id="search-suggestions"
-                         class="absolute top-full mt-1 left-0 right-0 bg-white rounded-2xl
-                                shadow-xl border border-gray-100 z-50 overflow-hidden">
+                         class="absolute top-full mt-1 left-0 right-0 bg-surface rounded-2xl
+                                shadow-xl border border-ink-100 z-50 overflow-hidden">
                     </div>
                 </div>
 
+                <!-- Nav links (desktop) -->
+                <nav class="hidden lg:flex items-center gap-1">
+                    <a href="/"
+                       class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors
+                              @(currentPath == "/" ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
+                        Trang chủ
+                    </a>
+                    <a href="/shop"
+                       class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors
+                              @(currentPath.StartsWith("/shop") ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
+                        Duyệt
+                    </a>
+                    <a href="/cart"
+                       class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors
+                              @(currentPath.StartsWith("/cart") ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
+                        Giỏ hàng
+                    </a>
+                    <a href="/account/orders"
+                       class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors
+                              @(currentPath.StartsWith("/account/orders") ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
+                        Đơn hàng
+                    </a>
+                </nav>
+
                 <!-- Right actions -->
-                <div class="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto md:ml-0">
+                <div class="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto lg:ml-0">
 
                     <!-- Mobile search trigger -->
                     <button class="btn-icon md:hidden" aria-label="Tìm kiếm">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-                             viewBox="0 0 24 24">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z"/>
                         </svg>
@@ -139,60 +123,65 @@
 
                     <!-- Wishlist -->
                     <a href="/account/wishlist" class="btn-icon hidden sm:inline-flex" aria-label="Yêu thích">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-                             viewBox="0 0 24 24">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/>
                         </svg>
                     </a>
 
                     <!-- Cart -->
-                    <a href="/cart"
-                       class="relative btn-icon"
-                       aria-label="Giỏ hàng">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-                             viewBox="0 0 24 24">
+                    <a href="/cart" class="relative btn-icon" aria-label="Giỏ hàng">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"/>
+                                  d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
                         </svg>
-                        <!-- Cart badge -->
                         <template x-if="$store.cart.count > 0">
                             <span x-text="$store.cart.count > 99 ? '99+' : $store.cart.count"
                                   class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1
-                                         bg-brand-500 text-white text-[10px] font-bold
+                                         bg-accent-400 text-accent-900 text-[10px] font-bold
                                          rounded-full flex items-center justify-center leading-none">
                             </span>
                         </template>
                     </a>
 
+                    <!-- Theme toggle -->
+                    <button @@click="theme = theme === 'light' ? 'dark' : 'light'; localStorage.setItem('mn-theme', theme)"
+                            class="btn-icon" aria-label="Đổi giao diện">
+                        <template x-if="theme === 'light'">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
+                            </svg>
+                        </template>
+                        <template x-if="theme === 'dark'">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/>
+                            </svg>
+                        </template>
+                    </button>
+
                     <!-- Auth: logged out -->
-                    <template x-if="!$store.auth.isLoggedIn">
+                    <template x-if="!$store.user.isAuthenticated">
                         <a href="/auth/login"
-                           class="hidden sm:inline-flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2
-                                  text-sm font-semibold text-white hover:bg-gray-700 transition-colors">
+                           class="hidden sm:inline-flex btn-primary text-xs px-4 py-2">
                             Đăng nhập
                         </a>
                     </template>
 
                     <!-- Auth: logged in -->
-                    <template x-if="$store.auth.isLoggedIn">
+                    <template x-if="$store.user.isAuthenticated">
                         <div x-data="{ open: false }" class="relative">
                             <button @@click="open = !open"
-                                    class="flex items-center gap-2 rounded-xl px-2 py-1.5
-                                           hover:bg-gray-50 transition-colors">
-                                <div class="avatar avatar-sm" aria-hidden="true"
-                                     x-text="($store.auth.displayName || 'U').charAt(0).toUpperCase()">
+                                    class="flex items-center gap-2 rounded-full px-2 py-1.5
+                                           hover:bg-cream-100 transition-colors">
+                                <div class="avatar avatar-sm"
+                                     x-text="($store.user.name || 'U').charAt(0).toUpperCase()">
                                 </div>
-                                <span class="hidden sm:block text-sm font-medium text-gray-700 max-w-[100px] truncate"
-                                      x-text="$store.auth.displayName"></span>
-                                <svg class="w-3.5 h-3.5 text-gray-400 transition-transform duration-200"
-                                     :class="{ 'rotate-180': open }"
-                                     fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
-                                </svg>
+                                <span class="hidden sm:block text-sm font-medium text-ink-600 max-w-[100px] truncate"
+                                      x-text="$store.user.name"></span>
                             </button>
 
-                            <!-- Dropdown menu -->
                             <div x-show="open"
                                  @@click.away="open = false"
                                  x-cloak
@@ -200,46 +189,32 @@
                                  x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                                  x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                                  x-transition:leave="transition ease-in duration-100"
-                                 x-transition:leave-start="opacity-100 scale-100"
-                                 x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
-                                 class="absolute right-0 mt-2 w-52 bg-white rounded-2xl
-                                        shadow-xl border border-gray-100 py-1.5 z-50 origin-top-right">
-                                <!-- Profile header -->
-                                <div class="px-4 py-2.5 border-b border-gray-100">
-                                    <p class="text-xs text-gray-500">Đăng nhập với</p>
-                                    <p class="text-sm font-semibold text-gray-900 truncate"
-                                       x-text="$store.auth.displayName"></p>
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 class="absolute right-0 mt-2 w-52 bg-surface rounded-2xl
+                                        shadow-xl border border-ink-100 py-1.5 z-50 origin-top-right">
+                                <div class="px-4 py-2.5 border-b border-ink-100/60">
+                                    <p class="text-xs text-ink-400">Đăng nhập với</p>
+                                    <p class="text-sm font-semibold text-ink-700 truncate"
+                                       x-text="$store.user.name"></p>
                                 </div>
                                 <div class="py-1">
                                     <a href="/account/settings"
-                                       class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
-                                        </svg>
+                                       class="flex items-center gap-3 px-4 py-2 text-sm text-ink-600 hover:bg-cream-50 transition-colors">
                                         Tài khoản
                                     </a>
                                     <a href="/account/orders"
-                                       class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"/>
-                                        </svg>
+                                       class="flex items-center gap-3 px-4 py-2 text-sm text-ink-600 hover:bg-cream-50 transition-colors">
                                         Đơn hàng của tôi
                                     </a>
                                     <a href="/seller/dashboard"
-                                       class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z"/>
-                                        </svg>
+                                       class="flex items-center gap-3 px-4 py-2 text-sm text-ink-600 hover:bg-cream-50 transition-colors">
                                         Kênh bán hàng
                                     </a>
                                 </div>
-                                <div class="border-t border-gray-100 pt-1">
-                                    <button @@click="$store.auth.logout()"
-                                            class="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600
-                                                   hover:bg-red-50 transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25"/>
-                                        </svg>
+                                <div class="border-t border-ink-100/60 pt-1">
+                                    <button @@click="$store.user.logout()"
+                                            class="flex items-center gap-3 w-full px-4 py-2 text-sm text-danger-500
+                                                   hover:bg-danger-50 transition-colors">
                                         Đăng xuất
                                     </button>
                                 </div>
@@ -249,115 +224,70 @@
                 </div>
             </div>
         </div>
-
-        <!-- ░ Category Navigation Strip ░ -->
-        <div class="border-t border-gray-100 bg-white">
-            <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center gap-2 overflow-x-auto py-2.5 scrollbar-hide"
-                     style="-ms-overflow-style:none; scrollbar-width:none;">
-                    <a href="/shop" class="category-chip @(currentPath == "/shop" ? "category-chip-active" : "")">
-                        🏠 Tất cả
-                    </a>
-                    <a href="/shop?cat=food" class="category-chip @(currentPath.Contains("cat=food") ? "category-chip-active" : "")">
-                        🥦 Thực phẩm
-                    </a>
-                    <a href="/shop?cat=fashion" class="category-chip">
-                        👗 Thời trang
-                    </a>
-                    <a href="/shop?cat=electronics" class="category-chip">
-                        📱 Điện tử
-                    </a>
-                    <a href="/shop?cat=home" class="category-chip">
-                        🏡 Nhà cửa
-                    </a>
-                    <a href="/shop?cat=beauty" class="category-chip">
-                        💄 Làm đẹp
-                    </a>
-                    <a href="/shop?cat=sports" class="category-chip">
-                        ⚽ Thể thao
-                    </a>
-                    <a href="/shop?cat=books" class="category-chip">
-                        📚 Sách
-                    </a>
-                    <a href="/shop?cat=toys" class="category-chip">
-                        🧸 Đồ chơi
-                    </a>
-                    <a href="/shop?cat=automotive" class="category-chip">
-                        🚗 Xe cộ
-                    </a>
-                    <a href="/shop?cat=pets" class="category-chip">
-                        🐾 Thú cưng
-                    </a>
-                </div>
-            </div>
-        </div>
     </header>
 
     <!-- ░░ MAIN CONTENT ░░ -->
-    <main class="flex-1 max-w-[1400px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+    <main class="flex-1">
         @RenderBody()
     </main>
 
     <!-- ░░ FOOTER ░░ -->
-    <footer class="bg-gray-900 text-gray-300 mt-12">
-        <!-- Top footer -->
-        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+    <footer class="bg-ink-700 text-cream-200 mt-12">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-14">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
                 <!-- Brand column -->
-                <div class="sm:col-span-2 lg:col-span-1">
-                    <a href="/" class="inline-flex items-baseline gap-0.5 mb-4">
-                        <span class="text-2xl font-black text-white" style="font-family:'Nunito',sans-serif">Market</span>
-                        <span class="text-2xl font-black text-market-400" style="font-family:'Nunito',sans-serif">Nest</span>
+                <div class="sm:col-span-2 lg:col-span-2">
+                    <a href="/" class="inline-flex items-center gap-2 mb-4">
+                        <div class="w-9 h-9 rounded-full bg-accent-400 flex items-center justify-center">
+                            <span class="text-accent-900 font-bold italic"
+                                  style="font-family:'Fraunces',serif">m</span>
+                        </div>
+                        <span class="text-xl font-semibold text-cream-100 tracking-tight">MarketNest</span>
                     </a>
-                    <p class="text-sm text-gray-400 leading-relaxed mb-5">
+                    <p class="text-sm text-cream-400 leading-relaxed mb-6 max-w-xs">
                         Sàn thương mại điện tử đa người bán — nơi kết nối người mua và người bán trên toàn quốc.
                     </p>
-                    <div class="flex gap-3">
-                        <a href="#" class="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
-                            <span class="sr-only">Facebook</span>
-                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                        </a>
-                        <a href="#" class="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
-                            <span class="sr-only">TikTok</span>
-                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
-                        </a>
-                        <a href="#" class="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
-                            <span class="sr-only">Zalo</span>
-                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 16.75H6.106C5.494 16.75 5 16.256 5 15.644V8.356C5 7.744 5.494 7.25 6.106 7.25h11.788C18.506 7.25 19 7.744 19 8.356v7.288c0 .612-.494 1.106-1.106 1.106zM8.5 10.75c-.414 0-.75.336-.75.75v2c0 .414.336.75.75.75s.75-.336.75-.75v-2c0-.414-.336-.75-.75-.75zm7 0c-.414 0-.75.336-.75.75v2c0 .414.336.75.75.75s.75-.336.75-.75v-2c0-.414-.336-.75-.75-.75zm-3.5 0c-.414 0-.75.336-.75.75v2c0 .414.336.75.75.75s.75-.336.75-.75v-2c0-.414-.336-.75-.75-.75z"/></svg>
-                        </a>
+                    <!-- Newsletter -->
+                    <div class="flex gap-2 max-w-xs">
+                        <input type="email" placeholder="Email của bạn"
+                               class="flex-1 h-10 px-4 text-sm rounded-full bg-white/10 border border-white/10
+                                      text-cream-100 placeholder:text-cream-500
+                                      focus:bg-white/15 focus:border-accent-400 focus:outline-none transition-all" />
+                        <button class="h-10 px-5 text-sm font-semibold rounded-full
+                                       bg-accent-400 text-accent-900 hover:bg-accent-300 transition-colors">
+                            Đăng ký
+                        </button>
                     </div>
                 </div>
 
                 <!-- Links columns -->
                 <div>
-                    <h4 class="text-sm font-bold text-white mb-4 uppercase tracking-wider">Mua sắm</h4>
+                    <h4 class="text-[11px] font-bold text-cream-100 mb-4 uppercase tracking-[0.12em]">Mua sắm</h4>
                     <ul class="space-y-2.5 text-sm">
-                        <li><a href="/shop" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Tất cả sản phẩm</a></li>
-                        <li><a href="/shop?sort=new" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Hàng mới về</a></li>
-                        <li><a href="/shop?sort=bestseller" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Bán chạy nhất</a></li>
-                        <li><a href="/shop?sale=1" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Đang giảm giá</a></li>
-                        <li><a href="/storefronts" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Cửa hàng</a></li>
+                        <li><a href="/shop" class="text-cream-400 hover:text-cream-100 transition-colors">Tất cả sản phẩm</a></li>
+                        <li><a href="/shop?sort=new" class="text-cream-400 hover:text-cream-100 transition-colors">Hàng mới về</a></li>
+                        <li><a href="/shop?sort=bestseller" class="text-cream-400 hover:text-cream-100 transition-colors">Bán chạy nhất</a></li>
+                        <li><a href="/shop?sale=1" class="text-cream-400 hover:text-cream-100 transition-colors">Đang giảm giá</a></li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4 class="text-sm font-bold text-white mb-4 uppercase tracking-wider">Bán hàng</h4>
+                    <h4 class="text-[11px] font-bold text-cream-100 mb-4 uppercase tracking-[0.12em]">Bán hàng</h4>
                     <ul class="space-y-2.5 text-sm">
-                        <li><a href="/seller/dashboard" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Kênh bán hàng</a></li>
-                        <li><a href="/auth/register?role=seller" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Đăng ký bán</a></li>
-                        <li><a href="#" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Chính sách hoa hồng</a></li>
-                        <li><a href="#" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Hướng dẫn người bán</a></li>
+                        <li><a href="/seller/dashboard" class="text-cream-400 hover:text-cream-100 transition-colors">Kênh bán hàng</a></li>
+                        <li><a href="/auth/register?role=seller" class="text-cream-400 hover:text-cream-100 transition-colors">Đăng ký bán</a></li>
+                        <li><a href="#" class="text-cream-400 hover:text-cream-100 transition-colors">Chính sách hoa hồng</a></li>
+                        <li><a href="#" class="text-cream-400 hover:text-cream-100 transition-colors">Hướng dẫn người bán</a></li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4 class="text-sm font-bold text-white mb-4 uppercase tracking-wider">Hỗ trợ</h4>
+                    <h4 class="text-[11px] font-bold text-cream-100 mb-4 uppercase tracking-[0.12em]">Hỗ trợ</h4>
                     <ul class="space-y-2.5 text-sm">
-                        <li><a href="#" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Trung tâm trợ giúp</a></li>
-                        <li><a href="#" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Chính sách hoàn trả</a></li>
-                        <li><a href="#" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Theo dõi đơn hàng</a></li>
-                        <li><a href="/account/disputes" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Khiếu nại</a></li>
-                        <li><a href="mailto:support@marketnest.vn" class="hover:text-white hover:translate-x-0.5 transition-all inline-block">Liên hệ</a></li>
+                        <li><a href="#" class="text-cream-400 hover:text-cream-100 transition-colors">Trung tâm trợ giúp</a></li>
+                        <li><a href="#" class="text-cream-400 hover:text-cream-100 transition-colors">Chính sách hoàn trả</a></li>
+                        <li><a href="/account/disputes" class="text-cream-400 hover:text-cream-100 transition-colors">Khiếu nại</a></li>
+                        <li><a href="mailto:support@marketnest.vn" class="text-cream-400 hover:text-cream-100 transition-colors">Liên hệ</a></li>
                     </ul>
                 </div>
             </div>
@@ -366,12 +296,12 @@
         <!-- Bottom bar -->
         <div class="border-t border-white/10">
             <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-cream-500">
                     <span>&copy; @DateTime.UtcNow.Year MarketNest. Built as a learning project.</span>
                     <div class="flex items-center gap-4">
-                        <a href="#" class="hover:text-gray-300 transition-colors">Điều khoản</a>
-                        <a href="#" class="hover:text-gray-300 transition-colors">Bảo mật</a>
-                        <a href="#" class="hover:text-gray-300 transition-colors">Cookie</a>
+                        <a href="#" class="hover:text-cream-200 transition-colors">Điều khoản</a>
+                        <a href="#" class="hover:text-cream-200 transition-colors">Bảo mật</a>
+                        <a href="#" class="hover:text-cream-200 transition-colors">Cookie</a>
                     </div>
                 </div>
             </div>
@@ -381,36 +311,23 @@
     <!-- ░░ TOAST NOTIFICATIONS ░░ -->
     <div class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"
          x-data x-cloak>
-        <template x-for="toast in $store.toast.items" :key="toast.id">
+        <template x-for="toast in $store.toasts.items" :key="toast.id">
             <div x-show="toast.visible"
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 translate-y-4 scale-95"
                  x-transition:enter-end="opacity-100 translate-y-0 scale-100"
                  x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                  x-transition:leave-end="opacity-0 translate-y-2 scale-95"
                  :class="{
-                     'border-market-300 bg-market-50 text-market-900': toast.type === 'success',
-                     'border-red-300 bg-red-50 text-red-900':          toast.type === 'error',
-                     'border-amber-300 bg-amber-50 text-amber-900':     toast.type === 'warning',
-                     'border-blue-300 bg-blue-50 text-blue-900':        toast.type === 'info'
+                     'border-success-300 bg-success-50 text-success-700': toast.type === 'success',
+                     'border-danger-300 bg-danger-50 text-danger-700':    toast.type === 'error',
+                     'border-warn-300 bg-warn-50 text-warn-700':          toast.type === 'warning',
+                     'border-info-300 bg-info-50 text-info-700':          toast.type === 'info'
                  }"
                  class="pointer-events-auto flex items-start gap-3 px-4 py-3.5
                         rounded-2xl border shadow-lg backdrop-blur-sm">
-                <span class="text-base mt-0.5" aria-hidden="true"
-                      :class="{
-                          'text-market-600': toast.type === 'success',
-                          'text-red-600':    toast.type === 'error',
-                          'text-amber-600':  toast.type === 'warning',
-                          'text-blue-600':   toast.type === 'info'
-                      }">
-                    <template x-if="toast.type === 'success'">✓</template>
-                    <template x-if="toast.type === 'error'">✗</template>
-                    <template x-if="toast.type === 'warning'">⚠</template>
-                    <template x-if="toast.type === 'info'">ℹ</template>
-                </span>
                 <span x-text="toast.message" class="text-sm font-medium flex-1"></span>
-                <button @@click="$store.toast.dismiss(toast.id)"
+                <button @@click="$store.toasts.dismiss(toast.id)"
                         class="opacity-40 hover:opacity-100 transition-opacity text-lg leading-none -mt-0.5">
                     &times;
                 </button>
@@ -421,7 +338,7 @@
     <script>
         document.addEventListener('showToast', function (e) {
             const { message, type } = e.detail ?? {};
-            if (message && window.Alpine) Alpine.store('toast').show(message, type ?? 'info');
+            if (message && window.Alpine) Alpine.store('toasts').show(message, type ?? 'info');
         });
     </script>
 

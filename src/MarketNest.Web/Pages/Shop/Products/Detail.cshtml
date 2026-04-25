@@ -1,14 +1,390 @@
 @page "/shop/{slug}/products/{productId:guid}"
 @model DetailModel
 @{
-  ViewData["Title"] = "Product Detail";
+  ViewData["Title"] = "Binh gom men ngoc";
 }
 
-<h1 class="text-2xl font-bold text-gray-900 mb-6">@ViewData["Title"]</h1>
+<div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
 
-<!-- TODO: Implement Product Detail page -->
-<div class="card">
-  <div class="card-body">
-    <p class="text-gray-500">This page is under construction.</p>
-  </div>
-</div>
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 text-sm text-ink-400 mb-8">
+    <a href="/" class="hover:text-ink-700 transition-colors">Trang chu</a>
+    <span>/</span>
+    <a href="/shop" class="hover:text-ink-700 transition-colors">Cua hang</a>
+    <span>/</span>
+    <span class="text-ink-700 font-medium">Binh gom men ngoc</span>
+  </nav>
+
+  <!-- Main product grid -->
+  <div class="flex flex-col lg:flex-row gap-8 lg:gap-12" x-data="{
+    selectedImage: 0,
+    selectedColor: 0,
+    selectedSize: 'M',
+    quantity: 1,
+    tab: 'description',
+    images: [
+    { bg: 'bg-lilac-200', emoji: '&#x1F3FA;' },
+    { bg: 'bg-lilac-100', emoji: '&#x1F3FA;' },
+    { bg: 'bg-accent-100', emoji: '&#x1F3FA;' },
+    { bg: 'bg-mustard-100', emoji: '&#x1F3FA;' },
+    { bg: 'bg-cream-200', emoji: '&#x1F3FA;' }
+    ],
+    colors: [
+    { name: 'Ngoc lam', class: 'bg-[#5BA8A0]' },
+    { name: 'Trang su', class: 'bg-[#F5F0E8]' },
+    { name: 'Xanh cobalt', class: 'bg-[#2F4B8F]' },
+    { name: 'Nau dat', class: 'bg-[#8B6B4E]' }
+    ]
+    }">
+
+    <!-- Thumbnails column -->
+    <div class="hidden lg:flex flex-col gap-3 w-[90px] shrink-0">
+      <template x-for="(img, index) in images" :key="index">
+        <button @@click="selectedImage = index"
+          :class="selectedImage === index ? 'ring-2 ring-ink-700 ring-offset-2' : 'opacity-60 hover:opacity-100'"
+          class="w-[90px] h-[90px] rounded-xl overflow-hidden transition-all flex items-center justify-center"
+          :style="'background-color: var(--tw-' + img.bg + ')'">
+          <div class="w-full h-full flex items-center justify-center" :class="img.bg">
+            <span class="text-2xl" x-html="img.emoji"></span>
+          </div>
+        </button>
+      </template>
+    </div>
+
+    <!-- Main image -->
+    <div class="flex-[1.1] min-w-0">
+      <div class="bg-lilac-200 rounded-3xl aspect-square flex items-center justify-center overflow-hidden">
+        <span class="text-[120px]">&#x1F3FA;</span>
+      </div>
+      <!-- Mobile thumbnails -->
+      <div class="flex lg:hidden gap-2 mt-4 overflow-x-auto pb-2">
+        <template x-for="(img, index) in images" :key="'m-'+index">
+          <button @@click="selectedImage = index"
+            :class="selectedImage === index ? 'ring-2 ring-ink-700' : 'opacity-60'"
+            class="w-16 h-16 rounded-lg overflow-hidden shrink-0 flex items-center justify-center"
+            :style="'background-color: var(--tw-' + img.bg + ')'">
+            <div class="w-full h-full flex items-center justify-center" :class="img.bg">
+              <span class="text-lg" x-html="img.emoji"></span>
+            </div>
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <!-- Info panel -->
+    <div class="flex-1 min-w-0">
+      <h1 class="mn-h3 text-ink-800">Binh gom men ngoc</h1>
+      <p class="mn-mono text-3xl text-accent-600 font-bold mt-3">450.000&#8363;</p>
+
+      <div class="flex items-center gap-2 mt-3">
+        <div class="flex text-mustard-500 text-sm">
+          &#9733;&#9733;&#9733;&#9733;&#9733;
+        </div>
+        <span class="text-sm text-ink-400">(48 danh gia)</span>
+      </div>
+
+      <!-- Color swatches -->
+      <div class="mt-6">
+        <p class="text-sm font-medium text-ink-600 mb-3">Mau sac: <span class="text-ink-800"
+                                                                          x-text="colors[selectedColor].name"></span></p>
+          <div class="flex gap-3">
+            <template x-for="(color, i) in colors" :key="'c-'+i">
+              <button @@click="selectedColor = i"
+                :class="[color.class, selectedColor === i ? 'ring-2 ring-offset-2 ring-ink-700 scale-110' : 'hover:scale-105']"
+                class="w-8 h-8 rounded-full border border-ink-200 transition-all" :title="color.name">
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Size options -->
+        <div class="mt-6">
+          <p class="text-sm font-medium text-ink-600 mb-3">Kich thuoc</p>
+          <div class="flex flex-wrap gap-2">
+            <template x-for="size in ['S', 'M', 'L', 'XL']" :key="size">
+              <button @@click="selectedSize = size" :class="selectedSize === size ? 'mn-chip-active' : 'mn-chip'"
+                class="min-w-[48px] px-4 py-2 text-sm font-medium rounded-full border transition-all" x-text="size">
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Quantity -->
+        <div class="mt-6">
+          <p class="text-sm font-medium text-ink-600 mb-3">So luong</p>
+          <div class="inline-flex items-center border border-ink-200 rounded-full overflow-hidden">
+            <button @@click="quantity = Math.max(1, quantity - 1)"
+              class="w-10 h-10 flex items-center justify-center text-ink-500 hover:bg-cream-100 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" d="M5 12h14" />
+              </svg>
+            </button>
+            <span class="w-12 text-center text-sm font-semibold text-ink-700" x-text="quantity"></span>
+            <button @@click="quantity = Math.min(99, quantity + 1)"
+              class="w-10 h-10 flex items-center justify-center text-ink-500 hover:bg-cream-100 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" d="M12 5v14m-7-7h14" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-8 flex gap-3">
+          <button class="btn-primary btn-lg flex-1">
+            <svg class="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
+            Them vao gio
+          </button>
+          <button class="btn-ghost btn-lg btn-icon shrink-0" aria-label="Yeu thich">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Seller info -->
+        <div class="mt-8 pt-6 border-t border-ink-100 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-forest-200 flex items-center justify-center">
+            <span class="text-forest-700 font-bold text-sm">G</span>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-ink-700">Gom Bat Trang</p>
+            <p class="text-xs text-ink-400">Ha Noi &middot; 4.8 &#9733; (312 danh gia)</p>
+          </div>
+          <a href="/shop/gom-bat-trang" class="ml-auto btn-ghost btn-sm text-xs">Xem gian hang</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ░░ TABS ░░ -->
+    <div class="mt-14" x-data="{ tab: 'description' }">
+      <div class="flex gap-1 border-b border-ink-100">
+        <button @@click="tab = 'description'"
+          :class="tab === 'description' ? 'border-ink-700 text-ink-800' : 'border-transparent text-ink-400 hover:text-ink-600'"
+          class="px-5 py-3 text-sm font-medium border-b-2 transition-colors -mb-px">
+          Mo ta
+        </button>
+        <button @@click="tab = 'specs'"
+          :class="tab === 'specs' ? 'border-ink-700 text-ink-800' : 'border-transparent text-ink-400 hover:text-ink-600'"
+          class="px-5 py-3 text-sm font-medium border-b-2 transition-colors -mb-px">
+          Thong so
+        </button>
+        <button @@click="tab = 'reviews'"
+          :class="tab === 'reviews' ? 'border-ink-700 text-ink-800' : 'border-transparent text-ink-400 hover:text-ink-600'"
+          class="px-5 py-3 text-sm font-medium border-b-2 transition-colors -mb-px">
+          Danh gia (48)
+        </button>
+      </div>
+
+      <!-- Description tab -->
+      <div x-show="tab === 'description'" class="py-8">
+        <div class="prose max-w-none text-ink-600 leading-relaxed">
+          <p>Binh gom men ngoc duoc lam thu cong tai lang gom Bat Trang voi lich su hon 700 nam. Moi chiec binh deu mang
+            net doc dao rieng, duoc tao hinh bang tay va trang men tu nhien.</p>
+            <p class="mt-4">San pham duoc nung o nhiet do cao, dam bao do ben va an toan khi su dung. Men ngoc tu nhien tao
+              nen ve dep tinh te, phu hop lam vat trang tri hoac qua tang y nghia.</p>
+              <ul class="mt-4 space-y-2">
+                <li>Chat lieu: Gom su cao cap</li>
+                <li>Lam thu cong 100%</li>
+                <li>An toan voi thuc pham</li>
+                <li>Phu hop trang tri noi that</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Specs tab -->
+          <div x-show="tab === 'specs'" x-cloak class="py-8">
+            <table class="w-full max-w-lg">
+              <tbody class="divide-y divide-ink-100">
+                <tr>
+                  <td class="py-3 text-sm font-medium text-ink-500 w-40">Chat lieu</td>
+                  <td class="py-3 text-sm text-ink-700">Gom su</td>
+                </tr>
+                <tr>
+                  <td class="py-3 text-sm font-medium text-ink-500">Chieu cao</td>
+                  <td class="py-3 text-sm text-ink-700">25 cm</td>
+                </tr>
+                <tr>
+                  <td class="py-3 text-sm font-medium text-ink-500">Duong kinh</td>
+                  <td class="py-3 text-sm text-ink-700">12 cm</td>
+                </tr>
+                <tr>
+                  <td class="py-3 text-sm font-medium text-ink-500">Trong luong</td>
+                  <td class="py-3 text-sm text-ink-700">450g</td>
+                </tr>
+                <tr>
+                  <td class="py-3 text-sm font-medium text-ink-500">Xuat xu</td>
+                  <td class="py-3 text-sm text-ink-700">Bat Trang, Ha Noi</td>
+                </tr>
+                <tr>
+                  <td class="py-3 text-sm font-medium text-ink-500">Bao hanh</td>
+                  <td class="py-3 text-sm text-ink-700">30 ngay</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Reviews tab -->
+          <div x-show="tab === 'reviews'" x-cloak class="py-8">
+            <!-- Star distribution -->
+            <div class="flex flex-col sm:flex-row gap-8 mb-10">
+              <div class="text-center">
+                <p class="text-5xl font-bold text-ink-800 mn-mono">4.8</p>
+                <div class="flex justify-center text-mustard-500 mt-1">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <p class="text-sm text-ink-400 mt-1">48 danh gia</p>
+              </div>
+              <div class="flex-1 space-y-2 max-w-sm">
+                <div class="flex items-center gap-3">
+                  <span class="text-sm text-ink-500 w-8">5 &#9733;</span>
+                  <div class="flex-1 h-2.5 bg-cream-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-mustard-400 rounded-full" style="width: 78%"></div>
+                  </div>
+                  <span class="text-xs text-ink-400 w-8 text-right">37</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm text-ink-500 w-8">4 &#9733;</span>
+                  <div class="flex-1 h-2.5 bg-cream-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-mustard-400 rounded-full" style="width: 15%"></div>
+                  </div>
+                  <span class="text-xs text-ink-400 w-8 text-right">7</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm text-ink-500 w-8">3 &#9733;</span>
+                  <div class="flex-1 h-2.5 bg-cream-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-mustard-400 rounded-full" style="width: 6%"></div>
+                  </div>
+                  <span class="text-xs text-ink-400 w-8 text-right">3</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm text-ink-500 w-8">2 &#9733;</span>
+                  <div class="flex-1 h-2.5 bg-cream-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-mustard-400 rounded-full" style="width: 2%"></div>
+                  </div>
+                  <span class="text-xs text-ink-400 w-8 text-right">1</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm text-ink-500 w-8">1 &#9733;</span>
+                  <div class="flex-1 h-2.5 bg-cream-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-mustard-400 rounded-full" style="width: 0%"></div>
+                  </div>
+                  <span class="text-xs text-ink-400 w-8 text-right">0</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Review cards -->
+            <div class="space-y-6">
+              <!-- Review 1 -->
+              <div class="card p-5">
+                <div class="flex items-start gap-3">
+                  <div class="w-10 h-10 rounded-full bg-lilac-200 flex items-center justify-center shrink-0">
+                    <span class="text-lilac-700 font-bold text-sm">T</span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="font-semibold text-sm text-ink-700">Tran Minh Anh</span>
+                      <span class="text-mustard-500 text-xs">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                    </div>
+                    <p class="text-xs text-ink-400 mt-0.5">15/04/2026</p>
+                    <p class="text-sm text-ink-600 mt-2 leading-relaxed">
+                      Binh gom rat dep, men ngoc sang bong va deu mau. Dong goi can than, giao hang nhanh. Se mua them lam qua
+                      tang.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Review 2 -->
+              <div class="card p-5">
+                <div class="flex items-start gap-3">
+                  <div class="w-10 h-10 rounded-full bg-accent-200 flex items-center justify-center shrink-0">
+                    <span class="text-accent-700 font-bold text-sm">N</span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="font-semibold text-sm text-ink-700">Nguyen Hoang Long</span>
+                      <span class="text-mustard-500 text-xs">&#9733;&#9733;&#9733;&#9733;&#9734;</span>
+                    </div>
+                    <p class="text-xs text-ink-400 mt-0.5">10/04/2026</p>
+                    <p class="text-sm text-ink-600 mt-2 leading-relaxed">
+                      Chat luong tot, dung nhu mo ta. Chi co dieu kich thuoc hoi nho hon minh tuong tuong. Nhin chung van rat
+                      hai long.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Review 3 -->
+              <div class="card p-5">
+                <div class="flex items-start gap-3">
+                  <div class="w-10 h-10 rounded-full bg-mustard-200 flex items-center justify-center shrink-0">
+                    <span class="text-mustard-700 font-bold text-sm">L</span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="font-semibold text-sm text-ink-700">Le Phuong Thao</span>
+                      <span class="text-mustard-500 text-xs">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                    </div>
+                    <p class="text-xs text-ink-400 mt-0.5">02/04/2026</p>
+                    <p class="text-sm text-ink-600 mt-2 leading-relaxed">
+                      Tuyet voi! Day la mon qua sinh nhat minh tang cho me va me rat thich. Gom Bat Trang xung danh chat luong
+                      hang dau.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ░░ SIMILAR PRODUCTS ░░ -->
+        <section class="mt-16">
+          <h2 class="mn-h4 text-ink-800 mb-6">San pham tuong tu</h2>
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+            <a href="#" class="product-card rounded-2xl overflow-hidden group">
+              <div
+                class="product-card-image bg-accent-200 h-[180px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                <span class="text-4xl">&#x1F3FA;</span>
+              </div>
+              <div class="product-card-body p-4">
+                <p class="product-card-title text-ink-700 font-semibold text-sm">Chen tra gom</p>
+                <p class="product-card-price text-accent-600 font-bold mn-mono text-sm mt-0.5">120.000&#8363;</p>
+              </div>
+            </a>
+            <a href="#" class="product-card rounded-2xl overflow-hidden group">
+              <div
+                class="product-card-image bg-forest-200 h-[180px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                <span class="text-4xl">&#x1F3FA;</span>
+              </div>
+              <div class="product-card-body p-4">
+                <p class="product-card-title text-ink-700 font-semibold text-sm">Lo hoa dat nung</p>
+                <p class="product-card-price text-accent-600 font-bold mn-mono text-sm mt-0.5">380.000&#8363;</p>
+              </div>
+            </a>
+            <a href="#" class="product-card rounded-2xl overflow-hidden group">
+              <div
+                class="product-card-image bg-mustard-200 h-[180px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                <span class="text-4xl">&#x1F3FA;</span>
+              </div>
+              <div class="product-card-body p-4">
+                <p class="product-card-title text-ink-700 font-semibold text-sm">Bo am tra Nhat Ban</p>
+                <p class="product-card-price text-accent-600 font-bold mn-mono text-sm mt-0.5">650.000&#8363;</p>
+              </div>
+            </a>
+            <a href="#" class="product-card rounded-2xl overflow-hidden group">
+              <div
+                class="product-card-image bg-lilac-100 h-[180px] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                <span class="text-4xl">&#x1F3FA;</span>
+              </div>
+              <div class="product-card-body p-4">
+                <p class="product-card-title text-ink-700 font-semibold text-sm">Dia gom trang tri</p>
+                <p class="product-card-price text-accent-600 font-bold mn-mono text-sm mt-0.5">250.000&#8363;</p>
+              </div>
+            </a>
+          </div>
+        </section>
+      </div>
