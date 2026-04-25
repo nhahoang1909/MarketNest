@@ -8,7 +8,7 @@ document.addEventListener("alpine:init", () => {
 
         add(message, type = "info", duration = 5000) {
             const id = this._nextId++;
-            this.items.push({id, message, type, visible: true});
+            this.items.push({ id, message, type, visible: true });
 
             if (duration > 0) {
                 setTimeout(() => this.remove(id), duration);
@@ -39,6 +39,14 @@ document.addEventListener("alpine:init", () => {
         },
         info(message, duration) {
             return this.add(message, "info", duration);
+        },
+
+        /* Aliases used by layouts */
+        dismiss(id) {
+            return this.remove(id);
+        },
+        show(message, type, duration) {
+            return this.add(message, type, duration);
         },
     });
 });

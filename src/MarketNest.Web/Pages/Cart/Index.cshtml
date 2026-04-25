@@ -1,14 +1,124 @@
 @page "/cart"
 @model IndexModel
 @{
-  ViewData["Title"] = "Shopping Cart";
+  ViewData["Title"] = "Gio hang";
 }
 
-<h1 class="text-2xl font-bold text-gray-900 mb-6">@ViewData["Title"]</h1>
+<div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12" x-data="{
+  items: [
+  { id: 1, name: 'Binh gom men ngoc', variant: 'Ngoc lam / M', price: 450000, qty: 1, emoji: '&#x1F3FA;', bg: 'bg-lilac-200', seller: 'Gom Bat Trang' },
+  { id: 2, name: 'Loa go bluetooth mini', variant: 'Walnut / -', price: 750000, qty: 2, emoji: '&#x1F3B6;', bg: 'bg-mustard-200', seller: 'Woodsound VN' },
+  { id: 3, name: 'Khan lua to tam', variant: 'Do / XL', price: 1250000, qty: 1, emoji: '&#x1F9E3;', bg: 'bg-accent-200', seller: 'Lua Hoi An' }
+  ],
+  promo: '',
+  formatVnd(n) { return n.toLocaleString('vi-VN') + '\u20AB'; },
+  get subtotal() { return this.items.reduce((s, i) => s + i.price * i.qty, 0); },
+  get shipping() { return this.items.length > 0 ? 25000 : 0; },
+  get total() { return this.subtotal + this.shipping; },
+  removeItem(id) { this.items = this.items.filter(i => i.id !== id); }
+  }">
 
-<!-- TODO: Implement Shopping Cart page -->
-<div class="card">
-  <div class="card-body">
-    <p class="text-gray-500">This page is under construction.</p>
+  <h1 class="mn-h2 text-ink-800 mb-8">Gio hang cua ban</h1>
+
+  <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
+
+    <!-- ░░ CART ITEMS ░░ -->
+    <div class="flex-[1.6] min-w-0">
+      <!-- Empty state -->
+      <template x-if="items.length === 0">
+        <div class="card p-12 text-center">
+          <span class="text-6xl block mb-4">&#x1F6D2;</span>
+          <p class="mn-h4 text-ink-600 mb-2">Gio hang trong</p>
+          <p class="text-sm text-ink-400 mb-6">Ban chua co san pham nao trong gio hang.</p>
+          <a href="/shop" class="btn-primary">Bat dau mua sam</a>
+        </div>
+      </template>
+
+      <!-- Items list -->
+      <template x-if="items.length > 0">
+        <div class="space-y-0 divide-y divide-ink-100">
+          <template x-for="item in items" :key="item.id">
+            <div class="flex gap-4 py-5 first:pt-0">
+              <!-- Product image -->
+              <div class="w-20 h-20 rounded-xl shrink-0 flex items-center justify-center" :class="item.bg">
+                <span class="text-3xl" x-html="item.emoji"></span>
+              </div>
+
+              <!-- Info -->
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-ink-700 text-sm truncate" x-text="item.name"></p>
+                <p class="text-xs text-ink-400 mt-0.5" x-text="item.variant"></p>
+                <p class="text-xs text-ink-400" x-text="item.seller"></p>
+
+                <!-- Quantity + remove (mobile-friendly) -->
+                <div class="flex items-center gap-4 mt-3">
+                  <div class="inline-flex items-center border border-ink-200 rounded-full overflow-hidden">
+                    <button @@click="item.qty = Math.max(1, item.qty - 1)"
+                      class="w-8 h-8 flex items-center justify-center text-ink-500 hover:bg-cream-100 transition-colors text-sm">
+                      &minus;
+                    </button>
+                    <span class="w-8 text-center text-xs font-semibold text-ink-700" x-text="item.qty"></span>
+                    <button @@click="item.qty = Math.min(99, item.qty + 1)"
+                      class="w-8 h-8 flex items-center justify-center text-ink-500 hover:bg-cream-100 transition-colors text-sm">
+                      +
+                    </button>
+                  </div>
+                  <button @@click="removeItem(item.id)"
+                    class="text-xs text-danger-500 hover:text-danger-700 transition-colors">
+                    Xoa
+                  </button>
+                </div>
+              </div>
+
+              <!-- Price -->
+              <div class="text-right shrink-0">
+                <p class="font-bold mn-mono text-ink-800 text-sm" x-text="formatVnd(item.price * item.qty)"></p>
+                <template x-if="item.qty > 1">
+                  <p class="text-xs text-ink-400 mt-0.5" x-text="formatVnd(item.price) + ' / sp'"></p>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+    </div>
+
+    <!-- ░░ ORDER SUMMARY ░░ -->
+    <template x-if="items.length > 0">
+      <div class="flex-1 min-w-0">
+        <div class="lg:sticky lg:top-[82px]">
+          <div class="card p-6">
+            <h2 class="mn-h5 text-ink-700 mb-5">Tom tat don hang</h2>
+
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between">
+                <span class="text-ink-500">Tam tinh</span>
+                <span class="text-ink-700 font-medium mn-mono" x-text="formatVnd(subtotal)"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-ink-500">Phi van chuyen (du kien)</span>
+                <span class="text-ink-700 font-medium mn-mono" x-text="formatVnd(shipping)"></span>
+              </div>
+              <div class="border-t border-ink-100 pt-3 flex justify-between">
+                <span class="font-semibold text-ink-800">Tong cong</span>
+                <span class="font-bold text-lg text-accent-600 mn-mono" x-text="formatVnd(total)"></span>
+              </div>
+            </div>
+
+            <!-- Promo code -->
+            <div class="mt-5">
+              <div class="flex gap-2">
+                <input type="text" x-model="promo" placeholder="Ma giam gia" class="form-input flex-1 text-sm" />
+                <button class="btn-ghost btn-sm text-xs">Ap dung</button>
+              </div>
+            </div>
+
+            <!-- CTA -->
+            <a href="/checkout" class="btn-primary w-full mt-5 text-center block">Thanh toan</a>
+            <a href="/shop" class="btn-ghost w-full mt-2 text-center block text-sm">Tiep tuc mua sam</a>
+          </div>
+        </div>
+      </div>
+    </template>
   </div>
 </div>

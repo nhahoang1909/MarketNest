@@ -1,14 +1,227 @@
 @page "/checkout"
 @model IndexModel
 @{
-  ViewData["Title"] = "Checkout";
+  ViewData["Title"] = "Thanh toan";
 }
 
-<h1 class="text-2xl font-bold text-gray-900 mb-6">@ViewData["Title"]</h1>
+<div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12" x-data="{
+  step: 1,
+  form: {
+  fullName: '', phone: '', address: '', city: '', district: '', ward: '',
+  shipping: 'standard',
+  payment: 'cod'
+  },
+  shippingOptions: [
+  { id: 'standard', name: 'Tieu chuan', desc: '3-5 ngay lam viec', price: 25000 },
+  { id: 'express', name: 'Nhanh', desc: '1-2 ngay lam viec', price: 45000 },
+  { id: 'sameday', name: 'Trong ngay', desc: 'Nhan hang hom nay', price: 75000 }
+  ],
+  paymentOptions: [
+  { id: 'cod', name: 'Thanh toan khi nhan hang (COD)', icon: '&#x1F4B5;' },
+  { id: 'bank', name: 'Chuyen khoan ngan hang', icon: '&#x1F3E6;' },
+  { id: 'card', name: 'The tin dung / ghi no', icon: '&#x1F4B3;' }
+  ],
+  items: [
+  { name: 'Binh gom men ngoc', qty: 1, price: 450000 },
+  { name: 'Loa go bluetooth mini', qty: 2, price: 750000 },
+  { name: 'Khan lua to tam', qty: 1, price: 1250000 }
+  ],
+  get shippingPrice() { return this.shippingOptions.find(o => o.id === this.form.shipping)?.price || 25000; },
+  get subtotal() { return this.items.reduce((s, i) => s + i.price * i.qty, 0); },
+  get total() { return this.subtotal + this.shippingPrice; },
+  formatVnd(n) { return n.toLocaleString('vi-VN') + '\u20AB'; }
+  }">
 
-<!-- TODO: Implement Checkout page -->
-<div class="card">
-  <div class="card-body">
-    <p class="text-gray-500">This page is under construction.</p>
+  <h1 class="mn-h2 text-ink-800 mb-8">Thanh toan</h1>
+
+  <!-- ░░ STEPPER ░░ -->
+  <div class="flex items-center gap-2 mb-10 overflow-x-auto pb-2">
+    <template x-for="(s, i) in [
+      { num: 1, label: 'Dia chi' },
+      { num: 2, label: 'Van chuyen' },
+      { num: 3, label: 'Thanh toan' },
+      { num: 4, label: 'Xac nhan' }
+      ]" :key="s.num">
+      <div class="flex items-center gap-2">
+        <div :class="step >= s.num ? 'bg-ink-700 text-cream-100' : 'bg-cream-200 text-ink-400'"
+             class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors"
+             x-text="s.num"></div>
+        <span :class="step >= s.num ? 'text-ink-700 font-medium' : 'text-ink-400'"
+              class="text-sm whitespace-nowrap transition-colors" x-text="s.label"></span>
+        <template x-if="i < 3">
+          <div class="w-8 lg:w-16 h-px bg-ink-200 shrink-0"></div>
+        </template>
+      </div>
+    </template>
+  </div>
+
+  <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
+
+    <!-- ░░ FORM AREA ░░ -->
+    <div class="flex-[1.6] min-w-0">
+
+      <!-- Step 1: Address -->
+      <div x-show="step === 1" x-transition>
+        <h2 class="mn-h4 text-ink-800 mb-6">Thong tin giao hang</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label class="form-label">Ho va ten</label>
+            <input type="text" x-model="form.fullName" class="form-input w-full" placeholder="Nguyen Van A" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="form-label">So dien thoai</label>
+            <input type="tel" x-model="form.phone" class="form-input w-full" placeholder="0901 234 567" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="form-label">Dia chi</label>
+            <input type="text" x-model="form.address" class="form-input w-full" placeholder="So nha, ten duong" />
+          </div>
+          <div>
+            <label class="form-label">Tinh / Thanh pho</label>
+            <input type="text" x-model="form.city" class="form-input w-full" placeholder="TP. Ho Chi Minh" />
+          </div>
+          <div>
+            <label class="form-label">Quan / Huyen</label>
+            <input type="text" x-model="form.district" class="form-input w-full" placeholder="Quan 1" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="form-label">Phuong / Xa</label>
+            <input type="text" x-model="form.ward" class="form-input w-full" placeholder="Phuong Ben Nghe" />
+          </div>
+        </div>
+        <div class="flex justify-end mt-8">
+          <button @@click="step = 2" class="btn-primary">Tiep tuc</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Shipping -->
+      <div x-show="step === 2" x-transition x-cloak>
+        <h2 class="mn-h4 text-ink-800 mb-6">Phuong thuc van chuyen</h2>
+        <div class="space-y-3">
+          <template x-for="opt in shippingOptions" :key="opt.id">
+            <label
+              :class="form.shipping === opt.id ? 'border-ink-700 bg-cream-50' : 'border-ink-200 hover:border-ink-300'"
+              class="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-colors">
+              <input type="radio" name="shipping" :value="opt.id" x-model="form.shipping"
+                     class="form-radio text-ink-700 focus:ring-ink-700" />
+              <div class="flex-1">
+                <p class="font-semibold text-sm text-ink-700" x-text="opt.name"></p>
+                <p class="text-xs text-ink-400" x-text="opt.desc"></p>
+              </div>
+              <span class="font-bold mn-mono text-sm text-ink-700" x-text="formatVnd(opt.price)"></span>
+            </label>
+          </template>
+        </div>
+        <div class="flex justify-between mt-8">
+          <button @@click="step = 1" class="btn-ghost">Quay lai</button>
+          <button @@click="step = 3" class="btn-primary">Tiep tuc</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Payment -->
+      <div x-show="step === 3" x-transition x-cloak>
+        <h2 class="mn-h4 text-ink-800 mb-6">Phuong thuc thanh toan</h2>
+        <div class="space-y-3">
+          <template x-for="opt in paymentOptions" :key="opt.id">
+            <label
+              :class="form.payment === opt.id ? 'border-ink-700 bg-cream-50' : 'border-ink-200 hover:border-ink-300'"
+              class="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-colors">
+              <input type="radio" name="payment" :value="opt.id" x-model="form.payment"
+                     class="form-radio text-ink-700 focus:ring-ink-700" />
+              <span class="text-xl" x-html="opt.icon"></span>
+              <p class="font-semibold text-sm text-ink-700" x-text="opt.name"></p>
+            </label>
+          </template>
+        </div>
+        <div class="flex justify-between mt-8">
+          <button @@click="step = 2" class="btn-ghost">Quay lai</button>
+          <button @@click="step = 4" class="btn-primary">Tiep tuc</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Review -->
+      <div x-show="step === 4" x-transition x-cloak>
+        <h2 class="mn-h4 text-ink-800 mb-6">Xac nhan don hang</h2>
+
+        <div class="space-y-6">
+          <!-- Address summary -->
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold text-sm text-ink-700">Dia chi giao hang</h3>
+              <button @@click="step = 1" class="text-xs text-accent-600 hover:text-accent-800">Thay doi</button>
+            </div>
+            <p class="text-sm text-ink-600" x-text="form.fullName || 'Chua nhap'"></p>
+            <p class="text-sm text-ink-500" x-text="form.phone || ''"></p>
+            <p class="text-sm text-ink-500"
+               x-text="[form.address, form.ward, form.district, form.city].filter(Boolean).join(', ') || 'Chua nhap'">
+            </p>
+          </div>
+
+          <!-- Shipping summary -->
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold text-sm text-ink-700">Van chuyen</h3>
+              <button @@click="step = 2" class="text-xs text-accent-600 hover:text-accent-800">Thay doi</button>
+            </div>
+            <p class="text-sm text-ink-600"
+               x-text="shippingOptions.find(o => o.id === form.shipping)?.name + ' - ' + formatVnd(shippingPrice)"></p>
+          </div>
+
+          <!-- Payment summary -->
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold text-sm text-ink-700">Thanh toan</h3>
+              <button @@click="step = 3" class="text-xs text-accent-600 hover:text-accent-800">Thay doi</button>
+            </div>
+            <p class="text-sm text-ink-600" x-text="paymentOptions.find(o => o.id === form.payment)?.name"></p>
+          </div>
+        </div>
+
+        <div class="flex justify-between mt-8">
+          <button @@click="step = 3" class="btn-ghost">Quay lai</button>
+          <a href="/orders/00000000-0000-0000-0000-000000000001/confirmation" class="btn-primary btn-lg">
+            Dat hang
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ░░ ORDER SUMMARY SIDEBAR ░░ -->
+    <div class="flex-1 min-w-0">
+      <div class="lg:sticky lg:top-[82px]">
+        <div class="card p-6">
+          <h2 class="mn-h5 text-ink-700 mb-5">Don hang cua ban</h2>
+
+          <!-- Items mini list -->
+          <div class="space-y-3 mb-5">
+            <template x-for="item in items" :key="item.name">
+              <div class="flex items-center justify-between text-sm">
+                <div class="flex-1 min-w-0">
+                  <span class="text-ink-600 truncate block" x-text="item.name"></span>
+                  <span class="text-xs text-ink-400" x-text="'x' + item.qty"></span>
+                </div>
+                <span class="ml-4 text-ink-700 font-medium mn-mono shrink-0"
+                      x-text="formatVnd(item.price * item.qty)"></span>
+              </div>
+            </template>
+          </div>
+
+          <div class="border-t border-ink-100 pt-4 space-y-3 text-sm">
+            <div class="flex justify-between">
+              <span class="text-ink-500">Tam tinh</span>
+              <span class="text-ink-700 font-medium mn-mono" x-text="formatVnd(subtotal)"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-ink-500">Phi van chuyen</span>
+              <span class="text-ink-700 font-medium mn-mono" x-text="formatVnd(shippingPrice)"></span>
+            </div>
+            <div class="border-t border-ink-100 pt-3 flex justify-between">
+              <span class="font-semibold text-ink-800">Tong cong</span>
+              <span class="font-bold text-lg text-accent-600 mn-mono" x-text="formatVnd(total)"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

@@ -1,61 +1,156 @@
 @import "tailwindcss";
 @import "./components.css";
 
-/* ── MarketNest Design Tokens ──────────────────────────────── */
+/* ── MarketNest Design Tokens — Editorial × Marketplace ────── */
 @theme {
-    /* Brand — Warm Orange */
-    --color-brand-50:  #fef7f0;
-    --color-brand-100: #fdebd6;
-    --color-brand-200: #fad3a8;
-    --color-brand-300: #f7b472;
-    --color-brand-400: #f9923a;
-    --color-brand-500: #f97316;
-    --color-brand-600: #ea5f0c;
-    --color-brand-700: #c2470c;
-    --color-brand-800: #9a3912;
-    --color-brand-900: #431407;
+    /* Accent — Lime (CTA, interactive highlights) */
+    --color-accent-50: #f7fde8;
+    --color-accent-100: #effad0;
+    --color-accent-200: #e2f6a8;
+    --color-accent-300: #d4ff6b;
+    --color-accent-400: #c8f25c;
+    --color-accent-500: #b5e040;
+    --color-accent-600: #8fbf22;
+    --color-accent-700: #6b9318;
+    --color-accent-800: #4d6a14;
+    --color-accent-900: #1a2208;
 
-    /* Market Green — buyer CTA, prices, success states */
-    --color-market-50:  #f0fdf4;
-    --color-market-100: #dcfce7;
-    --color-market-200: #bbf7d0;
-    --color-market-300: #86efac;
-    --color-market-400: #4ade80;
-    --color-market-500: #22c55e;
-    --color-market-600: #16a34a;
-    --color-market-700: #15803d;
-    --color-market-800: #166534;
-    --color-market-900: #14532d;
+    /* Ink — Warm near-black (text, dark surfaces) */
+    --color-ink-50: #f5f5f4;
+    --color-ink-100: #e8e7e5;
+    --color-ink-200: #d0cfcc;
+    --color-ink-300: #a8a7a3;
+    --color-ink-400: #6b6a66;
+    --color-ink-500: #454440;
+    --color-ink-600: #2d332e;
+    --color-ink-700: #1a1f1b;
+    --color-ink-800: #131613;
+    --color-ink-900: #0a0c0a;
 
-    /* Indigo — admin sidebar & accents */
-    --color-indigo-50:  #eef2ff;
-    --color-indigo-100: #e0e7ff;
-    --color-indigo-200: #c7d2fe;
-    --color-indigo-300: #a5b4fc;
-    --color-indigo-400: #818cf8;
-    --color-indigo-500: #6366f1;
-    --color-indigo-600: #4f46e5;
-    --color-indigo-700: #4338ca;
-    --color-indigo-800: #3730a3;
-    --color-indigo-900: #312e81;
-    --color-indigo-950: #1e1b4b;
+    /* Cream — Page backgrounds */
+    --color-cream-50: #faf8f4;
+    --color-cream-100: #f5f0e8;
+    --color-cream-200: #ece5d8;
+    --color-cream-300: #ddd4c4;
+    --color-cream-400: #c9bfab;
+    --color-cream-500: #b0a590;
+    --color-cream-600: #918574;
+    --color-cream-700: #6d6358;
+    --color-cream-800: #4a433c;
+    --color-cream-900: #282420;
 
-    /* Surfaces */
-    --color-surface:        #ffffff;
-    --color-surface-muted:  #f8fafc;
-    --color-surface-subtle: #f1f5f9;
-    --color-surface-warm:   #fafaf9;
+    /* Forest — Deep green (admin/finance accent) */
+    --color-forest-50: #eef5f1;
+    --color-forest-100: #d4e8dc;
+    --color-forest-200: #a9d1b9;
+    --color-forest-300: #6fae8b;
+    --color-forest-400: #3f8a62;
+    --color-forest-500: #2f6b4a;
+    --color-forest-600: #1f3a2e;
+    --color-forest-700: #1a3027;
+    --color-forest-800: #142420;
+    --color-forest-900: #0d1814;
+
+    /* Mustard — Badges, secondary accent */
+    --color-mustard-50: #fef9ed;
+    --color-mustard-100: #fdf0d0;
+    --color-mustard-200: #fbe3a5;
+    --color-mustard-300: #f5d176;
+    --color-mustard-400: #f0c566;
+    --color-mustard-500: #e8b547;
+    --color-mustard-600: #d9a030;
+    --color-mustard-700: #b58025;
+    --color-mustard-800: #8c631f;
+    --color-mustard-900: #5c4114;
+
+    /* Lilac — Highlights, decorative */
+    --color-lilac-50: #f3f0ff;
+    --color-lilac-100: #e8e2ff;
+    --color-lilac-200: #d5caff;
+    --color-lilac-300: #c7b8ff;
+    --color-lilac-400: #b5a2f5;
+    --color-lilac-500: #9c86e5;
+    --color-lilac-600: #7c66c5;
+    --color-lilac-700: #5e4a9e;
+    --color-lilac-800: #3f3270;
+    --color-lilac-900: #231c40;
+
+    /* Sky — Info accent */
+    --color-sky-50: #eef6fa;
+    --color-sky-100: #dceaf4;
+    --color-sky-200: #bbdeec;
+    --color-sky-300: #a8d5e5;
+    --color-sky-400: #7bbdd6;
+    --color-sky-500: #4fa5c7;
+    --color-sky-600: #2f6b9b;
+    --color-sky-700: #245478;
+    --color-sky-800: #1a3d57;
+    --color-sky-900: #102636;
+
+    /* Status colors */
+    --color-success-50: #edf7f1;
+    --color-success-100: #dcefe3;
+    --color-success-200: #b4dfc5;
+    --color-success-300: #7ccca0;
+    --color-success-400: #4db87d;
+    --color-success-500: #2f8f5a;
+    --color-success-600: #257148;
+    --color-success-700: #1c5536;
+    --color-success-800: #133a25;
+    --color-success-900: #0b2016;
+
+    --color-warn-50: #fdf6eb;
+    --color-warn-100: #fbebd0;
+    --color-warn-200: #f6d5a0;
+    --color-warn-300: #f0b86a;
+    --color-warn-400: #e8a03c;
+    --color-warn-500: #d9831f;
+    --color-warn-600: #b46a18;
+    --color-warn-700: #8a5114;
+    --color-warn-800: #603a0f;
+    --color-warn-900: #38220a;
+
+    --color-danger-50: #fdf2f0;
+    --color-danger-100: #fbded9;
+    --color-danger-200: #f5b5ac;
+    --color-danger-300: #ee7e72;
+    --color-danger-400: #e05a4d;
+    --color-danger-500: #c73e2e;
+    --color-danger-600: #a03225;
+    --color-danger-700: #79261c;
+    --color-danger-800: #531a13;
+    --color-danger-900: #300f0b;
+
+    --color-info-50: #eef5fa;
+    --color-info-100: #dceaf4;
+    --color-info-200: #b5d5e8;
+    --color-info-300: #88bcd8;
+    --color-info-400: #5da3c5;
+    --color-info-500: #2f6b9b;
+    --color-info-600: #26577e;
+    --color-info-700: #1d4360;
+    --color-info-800: #142f43;
+    --color-info-900: #0b1c28;
+
+    /* Surfaces — map to cream/paper */
+    --color-surface: #ffffff;
+    --color-surface-muted: #faf8f4;
+    --color-surface-subtle: #f5f0e8;
+    --color-surface-warm: #f5f0e8;
+    --color-surface-inset: #ece5d8;
 
     /* Fonts */
-    --font-sans:    "Plus Jakarta Sans", system-ui, sans-serif;
-    --font-display: "Nunito", system-ui, sans-serif;
-    --font-admin:   "Outfit", system-ui, sans-serif;
-    --font-mono:    "JetBrains Mono", "Fira Code", monospace;
+    --font-sans: "Geist", "Inter", system-ui, sans-serif;
+    --font-display: "Fraunces", "Times New Roman", Georgia, serif;
+    --font-admin: "Geist", "Inter", system-ui, sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 /* ── Base ──────────────────────────────────────────────────── */
 @layer base {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
         box-sizing: border-box;
     }
 
@@ -64,28 +159,107 @@
     }
 
     body {
-        @apply bg-surface text-gray-900 antialiased;
+        @apply bg-cream-100 text-ink-700 antialiased;
         font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.55;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        font-feature-settings: "ss01", "cv11";
     }
 
-    /* Admin & Seller layouts use Outfit */
+    /* Admin & Seller layouts */
     body.layout-admin,
     body.layout-seller {
         font-family: var(--font-admin);
-        background-color: #f0f2f8;
+        background-color: #f0f2f0;
     }
 
     /* Smooth focus rings */
     :focus-visible {
-        outline: 2px solid var(--color-brand-500);
+        outline: 2px solid var(--color-accent-400);
         outline-offset: 2px;
     }
 
+    /* Selection */
+    ::selection {
+        background: var(--color-accent-400);
+        color: var(--color-accent-900);
+    }
+
     /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(26, 31, 27, 0.14);
+        border-radius: 9999px;
+        border: 2px solid var(--color-cream-100);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(26, 31, 27, 0.22);
+    }
+}
+
+/* ── Typography classes ───────────────────────────────────── */
+@layer utilities {
+    .mn-display {
+        font-family: var(--font-display);
+        font-weight: 400;
+        letter-spacing: -0.025em;
+        line-height: 0.95;
+        font-variation-settings:
+            "opsz" 144,
+            "SOFT" 50;
+    }
+    .mn-h1 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        line-height: 1.02;
+        font-size: clamp(40px, 4.4vw, 72px);
+    }
+    .mn-h2 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        line-height: 1.05;
+        font-size: clamp(32px, 3.4vw, 52px);
+    }
+    .mn-h3 {
+        font-family: var(--font-sans);
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        font-size: 28px;
+        line-height: 1.15;
+    }
+    .mn-h4 {
+        font-family: var(--font-sans);
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        font-size: 22px;
+        line-height: 1.25;
+    }
+    .mn-h5 {
+        font-family: var(--font-sans);
+        font-weight: 600;
+        font-size: 18px;
+        line-height: 1.35;
+    }
+    .mn-eyebrow {
+        font-family: var(--font-sans);
+        font-weight: 600;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        @apply text-ink-400;
+    }
+    .mn-mono {
+        font-family: var(--font-mono);
+        font-feature-settings: "tnum";
+    }
 }
