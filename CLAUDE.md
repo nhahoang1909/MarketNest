@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Shared agent rule files are stored at `agents/rules/` (architecture.md, codestyle.md, git.md, security.md, testing.md). If you update rules, also update `AGENTS.md`.
+
 ## Project Overview
 
 MarketNest is a multi-vendor marketplace (Etsy/Shopee-style) built as a solo learning project. The architecture is intentionally phased: **Modular Monolith → Microservices → Kubernetes** over ~9 months.
