@@ -2,6 +2,7 @@ using System.Globalization;
 using FluentValidation;
 using MarketNest.Core.Logging;
 using MarketNest.Web.Infrastructure;
+using Microsoft.AspNetCore.Localization;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -25,7 +26,10 @@ try
                      formatProvider: CultureInfo.InvariantCulture));
 
     // ── Services ──────────────────────────────────────────────────────
-    builder.Services.AddRazorPages();
+    builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+    builder.Services.AddRazorPages()
+        .AddViewLocalization()
+        .AddDataAnnotationsLocalization();
     builder.Services.AddAntiforgery();
     builder.Services.AddHealthChecks();
 
@@ -95,20 +99,50 @@ try
     // ── Middleware Pipeline ───────────────────────────────────────────
     if (!app.Environment.IsDevelopment())
     {
-        app.UseExceptionHandler("/Error");
+        app.UseExceptionHandler(AppRoutes.Error);
         app.UseHsts();
     }
 
     app.UseHttpsRedirection();
     app.UseStaticFiles();
+
+    // ── Localization ─────────────────────────────────────────────────
+    var supportedCultures = new[] { "en", "vi" };
+    app.UseRequestLocalization(options =>
+    {
+        options.SetDefaultCulture("en");
+        options.AddSupportedCultures(supportedCultures);
+        options.AddSupportedUICultures(supportedCultures);
+        options.RequestCultureProviders =
+        [
+            new CookieRequestCultureProvider { CookieName = ".MarketNest.Culture" },
+            new AcceptLanguageHeaderRequestCultureProvider()
+        ];
+    });
+
     app.UseSerilogRequestLogging();
+
+    // ── Route Whitelist (after static files, before routing) ──────────
+    app.UseMiddleware<RouteWhitelistMiddleware>();
+
     app.UseRouting();
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseAntiforgery();
 
     app.MapRazorPages();
-    app.MapHealthChecks("/health");
+    app.MapHealthChecks(AppRoutes.Health);
+
+    // ── Language switch endpoint ──────────────────────────────────────
+    app.MapPost(AppRoutes.Api.SetLanguage, (HttpContext context, string culture, string? returnUrl) =>
+    {
+        if (culture is not ("en" or "vi")) culture = "en";
+        context.Response.Cookies.Append(
+            ".MarketNest.Culture",
+            CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+            new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), IsEssential = true });
+        return Results.LocalRedirect(returnUrl ?? "/");
+    }).DisableAntiforgery();
 
     // ── Initialize database: migrate + seed ───────────────────────────
     // TODO: Uncomment when module DbContexts and DatabaseInitializer are registered

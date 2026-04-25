@@ -5,7 +5,7 @@
     var currentPath  = Context.Request.Path.Value ?? "";
 }
 <!DOCTYPE html>
-<html lang="vi" class="scroll-smooth" x-data="{ theme: localStorage.getItem('mn-theme') || 'light' }"
+<html lang="@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName" class="scroll-smooth" x-data="{ theme: localStorage.getItem('mn-theme') || 'light' }"
       :data-theme="theme">
 
 <head>
@@ -52,7 +52,7 @@
             <div class="flex items-center gap-4 lg:gap-8 h-[64px]">
 
                 <!-- Logo -->
-                <a href="/" class="shrink-0 flex items-center gap-2">
+                <a href="@AppRoutes.Home" class="shrink-0 flex items-center gap-2">
                     <div class="w-8 h-8 rounded-full bg-ink-700 flex items-center justify-center">
                         <span class="text-accent-400 font-bold text-sm italic"
                               style="font-family:'Fraunces',serif">m</span>
@@ -64,19 +64,19 @@
 
                 <!-- Search (desktop) -->
                 <div class="hidden md:flex flex-1 max-w-xl relative" x-data="searchBar()">
-                    <form action="/search" method="get" class="w-full relative">
+                    <form action="@AppRoutes.Search" method="get" class="w-full relative">
                         <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-300 pointer-events-none"
                              fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z"/>
                         </svg>
                         <input type="text" name="q" x-model="query"
-                               placeholder="Tìm kiếm sản phẩm..."
+                               placeholder="@SharedLocalizer["Nav.Search.Placeholder"]"
                                class="w-full h-[42px] pl-11 pr-4 text-sm rounded-full
                                       border border-ink-200 bg-cream-50
                                       focus:bg-surface focus:border-ink-700 focus:ring-0 focus:outline-none
                                       placeholder:text-ink-300 transition-all duration-200"
-                               hx-get="/search/suggestions"
+                               hx-get="@AppRoutes.SearchSuggestions"
                                hx-trigger="keyup changed delay:350ms"
                                hx-target="#search-suggestions" />
                     </form>
@@ -88,25 +88,25 @@
 
                 <!-- Nav links (desktop) -->
                 <nav class="hidden lg:flex items-center gap-1">
-                    <a href="/"
+                    <a href="@AppRoutes.Home"
                        class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors
-                              @(currentPath == "/" ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
-                        Trang chủ
+                              @(currentPath == AppRoutes.Home ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
+                        @SharedLocalizer["Nav.Home"]
                     </a>
-                    <a href="/shop"
+                    <a href="@AppRoutes.Shop"
                        class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors
-                              @(currentPath.StartsWith("/shop") ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
-                        Duyệt
+                              @(currentPath.StartsWith(AppRoutes.Shop) ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
+                        @SharedLocalizer["Nav.Shop"]
                     </a>
-                    <a href="/cart"
+                    <a href="@AppRoutes.Cart"
                        class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors
-                              @(currentPath.StartsWith("/cart") ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
-                        Giỏ hàng
+                              @(currentPath.StartsWith(AppRoutes.Cart) ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
+                        @SharedLocalizer["Nav.Cart"]
                     </a>
-                    <a href="/account/orders"
+                    <a href="@AppRoutes.Account.Orders"
                        class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors
-                              @(currentPath.StartsWith("/account/orders") ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
-                        Đơn hàng
+                              @(currentPath.StartsWith(AppRoutes.Account.Orders) ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
+                        @SharedLocalizer["Nav.Orders"]
                     </a>
                 </nav>
 
@@ -114,7 +114,7 @@
                 <div class="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto lg:ml-0">
 
                     <!-- Mobile search trigger -->
-                    <button class="btn-icon md:hidden" aria-label="Tìm kiếm">
+                    <button class="btn-icon md:hidden" aria-label="@SharedLocalizer["Nav.Search"]">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z"/>
@@ -122,7 +122,7 @@
                     </button>
 
                     <!-- Wishlist -->
-                    <a href="/account/wishlist" class="btn-icon hidden sm:inline-flex" aria-label="Yêu thích">
+                    <a href="@AppRoutes.Account.Wishlist" class="btn-icon hidden sm:inline-flex" aria-label="@SharedLocalizer["Nav.Wishlist"]">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/>
@@ -130,7 +130,7 @@
                     </a>
 
                     <!-- Cart -->
-                    <a href="/cart" class="relative btn-icon" aria-label="Giỏ hàng">
+                    <a href="@AppRoutes.Cart" class="relative btn-icon" aria-label="@SharedLocalizer["Nav.Cart"]">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
@@ -146,12 +146,11 @@
 
                     <!-- Theme toggle -->
                     <button @@click="theme = theme === 'light' ? 'dark' : 'light'; localStorage.setItem('mn-theme', theme)"
-                            class="btn-icon" aria-label="Đổi giao diện">
+                            class="btn-icon" aria-label="@SharedLocalizer["Nav.ThemeToggle"]">
                         <template x-if="theme === 'light'">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                       d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
-                            </svg>
                         </template>
                         <template x-if="theme === 'dark'">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -161,11 +160,23 @@
                         </template>
                     </button>
 
+                    <!-- Language switcher -->
+                    <form method="post" action="@AppRoutes.Api.SetLanguage" class="inline-flex">
+                        <input type="hidden" name="culture"
+                               value="@(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "vi" ? "en" : "vi")" />
+                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                        <button type="submit" class="btn-icon" aria-label="@SharedLocalizer["Nav.SwitchLanguage"]">
+                            <span class="text-xs font-bold">
+                                @(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "vi" ? "EN" : "VI")
+                            </span>
+                        </button>
+                    </form>
+
                     <!-- Auth: logged out -->
                     <template x-if="!$store.user.isAuthenticated">
-                        <a href="/auth/login"
+                        <a href="@AppRoutes.Auth.Login"
                            class="hidden sm:inline-flex btn-primary text-xs px-4 py-2">
-                            Đăng nhập
+                            @SharedLocalizer["Auth.Login"]
                         </a>
                     </template>
 
@@ -193,29 +204,29 @@
                                  class="absolute right-0 mt-2 w-52 bg-surface rounded-2xl
                                         shadow-xl border border-ink-100 py-1.5 z-50 origin-top-right">
                                 <div class="px-4 py-2.5 border-b border-ink-100/60">
-                                    <p class="text-xs text-ink-400">Đăng nhập với</p>
+                                    <p class="text-xs text-ink-400">@SharedLocalizer["Auth.LoggedInAs"]</p>
                                     <p class="text-sm font-semibold text-ink-700 truncate"
                                        x-text="$store.user.name"></p>
                                 </div>
                                 <div class="py-1">
-                                    <a href="/account/settings"
+                                    <a href="@AppRoutes.Account.Settings"
                                        class="flex items-center gap-3 px-4 py-2 text-sm text-ink-600 hover:bg-cream-50 transition-colors">
-                                        Tài khoản
+                                        @SharedLocalizer["User.Account"]
                                     </a>
-                                    <a href="/account/orders"
+                                    <a href="@AppRoutes.Account.Orders"
                                        class="flex items-center gap-3 px-4 py-2 text-sm text-ink-600 hover:bg-cream-50 transition-colors">
-                                        Đơn hàng của tôi
+                                        @SharedLocalizer["User.MyOrders"]
                                     </a>
-                                    <a href="/seller/dashboard"
+                                    <a href="@AppRoutes.Seller.Dashboard"
                                        class="flex items-center gap-3 px-4 py-2 text-sm text-ink-600 hover:bg-cream-50 transition-colors">
-                                        Kênh bán hàng
+                                        @SharedLocalizer["User.SellerDashboard"]
                                     </a>
                                 </div>
                                 <div class="border-t border-ink-100/60 pt-1">
                                     <button @@click="$store.user.logout()"
                                             class="flex items-center gap-3 w-full px-4 py-2 text-sm text-danger-500
                                                    hover:bg-danger-50 transition-colors">
-                                        Đăng xuất
+                                        @SharedLocalizer["Auth.Logout"]
                                     </button>
                                 </div>
                             </div>
@@ -237,7 +248,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
                 <!-- Brand column -->
                 <div class="sm:col-span-2 lg:col-span-2">
-                    <a href="/" class="inline-flex items-center gap-2 mb-4">
+                    <a href="@AppRoutes.Home" class="inline-flex items-center gap-2 mb-4">
                         <div class="w-9 h-9 rounded-full bg-accent-400 flex items-center justify-center">
                             <span class="text-accent-900 font-bold italic"
                                   style="font-family:'Fraunces',serif">m</span>
@@ -245,49 +256,49 @@
                         <span class="text-xl font-semibold text-cream-100 tracking-tight">MarketNest</span>
                     </a>
                     <p class="text-sm text-cream-400 leading-relaxed mb-6 max-w-xs">
-                        Sàn thương mại điện tử đa người bán — nơi kết nối người mua và người bán trên toàn quốc.
+                        @SharedLocalizer["Footer.Description"]
                     </p>
                     <!-- Newsletter -->
                     <div class="flex gap-2 max-w-xs">
-                        <input type="email" placeholder="Email của bạn"
+                        <input type="email" placeholder="@SharedLocalizer["Footer.Newsletter.Placeholder"]"
                                class="flex-1 h-10 px-4 text-sm rounded-full bg-white/10 border border-white/10
                                       text-cream-100 placeholder:text-cream-500
                                       focus:bg-white/15 focus:border-accent-400 focus:outline-none transition-all" />
                         <button class="h-10 px-5 text-sm font-semibold rounded-full
                                        bg-accent-400 text-accent-900 hover:bg-accent-300 transition-colors">
-                            Đăng ký
+                            @SharedLocalizer["Footer.Newsletter.Subscribe"]
                         </button>
                     </div>
                 </div>
 
                 <!-- Links columns -->
                 <div>
-                    <h4 class="text-[11px] font-bold text-cream-100 mb-4 uppercase tracking-[0.12em]">Mua sắm</h4>
+                    <h4 class="text-[11px] font-bold text-cream-100 mb-4 uppercase tracking-[0.12em]">@SharedLocalizer["Footer.Shopping"]</h4>
                     <ul class="space-y-2.5 text-sm">
-                        <li><a href="/shop" class="text-cream-400 hover:text-cream-100 transition-colors">Tất cả sản phẩm</a></li>
-                        <li><a href="/shop?sort=new" class="text-cream-400 hover:text-cream-100 transition-colors">Hàng mới về</a></li>
-                        <li><a href="/shop?sort=bestseller" class="text-cream-400 hover:text-cream-100 transition-colors">Bán chạy nhất</a></li>
-                        <li><a href="/shop?sale=1" class="text-cream-400 hover:text-cream-100 transition-colors">Đang giảm giá</a></li>
+                        <li><a href="@AppRoutes.Shop" class="text-cream-400 hover:text-cream-100 transition-colors">@SharedLocalizer["Footer.Shopping.AllProducts"]</a></li>
+                        <li><a href="@AppRoutes.ShopQuery.Sort("new")" class="text-cream-400 hover:text-cream-100 transition-colors">@SharedLocalizer["Footer.Shopping.NewArrivals"]</a></li>
+                        <li><a href="@AppRoutes.ShopQuery.Sort("bestseller")" class="text-cream-400 hover:text-cream-100 transition-colors">@SharedLocalizer["Footer.Shopping.Bestsellers"]</a></li>
+                        <li><a href="@AppRoutes.ShopQuery.Sale()" class="text-cream-400 hover:text-cream-100 transition-colors">@SharedLocalizer["Footer.Shopping.OnSale"]</a></li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4 class="text-[11px] font-bold text-cream-100 mb-4 uppercase tracking-[0.12em]">Bán hàng</h4>
+                    <h4 class="text-[11px] font-bold text-cream-100 mb-4 uppercase tracking-[0.12em]">@SharedLocalizer["Footer.Selling"]</h4>
                     <ul class="space-y-2.5 text-sm">
-                        <li><a href="/seller/dashboard" class="text-cream-400 hover:text-cream-100 transition-colors">Kênh bán hàng</a></li>
-                        <li><a href="/auth/register?role=seller" class="text-cream-400 hover:text-cream-100 transition-colors">Đăng ký bán</a></li>
-                        <li><a href="#" class="text-cream-400 hover:text-cream-100 transition-colors">Chính sách hoa hồng</a></li>
-                        <li><a href="#" class="text-cream-400 hover:text-cream-100 transition-colors">Hướng dẫn người bán</a></li>
+                        <li><a href="@AppRoutes.Seller.Dashboard" class="text-cream-400 hover:text-cream-100 transition-colors">@SharedLocalizer["Footer.Selling.SellerChannel"]</a></li>
+                        <li><a href="@AppRoutes.Auth.RegisterSeller" class="text-cream-400 hover:text-cream-100 transition-colors">@SharedLocalizer["Footer.Selling.RegisterSeller"]</a></li>
+                        <li><a href="#" class="text-cream-400 hover:text-cream-100 transition-colors">@SharedLocalizer["Footer.Selling.CommissionPolicy"]</a></li>
+                        <li><a href="#" class="text-cream-400 hover:text-cream-100 transition-colors">@SharedLocalizer["Footer.Selling.SellerGuide"]</a></li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4 class="text-[11px] font-bold text-cream-100 mb-4 uppercase tracking-[0.12em]">Hỗ trợ</h4>
+                    <h4 class="text-[11px] font-bold text-cream-100 mb-4 uppercase tracking-[0.12em]">@SharedLocalizer["Footer.Support"]</h4>
                     <ul class="space-y-2.5 text-sm">
-                        <li><a href="#" class="text-cream-400 hover:text-cream-100 transition-colors">Trung tâm trợ giúp</a></li>
-                        <li><a href="#" class="text-cream-400 hover:text-cream-100 transition-colors">Chính sách hoàn trả</a></li>
-                        <li><a href="/account/disputes" class="text-cream-400 hover:text-cream-100 transition-colors">Khiếu nại</a></li>
-                        <li><a href="mailto:support@marketnest.vn" class="text-cream-400 hover:text-cream-100 transition-colors">Liên hệ</a></li>
+                        <li><a href="#" class="text-cream-400 hover:text-cream-100 transition-colors">@SharedLocalizer["Footer.Support.HelpCenter"]</a></li>
+                        <li><a href="#" class="text-cream-400 hover:text-cream-100 transition-colors">@SharedLocalizer["Footer.Support.ReturnPolicy"]</a></li>
+                        <li><a href="@AppRoutes.Account.Disputes" class="text-cream-400 hover:text-cream-100 transition-colors">@SharedLocalizer["Footer.Support.Disputes"]</a></li>
+                        <li><a href="mailto:support@marketnest.vn" class="text-cream-400 hover:text-cream-100 transition-colors">@SharedLocalizer["Footer.Support.Contact"]</a></li>
                     </ul>
                 </div>
             </div>
@@ -297,11 +308,11 @@
         <div class="border-t border-white/10">
             <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-cream-500">
-                    <span>&copy; @DateTime.UtcNow.Year MarketNest. Built as a learning project.</span>
+                    <span>&copy; @DateTime.UtcNow.Year MarketNest. @SharedLocalizer["Footer.Copyright"]</span>
                     <div class="flex items-center gap-4">
-                        <a href="#" class="hover:text-cream-200 transition-colors">Điều khoản</a>
-                        <a href="#" class="hover:text-cream-200 transition-colors">Bảo mật</a>
-                        <a href="#" class="hover:text-cream-200 transition-colors">Cookie</a>
+                        <a href="#" class="hover:text-cream-200 transition-colors">@SharedLocalizer["Footer.Terms"]</a>
+                        <a href="#" class="hover:text-cream-200 transition-colors">@SharedLocalizer["Footer.Privacy"]</a>
+                        <a href="#" class="hover:text-cream-200 transition-colors">@SharedLocalizer["Footer.Cookies"]</a>
                     </div>
                 </div>
             </div>
