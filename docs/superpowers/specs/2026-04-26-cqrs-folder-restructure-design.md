@@ -8,12 +8,14 @@
 
 ## 1. Goals
 
-1. Remove Application → Infrastructure dependency (handlers currently inject `AdminDbContext` directly).
-2. Introduce `IBaseQuery<TEntity, TKey>` in Core to mirror `IBaseRepository<TEntity, TKey>`.
-3. Separate `AdminDbContext` (write, change tracking) from `AdminReadDbContext` (read, NoTracking global).
-4. Split controllers into `ReadController` (GET) and `WriteController` (POST/PUT/DELETE).
-5. Reorganize folder structure to vertical-slice-within-layer: feature folders inside each layer.
-6. Move module-specific background jobs from `MarketNest.Web` into the owning module.
+1. Remove Application → Infrastructure dependency — neither CommandHandlers nor QueryHandlers reference DbContext directly.
+2. CommandHandlers inject `ITestRepository` (Application interface) — write side mirrors existing `IBaseRepository<TEntity, TKey>` pattern.
+3. QueryHandlers inject `ITestQuery` (Application interface) — read side uses new `IBaseQuery<TEntity, TKey>` pattern.
+4. Introduce `IBaseQuery<TEntity, TKey>` in Core to mirror `IBaseRepository<TEntity, TKey>`.
+5. Separate `AdminDbContext` (write, change tracking) from `AdminReadDbContext` (read, NoTracking global).
+6. Split controllers into `ReadController` (GET) and `WriteController` (POST/PUT/DELETE).
+7. Reorganize folder structure to vertical-slice-within-layer: feature folders inside each layer.
+8. Move module-specific background jobs from `MarketNest.Web` into the owning module.
 
 ---
 
@@ -40,6 +42,8 @@ src/MarketNest.Admin/
 │   │   │   │   ├── GetTestsPagedQuery.cs     # IQuery<PagedResult<TestDto>>
 │   │   │   │   ├── TestDto.cs
 │   │   │   │   └── ITestQuery.cs             # extends IBaseQuery<TestEntity, Guid>
+│   │   │   ├── Repositories/
+│   │   │   │   └── ITestRepository.cs        # extends IBaseRepository<TestEntity, Guid>
 │   │   │   └── Validators/
 │   │   │       └── CreateTestCommandValidator.cs
 │   │   └── Configuration/                   # platform settings domain (future)
@@ -97,11 +101,73 @@ src/MarketNest.Core/Common/Queries/
   PagedResult.cs      # existing
 ```
 
-**Note on write side scope:** CommandHandlers currently inject `AdminDbContext` directly and continue to do so — they use the write context which is correct. Introducing `ITestRepository` is a separate concern and out of scope for this refactor. The only write-side change in this spec is extracting entity configurations to shared `IEntityTypeConfiguration` classes.
+---
+
+## 3. `ITestRepository` (Write Side)
+
+### Interface (Application layer)
+
+```csharp
+// Application/Submodule/Test/Repositories/ITestRepository.cs
+namespace MarketNest.Admin.Application;
+
+public interface ITestRepository : IBaseRepository<TestEntity, Guid>;
+```
+
+`IBaseRepository<TEntity, TKey>` already provides all write methods — no additional methods needed on `ITestRepository` unless a module requires custom queries for command use cases (e.g., `GetWithSubEntitiesAsync`).
+
+### Infrastructure implementation
+
+```csharp
+// Infrastructure/Repositories/Test/TestRepository.cs
+namespace MarketNest.Admin.Infrastructure;
+
+public class TestRepository(AdminDbContext db) : ITestRepository
+{
+    public Task<TestEntity?> GetByKeyAsync(Guid id, CancellationToken ct)
+        => db.Tests.Include(x => x.SubEntities).FirstOrDefaultAsync(x => x.Id == id, ct);
+
+    public async Task<TestEntity> GetByKeyOrThrowAsync(Guid id, CancellationToken ct)
+        => await GetByKeyAsync(id, ct)
+           ?? throw new KeyNotFoundException($"TestEntity {id} not found");
+
+    public Task<bool> ExistsAsync(Guid id, CancellationToken ct)
+        => db.Tests.AnyAsync(x => x.Id == id, ct);
+
+    public void Add(TestEntity entity) => db.Tests.Add(entity);
+    public void Update(TestEntity entity) => db.Tests.Update(entity);
+    public void Remove(TestEntity entity) => db.Tests.Remove(entity);
+    public Task<int> SaveChangesAsync(CancellationToken ct) => db.SaveChangesAsync(ct);
+}
+```
+
+### Updated CommandHandlers (no DbContext import)
+
+```csharp
+// Application/Submodule/Test/Handlers/CreateTestHandler.cs
+namespace MarketNest.Admin.Application;
+
+public class CreateTestHandler(ITestRepository repository) : ICommandHandler<CreateTestCommand, Guid>
+{
+    public async Task<Result<Guid, Error>> Handle(CreateTestCommand request, CancellationToken ct)
+    {
+        var id = Guid.NewGuid();
+        var entity = new TestEntity(id, request.Name, request.Value);
+
+        if (request.SubTitles is not null)
+            foreach (var title in request.SubTitles)
+                entity.AddSubEntity(new TestSubEntity(Guid.NewGuid(), id, title));
+
+        repository.Add(entity);
+        await repository.SaveChangesAsync(ct);
+        return Result<Guid, Error>.Success(id);
+    }
+}
+```
 
 ---
 
-## 3. `IBaseQuery<TEntity, TKey>` (Core)
+## 4. `IBaseQuery<TEntity, TKey>` (Core)
 
 Mirrors `IBaseRepository<TEntity, TKey>` but read-only. No write methods, no `SaveChangesAsync`.
 
@@ -219,7 +285,7 @@ public class GetTestsPagedHandler(ITestQuery query)
 - Keeps change tracking ON (default).
 - Implements `IModuleDbContext` — used by `DatabaseInitializer` for migrations and seeding.
 - Uses `ApplyConfigurationsFromAssembly` — no more inline `OnModelCreating` entity configs.
-- CommandHandlers inject `AdminDbContext`.
+- Only `TestRepository` (Infrastructure) injects `AdminDbContext`. CommandHandlers never reference it.
 
 ### AdminReadDbContext (read)
 
@@ -241,7 +307,7 @@ Each API resource gets two controllers in `Infrastructure/Api/{Feature}/`:
 | Controller | HTTP verbs | Depends on |
 |---|---|---|
 | `TestReadController` | GET | QueryHandlers → `ITestQuery` → `AdminReadDbContext` |
-| `TestWriteController` | POST, PUT, DELETE | CommandHandlers → `AdminDbContext` |
+| `TestWriteController` | POST, PUT, DELETE | CommandHandlers → `ITestRepository` → `AdminDbContext` |
 
 Both controllers inject only `IMediator`. The read/write separation is enforced end-to-end by the DbContext type used, not just by controller naming.
 
@@ -266,9 +332,11 @@ All files follow the flat layer-level namespace rule regardless of sub-folder de
 | File path | Namespace |
 |---|---|
 | `Admin/Application/Submodule/Test/Queries/ITestQuery.cs` | `MarketNest.Admin.Application` |
+| `Admin/Application/Submodule/Test/Repositories/ITestRepository.cs` | `MarketNest.Admin.Application` |
 | `Admin/Application/Timer/TestTimer/TestTimerJob.cs` | `MarketNest.Admin.Application` |
 | `Admin/Infrastructure/Api/Test/TestReadController.cs` | `MarketNest.Admin.Infrastructure` |
 | `Admin/Infrastructure/Queries/Test/TestQuery.cs` | `MarketNest.Admin.Infrastructure` |
+| `Admin/Infrastructure/Repositories/Test/TestRepository.cs` | `MarketNest.Admin.Infrastructure` |
 | `Admin/Infrastructure/Persistence/Configurations/TestEntityConfiguration.cs` | `MarketNest.Admin.Infrastructure` |
 | `Core/Common/Queries/IBaseQuery.cs` | `MarketNest.Core.Common.Queries` |
 
