@@ -2,6 +2,8 @@
  * Reservation countdown timer Alpine.js component
  * Usage: x-data="reservationTimer({ expiresAt: '2026-04-25T12:00:00Z' })"
  */
+import { TimerConfig } from "../constants.js";
+
 document.addEventListener("alpine:init", () => {
     Alpine.data("reservationTimer", ({expiresAt = ""} = {}) => ({
         expiresAt,
@@ -11,7 +13,7 @@ document.addEventListener("alpine:init", () => {
 
         init() {
             this._tick();
-            this._interval = setInterval(() => this._tick(), 1000);
+            this._interval = setInterval(() => this._tick(), TimerConfig.TICK_INTERVAL_MS);
         },
 
         destroy() {
@@ -20,7 +22,7 @@ document.addEventListener("alpine:init", () => {
 
         _tick() {
             if (!this.expiresAt) {
-                this.remaining = "--:--";
+                this.remaining = TimerConfig.PLACEHOLDER;
                 return;
             }
 
@@ -29,15 +31,15 @@ document.addEventListener("alpine:init", () => {
             const diff = end - now;
 
             if (diff <= 0) {
-                this.remaining = "00:00";
+                this.remaining = TimerConfig.EXPIRED;
                 this.expired = true;
                 clearInterval(this._interval);
                 this.$dispatch("reservation-expired");
                 return;
             }
 
-            const minutes = Math.floor(diff / 60000);
-            const seconds = Math.floor((diff % 60000) / 1000);
+            const minutes = Math.floor(diff / TimerConfig.MS_PER_MINUTE);
+            const seconds = Math.floor((diff % TimerConfig.MS_PER_MINUTE) / TimerConfig.MS_PER_SECOND);
             this.remaining = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
         },
     }));

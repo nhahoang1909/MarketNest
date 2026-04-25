@@ -2,7 +2,7 @@
 @model IndexModel
 @{
     Layout = "_LayoutSeller";
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = AppConstants.Defaults.FallbackPageTitle;
 }
 
 <!-- Welcome section -->
@@ -15,49 +15,49 @@
     <!-- Stat cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Doanh thu thang -->
-        <div class="rounded-2xl p-5" style="background:#1e293b;">
+        <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.LogoBgSeller;">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-medium uppercase tracking-wider" style="color:rgba(255,255,255,0.5);">Doanh thu
                     thang</span>
                     <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                          style="background:rgba(200,242,92,0.15); color:#C8F25C;">+12%</span>
+                          style="background:rgba(0,117,74,0.15); color:@AppConstants.Colors.Accent;">+12%</span>
                 </div>
                 <p class="text-2xl font-bold mn-mono text-white">12.450.000d</p>
                 <p class="text-xs mt-1" style="color:rgba(255,255,255,0.4);">So voi thang truoc</p>
             </div>
 
             <!-- Don hang moi -->
-            <div class="rounded-2xl p-5" style="background:#f0fbc4;">
+            <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.AccentBg;">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-medium uppercase tracking-wider" style="color:#3d5a00;">Don hang moi</span>
+                    <span class="text-xs font-medium uppercase tracking-wider" style="color:@AppConstants.Colors.AccentDarker;">Don hang moi</span>
                     <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                          style="background:rgba(61,90,0,0.1); color:#3d5a00;">+5</span>
+                          style="background:rgba(0,79,52,0.1); color:@AppConstants.Colors.AccentDarker;">+5</span>
                 </div>
-                <p class="text-2xl font-bold mn-mono" style="color:#2d4400;">23</p>
-                <p class="text-xs mt-1" style="color:#5c8a00;">Trong 7 ngay qua</p>
+                <p class="text-2xl font-bold mn-mono" style="color:@AppConstants.Colors.AccentDeep;">23</p>
+                <p class="text-xs mt-1" style="color:@AppConstants.Colors.AccentMuted;">Trong 7 ngay qua</p>
             </div>
 
             <!-- San pham dang ban -->
-            <div class="rounded-2xl p-5" style="background:#f0fdf4;">
+            <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.SuccessBg;">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-medium uppercase tracking-wider" style="color:#15803d;">San pham dang ban</span>
+                    <span class="text-xs font-medium uppercase tracking-wider" style="color:@AppConstants.Colors.SuccessTextDark;">San pham dang ban</span>
                     <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                          style="background:rgba(22,163,74,0.1); color:#16a34a;">+3</span>
+                          style="background:rgba(22,163,74,0.1); color:@AppConstants.Colors.SuccessText;">+3</span>
                 </div>
-                <p class="text-2xl font-bold mn-mono" style="color:#166534;">45</p>
-                <p class="text-xs mt-1" style="color:#22c55e;">Dang hoat dong</p>
+                <p class="text-2xl font-bold mn-mono" style="color:@AppConstants.Colors.BadgeActiveText;">45</p>
+                <p class="text-xs mt-1" style="color:@AppConstants.Colors.SuccessTextLight;">Dang hoat dong</p>
             </div>
 
             <!-- Danh gia trung binh -->
-            <div class="rounded-2xl p-5" style="background:#fef9ee;">
+            <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.WarningBg;">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-medium uppercase tracking-wider" style="color:#92400e;">Danh gia trung binh</span>
+                    <span class="text-xs font-medium uppercase tracking-wider" style="color:@AppConstants.Colors.WarningText;">Danh gia trung binh</span>
                     <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                          style="background:rgba(232,181,71,0.15); color:#92400e;">+0.2</span>
+                          style="background:rgba(232,181,71,0.15); color:@AppConstants.Colors.WarningText;">+0.2</span>
                 </div>
-                <p class="text-2xl font-bold mn-mono" style="color:#78350f;">4.8<span class="text-base ml-0.5">&#9733;</span>
+                <p class="text-2xl font-bold mn-mono" style="color:@AppConstants.Colors.WarningTextDark;">4.8<span class="text-base ml-0.5">&#9733;</span>
                 </p>
-                <p class="text-xs mt-1" style="color:#b45309;">Tu 128 danh gia</p>
+                <p class="text-xs mt-1" style="color:@AppConstants.Colors.WarningBorder;">Tu 128 danh gia</p>
             </div>
         </div>
 
@@ -80,8 +80,8 @@
             <svg viewBox="0 0 500 150" class="w-full h-auto" style="max-height:150px;">
                 <defs>
                     <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#C8F25C" stop-opacity="0.3" />
-                        <stop offset="100%" stop-color="#C8F25C" stop-opacity="0" />
+                        <stop offset="0%" stop-color="#00754A" stop-opacity="0.3" />
+                        <stop offset="100%" stop-color="#00754A" stop-opacity="0" />
                     </linearGradient>
                 </defs>
                 <!-- Grid lines -->
@@ -108,7 +108,7 @@
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
                 <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                     <h2 class="text-base font-semibold text-gray-900">Don hang gan day</h2>
-                    <a href="/seller/orders" class="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">Xem
+                    <a href="@AppRoutes.Seller.Orders" class="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">Xem
                         tat ca &rarr;</a>
                     </div>
                     <div class="overflow-x-auto">
@@ -135,7 +135,7 @@
                                                     <td class="px-4 py-3 mn-mono text-right text-gray-800">350.000d</td>
                                                     <td class="px-4 py-3"><span
                                                         class="badge badge-yellow text-[11px] px-2 py-0.5 rounded-full font-medium"
-                                                        style="background:#fef9c3; color:#854d0e;">Cho xac nhan</span></td>
+                                                        style="background:@AppConstants.Colors.PendingBg; color:@AppConstants.Colors.PendingText;">Cho xac nhan</span></td>
                                                     </tr>
                                                     <tr class="hover:bg-gray-50/50 transition-colors">
                                                         <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1246</td>
@@ -144,7 +144,7 @@
                                                         <td class="px-4 py-3 mn-mono text-right text-gray-800">1.250.000d</td>
                                                         <td class="px-4 py-3"><span
                                                             class="badge badge-blue text-[11px] px-2 py-0.5 rounded-full font-medium"
-                                                            style="background:#dbeafe; color:#1e40af;">Dang giao</span></td>
+                                                            style="background:@AppConstants.Colors.BadgeBuyerBg; color:@AppConstants.Colors.BadgeBuyerText;">Dang giao</span></td>
                                                         </tr>
                                                         <tr class="hover:bg-gray-50/50 transition-colors">
                                                             <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1245</td>
@@ -153,7 +153,7 @@
                                                             <td class="px-4 py-3 mn-mono text-right text-gray-800">890.000d</td>
                                                             <td class="px-4 py-3"><span
                                                                 class="badge badge-green text-[11px] px-2 py-0.5 rounded-full font-medium"
-                                                                style="background:#dcfce7; color:#166534;">Da giao</span></td>
+                                                                style="background:@AppConstants.Colors.BadgeActiveBg; color:@AppConstants.Colors.BadgeActiveText;">Da giao</span></td>
                                                             </tr>
                                                             <tr class="hover:bg-gray-50/50 transition-colors">
                                                                 <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1244</td>
@@ -162,7 +162,7 @@
                                                                 <td class="px-4 py-3 mn-mono text-right text-gray-800">450.000d</td>
                                                                 <td class="px-4 py-3"><span
                                                                     class="badge badge-green text-[11px] px-2 py-0.5 rounded-full font-medium"
-                                                                    style="background:#dcfce7; color:#166534;">Da giao</span></td>
+                                                                    style="background:@AppConstants.Colors.BadgeActiveBg; color:@AppConstants.Colors.BadgeActiveText;">Da giao</span></td>
                                                                 </tr>
                                                                 <tr class="hover:bg-gray-50/50 transition-colors">
                                                                     <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1243</td>
@@ -171,7 +171,7 @@
                                                                     <td class="px-4 py-3 mn-mono text-right text-gray-800">180.000d</td>
                                                                     <td class="px-4 py-3"><span
                                                                         class="badge badge-red text-[11px] px-2 py-0.5 rounded-full font-medium"
-                                                                        style="background:#fef2f2; color:#991b1b;">Da huy</span></td>
+                                                                        style="background:@AppConstants.Colors.BadgeSuspendedBg; color:@AppConstants.Colors.BadgeSuspendedText;">Da huy</span></td>
                                                                     </tr>
                                                                 </tbody>
                                                             </table>
@@ -182,7 +182,7 @@
                                                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
                                                         <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                                                             <h2 class="text-base font-semibold text-gray-900">San pham ban chay</h2>
-                                                            <a href="/seller/products"
+                                                            <a href="@AppRoutes.Seller.Products"
                                                                class="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">Xem tat ca &rarr;</a>
                                                         </div>
                                                         <div class="divide-y divide-gray-50">

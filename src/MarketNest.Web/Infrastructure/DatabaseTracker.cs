@@ -1,34 +1,36 @@
 ﻿using System.Data;
+using MarketNest.Core.Common;
 using MarketNest.Core.Logging;
 using Npgsql;
 
 namespace MarketNest.Web.Infrastructure;
 
 /// <summary>
-/// Manages the <c>_system.__auto_migration_history</c> and <c>_system.__seed_history</c> tables
+/// Manages the <c>public.__auto_migration_history</c> and <c>public.__seed_history</c> tables
 /// via raw SQL (independent of any module DbContext to avoid circular dependencies).
 ///
-/// These tables live in the <c>_system</c> schema — a shared schema not owned by any module.
+/// These tables live in the <c>public</c> schema — the default PostgreSQL schema for
+/// system-level tables, while each module owns its own named schema.
 /// </summary>
 public sealed class DatabaseTracker(
     IConfiguration configuration,
     IAppLogger<DatabaseTracker> logger)
 {
-    private const string Schema = "_system";
-    private const string MigrationTable = "__auto_migration_history";
-    private const string SeedTable = "__seed_history";
+    private const string Schema = TableConstants.Schema.Default;
+    private const string MigrationTable = TableConstants.SystemTable.AutoMigrationHistory;
+    private const string SeedTable = TableConstants.SystemTable.SeedHistory;
 
     // PostgreSQL advisory lock key — prevents concurrent instances from racing
     private const long AdvisoryLockId = 0x4D61726B65744E73; // "MarketNs" in hex
 
     private string ConnectionString =>
-        configuration.GetConnectionString("DefaultConnection")
-        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+        configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)
+        ?? throw new InvalidOperationException($"Connection string '{AppConstants.DefaultConnectionStringName}' is not configured.");
 
     // ─── Bootstrap ────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Creates the <c>_system</c> schema and both tracking tables if they don't exist.
+    /// Creates tracking tables in the <c>public</c> schema if they don't exist.
     /// Safe to call multiple times (idempotent).
     /// </summary>
     public async Task EnsureTrackingTablesExistAsync(CancellationToken ct = default)
@@ -37,7 +39,6 @@ public sealed class DatabaseTracker(
         await conn.OpenAsync(ct);
 
         const string sql = $"""
-            CREATE SCHEMA IF NOT EXISTS {Schema};
 
             CREATE TABLE IF NOT EXISTS {Schema}.{MigrationTable} (
                 id              SERIAL PRIMARY KEY,

@@ -3,18 +3,19 @@
  * - Listens for custom HX-Trigger events from server responses
  * - Injects anti-forgery tokens into HTMX requests
  */
+import { Routes, ToastConfig, HtmxConfig, HttpStatus, ErrorMessages } from "../constants.js";
+
 (function () {
     "use strict";
 
     // ── Anti-forgery token injection ──────────────────────────────
     document.body.addEventListener("htmx:configRequest", (event) => {
         const tokenEl =
-            document.querySelector(
-                'input[name="__RequestVerificationToken"]',
-            ) ?? document.querySelector('meta[name="csrf-token"]');
+            document.querySelector(HtmxConfig.CSRF_INPUT_SELECTOR) ??
+            document.querySelector(HtmxConfig.CSRF_META_SELECTOR);
         if (tokenEl) {
             const token = tokenEl.value ?? tokenEl.content;
-            event.detail.headers["RequestVerificationToken"] = token;
+            event.detail.headers[HtmxConfig.CSRF_HEADER] = token;
         }
     });
 
@@ -32,8 +33,8 @@
         if (window.Alpine && message) {
             Alpine.store("toasts").add(
                 message,
-                type ?? "info",
-                duration ?? 5000,
+                type ?? ToastConfig.DEFAULT_TYPE,
+                duration ?? ToastConfig.DEFAULT_DURATION_MS,
             );
         }
     });
@@ -51,20 +52,18 @@
     // ── Global HTMX error handling ────────────────────────────────
     document.body.addEventListener("htmx:responseError", (event) => {
         const status = event.detail.xhr?.status;
-        if (status === 401) {
-            window.location.href = "/account/login";
-        } else if (status >= 500 && window.Alpine) {
-            Alpine.store("toasts").error(
-                "Something went wrong. Please try again.",
-            );
+        if (status === HttpStatus.UNAUTHORIZED) {
+            window.location.href = Routes.AUTH_LOGIN;
+        } else if (status >= HttpStatus.INTERNAL_SERVER_ERROR && window.Alpine) {
+            Alpine.store("toasts").error(ErrorMessages.GENERIC);
         }
     });
 
     // ── HTMX request indicator class on body ──────────────────────
     document.body.addEventListener("htmx:beforeRequest", () => {
-        document.body.classList.add("htmx-request");
+        document.body.classList.add(HtmxConfig.REQUEST_CLASS);
     });
     document.body.addEventListener("htmx:afterRequest", () => {
-        document.body.classList.remove("htmx-request");
+        document.body.classList.remove(HtmxConfig.REQUEST_CLASS);
     });
 })();

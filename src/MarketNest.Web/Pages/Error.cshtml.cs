@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -10,5 +11,11 @@ public class ErrorModel : PageModel
 {
     public string? RequestId { get; set; }
 
-    public void OnGet() => RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+    public string Timestamp { get; set; } = string.Empty;
+
+    public void OnGet()
+    {
+        RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+        Timestamp = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + " UTC";
+    }
 }

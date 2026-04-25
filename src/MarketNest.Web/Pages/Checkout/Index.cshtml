@@ -179,7 +179,8 @@
 
         <div class="flex justify-between mt-8">
           <button @@click="step = 3" class="btn-ghost">Quay lai</button>
-          <a href="/orders/00000000-0000-0000-0000-000000000001/confirmation" class="btn-primary btn-lg">
+          <!-- TODO: Replace with real order placement via form POST. Mock GUID for prototyping. -->
+          <a href="@AppRoutes.OrderPages.Confirmation(Guid.Empty)" class="btn-primary btn-lg">
             Dat hang
           </a>
         </div>

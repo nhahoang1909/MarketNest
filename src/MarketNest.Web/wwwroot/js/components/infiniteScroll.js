@@ -2,6 +2,8 @@
  * Infinite scroll Alpine.js component using IntersectionObserver
  * Usage: x-data="infiniteScroll({ url: '/api/products', targetId: '#product-list' })"
  */
+import { InfiniteScrollConfig } from "../constants.js";
+
 document.addEventListener("alpine:init", () => {
     Alpine.data("infiniteScroll", ({url = "", targetId = ""} = {}) => ({
         page: 1,
@@ -28,7 +30,7 @@ document.addEventListener("alpine:init", () => {
                             this.loadMore();
                         }
                     },
-                    {rootMargin: "200px"},
+                    {rootMargin: InfiniteScrollConfig.ROOT_MARGIN},
                 );
 
                 this._observer.observe(sentinel);
@@ -48,7 +50,7 @@ document.addEventListener("alpine:init", () => {
 
             try {
                 const response = await fetch(fetchUrl, {
-                    headers: {"HX-Request": "true"},
+                    headers: {[InfiniteScrollConfig.HX_REQUEST_HEADER]: "true"},
                 });
 
                 if (!response.ok) {

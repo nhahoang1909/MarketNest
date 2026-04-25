@@ -62,6 +62,7 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 - **Engine**: PostgreSQL 16
 - **Dev credentials**: user `mn` / database `mn` (password in `.env` — see `.env.example`)
 - **Schema per module**: `identity.*`, `catalog.*`, `cart.*`, `orders.*`, `payments.*`, `reviews.*`, `disputes.*`, `notifications.*`, `admin.*`
+- **System tables**: `public.__auto_migration_history`, `public.__seed_history` (tracking tables for `DatabaseInitializer`)
 - **Migrations**: EF Core per-module, auto-applied on startup via `DatabaseInitializer`
 
 ---
@@ -69,9 +70,12 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 ## Infrastructure Defaults (dev)
 
 - Health endpoint: `GET /health`
+- OpenAPI spec: `GET /openapi/v1.json`
+- Scalar API docs (interactive UI): `/scalar/v1` (dev only)
 - Seq logs: `http://localhost:5341`
 - MailHog UI: `http://localhost:8025`
 - RabbitMQ management: `http://localhost:15672`
+- API contract markdown: `docs/api-contract.md` (auto-generated on startup in dev mode)
 
 ---
 

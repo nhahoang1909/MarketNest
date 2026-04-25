@@ -1,0 +1,21 @@
+@* Order status badge — specialized for order statuses *@
+@using MarketNest.Core.Common
+@{
+  var status = ViewData["Status"]?.ToString() ?? OrderStatusNames.Unknown;
+  var badgeCss = status.ToLower() switch
+  {
+    OrderStatusNames.PendingPayment or OrderStatusNames.Pending => "badge badge-yellow",
+    OrderStatusNames.Confirmed or OrderStatusNames.Paid => "badge badge-blue",
+    OrderStatusNames.Processing => "badge badge-blue",
+    OrderStatusNames.Shipped or OrderStatusNames.InTransit => "badge badge-purple",
+    OrderStatusNames.Delivered => "badge badge-green",
+    OrderStatusNames.Completed => "badge badge-green",
+    OrderStatusNames.Cancelled => "badge badge-gray",
+    OrderStatusNames.Refunded => "badge badge-orange",
+    OrderStatusNames.Disputed => "badge badge-red",
+    OrderStatusNames.ReturnRequested => "badge badge-orange",
+    _ => "badge badge-gray"
+  };
+}
+
+<span class="@badgeCss">@status</span>

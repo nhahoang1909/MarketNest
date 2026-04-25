@@ -1,5 +1,10 @@
+@using System.Globalization
 @using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.Mvc.Localization
+@using MarketNest.Web
+@using MarketNest.Web.Infrastructure
 @inject IAntiforgery Antiforgery
+@inject IHtmlLocalizer<SharedResource> SharedLocalizer
 @{
     var requestToken = Antiforgery.GetAndStoreTokens(Context);
     var currentPath  = Context.Request.Path.Value ?? "";
@@ -11,15 +16,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1a1f1b" />
-    <title>@ViewData["Title"] - MarketNest</title>
+    <meta name="theme-color" content="@AppConstants.Colors.Ink" />
+    <title>@ViewData["Title"] - @AppConstants.AppName</title>
 
-    <!-- Fonts: Fraunces (display) + Geist (UI) + Geist Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-sans/style.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-mono/style.css" rel="stylesheet" />
+    <!-- Fonts: Playfair Display (display) + DM Sans (UI) + JetBrains Mono -->
+    <link rel="preconnect" href="@AppConstants.Fonts.GoogleFontsOrigin" />
+    <link rel="preconnect" href="@AppConstants.Fonts.GoogleFontsStaticOrigin" crossorigin />
+    <link href="@AppConstants.Fonts.DisplayCdn" rel="stylesheet" />
+    <link href="@AppConstants.Fonts.SansCdn" rel="stylesheet" />
+    <link href="@AppConstants.Fonts.MonoCdn" rel="stylesheet" />
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 
@@ -49,16 +54,16 @@
     <header class="sticky top-0 z-50 bg-surface border-b border-ink-100/60"
             style="backdrop-filter: blur(12px); background: rgba(255,255,255,0.92);">
         <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center gap-4 lg:gap-8 h-[64px]">
+            <div class="flex items-center gap-4 lg:gap-8 h-[72px]">
 
                 <!-- Logo -->
                 <a href="@AppRoutes.Home" class="shrink-0 flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-full bg-ink-700 flex items-center justify-center">
-                        <span class="text-accent-400 font-bold text-sm italic"
-                              style="font-family:'Fraunces',serif">m</span>
+                    <div class="w-9 h-9 rounded-full bg-accent-400 flex items-center justify-center">
+                        <span class="text-white font-bold text-base"
+                              style="font-family:@AppConstants.Fonts.DisplayShort">M</span>
                     </div>
                     <span class="text-lg font-semibold text-ink-700 tracking-tight hidden sm:block">
-                        MarketNest
+                        @AppConstants.AppName
                     </span>
                 </a>
 
@@ -90,22 +95,22 @@
                 <nav class="hidden lg:flex items-center gap-1">
                     <a href="@AppRoutes.Home"
                        class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors
-                              @(currentPath == AppRoutes.Home ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
+                              @(currentPath == AppRoutes.Home ? "bg-accent-400 text-white" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
                         @SharedLocalizer["Nav.Home"]
                     </a>
                     <a href="@AppRoutes.Shop"
                        class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors
-                              @(currentPath.StartsWith(AppRoutes.Shop) ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
+                              @(currentPath.StartsWith(AppRoutes.Shop) ? "bg-accent-400 text-white" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
                         @SharedLocalizer["Nav.Shop"]
                     </a>
                     <a href="@AppRoutes.Cart"
                        class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors
-                              @(currentPath.StartsWith(AppRoutes.Cart) ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
+                              @(currentPath.StartsWith(AppRoutes.Cart) ? "bg-accent-400 text-white" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
                         @SharedLocalizer["Nav.Cart"]
                     </a>
                     <a href="@AppRoutes.Account.Orders"
                        class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors
-                              @(currentPath.StartsWith(AppRoutes.Account.Orders) ? "bg-ink-700 text-cream-100" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
+                              @(currentPath.StartsWith(AppRoutes.Account.Orders) ? "bg-accent-400 text-white" : "text-ink-500 hover:text-ink-700 hover:bg-cream-100")">
                         @SharedLocalizer["Nav.Orders"]
                     </a>
                 </nav>
@@ -138,7 +143,7 @@
                         <template x-if="$store.cart.count > 0">
                             <span x-text="$store.cart.count > 99 ? '99+' : $store.cart.count"
                                   class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1
-                                         bg-accent-400 text-accent-900 text-[10px] font-bold
+                                         bg-accent-400 text-white text-[10px] font-bold
                                          rounded-full flex items-center justify-center leading-none">
                             </span>
                         </template>
@@ -151,6 +156,7 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                       d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
+                            </svg>
                         </template>
                         <template x-if="theme === 'dark'">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -243,17 +249,17 @@
     </main>
 
     <!-- ░░ FOOTER ░░ -->
-    <footer class="bg-ink-700 text-cream-200 mt-12">
+    <footer class="text-cream-200 mt-12" style="background:#1E3932;">
         <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-14">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
                 <!-- Brand column -->
                 <div class="sm:col-span-2 lg:col-span-2">
                     <a href="@AppRoutes.Home" class="inline-flex items-center gap-2 mb-4">
                         <div class="w-9 h-9 rounded-full bg-accent-400 flex items-center justify-center">
-                            <span class="text-accent-900 font-bold italic"
-                                  style="font-family:'Fraunces',serif">m</span>
+                            <span class="text-white font-bold"
+                                  style="font-family:@AppConstants.Fonts.DisplayShort">M</span>
                         </div>
-                        <span class="text-xl font-semibold text-cream-100 tracking-tight">MarketNest</span>
+                        <span class="text-xl font-semibold text-cream-100 tracking-tight">@AppConstants.AppName</span>
                     </a>
                     <p class="text-sm text-cream-400 leading-relaxed mb-6 max-w-xs">
                         @SharedLocalizer["Footer.Description"]
@@ -265,7 +271,7 @@
                                       text-cream-100 placeholder:text-cream-500
                                       focus:bg-white/15 focus:border-accent-400 focus:outline-none transition-all" />
                         <button class="h-10 px-5 text-sm font-semibold rounded-full
-                                       bg-accent-400 text-accent-900 hover:bg-accent-300 transition-colors">
+                                       bg-accent-400 text-white hover:bg-accent-500 transition-colors">
                             @SharedLocalizer["Footer.Newsletter.Subscribe"]
                         </button>
                     </div>
@@ -308,7 +314,7 @@
         <div class="border-t border-white/10">
             <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-cream-500">
-                    <span>&copy; @DateTime.UtcNow.Year MarketNest. @SharedLocalizer["Footer.Copyright"]</span>
+                    <span>&copy; @DateTime.UtcNow.Year @AppConstants.AppName. @SharedLocalizer["Footer.Copyright"]</span>
                     <div class="flex items-center gap-4">
                         <a href="#" class="hover:text-cream-200 transition-colors">@SharedLocalizer["Footer.Terms"]</a>
                         <a href="#" class="hover:text-cream-200 transition-colors">@SharedLocalizer["Footer.Privacy"]</a>

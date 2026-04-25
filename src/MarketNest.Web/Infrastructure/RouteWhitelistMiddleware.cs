@@ -22,7 +22,7 @@ public sealed class RouteWhitelistMiddleware
         if (!AppRoutes.IsAllowed(path))
         {
             _logger.LogWarning("Blocked request to non-whitelisted route: {Path}", path);
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            context.Response.Redirect(AppRoutes.NotFound);
             return;
         }
 

@@ -75,10 +75,18 @@ public sealed class DatabaseInitializer(
         foreach (var module in moduleContexts)
         {
             var contextName = module.ContextName;
+            var schemaName = module.SchemaName;
             var dbContext = module.AsDbContext();
 
             try
             {
+                // Ensure the module's schema exists before migration
+                // Schema name comes from IModuleDbContext (trusted internal source, not user input)
+#pragma warning disable EF1003
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    "CREATE SCHEMA IF NOT EXISTS \"" + schemaName + "\"", ct);
+#pragma warning restore EF1003
+
                 // Compute current model hash
                 var currentHash = ModelHasher.ComputeHash(dbContext.Model);
                 var storedHash = await tracker.GetLastModelHashAsync(contextName, ct);

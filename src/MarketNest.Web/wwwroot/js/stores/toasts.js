@@ -1,12 +1,14 @@
 /**
  * Alpine.js toast notification store
  */
+import { ToastConfig } from "../constants.js";
+
 document.addEventListener("alpine:init", () => {
     Alpine.store("toasts", {
         items: [],
         _nextId: 1,
 
-        add(message, type = "info", duration = 5000) {
+        add(message, type = ToastConfig.DEFAULT_TYPE, duration = ToastConfig.DEFAULT_DURATION_MS) {
             const id = this._nextId++;
             this.items.push({ id, message, type, visible: true });
 
@@ -24,7 +26,7 @@ document.addEventListener("alpine:init", () => {
                 // Remove from DOM after transition
                 setTimeout(() => {
                     this.items = this.items.filter((t) => t.id !== id);
-                }, 300);
+                }, ToastConfig.DOM_REMOVAL_DELAY_MS);
             }
         },
 
