@@ -9,13 +9,14 @@
 ## 1. Goals
 
 1. Remove Application → Infrastructure dependency — neither CommandHandlers nor QueryHandlers reference DbContext directly.
-2. CommandHandlers inject `ITestRepository` (Application interface) — write side mirrors existing `IBaseRepository<TEntity, TKey>` pattern.
-3. QueryHandlers inject `ITestQuery` (Application interface) — read side uses new `IBaseQuery<TEntity, TKey>` pattern.
-4. Introduce `IBaseQuery<TEntity, TKey>` in Core to mirror `IBaseRepository<TEntity, TKey>`.
-5. Separate `AdminDbContext` (write, change tracking) from `AdminReadDbContext` (read, NoTracking global).
-6. Split controllers into `ReadController` (GET) and `WriteController` (POST/PUT/DELETE).
-7. Reorganize folder structure to vertical-slice-within-layer: feature folders inside each layer.
-8. Move module-specific background jobs from `MarketNest.Web` into the owning module.
+2. CommandHandlers inject `ITestRepository` (Application interface, backed by abstract `BaseRepository<T,K>`).
+3. QueryHandlers inject either `ITestQuery` (for simple reads) or `IGetTestsPagedQuery` (per complex query contract).
+4. Introduce `IBaseQuery<TEntity, TKey>` in Core — simple reads only. Complex queries get their own interfaces.
+5. Abstract base classes `BaseRepository<T,K>` and `BaseQuery<T,K>` in Infrastructure so subclasses don't re-implement boilerplate.
+6. Separate `AdminDbContext` (write) from `AdminReadDbContext` (read, global NoTracking).
+7. Split handlers folder into `CommandHandlers/`, `QueryHandlers/`, `DomainEventHandlers/`, `IntegrationEventHandlers/`.
+8. Split controllers into `ReadController` / `WriteController`, each extending a typed base class.
+9. Move module-specific background jobs from `MarketNest.Web` into the owning module.
 
 ---
 
@@ -26,22 +27,26 @@
 ```
 src/MarketNest.Admin/
 ├── Application/
-│   ├── Common/                          # shared DTOs, behaviors scoped to Admin
+│   ├── Common/
 │   ├── Submodule/
 │   │   ├── Test/
 │   │   │   ├── Commands/
 │   │   │   │   ├── CreateTestCommand.cs
 │   │   │   │   └── UpdateTestCommand.cs
-│   │   │   ├── Handlers/
+│   │   │   ├── CommandHandlers/
 │   │   │   │   ├── CreateTestHandler.cs
-│   │   │   │   ├── UpdateTestHandler.cs
+│   │   │   │   └── UpdateTestHandler.cs
+│   │   │   ├── QueryHandlers/
 │   │   │   │   ├── GetTestByIdHandler.cs
 │   │   │   │   └── GetTestsPagedHandler.cs
+│   │   │   ├── DomainEventHandlers/          # future — handles domain events raised by TestEntity
+│   │   │   ├── IntegrationEventHandlers/     # future — handles cross-module integration events
 │   │   │   ├── Queries/
-│   │   │   │   ├── GetTestByIdQuery.cs       # IQuery<TestDto?> — MediatR message
+│   │   │   │   ├── GetTestByIdQuery.cs       # IQuery<TestDto?>
 │   │   │   │   ├── GetTestsPagedQuery.cs     # IQuery<PagedResult<TestDto>>
-│   │   │   │   ├── TestDto.cs
-│   │   │   │   └── ITestQuery.cs             # extends IBaseQuery<TestEntity, Guid>
+│   │   │   │   ├── ITestQuery.cs             # extends IBaseQuery<TestEntity, Guid> — simple reads
+│   │   │   │   ├── IGetTestsPagedQuery.cs    # complex query contract — separate interface
+│   │   │   │   └── TestDto.cs
 │   │   │   ├── Repositories/
 │   │   │   │   └── ITestRepository.cs        # extends IBaseRepository<TestEntity, Guid>
 │   │   │   └── Validators/
@@ -62,21 +67,27 @@ src/MarketNest.Admin/
 │       └── Configuration/                   # future
 └── Infrastructure/
     ├── Api/
+    │   ├── Common/
+    │   │   ├── ApiV1ControllerBase.cs        # shared base: IMediator, ToActionResult helper
+    │   │   ├── ReadApiV1ControllerBase.cs    # base for all read controllers
+    │   │   └── WriteApiV1ControllerBase.cs   # base for all write controllers
     │   └── Test/
-    │       ├── TestReadController.cs         # GET only
-    │       └── TestWriteController.cs        # POST / PUT / DELETE only
+    │       ├── TestReadController.cs         # extends ReadApiV1ControllerBase
+    │       └── TestWriteController.cs        # extends WriteApiV1ControllerBase
     ├── Queries/
     │   └── Test/
-    │       └── TestQuery.cs                  # implements ITestQuery, uses AdminReadDbContext
+    │       └── TestQuery.cs                  # extends BaseQuery<TestEntity,Guid>, implements ITestQuery + IGetTestsPagedQuery
     ├── Repositories/
     │   └── Test/
-    │       └── TestRepository.cs             # implements ITestRepository (Application layer), uses AdminDbContext
+    │       └── TestRepository.cs             # extends BaseRepository<TestEntity,Guid>, implements ITestRepository
     ├── Persistence/
-    │   ├── AdminDbContext.cs                 # write context, IModuleDbContext, runs migrations
-    │   ├── AdminReadDbContext.cs             # read context, NoTracking global, NOT IModuleDbContext
+    │   ├── AdminDbContext.cs                 # write, IModuleDbContext, runs migrations
+    │   ├── AdminReadDbContext.cs             # read, NoTracking global
+    │   ├── BaseRepository.cs                 # abstract EF Core base for write repositories
+    │   ├── BaseQuery.cs                      # abstract EF Core base for read queries
     │   └── Configurations/
-    │       ├── TestEntityConfiguration.cs    # IEntityTypeConfiguration<TestEntity>
-    │       └── TestSubEntityConfiguration.cs # IEntityTypeConfiguration<TestSubEntity>
+    │       ├── TestEntityConfiguration.cs
+    │       └── TestSubEntityConfiguration.cs
     └── Seeders/
         └── AdminDataSeeder.cs
 ```
@@ -85,91 +96,26 @@ src/MarketNest.Admin/
 
 ```
 MarketNest.Web/BackgroundJobs/
-  NpgsqlJobExecutionStore.cs       # infrastructure only
+  NpgsqlJobExecutionStore.cs
   ServiceCollectionJobRegistry.cs
   Hosting/
     JobRunnerHostedService.cs
-  # TestTimerJob.cs removed — moved to MarketNest.Admin
 ```
 
 ### MarketNest.Core — new file
 
 ```
 src/MarketNest.Core/Common/Queries/
-  IBaseQuery.cs       # new
-  PagedQuery.cs       # existing
-  PagedResult.cs      # existing
+  IBaseQuery.cs    # new — simple reads only
+  PagedQuery.cs    # existing
+  PagedResult.cs   # existing
 ```
 
 ---
 
-## 3. `ITestRepository` (Write Side)
+## 3. Interface Contracts
 
-### Interface (Application layer)
-
-```csharp
-// Application/Submodule/Test/Repositories/ITestRepository.cs
-namespace MarketNest.Admin.Application;
-
-public interface ITestRepository : IBaseRepository<TestEntity, Guid>;
-```
-
-`IBaseRepository<TEntity, TKey>` already provides all write methods — no additional methods needed on `ITestRepository` unless a module requires custom queries for command use cases (e.g., `GetWithSubEntitiesAsync`).
-
-### Infrastructure implementation
-
-```csharp
-// Infrastructure/Repositories/Test/TestRepository.cs
-namespace MarketNest.Admin.Infrastructure;
-
-public class TestRepository(AdminDbContext db) : ITestRepository
-{
-    public Task<TestEntity?> GetByKeyAsync(Guid id, CancellationToken ct)
-        => db.Tests.Include(x => x.SubEntities).FirstOrDefaultAsync(x => x.Id == id, ct);
-
-    public async Task<TestEntity> GetByKeyOrThrowAsync(Guid id, CancellationToken ct)
-        => await GetByKeyAsync(id, ct)
-           ?? throw new KeyNotFoundException($"TestEntity {id} not found");
-
-    public Task<bool> ExistsAsync(Guid id, CancellationToken ct)
-        => db.Tests.AnyAsync(x => x.Id == id, ct);
-
-    public void Add(TestEntity entity) => db.Tests.Add(entity);
-    public void Update(TestEntity entity) => db.Tests.Update(entity);
-    public void Remove(TestEntity entity) => db.Tests.Remove(entity);
-    public Task<int> SaveChangesAsync(CancellationToken ct) => db.SaveChangesAsync(ct);
-}
-```
-
-### Updated CommandHandlers (no DbContext import)
-
-```csharp
-// Application/Submodule/Test/Handlers/CreateTestHandler.cs
-namespace MarketNest.Admin.Application;
-
-public class CreateTestHandler(ITestRepository repository) : ICommandHandler<CreateTestCommand, Guid>
-{
-    public async Task<Result<Guid, Error>> Handle(CreateTestCommand request, CancellationToken ct)
-    {
-        var id = Guid.NewGuid();
-        var entity = new TestEntity(id, request.Name, request.Value);
-
-        if (request.SubTitles is not null)
-            foreach (var title in request.SubTitles)
-                entity.AddSubEntity(new TestSubEntity(Guid.NewGuid(), id, title));
-
-        repository.Add(entity);
-        await repository.SaveChangesAsync(ct);
-        return Result<Guid, Error>.Success(id);
-    }
-}
-```
-
----
-
-## 4. `IBaseQuery<TEntity, TKey>` (Core)
-
-Mirrors `IBaseRepository<TEntity, TKey>` but read-only. No write methods, no `SaveChangesAsync`.
+### 3.1 `IBaseQuery<TEntity, TKey>` (Core) — simple reads only
 
 ```csharp
 namespace MarketNest.Core.Common.Queries;
@@ -181,61 +127,160 @@ public interface IBaseQuery<TEntity, TKey> where TEntity : Entity<TKey>
     Task<bool> ExistsAsync(TKey id, CancellationToken ct = default);
     Task<IReadOnlyList<TEntity>> ListAsync(CancellationToken ct = default);
     Task<TEntity?> FirstOrDefaultAsync(
-        Expression<Func<TEntity, bool>> predicate,
-        CancellationToken ct = default);
+        Expression<Func<TEntity, bool>> predicate, CancellationToken ct = default);
     Task<int> CountAsync(
-        Expression<Func<TEntity, bool>>? predicate = null,
-        CancellationToken ct = default);
+        Expression<Func<TEntity, bool>>? predicate = null, CancellationToken ct = default);
 }
 ```
 
-**Module-specific interface** (Application layer):
+### 3.2 Module query interfaces (Application layer)
+
+`ITestQuery` extends `IBaseQuery` for simple lookups. Complex queries get **their own interface** — one per use case:
 
 ```csharp
 // Application/Submodule/Test/Queries/ITestQuery.cs
 namespace MarketNest.Admin.Application;
 
-public interface ITestQuery : IBaseQuery<TestEntity, Guid>
+public interface ITestQuery : IBaseQuery<TestEntity, Guid>;
+// No complex methods here — IBaseQuery base methods only.
+```
+
+```csharp
+// Application/Submodule/Test/Queries/IGetTestsPagedQuery.cs
+namespace MarketNest.Admin.Application;
+
+public interface IGetTestsPagedQuery
 {
-    Task<PagedResult<TestDto>> GetPagedAsync(GetTestsPagedQuery request, CancellationToken ct);
+    Task<PagedResult<TestDto>> ExecuteAsync(GetTestsPagedQuery request, CancellationToken ct);
 }
 ```
 
-**Infrastructure implementation:**
+**Rule:** Any query that involves projection to a DTO, pagination, joins, or filtering beyond a single predicate gets its own `IGet{UseCase}Query` interface, not a method on `ITestQuery`.
+
+### 3.3 `ITestRepository` (Application layer)
+
+```csharp
+// Application/Submodule/Test/Repositories/ITestRepository.cs
+namespace MarketNest.Admin.Application;
+
+public interface ITestRepository : IBaseRepository<TestEntity, Guid>;
+```
+
+Add extra methods only if a CommandHandler needs them (e.g., loading with includes):
+
+```csharp
+public interface ITestRepository : IBaseRepository<TestEntity, Guid>
+{
+    Task<TestEntity?> GetWithSubEntitiesAsync(Guid id, CancellationToken ct = default);
+}
+```
+
+---
+
+## 4. Abstract Base Classes (Infrastructure)
+
+Placed in `Infrastructure/Persistence/` per module. Avoids each concrete class re-implementing the same boilerplate. When multiple modules exist, extract to a shared infrastructure package.
+
+### 4.1 `BaseRepository<TEntity, TKey>`
+
+```csharp
+// Infrastructure/Persistence/BaseRepository.cs
+namespace MarketNest.Admin.Infrastructure;
+
+public abstract class BaseRepository<TEntity, TKey>(AdminDbContext db)
+    : IBaseRepository<TEntity, TKey>
+    where TEntity : Entity<TKey>
+{
+    protected AdminDbContext Db => db;
+
+    public virtual Task<TEntity?> GetByKeyAsync(TKey id, CancellationToken ct)
+        => db.Set<TEntity>().FindAsync([id], ct).AsTask();
+
+    public virtual async Task<TEntity> GetByKeyOrThrowAsync(TKey id, CancellationToken ct)
+        => await GetByKeyAsync(id, ct)
+           ?? throw new KeyNotFoundException($"{typeof(TEntity).Name} {id} not found");
+
+    public virtual Task<bool> ExistsAsync(TKey id, CancellationToken ct)
+        => db.Set<TEntity>().AnyAsync(e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
+
+    public virtual void Add(TEntity entity)    => db.Set<TEntity>().Add(entity);
+    public virtual void Update(TEntity entity) => db.Set<TEntity>().Update(entity);
+    public virtual void Remove(TEntity entity) => db.Set<TEntity>().Remove(entity);
+
+    public Task<int> SaveChangesAsync(CancellationToken ct) => db.SaveChangesAsync(ct);
+}
+```
+
+Concrete class only overrides when needed:
+
+```csharp
+// Infrastructure/Repositories/Test/TestRepository.cs
+namespace MarketNest.Admin.Infrastructure;
+
+public class TestRepository(AdminDbContext db)
+    : BaseRepository<TestEntity, Guid>(db), ITestRepository
+{
+    // Override to load aggregate with children
+    public override Task<TestEntity?> GetByKeyAsync(Guid id, CancellationToken ct)
+        => Db.Tests.Include(x => x.SubEntities).FirstOrDefaultAsync(x => x.Id == id, ct);
+
+    public Task<TestEntity?> GetWithSubEntitiesAsync(Guid id, CancellationToken ct)
+        => GetByKeyAsync(id, ct);
+}
+```
+
+### 4.2 `BaseQuery<TEntity, TKey>`
+
+```csharp
+// Infrastructure/Persistence/BaseQuery.cs
+namespace MarketNest.Admin.Infrastructure;
+
+public abstract class BaseQuery<TEntity, TKey>(AdminReadDbContext db)
+    : IBaseQuery<TEntity, TKey>
+    where TEntity : Entity<TKey>
+{
+    protected AdminReadDbContext Db => db;
+
+    public virtual Task<TEntity?> GetByKeyAsync(TKey id, CancellationToken ct)
+        => db.Set<TEntity>().FirstOrDefaultAsync(
+               e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
+
+    public virtual async Task<TEntity> GetByKeyOrThrowAsync(TKey id, CancellationToken ct)
+        => await GetByKeyAsync(id, ct)
+           ?? throw new KeyNotFoundException($"{typeof(TEntity).Name} {id} not found");
+
+    public virtual Task<bool> ExistsAsync(TKey id, CancellationToken ct)
+        => db.Set<TEntity>().AnyAsync(
+               e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
+
+    public virtual async Task<IReadOnlyList<TEntity>> ListAsync(CancellationToken ct)
+        => await db.Set<TEntity>().ToListAsync(ct);
+
+    public virtual Task<TEntity?> FirstOrDefaultAsync(
+        Expression<Func<TEntity, bool>> predicate, CancellationToken ct)
+        => db.Set<TEntity>().FirstOrDefaultAsync(predicate, ct);
+
+    public virtual Task<int> CountAsync(
+        Expression<Func<TEntity, bool>>? predicate, CancellationToken ct)
+        => predicate is null
+            ? db.Set<TEntity>().CountAsync(ct)
+            : db.Set<TEntity>().CountAsync(predicate, ct);
+}
+```
+
+Concrete class implements `ITestQuery` (via base) **and** each complex interface separately:
 
 ```csharp
 // Infrastructure/Queries/Test/TestQuery.cs
 namespace MarketNest.Admin.Infrastructure;
 
-public class TestQuery(AdminReadDbContext db) : ITestQuery
+public class TestQuery(AdminReadDbContext db)
+    : BaseQuery<TestEntity, Guid>(db), ITestQuery, IGetTestsPagedQuery
 {
-    public Task<TestEntity?> GetByKeyAsync(Guid id, CancellationToken ct)
-        => db.Tests.FirstOrDefaultAsync(x => x.Id == id, ct);
-
-    public async Task<TestEntity> GetByKeyOrThrowAsync(Guid id, CancellationToken ct)
-        => await db.Tests.FirstOrDefaultAsync(x => x.Id == id, ct)
-           ?? throw new KeyNotFoundException($"TestEntity {id} not found");
-
-    public Task<bool> ExistsAsync(Guid id, CancellationToken ct)
-        => db.Tests.AnyAsync(x => x.Id == id, ct);
-
-    public Task<IReadOnlyList<TestEntity>> ListAsync(CancellationToken ct)
-        => db.Tests.ToListAsync(ct).ContinueWith(t => (IReadOnlyList<TestEntity>)t.Result, ct);
-
-    public Task<TestEntity?> FirstOrDefaultAsync(
-        Expression<Func<TestEntity, bool>> predicate, CancellationToken ct)
-        => db.Tests.FirstOrDefaultAsync(predicate, ct);
-
-    public Task<int> CountAsync(
-        Expression<Func<TestEntity, bool>>? predicate, CancellationToken ct)
-        => predicate is null
-            ? db.Tests.CountAsync(ct)
-            : db.Tests.CountAsync(predicate, ct);
-
-    public async Task<PagedResult<TestDto>> GetPagedAsync(
+    public async Task<PagedResult<TestDto>> ExecuteAsync(
         GetTestsPagedQuery request, CancellationToken ct)
     {
-        var query = db.Tests.Include(x => x.SubEntities).AsQueryable();
+        var query = Db.Tests.Include(x => x.SubEntities).AsQueryable();
         if (!string.IsNullOrWhiteSpace(request.SearchName))
             query = query.Where(x => x.Name.Contains(request.SearchName));
 
@@ -253,97 +298,201 @@ public class TestQuery(AdminReadDbContext db) : ITestQuery
 
         return new PagedResult<TestDto>
         {
-            Items = items,
-            Page = request.Page,
-            PageSize = request.PageSize,
-            TotalCount = total
+            Items = items, Page = request.Page,
+            PageSize = request.PageSize, TotalCount = total
         };
     }
 }
 ```
 
-**Updated QueryHandler** (Application, no EF Core import):
+---
+
+## 5. Handlers (split by type)
+
+### CommandHandlers
 
 ```csharp
-// Application/Submodule/Test/Handlers/GetTestsPagedHandler.cs
+// Application/Submodule/Test/CommandHandlers/CreateTestHandler.cs
 namespace MarketNest.Admin.Application;
 
-public class GetTestsPagedHandler(ITestQuery query)
+public class CreateTestHandler(ITestRepository repository) : ICommandHandler<CreateTestCommand, Guid>
+{
+    public async Task<Result<Guid, Error>> Handle(CreateTestCommand request, CancellationToken ct)
+    {
+        var id = Guid.NewGuid();
+        var entity = new TestEntity(id, request.Name, request.Value);
+        if (request.SubTitles is not null)
+            foreach (var title in request.SubTitles)
+                entity.AddSubEntity(new TestSubEntity(Guid.NewGuid(), id, title));
+
+        repository.Add(entity);
+        await repository.SaveChangesAsync(ct);
+        return Result<Guid, Error>.Success(id);
+    }
+}
+```
+
+### QueryHandlers
+
+Simple read — injects `ITestQuery`:
+
+```csharp
+// Application/Submodule/Test/QueryHandlers/GetTestByIdHandler.cs
+namespace MarketNest.Admin.Application;
+
+public class GetTestByIdHandler(ITestQuery query) : IQueryHandler<GetTestByIdQuery, TestDto?>
+{
+    public async Task<TestDto?> Handle(GetTestByIdQuery request, CancellationToken ct)
+    {
+        var entity = await query.GetByKeyAsync(request.Id, ct);
+        return entity is null ? null : new TestDto
+        {
+            Id = entity.Id, Name = entity.Name, Value = entity.Value,
+            SubEntities = entity.SubEntities.Select(s => new TestSubDto(s.Id, s.Title)).ToList()
+        };
+    }
+}
+```
+
+Complex read — injects dedicated interface:
+
+```csharp
+// Application/Submodule/Test/QueryHandlers/GetTestsPagedHandler.cs
+namespace MarketNest.Admin.Application;
+
+public class GetTestsPagedHandler(IGetTestsPagedQuery query)
     : IQueryHandler<GetTestsPagedQuery, PagedResult<TestDto>>
 {
     public Task<PagedResult<TestDto>> Handle(GetTestsPagedQuery request, CancellationToken ct)
-        => query.GetPagedAsync(request, ct);
+        => query.ExecuteAsync(request, ct);
 }
 ```
 
 ---
 
-## 4. DbContext Split
+## 6. Controller Base Classes
+
+```csharp
+// Infrastructure/Api/Common/ApiV1ControllerBase.cs
+namespace MarketNest.Admin.Infrastructure;
+
+[ApiController]
+public abstract class ApiV1ControllerBase(IMediator mediator) : ControllerBase
+{
+    protected IMediator Mediator => mediator;
+
+    protected IActionResult ToActionResult<T>(Result<T, Error> result) =>
+        result.Match<IActionResult>(
+            value  => Ok(value),
+            error  => error.Type switch
+            {
+                ErrorType.NotFound     => NotFound(new { error.Code, error.Message }),
+                ErrorType.Conflict     => Conflict(new { error.Code, error.Message }),
+                ErrorType.Validation   => BadRequest(new { error.Code, error.Message }),
+                ErrorType.Unauthorized => Unauthorized(new { error.Code, error.Message }),
+                ErrorType.Forbidden    => Forbid(),
+                _                      => Problem(error.Message)
+            });
+}
+```
+
+```csharp
+// Infrastructure/Api/Common/ReadApiV1ControllerBase.cs
+namespace MarketNest.Admin.Infrastructure;
+
+public abstract class ReadApiV1ControllerBase(IMediator mediator)
+    : ApiV1ControllerBase(mediator);
+
+// Infrastructure/Api/Common/WriteApiV1ControllerBase.cs
+public abstract class WriteApiV1ControllerBase(IMediator mediator)
+    : ApiV1ControllerBase(mediator);
+```
+
+Controllers:
+
+```csharp
+// Infrastructure/Api/Test/TestReadController.cs
+namespace MarketNest.Admin.Infrastructure;
+
+[Route("api/v1/admin/tests")]
+public class TestReadController(IMediator mediator) : ReadApiV1ControllerBase(mediator)
+{
+    [HttpGet]
+    public Task<IActionResult> GetPaged([FromQuery] GetTestsPagedQuery query, CancellationToken ct)
+        => Mediator.Send(query, ct).ContinueWith(t => (IActionResult)Ok(t.Result), ct);
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
+        => Ok(await Mediator.Send(new GetTestByIdQuery(id), ct));
+}
+
+// Infrastructure/Api/Test/TestWriteController.cs
+[Route("api/v1/admin/tests")]
+public class TestWriteController(IMediator mediator) : WriteApiV1ControllerBase(mediator)
+{
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateTestRequest req, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new CreateTestCommand(req.Name, req.Value, req.SubTitles), ct);
+        return ToActionResult(result.Map(id => new { id }));
+    }
+}
+```
+
+---
+
+## 7. DbContext Split
 
 ### AdminDbContext (write)
 
-- Keeps change tracking ON (default).
-- Implements `IModuleDbContext` — used by `DatabaseInitializer` for migrations and seeding.
-- Uses `ApplyConfigurationsFromAssembly` — no more inline `OnModelCreating` entity configs.
-- Only `TestRepository` (Infrastructure) injects `AdminDbContext`. CommandHandlers never reference it.
+- Change tracking ON (default).
+- Implements `IModuleDbContext` — `DatabaseInitializer` uses this for migrations.
+- `ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly())` — shared configs.
+- Only `BaseRepository` subclasses inject this.
 
 ### AdminReadDbContext (read)
 
-- `UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)` applied globally.
-- Does **NOT** implement `IModuleDbContext` — no migrations.
-- Uses `ApplyConfigurationsFromAssembly(typeof(AdminDbContext).Assembly)` — same configs, single source of truth.
-- Query classes (`TestQuery`, etc.) inject `AdminReadDbContext`.
-
-### Shared Configurations (Option A)
-
-Entity configurations extracted from inline `OnModelCreating` into dedicated `IEntityTypeConfiguration<T>` classes under `Infrastructure/Persistence/Configurations/`. Both contexts call `ApplyConfigurationsFromAssembly(typeof(AdminDbContext).Assembly)`.
+- `UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)` globally.
+- Does **not** implement `IModuleDbContext` — no migrations.
+- `ApplyConfigurationsFromAssembly(typeof(AdminDbContext).Assembly)` — same entity configs as write context.
+- Only `BaseQuery` subclasses inject this.
 
 ---
 
-## 5. Read/Write Controller Split
-
-Each API resource gets two controllers in `Infrastructure/Api/{Feature}/`:
-
-| Controller | HTTP verbs | Depends on |
-|---|---|---|
-| `TestReadController` | GET | QueryHandlers → `ITestQuery` → `AdminReadDbContext` |
-| `TestWriteController` | POST, PUT, DELETE | CommandHandlers → `ITestRepository` → `AdminDbContext` |
-
-Both controllers inject only `IMediator`. The read/write separation is enforced end-to-end by the DbContext type used, not just by controller naming.
-
----
-
-## 6. Background Job Relocation
+## 8. Background Job Relocation
 
 | Before | After |
 |---|---|
 | `MarketNest.Web/BackgroundJobs/Test/TestTimerJob.cs` | `MarketNest.Admin/Application/Timer/TestTimer/TestTimerJob.cs` |
 
-`MarketNest.Web/BackgroundJobs/` retains only infrastructure: `NpgsqlJobExecutionStore`, `ServiceCollectionJobRegistry`, `JobRunnerHostedService`.
-
-DI registration in `Program.cs` must be updated to scan the Admin assembly for `IBackgroundJob` implementations.
+`Program.cs` must scan the Admin assembly for `IBackgroundJob` implementations.
 
 ---
 
-## 7. Namespace Rules (unchanged)
+## 9. Namespace Rules
 
-All files follow the flat layer-level namespace rule regardless of sub-folder depth:
+All files use flat layer-level namespaces regardless of sub-folder depth:
 
 | File path | Namespace |
 |---|---|
+| `Admin/Application/Submodule/Test/CommandHandlers/CreateTestHandler.cs` | `MarketNest.Admin.Application` |
+| `Admin/Application/Submodule/Test/QueryHandlers/GetTestByIdHandler.cs` | `MarketNest.Admin.Application` |
 | `Admin/Application/Submodule/Test/Queries/ITestQuery.cs` | `MarketNest.Admin.Application` |
+| `Admin/Application/Submodule/Test/Queries/IGetTestsPagedQuery.cs` | `MarketNest.Admin.Application` |
 | `Admin/Application/Submodule/Test/Repositories/ITestRepository.cs` | `MarketNest.Admin.Application` |
 | `Admin/Application/Timer/TestTimer/TestTimerJob.cs` | `MarketNest.Admin.Application` |
+| `Admin/Infrastructure/Api/Common/ApiV1ControllerBase.cs` | `MarketNest.Admin.Infrastructure` |
 | `Admin/Infrastructure/Api/Test/TestReadController.cs` | `MarketNest.Admin.Infrastructure` |
 | `Admin/Infrastructure/Queries/Test/TestQuery.cs` | `MarketNest.Admin.Infrastructure` |
 | `Admin/Infrastructure/Repositories/Test/TestRepository.cs` | `MarketNest.Admin.Infrastructure` |
-| `Admin/Infrastructure/Persistence/Configurations/TestEntityConfiguration.cs` | `MarketNest.Admin.Infrastructure` |
+| `Admin/Infrastructure/Persistence/BaseRepository.cs` | `MarketNest.Admin.Infrastructure` |
+| `Admin/Infrastructure/Persistence/BaseQuery.cs` | `MarketNest.Admin.Infrastructure` |
 | `Core/Common/Queries/IBaseQuery.cs` | `MarketNest.Core.Common.Queries` |
 
 ---
 
-## 8. Docs to Update
+## 10. Docs to Update
 
-- `docs/architecture.md` — add IBaseQuery pattern, ReadDbContext/WriteDbContext split, feature-folder layout
-- `AGENTS.md` — add IBaseQuery + query interface pattern to enforcement rules
-- `docs/code-rules.md` §2.7 — update namespace examples to reflect new folder structure
+- `docs/architecture.md` — IBaseQuery/IBaseRepository pattern, BaseQuery/BaseRepository abstract classes, ReadDbContext/WriteDbContext split, feature-folder layout, Read/WriteApiV1ControllerBase
+- `AGENTS.md` — enforcement rules for the new patterns
+- `docs/code-rules.md` §2.7 — namespace examples updated to reflect new folder structure
