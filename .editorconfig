@@ -12,6 +12,15 @@ trim_trailing_whitespace = true
 [*.{cs,csx}]
 indent_size = 4
 
+# CA1848: Use LoggerMessage delegates — disabled project-wide.
+# [LoggerMessage] source-gen is only worthwhile on hot paths (called millions of times).
+# Startup, infrastructure, and command-handler logging does not warrant the verbosity.
+dotnet_diagnostic.CA1848.severity = none
+# CA1727: Log message template parameters should be pascal case — too pedantic for this project.
+dotnet_diagnostic.CA1727.severity = none
+# CA1716: Identifiers should not match keywords — only relevant for multi-language public libraries.
+dotnet_diagnostic.CA1716.severity = none
+
 # C# code style
 dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = false

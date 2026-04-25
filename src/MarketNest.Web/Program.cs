@@ -1,5 +1,6 @@
 using System.Globalization;
 using FluentValidation;
+using MarketNest.Core.Logging;
 using MarketNest.Web.Infrastructure;
 using Serilog;
 
@@ -59,6 +60,9 @@ try
         builder.Services.AddValidatorsFromAssembly(assembly);
     }
 
+    // IAppLogger<T> — open-generic registration, resolved per class
+    builder.Services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
+
     // TODO: Register module DI (each module exposes AddXxxModule extension)
     // builder.Services.AddIdentityModule(builder.Configuration);
     // builder.Services.AddCatalogModule(builder.Configuration);
@@ -71,8 +75,15 @@ try
     // builder.Services.AddAdminModule(builder.Configuration);
 
     // ── Database: auto-migrate + seed ─────────────────────────────────
-    // TODO: Replace DbContext with MarketNestDbContext once created
-    // builder.Services.AddDatabaseInitializer<MarketNestDbContext>(
+    // TODO: Register module DbContexts as they are created:
+    // builder.Services.AddModuleDbContext<IdentityDbContext>(opts =>
+    //     opts.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    // builder.Services.AddModuleDbContext<CatalogDbContext>(opts =>
+    //     opts.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    // ... (repeat for each module that has a DbContext)
+
+    // Register DatabaseInitializer + auto-discover seeders from module assemblies
+    // builder.Services.AddDatabaseInitializer(
     //     typeof(MarketNest.Identity.AssemblyReference).Assembly,
     //     typeof(MarketNest.Catalog.AssemblyReference).Assembly,
     //     typeof(MarketNest.Orders.AssemblyReference).Assembly
@@ -100,8 +111,9 @@ try
     app.MapHealthChecks("/health");
 
     // ── Initialize database: migrate + seed ───────────────────────────
-    await app.Services.GetRequiredService<DatabaseInitializer>()
-        .InitializeAsync();
+    // TODO: Uncomment when module DbContexts and DatabaseInitializer are registered
+    // await app.Services.GetRequiredService<DatabaseInitializer>()
+    //     .InitializeAsync();
 
     app.Run();
 }

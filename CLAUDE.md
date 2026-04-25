@@ -75,6 +75,7 @@ All rules are specified in `docs/code-rules.md`. Key items:
 - **CQRS naming**: `PlaceOrderCommand`, `GetOrderByIdQuery`, `OrderPlacedEvent` — always explicit, never abbreviated.
 - **Module boundaries**: No module accesses another module's database schema. Cross-module sync calls go through service interfaces; async through domain events.
 - **Immutability**: Records for DTOs and value objects. Primary constructors for dependency injection.
+- **No magic strings / magic numbers**: Every repeated string literal and unexplained number must be a `const`, `static readonly`, enum, or bound configuration option. See `docs/code-rules.md` §2.5.
 - **Architecture tests** (NetArchTest) enforce that presentation layer cannot reference domain directly.
 
 ## Specification Documents
@@ -104,8 +105,94 @@ A real user can: browse → register → create storefront → list product → 
 
 ## Infrastructure Defaults (dev)
 
-- PostgreSQL: `mn` / `mn_secret`
+- PostgreSQL: user `mn`, database `marketnest` (password in `.env` — see `.env.example`)
 - Seq (logs): `http://localhost:5341`
 - MailHog (email): `http://localhost:8025`
 - RabbitMQ management: `http://localhost:15672`
 - Health endpoint: `GET /health`
+- All secrets managed via `.env` file (gitignored) — copy `.env.example` to `.env` for setup
+
+## Project Memory System
+
+This project maintains institutional knowledge in `docs/project_notes/` for consistency across AI sessions and human developers.
+
+### Memory Files — What Goes Where
+
+| File | Purpose | Example entries |
+|------|---------|----------------|
+| **bugs.md** | Bug log with dates, root cause, solution, and prevention | Runtime errors, config mistakes, migration failures |
+| **decisions.md** | Architectural Decision Records (ADRs) with context & trade-offs | Tech choices, pattern choices, library picks |
+| **key_facts.md** | Non-sensitive project config: ports, URLs, namespaces, env names | `PostgreSQL: 5432`, `Seq: http://localhost:5341` |
+| **issues.md** | Work log with PR references and brief descriptions | Completed PRs, in-progress features |
+
+### Memory-Aware Protocols
+
+**Before proposing architectural changes:**
+- Check `docs/project_notes/decisions.md` for existing decisions
+- Verify the proposed approach doesn't conflict with past choices
+- If it conflicts, acknowledge the prior ADR and explain why revisiting is warranted
+- Mark superseded decisions with `**Status**: Superseded by ADR-XXX` — never delete old ADRs
+
+**When encountering errors or bugs:**
+- Search `docs/project_notes/bugs.md` for similar issues
+- Apply known solutions if found
+- Document new bugs and solutions when resolved using the format:
+  ```
+  ### YYYY-MM-DD - Bug Title
+  - **Issue**: What happened
+  - **Root Cause**: Why it happened
+  - **Solution**: How you fixed it
+  - **Prevention**: How to avoid it
+  ```
+- Keep entries scannable in 30 seconds — link to separate docs for lengthy details
+
+**When looking up project configuration:**
+- Check `docs/project_notes/key_facts.md` for credentials references, ports, URLs
+- Prefer documented facts over assumptions
+
+**When completing work on a PR or feature:**
+- Log completed work in `docs/project_notes/issues.md` with date, description, and PR link
+
+**When user requests memory updates:**
+- Route to the correct file: bugs → `bugs.md`, decisions → `decisions.md`, config → `key_facts.md`, work → `issues.md`
+- Follow the established format (structured entries, dates, concise text)
+
+### Secrets Policy — What NEVER Goes in `key_facts.md`
+
+> **Rule**: Secrets belong in `.env` (gitignored), cloud secrets managers, or CI/CD variables — **never** in version-controlled markdown files.
+
+| ❌ Never store in `key_facts.md` | ✅ Safe to store in `key_facts.md` |
+|---|---|
+| Passwords, API keys, access tokens | Hostnames and public URLs |
+| Service account keys / private keys | Port numbers (e.g., `5432`, `6379`) |
+| OAuth client secrets, refresh tokens | Project identifiers, environment names |
+| DB connection strings with passwords | Non-sensitive config (timeouts, retry counts) |
+| SSH keys, VPN credentials | Service account email addresses |
+
+**Where secrets belong:**
+- **`.env` files** (gitignored) — local development (`DATABASE_PASSWORD=secret123`)
+- **Cloud secrets managers** — production (GCP Secret Manager, AWS Secrets Manager, Azure Key Vault)
+- **CI/CD variables** — pipelines (GitHub Actions secrets, GitLab CI/CD variables)
+- **Kubernetes Secrets** — containerized deployments
+
+> ⚠️ If secrets are accidentally committed, **rotate them immediately**. Removing from git history isn't enough — the repo may already be cloned elsewhere.
+
+### Memory Maintenance
+
+**Keep entries concise:**
+- Each bug/decision/issue should be scannable in 30 seconds
+- Use the structured format — if more detail is needed, link to a separate document
+
+**Make updates reflexive, not deliberate:**
+- After every bug fix → "Log this in `bugs.md`"
+- After every architecture discussion → "Add an ADR in `decisions.md`"
+- After every PR merge → "Update `issues.md`"
+
+**Scaling (when files grow large):**
+- When any file exceeds ~20 entries, add a Table of Contents at the top
+- For `bugs.md` and `issues.md`: archive entries older than 6–12 months to `bugs-archive-YYYY.md` / `issues-archive-YYYY.md`, keeping a reference in the main file
+- `decisions.md` and `key_facts.md` do **not** get archived — they remain relevant indefinitely (mark outdated decisions as superseded)
+
+**Review cadence:**
+- Review `decisions.md` quarterly — mark stale ADRs as `**Status**: Superseded by ADR-XXX`
+- Never delete old decisions — future developers need the historical context
