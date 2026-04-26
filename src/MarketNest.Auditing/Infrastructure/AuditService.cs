@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using MarketNest.Auditing.Domain;
 using MarketNest.Base.Common;
 using MarketNest.Base.Infrastructure;
@@ -9,7 +9,7 @@ namespace MarketNest.Auditing.Infrastructure;
 ///     Phase 1 implementation: writes audit entries directly to "auditing" schema in shared PostgreSQL.
 ///     Never throws — audit failures are logged but do not break the main request.
 /// </summary>
-public class AuditService(AuditingDbContext db, IAppLogger<AuditService> logger) : IAuditService
+public partial class AuditService(AuditingDbContext db, IAppLogger<AuditService> logger) : IAuditService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -37,8 +37,7 @@ public class AuditService(AuditingDbContext db, IAppLogger<AuditService> logger)
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Failed to record audit log: {EventType} {EntityType}:{EntityId}",
-                entry.EventType, entry.EntityType, entry.EntityId);
+            Log.ErrorRecordFailed(logger, entry.EventType, entry.EntityType, entry.EntityId, ex);
         }
     }
 
@@ -59,11 +58,23 @@ public class AuditService(AuditingDbContext db, IAppLogger<AuditService> logger)
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Failed to record login event: {Email} {Success}",
-                entry.Email, entry.Success);
+            Log.ErrorLoginRecordFailed(logger, entry.UserId, entry.Success, ex);
         }
     }
 
     private static string? Serialize(object? value) =>
         value is null ? null : JsonSerializer.Serialize(value, JsonOptions);
+
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.AuditSaveError, LogLevel.Error,
+            "Failed to record audit log: {EventType} {EntityType}:{EntityId}")]
+        public static partial void ErrorRecordFailed(
+            ILogger logger, string eventType, string? entityType, Guid? entityId, Exception ex);
+
+        [LoggerMessage((int)LogEventId.AuditSaveError + 1, LogLevel.Error,
+            "Failed to record login event: UserId={UserId} Success={Success}")]
+        public static partial void ErrorLoginRecordFailed(
+            ILogger logger, Guid? userId, bool success, Exception ex);
+    }
 }
