@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using MarketNest.Base.Common;
 using MarketNest.Base.Infrastructure;
 
@@ -12,24 +12,24 @@ namespace MarketNest.Web.Infrastructure;
 /// </summary>
 internal sealed class InProcessEventBus(IPublisher publisher, IAppLogger<InProcessEventBus> logger) : IEventBus
 {
-    public async Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default)
+    public async Task PublishAsync<TEvent>(TEvent integrationEvent, CancellationToken cancellationToken = default)
         where TEvent : class, IIntegrationEvent
     {
-        var eventTypeName = @event.GetType().Name;
+        var eventTypeName = integrationEvent.GetType().Name;
 
         logger.Info(
             "Publishing integration event {EventType} (Id: {EventId})",
             eventTypeName,
-            @event.EventId);
+            integrationEvent.EventId);
 
         try
         {
-            await publisher.Publish(@event, cancellationToken);
+            await publisher.Publish(integrationEvent, cancellationToken);
 
             logger.Info(
                 "Successfully dispatched integration event {EventType} (Id: {EventId})",
                 eventTypeName,
-                @event.EventId);
+                integrationEvent.EventId);
         }
         catch (Exception ex)
         {
@@ -37,7 +37,7 @@ internal sealed class InProcessEventBus(IPublisher publisher, IAppLogger<InProce
                 ex,
                 "Failed to dispatch integration event {EventType} (Id: {EventId})",
                 eventTypeName,
-                @event.EventId);
+                integrationEvent.EventId);
             throw;
         }
     }

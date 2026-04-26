@@ -70,5 +70,11 @@
         <None Include="package-lock.json"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include="..\..\.env">
+        <Link>.env</Link>
+      </Content>
+    </ItemGroup>
+
 
 </Project>
