@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace MarketNest.Base.Common;
+namespace MarketNest.Base.Domain;
 
 /// <summary>
 ///     Marker interface for domain events. Raised inside aggregate methods,

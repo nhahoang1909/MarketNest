@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace MarketNest.Base.Common;
+namespace MarketNest.Base.Domain;
 
 /// <summary>
 ///     Handler for domain events. Phase 1: in-process via MediatR.
