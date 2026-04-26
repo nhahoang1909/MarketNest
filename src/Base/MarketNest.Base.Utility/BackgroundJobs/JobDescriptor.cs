@@ -1,4 +1,4 @@
-﻿namespace MarketNest.Core.BackgroundJobs;
+﻿namespace MarketNest.Base.Utility;
 
 public sealed record JobDescriptor(
     string JobKey,

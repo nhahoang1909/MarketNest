@@ -1,4 +1,4 @@
-namespace MarketNest.Core.Common;
+namespace MarketNest.Base.Domain;
 
 /// <summary>
 ///     Base entity with strongly-typed ID and domain event support.

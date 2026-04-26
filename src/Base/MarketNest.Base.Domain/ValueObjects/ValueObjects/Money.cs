@@ -1,6 +1,6 @@
 using MarketNest.Core.Common;
 
-namespace MarketNest.Core.ValueObjects;
+namespace MarketNest.Base.Domain;
 
 /// <summary>
 ///     Money value object — amount + currency. Immutable.

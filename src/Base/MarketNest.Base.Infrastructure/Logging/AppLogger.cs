@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace MarketNest.Core.Logging;
+namespace MarketNest.Base.Infrastructure;
 
 /// <summary>
 /// ILogger&lt;T&gt; wrapper that implements IAppLogger&lt;T&gt;.

@@ -1,4 +1,4 @@
-namespace MarketNest.Core.Common;
+namespace MarketNest.Base.Domain;
 
 /// <summary>
 ///     Value object base — equality by structural value, not identity.

@@ -1,6 +1,6 @@
 using MarketNest.Core.Common;
 
-namespace MarketNest.Core.ValueObjects;
+namespace MarketNest.Base.Domain;
 
 /// <summary>
 ///     Address value object for shipping/billing.
