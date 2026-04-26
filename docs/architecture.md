@@ -20,6 +20,7 @@
 11. [Dependency Graph](#11-dependency-graph)
 12. [Quick Start Commands](#12-quick-start-commands)
 13. [Open Questions / Risks](#13-open-questions--risks)
+14. [Module Layer Patterns](#14-module-layer-patterns)
 
 ---
 
@@ -381,6 +382,66 @@ dotnet test tests/MarketNest.IntegrationTests            # Integration (needs Do
 | Redis single point of failure for cart reservations | Low | Acceptable for toy; Redis Sentinel in Phase 4 |
 | RabbitMQ message loss on restart | Medium | Enable persistence + quorum queues from Phase 3 |
 | Solo developer burnout | High | Phase gates — ship Phase 1 before starting Phase 2 |
+
+---
+
+---
+
+## 14. Module Layer Patterns
+
+### Read/Write DbContext Split
+
+Each module has two DbContexts:
+- `{Module}DbContext` — write context, change tracking ON, implements `IModuleDbContext`, runs migrations
+- `{Module}ReadDbContext` — read context, `NoTracking` globally, does NOT implement `IModuleDbContext`
+
+Both contexts use the same `IEntityTypeConfiguration<T>` classes via `ApplyConfigurationsFromAssembly(typeof({Module}DbContext).Assembly)`.
+
+### Query Contracts
+
+- `IBaseQuery<TEntity, TKey>` (Core) — simple reads: GetByKey, Exists, List, FirstOrDefault, Count
+- `I{Entity}Query` (Application) — extends IBaseQuery, simple module-specific reads
+- `IGet{UseCase}Query` (Application) — complex reads (projections, pagination, joins) get a dedicated interface
+
+Rule: any query involving DTO projection, pagination, or multi-table joins MUST use a dedicated `IGet{UseCase}Query` interface, not a method on `I{Entity}Query`.
+
+### Repository Contracts
+
+- `IBaseRepository<TEntity, TKey>` (Core) — write operations: Add, Update, Remove, SaveChanges, GetByKey
+- `I{Entity}Repository` (Application) — extends IBaseRepository, adds aggregate-specific operations
+
+### Abstract Base Classes (Infrastructure/Persistence)
+
+- `BaseRepository<TEntity, TKey>` — default EF Core impl of IBaseRepository using `{Module}DbContext`
+- `BaseQuery<TEntity, TKey>` — default EF Core impl of IBaseQuery using `{Module}ReadDbContext`
+
+Concrete classes override only what is module-specific (e.g., loading with `Include`).
+
+### Controller Base Classes (Infrastructure/Api/Common)
+
+- `ApiV1ControllerBase` — shared base: `IMediator`, `MapError(Error)` helper
+- `ReadApiV1ControllerBase` — extends base, used by GET-only controllers
+- `WriteApiV1ControllerBase` — extends base, used by POST/PUT/DELETE controllers
+
+### Feature Folder Layout (within layers)
+
+```
+Application/Submodule/{Feature}/
+  Commands/                     # ICommand<T> records
+  CommandHandlers/              # ICommandHandler implementations
+  QueryHandlers/                # IQueryHandler implementations
+  Queries/                      # IQuery<T> records + IBaseQuery interfaces + DTOs
+  Repositories/                 # IBaseRepository interfaces
+  Validators/                   # FluentValidation validators
+  DomainEventHandlers/          # IDomainEventHandler implementations
+  IntegrationEventHandlers/     # Integration event handlers
+
+Infrastructure/
+  Api/{Feature}/                # ReadController + WriteController
+  Queries/{Feature}/            # IBaseQuery implementations
+  Repositories/{Feature}/       # IBaseRepository implementations
+  Persistence/                  # DbContexts, BaseRepository, BaseQuery, Configurations/
+```
 
 ---
 

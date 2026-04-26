@@ -176,6 +176,25 @@ Secrets belong in:
   - `src/MarketNest.Admin/Modules/Account/Commands/CreateAccountCommand.cs` -> `namespace MarketNest.Admin.Application;`
   - `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs` -> `namespace MarketNest.Admin.Infrastructure;`
   - Do NOT include `Account`, `Commands`, `Persistence` in the namespace.
+### Query + Repository Pattern Enforcement
+
+Before writing any handler:
+- CommandHandlers MUST inject `I{Entity}Repository`, never `{Module}DbContext` directly
+- QueryHandlers for simple reads MUST inject `I{Entity}Query : IBaseQuery<T,K>`
+- QueryHandlers for complex reads (pagination, projection, joins) MUST inject a dedicated `IGet{UseCase}Query` interface
+- Query interface implementations live in `Infrastructure/Queries/{Feature}/`
+- Repository implementations live in `Infrastructure/Repositories/{Feature}/`
+
+Read context rules:
+- `{Module}ReadDbContext` is ONLY injected by `BaseQuery` subclasses
+- `{Module}DbContext` (write) is ONLY injected by `BaseRepository` subclasses
+- Neither context is injected by any Application layer class
+
+Controller base classes:
+- All read controllers extend `ReadApiV1ControllerBase`
+- All write controllers extend `WriteApiV1ControllerBase`
+- Route prefix: `api/v1/{module}/{resource}` — NOT `api/{module}/{resource}`
+
 - CQRS naming: `PlaceOrderCommand`, `GetOrderByIdQuery`, `OrderPlacedEvent`
 - Central Package Management: all NuGet versions are pinned in the repo-root `Directory.Packages.props`. Module `.csproj` files reference packages without versions
 - Build settings (`net10.0`, `TreatWarningsAsErrors`, `EnforceCodeStyleInBuild`) are in the repo-root `Directory.Build.props`
