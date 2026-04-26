@@ -121,6 +121,10 @@ try
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
     builder.Services.AddScoped<MarketNest.Admin.Application.ITestRepository,
         MarketNest.Admin.Infrastructure.TestRepository>();
+    builder.Services.AddScoped<MarketNest.Admin.Application.ITestQuery,
+        MarketNest.Admin.Infrastructure.TestQuery>();
+    builder.Services.AddScoped<MarketNest.Admin.Application.IGetTestsPagedQuery,
+        MarketNest.Admin.Infrastructure.TestQuery>();
 
     // IUserTimeZoneProvider — resolves user's time zone and date format from HTTP context
     builder.Services.AddHttpContextAccessor();
