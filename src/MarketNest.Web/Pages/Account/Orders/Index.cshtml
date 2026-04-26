@@ -1,5 +1,5 @@
 @page "/account/orders"
-@model IndexModel
+@model MarketNest.Web.Pages.Account.Orders.IndexModel
 @{
   ViewData["Title"] = "Don hang cua toi";
 }
@@ -15,19 +15,19 @@
       Tat ca
     </button>
     <button @@click="activeFilter = 'processing'"
-      :class="activeFilter === 'processing' ? 'mn-chip mn-chip-active' : 'mn-chip'">
+            :class="activeFilter === 'processing' ? 'mn-chip mn-chip-active' : 'mn-chip'">
       Dang xu ly
     </button>
     <button @@click="activeFilter = 'shipped'"
-      :class="activeFilter === 'shipped' ? 'mn-chip mn-chip-active' : 'mn-chip'">
+            :class="activeFilter === 'shipped' ? 'mn-chip mn-chip-active' : 'mn-chip'">
       Dang giao
     </button>
     <button @@click="activeFilter = 'delivered'"
-      :class="activeFilter === 'delivered' ? 'mn-chip mn-chip-active' : 'mn-chip'">
+            :class="activeFilter === 'delivered' ? 'mn-chip mn-chip-active' : 'mn-chip'">
       Da giao
     </button>
     <button @@click="activeFilter = 'cancelled'"
-      :class="activeFilter === 'cancelled' ? 'mn-chip mn-chip-active' : 'mn-chip'">
+            :class="activeFilter === 'cancelled' ? 'mn-chip mn-chip-active' : 'mn-chip'">
       Da huy
     </button>
   </div>
@@ -53,159 +53,168 @@
             <div class="flex -space-x-2">
               <div
                 class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
-                SP</div>
-                <div
-                  class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
-                  SP</div>
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-ink-700">Handmade Store</p>
-                  <p class="text-xs text-ink-400">2 san pham</p>
-                </div>
+                SP
               </div>
-              <a href="/account/orders/a1b2c3d4-e5f6-7890-abcd-ef1234567890" class="btn-ghost btn-sm">
-                Chi tiet
-              </a>
+              <div
+                class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
+                SP
+              </div>
             </div>
+            <div>
+              <p class="text-sm font-medium text-ink-700">Handmade Store</p>
+              <p class="text-xs text-ink-400">2 san pham</p>
+            </div>
+          </div>
+          <a href="/account/orders/a1b2c3d4-e5f6-7890-abcd-ef1234567890" class="btn-ghost btn-sm">
+            Chi tiet
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order 2: Shipped -->
+    <div class="card" x-show="activeFilter === 'all' || activeFilter === 'shipped'" x-transition>
+      <div class="card-body">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="mn-mono text-sm font-semibold text-ink-700">#MN-2024-002</span>
+            <span class="badge badge-blue">Dang giao</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="text-sm text-ink-400">18/03/2024</span>
+            <span class="mn-mono text-sm font-bold text-ink-700">890.000 VND</span>
           </div>
         </div>
-
-        <!-- Order 2: Shipped -->
-        <div class="card" x-show="activeFilter === 'all' || activeFilter === 'shipped'" x-transition>
-          <div class="card-body">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <div class="flex items-center gap-3">
-                <span class="mn-mono text-sm font-semibold text-ink-700">#MN-2024-002</span>
-                <span class="badge badge-blue">Dang giao</span>
-              </div>
-              <div class="flex items-center gap-4">
-                <span class="text-sm text-ink-400">18/03/2024</span>
-                <span class="mn-mono text-sm font-bold text-ink-700">890.000 VND</span>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="flex -space-x-2">
+              <div
+                class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
+                SP
               </div>
             </div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="flex -space-x-2">
-                  <div
-                    class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
-                    SP</div>
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium text-ink-700">Eco Living VN</p>
-                    <p class="text-xs text-ink-400">1 san pham</p>
-                  </div>
-                </div>
-                <a href="/account/orders/b2c3d4e5-f6a7-8901-bcde-f12345678901" class="btn-ghost btn-sm">
-                  Chi tiet
-                </a>
-              </div>
+            <div>
+              <p class="text-sm font-medium text-ink-700">Eco Living VN</p>
+              <p class="text-xs text-ink-400">1 san pham</p>
             </div>
           </div>
+          <a href="/account/orders/b2c3d4e5-f6a7-8901-bcde-f12345678901" class="btn-ghost btn-sm">
+            Chi tiet
+          </a>
+        </div>
+      </div>
+    </div>
 
-          <!-- Order 3: Processing -->
-          <div class="card" x-show="activeFilter === 'all' || activeFilter === 'processing'" x-transition>
-            <div class="card-body">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                <div class="flex items-center gap-3">
-                  <span class="mn-mono text-sm font-semibold text-ink-700">#MN-2024-003</span>
-                  <span class="badge badge-yellow">Dang xu ly</span>
-                </div>
-                <div class="flex items-center gap-4">
-                  <span class="text-sm text-ink-400">20/03/2024</span>
-                  <span class="mn-mono text-sm font-bold text-ink-700">2.150.000 VND</span>
-                </div>
+    <!-- Order 3: Processing -->
+    <div class="card" x-show="activeFilter === 'all' || activeFilter === 'processing'" x-transition>
+      <div class="card-body">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="mn-mono text-sm font-semibold text-ink-700">#MN-2024-003</span>
+            <span class="badge badge-yellow">Dang xu ly</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="text-sm text-ink-400">20/03/2024</span>
+            <span class="mn-mono text-sm font-bold text-ink-700">2.150.000 VND</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="flex -space-x-2">
+              <div
+                class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
+                SP
               </div>
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="flex -space-x-2">
-                    <div
-                      class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
-                      SP</div>
-                      <div
-                        class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
-                        SP</div>
-                        <div
-                          class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
-                          SP</div>
-                        </div>
-                        <div>
-                          <p class="text-sm font-medium text-ink-700">Vintage Corner</p>
-                          <p class="text-xs text-ink-400">3 san pham</p>
-                        </div>
-                      </div>
-                      <a href="/account/orders/c3d4e5f6-a7b8-9012-cdef-123456789012" class="btn-ghost btn-sm">
-                        Chi tiet
-                      </a>
-                    </div>
-                  </div>
-                </div>
+              <div
+                class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
+                SP
+              </div>
+              <div
+                class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
+                SP
+              </div>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-ink-700">Vintage Corner</p>
+              <p class="text-xs text-ink-400">3 san pham</p>
+            </div>
+          </div>
+          <a href="/account/orders/c3d4e5f6-a7b8-9012-cdef-123456789012" class="btn-ghost btn-sm">
+            Chi tiet
+          </a>
+        </div>
+      </div>
+    </div>
 
-                <!-- Order 4: Cancelled -->
-                <div class="card" x-show="activeFilter === 'all' || activeFilter === 'cancelled'" x-transition>
-                  <div class="card-body">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                      <div class="flex items-center gap-3">
-                        <span class="mn-mono text-sm font-semibold text-ink-700">#MN-2024-004</span>
-                        <span class="badge badge-red">Da huy</span>
-                      </div>
-                      <div class="flex items-center gap-4">
-                        <span class="text-sm text-ink-400">10/03/2024</span>
-                        <span class="mn-mono text-sm font-bold text-ink-700 line-through opacity-60">450.000 VND</span>
-                      </div>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-3">
-                        <div class="flex -space-x-2">
-                          <div
-                            class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
-                            SP</div>
-                          </div>
-                          <div>
-                            <p class="text-sm font-medium text-ink-700">ArtSpace Studio</p>
-                            <p class="text-xs text-ink-400">1 san pham</p>
-                          </div>
-                        </div>
-                        <a href="/account/orders/d4e5f6a7-b8c9-0123-defa-234567890123" class="btn-ghost btn-sm">
-                          Chi tiet
-                        </a>
-                      </div>
-                    </div>
-                  </div>
+    <!-- Order 4: Cancelled -->
+    <div class="card" x-show="activeFilter === 'all' || activeFilter === 'cancelled'" x-transition>
+      <div class="card-body">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="mn-mono text-sm font-semibold text-ink-700">#MN-2024-004</span>
+            <span class="badge badge-red">Da huy</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="text-sm text-ink-400">10/03/2024</span>
+            <span class="mn-mono text-sm font-bold text-ink-700 line-through opacity-60">450.000 VND</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="flex -space-x-2">
+              <div
+                class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
+                SP
+              </div>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-ink-700">ArtSpace Studio</p>
+              <p class="text-xs text-ink-400">1 san pham</p>
+            </div>
+          </div>
+          <a href="/account/orders/d4e5f6a7-b8c9-0123-defa-234567890123" class="btn-ghost btn-sm">
+            Chi tiet
+          </a>
+        </div>
+      </div>
+    </div>
 
-                  <!-- Order 5: Delivered -->
-                  <div class="card" x-show="activeFilter === 'all' || activeFilter === 'delivered'" x-transition>
-                    <div class="card-body">
-                      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                        <div class="flex items-center gap-3">
-                          <span class="mn-mono text-sm font-semibold text-ink-700">#MN-2024-005</span>
-                          <span class="badge badge-green">Da giao</span>
-                        </div>
-                        <div class="flex items-center gap-4">
-                          <span class="text-sm text-ink-400">05/03/2024</span>
-                          <span class="mn-mono text-sm font-bold text-ink-700">3.780.000 VND</span>
-                        </div>
-                      </div>
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                          <div class="flex -space-x-2">
-                            <div
-                              class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
-                              SP</div>
-                              <div
-                                class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
-                                SP</div>
-                              </div>
-                              <div>
-                                <p class="text-sm font-medium text-ink-700">Green Garden Shop</p>
-                                <p class="text-xs text-ink-400">2 san pham</p>
-                              </div>
-                            </div>
-                            <a href="/account/orders/e5f6a7b8-c9d0-1234-efab-345678901234" class="btn-ghost btn-sm">
-                              Chi tiet
-                            </a>
-                          </div>
-                        </div>
-                      </div>
+    <!-- Order 5: Delivered -->
+    <div class="card" x-show="activeFilter === 'all' || activeFilter === 'delivered'" x-transition>
+      <div class="card-body">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="mn-mono text-sm font-semibold text-ink-700">#MN-2024-005</span>
+            <span class="badge badge-green">Da giao</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="text-sm text-ink-400">05/03/2024</span>
+            <span class="mn-mono text-sm font-bold text-ink-700">3.780.000 VND</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="flex -space-x-2">
+              <div
+                class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
+                SP
+              </div>
+              <div
+                class="w-[60px] h-[60px] rounded-xl bg-cream-200 border-2 border-surface flex items-center justify-center text-xs text-ink-400">
+                SP
+              </div>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-ink-700">Green Garden Shop</p>
+              <p class="text-xs text-ink-400">2 san pham</p>
+            </div>
+          </div>
+          <a href="/account/orders/e5f6a7b8-c9d0-1234-efab-345678901234" class="btn-ghost btn-sm">
+            Chi tiet
+          </a>
+        </div>
+      </div>
+    </div>
 
-                    </div>
-                  </section>
+  </div>
+</section>

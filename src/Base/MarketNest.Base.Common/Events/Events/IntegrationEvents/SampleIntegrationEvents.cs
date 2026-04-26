@@ -19,7 +19,7 @@
 /// <summary>
 ///     Published by Orders module when a new order is placed.
 ///     Consumed by: Notifications (send confirmation), Payments (initiate charge),
-///                  Catalog (reserve inventory).
+///     Catalog (reserve inventory).
 /// </summary>
 public sealed record OrderPlacedIntegrationEvent : IntegrationEvent
 {
@@ -75,4 +75,3 @@ public sealed record ProductOutOfStockIntegrationEvent : IntegrationEvent
     public required Guid StorefrontId { get; init; }
     public required string ProductName { get; init; }
 }
-

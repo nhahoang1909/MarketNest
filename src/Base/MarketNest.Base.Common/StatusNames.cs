@@ -1,8 +1,8 @@
 ﻿namespace MarketNest.Base.Common;
 
 /// <summary>
-/// Order status string constants used for display and matching.
-/// These map to the <c>OrderStatus</c> enum values in the Orders module.
+///     Order status string constants used for display and matching.
+///     These map to the <c>OrderStatus</c> enum values in the Orders module.
 /// </summary>
 public static class OrderStatusNames
 {
@@ -23,7 +23,7 @@ public static class OrderStatusNames
 }
 
 /// <summary>
-/// General entity status string constants used across status badges.
+///     General entity status string constants used across status badges.
 /// </summary>
 public static class EntityStatusNames
 {
@@ -49,4 +49,3 @@ public static class EntityStatusNames
     public const string Seller = "Seller";
     public const string Admin = "Admin";
 }
-

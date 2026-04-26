@@ -1,347 +1,420 @@
 @page "/not-found"
-@model NotFoundModel
+@model MarketNest.Web.Pages.NotFoundModel
 @{
-    Layout = null;
+  Layout = null;
 }
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@AppConstants.NotFoundPage.PageTitle</title>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <style>
-        .nf-page {
-            min-height: 100vh;
-            display: grid;
-            grid-template-rows: auto 1fr auto;
-            padding: 28px 40px;
-            gap: 0;
-            background: #f5f0e8;
-            color: #1E3932;
-            font-family: var(--font-sans, sans-serif);
-            -webkit-font-smoothing: antialiased;
-        }
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>@AppConstants.NotFoundPage.PageTitle</title>
+  <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+  <style>
+    .nf-page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 28px 40px;
+      gap: 0;
+      background: #f5f0e8;
+      color: #1E3932;
+      font-family: var(--font-sans, sans-serif);
+      -webkit-font-smoothing: antialiased;
+    }
 
-        .nf-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 12px;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: #6b6a66;
-        }
-        .nf-bar .nf-mark {
-            color: #1E3932;
-            letter-spacing: 0.18em;
-        }
-        .nf-bar nav { display: flex; gap: 28px; }
-        .nf-bar nav a {
-            color: #6b6a66;
-            text-decoration: none;
-            transition: color 0.15s ease;
-        }
-        .nf-bar nav a:hover { color: #1E3932; }
-        .nf-footer {
-            border-top: 1px solid rgba(26, 31, 27, 0.14);
-            padding-top: 18px;
-            margin-top: 24px;
-        }
+    .nf-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6b6a66;
+    }
 
-        /* Hero */
-        .nf-main {
-            display: grid;
-            grid-template-columns: 1.05fr 0.95fr;
-            align-items: center;
-            gap: 56px;
-            padding: 48px 0;
-            max-width: 1080px;
-            width: 100%;
-            margin: 0 auto;
-        }
+    .nf-bar .nf-mark {
+      color: #1E3932;
+      letter-spacing: 0.18em;
+    }
 
-        /* Left column */
-        .nf-copy .nf-eyebrow {
-            font-size: 12px;
-            letter-spacing: 0.22em;
-            text-transform: uppercase;
-            color: #6b6a66;
-            margin: 0 0 24px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .nf-eyebrow .nf-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #1E3932;
-            display: inline-block;
-        }
-        .nf-copy h1 {
-            font-family: var(--font-sans, sans-serif);
-            font-weight: 300;
-            font-size: clamp(96px, 18vw, 220px);
-            line-height: 0.9;
-            letter-spacing: -0.04em;
-            margin: 0 0 18px;
-            color: #1E3932;
-        }
-        .nf-copy h2 {
-            font-family: var(--font-display, serif);
-            font-weight: 400;
-            font-size: clamp(20px, 2.4vw, 28px);
-            line-height: 1.25;
-            letter-spacing: -0.01em;
-            margin: 0 0 14px;
-            max-width: 28ch;
-            text-wrap: balance;
-        }
-        .nf-copy p {
-            font-weight: 400;
-            font-size: 15px;
-            line-height: 1.55;
-            color: #6b6a66;
-            margin: 0 0 28px;
-            max-width: 42ch;
-            text-wrap: pretty;
-        }
-        .nf-actions {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .nf-btn {
-            appearance: none;
-            border: 1px solid #1E3932;
-            background: #1E3932;
-            color: #f5f0e8;
-            font: inherit;
-            font-size: 13px;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            padding: 12px 20px;
-            border-radius: 999px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
-        }
-        .nf-btn:hover { transform: translateY(-1px); }
-        .nf-btn.nf-ghost {
-            background: transparent;
-            color: #1E3932;
-        }
-        .nf-btn.nf-ghost:hover { background: #1E3932; color: #f5f0e8; }
-        .nf-btn .nf-arrow {
-            display: inline-block;
-            transition: transform 0.2s ease;
-        }
-        .nf-btn:hover .nf-arrow { transform: translateX(3px); }
+    .nf-bar nav {
+      display: flex;
+      gap: 28px;
+    }
 
-        /* Right column — globe stage */
-        .nf-stage-wrap {
-            display: grid;
-            place-items: center;
-        }
-        .nf-stage {
-            width: 360px;
-            height: 360px;
-            position: relative;
-        }
-        .nf-stage svg {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            overflow: visible;
-        }
+    .nf-bar nav a {
+      color: #6b6a66;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
 
-        /* Globe */
-        .globe-sphere {
-            fill: #f5f0e8;
-            stroke: #1E3932;
-            stroke-width: 1.1;
-        }
-        .globe-graticule {
-            fill: none;
-            stroke: #1E3932;
-            stroke-width: 0.4;
-            stroke-opacity: 0.28;
-        }
-        .globe-land {
-            fill: #1E3932;
-            fill-opacity: 0.92;
-            stroke: #1E3932;
-            stroke-width: 0.25;
-            stroke-linejoin: round;
-        }
+    .nf-bar nav a:hover {
+      color: #1E3932;
+    }
 
-        /* Whirl */
-        .whirl, .whirl-rev, .whirl-fast {
-            transform-origin: 100px 100px;
-        }
-        .whirl     { animation: nf-spin    3.6s linear infinite; }
-        .whirl-rev { animation: nf-spinRev 5.2s linear infinite; }
-        .whirl-fast{ animation: nf-spin    2.2s linear infinite; }
-        .nf-arc {
-            fill: none;
-            stroke: #1E3932;
-            stroke-linecap: round;
-        }
-        .nf-dot-svg { fill: #1E3932; }
+    .nf-footer {
+      border-top: 1px solid rgba(26, 31, 27, 0.14);
+      padding-top: 18px;
+      margin-top: 24px;
+    }
 
-        .nf-coord {
-            position: absolute;
-            bottom: -34px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-family: var(--font-mono, monospace);
-            font-size: 11px;
-            letter-spacing: 0.12em;
-            color: #6b6a66;
-        }
+    /* Hero */
+    .nf-main {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      align-items: center;
+      gap: 56px;
+      padding: 48px 0;
+      max-width: 1080px;
+      width: 100%;
+      margin: 0 auto;
+    }
 
-        @@keyframes nf-spin    { to { transform: rotate(360deg); } }
-        @@keyframes nf-spinRev { to { transform: rotate(-360deg); } }
+    /* Left column */
+    .nf-copy .nf-eyebrow {
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #6b6a66;
+      margin: 0 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-        @@media (max-width: 760px) {
-            .nf-main {
-                grid-template-columns: 1fr;
-                gap: 32px;
-                padding: 24px 0;
-            }
-            .nf-page { padding: 20px; }
-            .nf-stage { width: 280px; height: 280px; }
-        }
-    </style>
+    .nf-eyebrow .nf-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #1E3932;
+      display: inline-block;
+    }
+
+    .nf-copy h1 {
+      font-family: var(--font-sans, sans-serif);
+      font-weight: 300;
+      font-size: clamp(96px, 18vw, 220px);
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      margin: 0 0 18px;
+      color: #1E3932;
+    }
+
+    .nf-copy h2 {
+      font-family: var(--font-display, serif);
+      font-weight: 400;
+      font-size: clamp(20px, 2.4vw, 28px);
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      margin: 0 0 14px;
+      max-width: 28ch;
+      text-wrap: balance;
+    }
+
+    .nf-copy p {
+      font-weight: 400;
+      font-size: 15px;
+      line-height: 1.55;
+      color: #6b6a66;
+      margin: 0 0 28px;
+      max-width: 42ch;
+      text-wrap: pretty;
+    }
+
+    .nf-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .nf-btn {
+      appearance: none;
+      border: 1px solid #1E3932;
+      background: #1E3932;
+      color: #f5f0e8;
+      font: inherit;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 12px 20px;
+      border-radius: 999px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+
+    .nf-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .nf-btn.nf-ghost {
+      background: transparent;
+      color: #1E3932;
+    }
+
+    .nf-btn.nf-ghost:hover {
+      background: #1E3932;
+      color: #f5f0e8;
+    }
+
+    .nf-btn .nf-arrow {
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+
+    .nf-btn:hover .nf-arrow {
+      transform: translateX(3px);
+    }
+
+    /* Right column ï¿½ globe stage */
+    .nf-stage-wrap {
+      display: grid;
+      place-items: center;
+    }
+
+    .nf-stage {
+      width: 360px;
+      height: 360px;
+      position: relative;
+    }
+
+    .nf-stage svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* Globe */
+    .globe-sphere {
+      fill: #f5f0e8;
+      stroke: #1E3932;
+      stroke-width: 1.1;
+    }
+
+    .globe-graticule {
+      fill: none;
+      stroke: #1E3932;
+      stroke-width: 0.4;
+      stroke-opacity: 0.28;
+    }
+
+    .globe-land {
+      fill: #1E3932;
+      fill-opacity: 0.92;
+      stroke: #1E3932;
+      stroke-width: 0.25;
+      stroke-linejoin: round;
+    }
+
+    /* Whirl */
+    .whirl, .whirl-rev, .whirl-fast {
+      transform-origin: 100px 100px;
+    }
+
+    .whirl {
+      animation: nf-spin 3.6s linear infinite;
+    }
+
+    .whirl-rev {
+      animation: nf-spinRev 5.2s linear infinite;
+    }
+
+    .whirl-fast {
+      animation: nf-spin 2.2s linear infinite;
+    }
+
+    .nf-arc {
+      fill: none;
+      stroke: #1E3932;
+      stroke-linecap: round;
+    }
+
+    .nf-dot-svg {
+      fill: #1E3932;
+    }
+
+    .nf-coord {
+      position: absolute;
+      bottom: -34px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: var(--font-mono, monospace);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: #6b6a66;
+    }
+
+    @@keyframes nf-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @@keyframes nf-spinRev {
+      to {
+        transform: rotate(-360deg);
+      }
+    }
+
+    @@media (max-width: 760px) {
+      .nf-main {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        padding: 24px 0;
+      }
+
+      .nf-page {
+        padding: 20px;
+      }
+
+      .nf-stage {
+        width: 280px;
+        height: 280px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="nf-page">
+<div class="nf-page">
 
-        <header class="nf-bar">
-            <div class="nf-mark">@AppConstants.AppName.ToUpperInvariant()</div>
-            <nav>
-                <a href="@AppRoutes.Home">Home</a>
-                <a href="@AppRoutes.Shop">Shop</a>
-                <a href="@AppRoutes.Search">Search</a>
-            </nav>
-        </header>
+  <header class="nf-bar">
+    <div class="nf-mark">@AppConstants.AppName.ToUpperInvariant()</div>
+    <nav>
+      <a href="@AppRoutes.Home">Home</a>
+      <a href="@AppRoutes.Shop">Shop</a>
+      <a href="@AppRoutes.Search">Search</a>
+    </nav>
+  </header>
 
-        <main class="nf-main">
-            <!-- Left: copy -->
-            <section class="nf-copy">
-                <p class="nf-eyebrow"><span class="nf-dot"></span> @AppConstants.NotFoundPage.Eyebrow</p>
-                <h1>@AppConstants.NotFoundPage.StatusCode</h1>
-                <h2>@AppConstants.NotFoundPage.Heading</h2>
-                <p>@AppConstants.NotFoundPage.Description</p>
-                <div class="nf-actions">
-                    <a href="@AppRoutes.Home" class="nf-btn">@AppConstants.NotFoundPage.BackToHome <span class="nf-arrow">?</span></a>
-                    <a href="@AppRoutes.Shop" class="nf-btn nf-ghost">@AppConstants.NotFoundPage.BrowseShop</a>
-                </div>
-            </section>
+  <main class="nf-main">
+    <!-- Left: copy -->
+    <section class="nf-copy">
+      <p class="nf-eyebrow"><span class="nf-dot"></span> @AppConstants.NotFoundPage.Eyebrow</p>
+      <h1>@AppConstants.NotFoundPage.StatusCode</h1>
+      <h2>@AppConstants.NotFoundPage.Heading</h2>
+      <p>@AppConstants.NotFoundPage.Description</p>
+      <div class="nf-actions">
+        <a href="@AppRoutes.Home" class="nf-btn">@AppConstants.NotFoundPage.BackToHome <span
+            class="nf-arrow">?</span></a>
+        <a href="@AppRoutes.Shop" class="nf-btn nf-ghost">@AppConstants.NotFoundPage.BrowseShop</a>
+      </div>
+    </section>
 
-            <!-- Right: globe -->
-            <section class="nf-stage-wrap">
-                <div class="nf-stage">
-                    <!-- Whirl rings -->
-                    <svg viewBox="0 0 200 200" aria-hidden="true">
-                        <g class="whirl-rev">
-                            <circle cx="100" cy="100" r="92" class="nf-arc" stroke-width="1.2" stroke-opacity="0.55" stroke-dasharray="120 70 28 360" />
-                            <circle cx="100" cy="100" r="92" class="nf-arc" stroke-width="1.2" stroke-opacity="0.18" stroke-dasharray="2 6" />
-                            <circle class="nf-dot-svg" cx="192" cy="100" r="2.2" />
-                            <circle class="nf-dot-svg" cx="8" cy="100" r="1.4" fill-opacity="0.55" />
-                        </g>
-                        <g class="whirl">
-                            <circle cx="100" cy="100" r="84" class="nf-arc" stroke-width="0.9" stroke-opacity="0.85" stroke-dasharray="60 22 14 30 6 360" />
-                        </g>
-                        <g class="whirl-fast">
-                            <circle cx="100" cy="100" r="78" class="nf-arc" stroke-width="0.7" stroke-opacity="0.4" stroke-dasharray="34 14 8 360" />
-                            <circle cx="100" cy="100" r="78" class="nf-arc" stroke-width="0.7" stroke-opacity="0.18" stroke-dasharray="1.5 5" />
-                        </g>
-                    </svg>
+    <!-- Right: globe -->
+    <section class="nf-stage-wrap">
+      <div class="nf-stage">
+        <!-- Whirl rings -->
+        <svg viewBox="0 0 200 200" aria-hidden="true">
+          <g class="whirl-rev">
+            <circle cx="100" cy="100" r="92" class="nf-arc" stroke-width="1.2" stroke-opacity="0.55"
+                    stroke-dasharray="120 70 28 360"/>
+            <circle cx="100" cy="100" r="92" class="nf-arc" stroke-width="1.2" stroke-opacity="0.18"
+                    stroke-dasharray="2 6"/>
+            <circle class="nf-dot-svg" cx="192" cy="100" r="2.2"/>
+            <circle class="nf-dot-svg" cx="8" cy="100" r="1.4" fill-opacity="0.55"/>
+          </g>
+          <g class="whirl">
+            <circle cx="100" cy="100" r="84" class="nf-arc" stroke-width="0.9" stroke-opacity="0.85"
+                    stroke-dasharray="60 22 14 30 6 360"/>
+          </g>
+          <g class="whirl-fast">
+            <circle cx="100" cy="100" r="78" class="nf-arc" stroke-width="0.7" stroke-opacity="0.4"
+                    stroke-dasharray="34 14 8 360"/>
+            <circle cx="100" cy="100" r="78" class="nf-arc" stroke-width="0.7" stroke-opacity="0.18"
+                    stroke-dasharray="1.5 5"/>
+          </g>
+        </svg>
 
-                    <!-- Globe -->
-                    <svg viewBox="0 0 200 200" id="globe">
-                        <circle class="globe-sphere" cx="100" cy="100" r="74" />
-                        <g><path class="globe-graticule" id="graticule-path" /></g>
-                        <g><path class="globe-land" id="land-path" /></g>
-                    </svg>
+        <!-- Globe -->
+        <svg viewBox="0 0 200 200" id="globe">
+          <circle class="globe-sphere" cx="100" cy="100" r="74"/>
+          <g>
+            <path class="globe-graticule" id="graticule-path"/>
+          </g>
+          <g>
+            <path class="globe-land" id="land-path"/>
+          </g>
+        </svg>
 
-                    <div class="nf-coord" id="coord">@AppConstants.NotFoundPage.CoordinateFormat</div>
-                </div>
-            </section>
-        </main>
+        <div class="nf-coord" id="coord">@AppConstants.NotFoundPage.CoordinateFormat</div>
+      </div>
+    </section>
+  </main>
 
-        <footer class="nf-bar nf-footer">
-            <div>© @AppConstants.AppName @AppConstants.CopyrightYear</div>
-            <div>@AppConstants.NotFoundPage.FooterStatus</div>
-        </footer>
+  <footer class="nf-bar nf-footer">
+    <div>ï¿½ @AppConstants.AppName @AppConstants.CopyrightYear</div>
+    <div>@AppConstants.NotFoundPage.FooterStatus</div>
+  </footer>
 
-    </div>
+</div>
 
-    <script src="@AppConstants.Cdn.D3Js"></script>
-    <script src="@AppConstants.Cdn.TopojsonClient"></script>
-    <script>
-        (async () => {
-            const W = 200, H = 200, R = 74;
-            const projection = d3.geoOrthographic()
-                .scale(R)
-                .translate([W / 2, H / 2])
-                .clipAngle(90)
-                .rotate([0, -12, 0]);
-            const path = d3.geoPath(projection);
-            const graticule = d3.geoGraticule10();
+<script src="@AppConstants.Cdn.D3Js"></script>
+<script src="@AppConstants.Cdn.TopojsonClient"></script>
+<script>
+  (async () => {
+    const W = 200, H = 200, R = 74;
+    const projection = d3.geoOrthographic()
+      .scale(R)
+      .translate([W / 2, H / 2])
+      .clipAngle(90)
+      .rotate([0, -12, 0]);
+    const path = d3.geoPath(projection);
+    const graticule = d3.geoGraticule10();
 
-            const landEl  = document.getElementById('land-path');
-            const gratEl  = document.getElementById('graticule-path');
-            const coordEl = document.getElementById('coord');
+    const landEl = document.getElementById('land-path');
+    const gratEl = document.getElementById('graticule-path');
+    const coordEl = document.getElementById('coord');
 
-            let land = null;
-            try {
-                const res = await fetch('@AppConstants.Cdn.WorldAtlas');
-                const topo = await res.json();
-                land = topojson.feature(topo, topo.objects.countries);
-            } catch (e) {
-                console.warn('world-atlas fetch failed', e);
-            }
+    let land = null;
+    try {
+      const res = await fetch('@AppConstants.Cdn.WorldAtlas');
+      const topo = await res.json();
+      land = topojson.feature(topo, topo.objects.countries);
+    } catch (e) {
+      console.warn('world-atlas fetch failed', e);
+    }
 
-            function draw() {
-                gratEl.setAttribute('d', path(graticule) || '');
-                if (land) landEl.setAttribute('d', path(land) || '');
-            }
-            draw();
+    function draw() {
+      gratEl.setAttribute('d', path(graticule) || '');
+      if (land) landEl.setAttribute('d', path(land) || '');
+    }
 
-            const PERIOD_MS = 24000;
-            const TILT = -12;
-            const start = performance.now();
+    draw();
 
-            function fmt(v, pad) {
-                const s = Math.abs(v).toFixed(1).padStart(pad, '0');
-                return (v < 0 ? '-' : ' ') + s + '\u00B0';
-            }
+    const PERIOD_MS = 24000;
+    const TILT = -12;
+    const start = performance.now();
 
-            function tick(now) {
-                const t = ((now - start) % PERIOD_MS) / PERIOD_MS;
-                const lambda = t * 360;
-                projection.rotate([lambda, TILT, 0]);
-                draw();
+    function fmt(v, pad) {
+      const s = Math.abs(v).toFixed(1).padStart(pad, '0');
+      return (v < 0 ? '-' : ' ') + s + '\u00B0';
+    }
 
-                const lon = ((lambda + 180) % 360) - 180;
-                const lat = -TILT;
-                coordEl.textContent =
-                    'LAT ' + fmt(lat, 4) + ' \u00B7 LON ' + fmt(lon, 5);
+    function tick(now) {
+      const t = ((now - start) % PERIOD_MS) / PERIOD_MS;
+      const lambda = t * 360;
+      projection.rotate([lambda, TILT, 0]);
+      draw();
 
-                requestAnimationFrame(tick);
-            }
-            requestAnimationFrame(tick);
-        })();
-    </script>
+      const lon = ((lambda + 180) % 360) - 180;
+      const lat = -TILT;
+      coordEl.textContent =
+        'LAT ' + fmt(lat, 4) + ' \u00B7 LON ' + fmt(lon, 5);
+
+      requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+  })();
+</script>
 </body>
 </html>
 

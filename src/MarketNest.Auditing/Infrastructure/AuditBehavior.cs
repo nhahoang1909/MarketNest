@@ -1,14 +1,14 @@
 ﻿using System.Reflection;
-using MarketNest.Core.Common;
-using MarketNest.Core.Contracts;
-using MarketNest.Core.Logging;
+using MarketNest.Base.Common;
+using MarketNest.Base.Infrastructure;
+// Audit attributes moved to Base.Common; use that namespace
 using MediatR;
 
 namespace MarketNest.Auditing.Infrastructure;
 
 /// <summary>
-/// MediatR pipeline behavior that automatically records audit entries for commands
-/// decorated with <see cref="AuditedAttribute"/>. Runs after the handler completes.
+///     MediatR pipeline behavior that automatically records audit entries for commands
+///     decorated with <see cref="AuditedAttribute" />. Runs after the handler completes.
 /// </summary>
 public class AuditBehavior<TRequest, TResponse>(
     IAuditService auditService,
@@ -21,21 +21,21 @@ public class AuditBehavior<TRequest, TResponse>(
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        var response = await next(cancellationToken);
+        TResponse response = await next(cancellationToken);
 
-        var attr = typeof(TRequest).GetCustomAttribute<AuditedAttribute>();
+        AuditedAttribute? attr = typeof(TRequest).GetCustomAttribute<AuditedAttribute>();
         if (attr is null)
             return response;
 
         try
         {
-            var isSuccess = IsSuccessResult(response);
+            bool isSuccess = IsSuccessResult(response);
 
             if (!isSuccess && !attr.AuditFailures)
                 return response;
 
-            var eventType = attr.EventType
-                ?? typeof(TRequest).Name.ToUpperInvariant().Replace("COMMAND", "");
+            string eventType = attr.EventType
+                               ?? typeof(TRequest).Name.ToUpperInvariant().Replace("COMMAND", "");
 
             await auditService.RecordAsync(new AuditEntry
             {
@@ -63,7 +63,8 @@ public class AuditBehavior<TRequest, TResponse>(
             null => false,
             _ when response.GetType().IsGenericType
                    && response.GetType().GetGenericTypeDefinition() == typeof(Result<,>)
-                => (bool)(response.GetType().GetProperty(nameof(Result<int, int>.IsSuccess))?.GetValue(response) ?? false),
+                => (bool)(response.GetType().GetProperty(nameof(Result<int, int>.IsSuccess))?.GetValue(response) ??
+                          false),
             _ => true
         };
 
@@ -73,4 +74,3 @@ public class AuditBehavior<TRequest, TResponse>(
             .FirstOrDefault(p => string.Equals(p.Name, "Id", StringComparison.OrdinalIgnoreCase))
             ?.GetValue(request) as Guid?;
 }
-

@@ -19,4 +19,3 @@ public interface IUserTimeZoneProvider
     /// <summary>The user's preferred time-only format (e.g. "HH:mm"). Defaults to 24h.</summary>
     string TimeFormat { get; }
 }
-

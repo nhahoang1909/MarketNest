@@ -7,7 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\MarketNest.Core\MarketNest.Core.csproj"/>
         <ProjectReference Include="..\..\src\MarketNest.Identity\MarketNest.Identity.csproj"/>
         <ProjectReference Include="..\..\src\MarketNest.Catalog\MarketNest.Catalog.csproj"/>
         <ProjectReference Include="..\..\src\MarketNest.Cart\MarketNest.Cart.csproj"/>

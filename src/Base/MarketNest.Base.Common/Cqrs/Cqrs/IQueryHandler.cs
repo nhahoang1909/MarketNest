@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace MarketNest.Core.Common.Cqrs;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Handler for queries. Returns TResult directly (no Result wrapper).

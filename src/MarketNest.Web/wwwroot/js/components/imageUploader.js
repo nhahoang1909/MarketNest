@@ -2,7 +2,7 @@
  * Image uploader Alpine.js component
  * Usage: x-data="imageUploader({ maxFiles: 5 })"
  */
-import { ImageUploadConfig } from "../constants.js";
+import {ImageUploadConfig} from "../constants.js";
 
 document.addEventListener("alpine:init", () => {
     Alpine.data("imageUploader", ({maxFiles = ImageUploadConfig.DEFAULT_MAX_FILES} = {}) => ({

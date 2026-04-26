@@ -7,19 +7,23 @@ namespace MarketNest.Base.Common;
 public record Error(string Code, string Message, ErrorType Type = ErrorType.Validation)
 {
     public static Error NotFound(string entity, string id)
-        => new($"{entity.ToUpperInvariant()}.{DomainConstants.ErrorCodes.NotFoundSuffix}", $"{entity} '{id}' not found", ErrorType.NotFound);
+        => new($"{entity.ToUpperInvariant()}.{DomainConstants.ErrorCodes.NotFoundSuffix}", $"{entity} '{id}' not found",
+            ErrorType.NotFound);
 
     public static Error Unauthorized(string? detail = null)
-        => new(DomainConstants.ErrorCodes.Unauthorized, detail ?? DomainConstants.ErrorMessages.AuthenticationRequired, ErrorType.Unauthorized);
+        => new(DomainConstants.ErrorCodes.Unauthorized, detail ?? DomainConstants.ErrorMessages.AuthenticationRequired,
+            ErrorType.Unauthorized);
 
     public static Error Forbidden(string? detail = null)
-        => new(DomainConstants.ErrorCodes.Forbidden, detail ?? DomainConstants.ErrorMessages.InsufficientPermissions, ErrorType.Forbidden);
+        => new(DomainConstants.ErrorCodes.Forbidden, detail ?? DomainConstants.ErrorMessages.InsufficientPermissions,
+            ErrorType.Forbidden);
 
     public static Error Conflict(string code, string message)
         => new(code, message, ErrorType.Conflict);
 
     public static Error Unexpected(string? detail = null)
-        => new(DomainConstants.ErrorCodes.UnexpectedError, detail ?? DomainConstants.ErrorMessages.UnexpectedError, ErrorType.Unexpected);
+        => new(DomainConstants.ErrorCodes.UnexpectedError, detail ?? DomainConstants.ErrorMessages.UnexpectedError,
+            ErrorType.Unexpected);
 }
 
 public enum ErrorType

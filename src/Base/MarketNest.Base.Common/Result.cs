@@ -1,5 +1,7 @@
 using MediatR;
 
+#pragma warning disable CA1000 // Allow static factory methods on generic Result<T, TError> for fluent API
+
 namespace MarketNest.Base.Common;
 
 /// <summary>

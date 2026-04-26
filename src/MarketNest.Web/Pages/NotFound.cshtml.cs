@@ -2,12 +2,14 @@
 
 namespace MarketNest.Web.Pages;
 
-[Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
-public class NotFoundModel : PageModel
+[IgnoreAntiforgeryToken]
+public class NotFoundModel(IAppLogger<NotFoundModel> logger) : PageModel
 {
     public void OnGet()
     {
+        var cid = HttpContext?.TraceIdentifier ?? "-";
+        using var scope = logger.BeginApiScope(nameof(OnGet), null, cid);
+        scope.Success();
         Response.StatusCode = StatusCodes.Status404NotFound;
     }
 }
-

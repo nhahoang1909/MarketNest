@@ -1,6 +1,4 @@
-using Microsoft.EntityFrameworkCore;
-using MarketNest.Core.Common;
-using MarketNest.Core.Common.Persistence;
+using MarketNest.Base.Infrastructure;
 
 namespace MarketNest.Admin.Infrastructure;
 
@@ -20,7 +18,7 @@ public abstract class BaseRepository<TEntity, TKey>(AdminDbContext db)
     public virtual Task<bool> ExistsAsync(TKey id, CancellationToken ct = default)
         => db.Set<TEntity>().AnyAsync(e => e.Id!.Equals(id), ct);
 
-    public virtual void Add(TEntity entity)    => db.Set<TEntity>().Add(entity);
+    public virtual void Add(TEntity entity) => db.Set<TEntity>().Add(entity);
     public virtual void Update(TEntity entity) => db.Set<TEntity>().Update(entity);
     public virtual void Remove(TEntity entity) => db.Set<TEntity>().Remove(entity);
 

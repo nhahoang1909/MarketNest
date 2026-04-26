@@ -1,3 +1,5 @@
+using MarketNest.Base.Domain;
+
 namespace MarketNest.Base.Infrastructure;
 
 /// <summary>

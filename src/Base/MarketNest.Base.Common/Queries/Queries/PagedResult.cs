@@ -1,5 +1,7 @@
 namespace MarketNest.Base.Common;
 
+#pragma warning disable CA1000 // Allow static convenience factory on generic PagedResult<T>
+
 /// <summary>
 ///     Standard paged result envelope for list endpoints.
 /// </summary>

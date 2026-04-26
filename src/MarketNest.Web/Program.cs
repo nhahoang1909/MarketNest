@@ -1,15 +1,20 @@
 using System.Globalization;
+using System.Reflection;
 using FluentValidation;
-using Microsoft.AspNetCore.Mvc;
-using MarketNest.Core.Common.Events;
-using MarketNest.Core.Contracts;
-using MarketNest.Core.Logging;
-using MarketNest.Web.Infrastructure;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Localization;
-using MarketNest.Core.BackgroundJobs;
+using MarketNest.Admin.Application;
+using MarketNest.Admin.Infrastructure;
+using MarketNest.Auditing;
+using MarketNest.Auditing.Infrastructure;
 using MarketNest.Web.BackgroundJobs;
 using MarketNest.Web.Hosting;
+using MarketNest.Web.Infrastructure;
+using MarketNest.Base.Common;
+using MarketNest.Base.Infrastructure;
+using MarketNest.Base.Utility;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -21,7 +26,7 @@ try
 {
     Log.Information("Starting MarketNest application");
 
-    var builder = WebApplication.CreateBuilder(args);
+    WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
     // ── Serilog ───────────────────────────────────────────────────────
     builder.Host.UseSerilog((context, loggerConfig) => loggerConfig
@@ -30,9 +35,10 @@ try
         .Enrich.WithProperty(AppConstants.SerilogApplicationProperty, AppConstants.AppName)
         .Enrich.WithEnvironmentName()
         .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
-        .WriteTo.Seq(serverUrl: context.Configuration[AppConstants.SeqServerUrlKey]
-                         ?? throw new InvalidOperationException($"Configuration key '{AppConstants.SeqServerUrlKey}' is not set. Add it to appsettings.json."),
-                     formatProvider: CultureInfo.InvariantCulture));
+        .WriteTo.Seq(context.Configuration[AppConstants.SeqServerUrlKey]
+                     ?? throw new InvalidOperationException(
+                         $"Configuration key '{AppConstants.SeqServerUrlKey}' is not set. Add it to appsettings.json."),
+            formatProvider: CultureInfo.InvariantCulture));
 
     // ── Services ──────────────────────────────────────────────────────
     builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
@@ -49,11 +55,11 @@ try
     {
         options.AddDocumentTransformer((document, _, _) =>
         {
-            document.Info = new()
+            document.Info = new OpenApiInfo
             {
                 Title = AppConstants.OpenApi.Title,
                 Version = AppConstants.OpenApi.Version,
-                Description = AppConstants.OpenApi.Description,
+                Description = AppConstants.OpenApi.Description
             };
             return Task.CompletedTask;
         });
@@ -67,7 +73,7 @@ try
     builder.Services.AddMediatR(cfg =>
     {
         cfg.RegisterServicesFromAssemblies(
-            typeof(MarketNest.Core.Common.Entity<>).Assembly,
+            typeof(MarketNest.Base.Domain.Entity<>).Assembly,
             typeof(MarketNest.Auditing.AssemblyReference).Assembly,
             typeof(MarketNest.Identity.AssemblyReference).Assembly,
             typeof(MarketNest.Catalog.AssemblyReference).Assembly,
@@ -80,11 +86,11 @@ try
             typeof(MarketNest.Admin.AssemblyReference).Assembly);
 
         // Auditing pipeline behavior — records [Audited] commands automatically
-        cfg.AddOpenBehavior(typeof(MarketNest.Auditing.Infrastructure.AuditBehavior<,>));
+        cfg.AddOpenBehavior(typeof(AuditBehavior<,>));
     });
 
     // FluentValidation — discover validators from all module assemblies
-    var validatorAssemblies = new[]
+    Assembly[] validatorAssemblies = new[]
     {
         typeof(MarketNest.Identity.AssemblyReference).Assembly,
         typeof(MarketNest.Catalog.AssemblyReference).Assembly,
@@ -92,13 +98,10 @@ try
         typeof(MarketNest.Orders.AssemblyReference).Assembly,
         typeof(MarketNest.Payments.AssemblyReference).Assembly,
         typeof(MarketNest.Reviews.AssemblyReference).Assembly,
-        typeof(MarketNest.Disputes.AssemblyReference).Assembly,
+        typeof(MarketNest.Disputes.AssemblyReference).Assembly
     };
 
-    foreach (var assembly in validatorAssemblies)
-    {
-        builder.Services.AddValidatorsFromAssembly(assembly);
-    }
+    foreach (Assembly assembly in validatorAssemblies) builder.Services.AddValidatorsFromAssembly(assembly);
 
     // IAppLogger<T> — open-generic registration, resolved per class
     builder.Services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
@@ -107,24 +110,24 @@ try
     builder.Services.AddSingleton<IEventBus, InProcessEventBus>();
 
     // ── Auditing Module ──────────────────────────────────────────────
-    builder.Services.AddScoped<MarketNest.Auditing.Infrastructure.AuditableInterceptor>();
-    builder.Services.AddModuleDbContext<MarketNest.Auditing.Infrastructure.AuditingDbContext>(opts =>
+    builder.Services.AddScoped<AuditableInterceptor>();
+    builder.Services.AddModuleDbContext<AuditingDbContext>(opts =>
         opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
-    builder.Services.AddScoped<IAuditService, MarketNest.Auditing.Infrastructure.AuditService>();
+    builder.Services.AddScoped<IAuditService, AuditService>();
 
     // ── Admin Module (tests) ─────────────────────────────────────────
-    builder.Services.AddModuleDbContext<MarketNest.Admin.Infrastructure.AdminDbContext>(opts =>
+    builder.Services.AddModuleDbContext<AdminDbContext>(opts =>
         opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
     // Read context — NoTracking, no migrations
-    builder.Services.AddDbContext<MarketNest.Admin.Infrastructure.AdminReadDbContext>(opts =>
+    builder.Services.AddDbContext<AdminReadDbContext>(opts =>
         opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName))
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
-    builder.Services.AddScoped<MarketNest.Admin.Application.ITestRepository,
-        MarketNest.Admin.Infrastructure.TestRepository>();
-    builder.Services.AddScoped<MarketNest.Admin.Application.ITestQuery,
-        MarketNest.Admin.Infrastructure.TestQuery>();
-    builder.Services.AddScoped<MarketNest.Admin.Application.IGetTestsPagedQuery,
-        MarketNest.Admin.Infrastructure.TestQuery>();
+    builder.Services.AddScoped<ITestRepository,
+        TestRepository>();
+    builder.Services.AddScoped<ITestQuery,
+        TestQuery>();
+    builder.Services.AddScoped<IGetTestsPagedQuery,
+        TestQuery>();
 
     // IUserTimeZoneProvider — resolves user's time zone and date format from HTTP context
     builder.Services.AddHttpContextAccessor();
@@ -145,7 +148,7 @@ try
     builder.Services.AddSingleton<IJobRegistry, ServiceCollectionJobRegistry>();
     builder.Services.AddScoped<IJobExecutionStore, NpgsqlJobExecutionStore>();
     // Example/demo job registration — modules should register their own jobs instead
-    builder.Services.AddSingleton<IBackgroundJob, MarketNest.Admin.Application.TestTimerJob>();
+    builder.Services.AddSingleton<IBackgroundJob, TestTimerJob>();
     builder.Services.AddHostedService<JobRunnerHostedService>();
 
     // ── Database: auto-migrate + seed ─────────────────────────────────
@@ -164,35 +167,30 @@ try
     // );
 
     // ── Build ─────────────────────────────────────────────────────────
-    var app = builder.Build();
+    WebApplication app = builder.Build();
 
     // ── Middleware Pipeline ───────────────────────────────────────────
     app.UseExceptionHandler(AppRoutes.Error);
 
-    if (!app.Environment.IsDevelopment())
-    {
-        app.UseHsts();
-    }
+    if (!app.Environment.IsDevelopment()) app.UseHsts();
 
     app.UseStatusCodePagesWithReExecute(AppRoutes.NotFound);
 
     // ── OpenAPI + Scalar (interactive API docs) ─────────────────────
     app.MapOpenApi();
     if (app.Environment.IsDevelopment())
-    {
         app.MapScalarApiReference(options =>
         {
             options.WithTitle(AppConstants.OpenApi.Title);
             options.WithTheme(ScalarTheme.BluePlanet);
             options.WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
         });
-    }
 
     app.UseHttpsRedirection();
     app.UseStaticFiles();
 
     // ── Localization ─────────────────────────────────────────────────
-    var supportedCultures = AppConstants.Cultures.Supported;
+    string[] supportedCultures = AppConstants.Cultures.Supported;
     app.UseRequestLocalization(options =>
     {
         options.SetDefaultCulture(AppConstants.Cultures.Default);
@@ -220,20 +218,21 @@ try
     app.MapHealthChecks(AppRoutes.Health);
 
     // ── Language switch endpoint ──────────────────────────────────────
-    app.MapPost(AppRoutes.Api.SetLanguage, (HttpContext context, [FromForm] string culture, [FromForm] string? returnUrl) =>
-    {
-        if (culture is not (AppConstants.Cultures.English or AppConstants.Cultures.Vietnamese))
-            culture = AppConstants.Cultures.Default;
-        context.Response.Cookies.Append(
-            AppConstants.Cultures.CookieName,
-            CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
-            new CookieOptions
-            {
-                Expires = DateTimeOffset.UtcNow.AddYears(AppConstants.Cookies.CultureExpirationYears),
-                IsEssential = true
-            });
-        return Results.LocalRedirect(returnUrl ?? AppRoutes.Home);
-    }).DisableAntiforgery();
+    app.MapPost(AppRoutes.Api.SetLanguage,
+        (HttpContext context, [FromForm] string culture, [FromForm] string? returnUrl) =>
+        {
+            if (culture is not (AppConstants.Cultures.English or AppConstants.Cultures.Vietnamese))
+                culture = AppConstants.Cultures.Default;
+            context.Response.Cookies.Append(
+                AppConstants.Cultures.CookieName,
+                CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+                new CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddYears(AppConstants.Cookies.CultureExpirationYears),
+                    IsEssential = true
+                });
+            return Results.LocalRedirect(returnUrl ?? AppRoutes.Home);
+        }).DisableAntiforgery();
 
     // ── Initialize database: migrate + seed ───────────────────────────
     // TODO: Uncomment when module DbContexts and DatabaseInitializer are registered

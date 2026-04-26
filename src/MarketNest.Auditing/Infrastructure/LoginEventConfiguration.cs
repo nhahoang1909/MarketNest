@@ -25,4 +25,3 @@ public class LoginEventConfiguration : IEntityTypeConfiguration<LoginEvent>
             .IsDescending(false, true);
     }
 }
-

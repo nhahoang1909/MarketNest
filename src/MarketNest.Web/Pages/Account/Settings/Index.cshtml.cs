@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace MarketNest.Web.Pages.Account.Settings;
 
-public class IndexModel : PageModel
+public class IndexModel(IAppLogger<IndexModel> logger) : PageModel
 {
     public void OnGet()
     {
+        logger.Info("API {Api} Start - CorrelationId={Cid}", nameof(OnGet), HttpContext?.TraceIdentifier ?? "-");
     }
 
     public void OnPost()
     {
+        logger.Info("API {Api} Start - CorrelationId={Cid}", nameof(OnPost), HttpContext?.TraceIdentifier ?? "-");
     }
 }

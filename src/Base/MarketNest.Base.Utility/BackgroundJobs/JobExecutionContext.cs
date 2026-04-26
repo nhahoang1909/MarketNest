@@ -15,4 +15,3 @@ public enum JobTriggerSource
     Admin = 2,
     Retry = 3
 }
-

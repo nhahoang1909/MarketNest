@@ -1,4 +1,3 @@
-using MarketNest.Core.Common;
 using MediatR;
 
 namespace MarketNest.Base.Common;

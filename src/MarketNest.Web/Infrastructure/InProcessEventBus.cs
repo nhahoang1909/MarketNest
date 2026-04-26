@@ -1,14 +1,13 @@
-﻿using MarketNest.Core.Common.Events;
-using MarketNest.Core.Logging;
-using MediatR;
+﻿using MediatR;
+using MarketNest.Base.Common;
+using MarketNest.Base.Infrastructure;
 
 namespace MarketNest.Web.Infrastructure;
 
 /// <summary>
 ///     Phase 1 implementation — dispatches integration events in-process via MediatR.
-///
 ///     Phase 3 migration: replace this registration with <c>MassTransitEventBus</c>.
-///     All <see cref="IIntegrationEventHandler{TEvent}"/> implementations remain unchanged
+///     All <see cref="IIntegrationEventHandler{TEvent}" /> implementations remain unchanged
 ///     because they depend on the abstraction, not the transport.
 /// </summary>
 internal sealed class InProcessEventBus(IPublisher publisher, IAppLogger<InProcessEventBus> logger) : IEventBus
@@ -43,5 +42,3 @@ internal sealed class InProcessEventBus(IPublisher publisher, IAppLogger<InProce
         }
     }
 }
-
-

@@ -1,4 +1,4 @@
-﻿namespace MarketNest.Core.BackgroundJobs;
+﻿namespace MarketNest.Base.Utility;
 
 public interface IJobRegistry
 {
@@ -6,4 +6,3 @@ public interface IJobRegistry
 
     JobDescriptor? FindByKey(string jobKey);
 }
-

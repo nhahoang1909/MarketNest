@@ -1,5 +1,5 @@
 @page "/seller/orders"
-@model IndexModel
+@model MarketNest.Web.Pages.Seller.Orders.IndexModel
 @{
   Layout = "_LayoutSeller";
   ViewData["Title"] = "Don hang";
@@ -13,28 +13,28 @@
 <!-- Filter pills -->
 <div class="flex flex-wrap items-center gap-2 mb-5" x-data="{ filter: 'all' }">
   <button @@click="filter = 'all'"
-    :class="filter === 'all' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
-    class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
+          :class="filter === 'all' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+          class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Tat ca
   </button>
   <button @@click="filter = 'pending'"
-    :class="filter === 'pending' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
-    class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
+          :class="filter === 'pending' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+          class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Cho xac nhan
   </button>
   <button @@click="filter = 'shipping'"
-    :class="filter === 'shipping' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
-    class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
+          :class="filter === 'shipping' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+          class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Dang giao
   </button>
   <button @@click="filter = 'delivered'"
-    :class="filter === 'delivered' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
-    class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
+          :class="filter === 'delivered' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+          class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Da giao
   </button>
   <button @@click="filter = 'cancelled'"
-    :class="filter === 'cancelled' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
-    class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
+          :class="filter === 'cancelled' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+          class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Da huy
   </button>
 </div>
@@ -44,77 +44,98 @@
   <div class="overflow-x-auto">
     <table class="admin-table w-full text-sm">
       <thead>
-        <tr class="border-b border-gray-100">
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ma don</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khach hang</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">San pham</th>
-          <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">So tien</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trang thai</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngay</th>
-          <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tac</th>
-        </tr>
+      <tr class="border-b border-gray-100">
+        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ma don</th>
+        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khach hang</th>
+        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">San pham</th>
+        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">So tien</th>
+        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trang thai</th>
+        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngay</th>
+        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tac</th>
+      </tr>
       </thead>
       <tbody class="divide-y divide-gray-50">
-        @{
-          var orders = new[] {
-                        new { Id = "#ORD-1247", Customer = "Nguyen Van A", Initial = "A", Color = "#3b82f6", Product = "Ao thun cotton x2", Amount = "700.000d", Status = "pending", StatusText = "Cho xac nhan", Date = "25/04/2026" },
-                        new { Id = "#ORD-1246", Customer = "Tran Thi B", Initial = "B", Color = "#ec4899", Product = "Tui xach da",
-        Amount = "1.250.000d", Status = "shipping", StatusText = "Dang giao", Date = "24/04/2026" },
-                        new { Id = "#ORD-1245", Customer = "Le Van C", Initial = "C", Color = "#8b5cf6", Product = "Giay sneaker Urban",
-        Amount = "890.000d", Status = "delivered", StatusText = "Da giao", Date = "23/04/2026" },
-                        new { Id = "#ORD-1244", Customer = "Pham Thi D", Initial = "D", Color = "#f59e0b", Product = "Vong tay bac x3",
-        Amount = "1.350.000d", Status = "delivered", StatusText = "Da giao", Date = "22/04/2026" },
-                        new { Id = "#ORD-1243", Customer = "Hoang Van E", Initial = "E", Color = "#10b981", Product = "Non bucket hat",
-        Amount = "180.000d", Status = "cancelled", StatusText = "Da huy", Date = "21/04/2026" },
-                        new { Id = "#ORD-1242", Customer = "Vo Thi F", Initial = "F", Color = "#6366f1", Product = "Kinh mat thoi trang", Amount = "280.000d", Status = "pending", StatusText = "Cho xac nhan", Date = "21/04/2026" },
-                        new { Id = "#ORD-1241", Customer = "Dang Van G", Initial = "G", Color = "#ef4444", Product = "Quan jeans slim fit", Amount = "520.000d", Status = "shipping", StatusText = "Dang giao", Date = "20/04/2026" },
-                        new { Id = "#ORD-1240", Customer = "Bui Thi H", Initial = "H", Color = "#14b8a6", Product = "That lung da bo",
-        Amount = "320.000d", Status = "delivered", StatusText = "Da giao", Date = "19/04/2026" }
-                    };
-
-          foreach (var o in orders)
+      @{
+        var orders = new[]
+        {
+          new { Id = "#ORD-1247", Customer = "Nguyen Van A", Initial = "A", Color = "#3b82f6", Product = "Ao thun cotton x2", Amount = "700.000d", Status = "pending", StatusText = "Cho xac nhan", Date = "25/04/2026" },
+          new
           {
-            var (badgeStyle, badgeText) = o.Status switch
-            {
-              "pending" => ("background:#fef9c3; color:#854d0e;", o.StatusText),
-              "shipping" => ("background:#dbeafe; color:#1e40af;", o.StatusText),
-              "delivered" => ("background:#dcfce7; color:#166534;", o.StatusText),
-              _ => ("background:#fef2f2; color:#991b1b;", o.StatusText)
-            };
-            <tr class="hover:bg-gray-50/50 transition-colors">
-              <td class="px-4 py-3 mn-mono text-xs text-gray-600">@o.Id</td>
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-2.5">
-                  <div
+            Id = "#ORD-1246", Customer = "Tran Thi B", Initial = "B", Color = "#ec4899", Product = "Tui xach da",
+            Amount = "1.250.000d", Status = "shipping", StatusText = "Dang giao", Date = "24/04/2026"
+          },
+          new
+          {
+            Id = "#ORD-1245", Customer = "Le Van C", Initial = "C", Color = "#8b5cf6", Product = "Giay sneaker Urban",
+            Amount = "890.000d", Status = "delivered", StatusText = "Da giao", Date = "23/04/2026"
+          },
+          new
+          {
+            Id = "#ORD-1244", Customer = "Pham Thi D", Initial = "D", Color = "#f59e0b", Product = "Vong tay bac x3",
+            Amount = "1.350.000d", Status = "delivered", StatusText = "Da giao", Date = "22/04/2026"
+          },
+          new
+          {
+            Id = "#ORD-1243", Customer = "Hoang Van E", Initial = "E", Color = "#10b981", Product = "Non bucket hat",
+            Amount = "180.000d", Status = "cancelled", StatusText = "Da huy", Date = "21/04/2026"
+          },
+          new { Id = "#ORD-1242", Customer = "Vo Thi F", Initial = "F", Color = "#6366f1", Product = "Kinh mat thoi trang", Amount = "280.000d", Status = "pending", StatusText = "Cho xac nhan", Date = "21/04/2026" },
+          new { Id = "#ORD-1241", Customer = "Dang Van G", Initial = "G", Color = "#ef4444", Product = "Quan jeans slim fit", Amount = "520.000d", Status = "shipping", StatusText = "Dang giao", Date = "20/04/2026" },
+          new
+          {
+            Id = "#ORD-1240", Customer = "Bui Thi H", Initial = "H", Color = "#14b8a6", Product = "That lung da bo",
+            Amount = "320.000d", Status = "delivered", StatusText = "Da giao", Date = "19/04/2026"
+          }
+        };
+
+        foreach (var o in orders)
+        {
+          var (badgeStyle, badgeText) = o.Status switch
+          {
+            "pending" => ("background:#fef9c3; color:#854d0e;", o.StatusText),
+            "shipping" => ("background:#dbeafe; color:#1e40af;", o.StatusText),
+            "delivered" => ("background:#dcfce7; color:#166534;", o.StatusText),
+            _ => ("background:#fef2f2; color:#991b1b;", o.StatusText)
+          };
+          <tr class="hover:bg-gray-50/50 transition-colors">
+            <td class="px-4 py-3 mn-mono text-xs text-gray-600">@o.Id</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2.5">
+                <div
                   class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
                   style="background:@o.Color;">@o.Initial</div>
-                  <span class="text-gray-800 font-medium">@o.Customer</span>
-                </div>
-              </td>
-              <td class="px-4 py-3 text-gray-600 truncate max-w-[160px]">@o.Product</td>
-              <td class="px-4 py-3 mn-mono text-right text-gray-800 font-semibold">@o.Amount</td>
-              <td class="px-4 py-3">
-                <span class="text-[11px] px-2 py-0.5 rounded-full font-medium" style="@badgeStyle">@badgeText</span>
-              </td>
-              <td class="px-4 py-3 text-xs text-gray-500">@o.Date</td>
-              <td class="px-4 py-3 text-right">
-                <div class="flex items-center justify-end gap-1">
-                  @if (o.Status == "pending")
-                  {
-                    <button class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors"
-                            style="background:#00754A; color:#ffffff;">Xac nhan</button>
-                  }
-                  <button
-                  class="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">In</button>
-                  <button
-                    class="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">Cap
-                    nhat</button>
-                  </div>
-                </td>
-              </tr>
-            }
-          }
-        </tbody>
-      </table>
-    </div>
+                <span class="text-gray-800 font-medium">@o.Customer</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-gray-600 truncate max-w-[160px]">@o.Product</td>
+            <td class="px-4 py-3 mn-mono text-right text-gray-800 font-semibold">@o.Amount</td>
+            <td class="px-4 py-3">
+              <span class="text-[11px] px-2 py-0.5 rounded-full font-medium" style="@badgeStyle">@badgeText</span>
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-500">@o.Date</td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1">
+                @if (o.Status == "pending")
+                {
+                  <button class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors"
+                          style="background:#00754A; color:#ffffff;">Xac nhan
+                  </button>
+                }
+                <button
+                  class="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                  In
+                </button>
+                <button
+                  class="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                  Cap
+                  nhat
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      }
+      </tbody>
+    </table>
   </div>
+</div>

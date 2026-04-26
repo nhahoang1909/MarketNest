@@ -1,17 +1,14 @@
-using Microsoft.Extensions.Logging;
 
-namespace MarketNest.Core.Logging;
+namespace MarketNest.Base.Infrastructure;
 
 /// <summary>
-/// Thin logging abstraction used across all MarketNest modules.
-/// Wraps ILogger with short method names: Info, Debug, Trace, Warn, Error, Critical.
-///
-/// Usage in a class:
-///   public class OrderRepository(IAppLogger&lt;OrderRepository&gt; logger) { ... }
-///
-///   _logger.Info("Order {Id} placed", orderId);
-///   _logger.Warn(ex, "Payment timeout after {Ms}ms", elapsed);
-///   _logger.Error(ex, "Failed to save order {Id}", orderId);
+///     Thin logging abstraction used across all MarketNest modules.
+///     Wraps ILogger with short method names: Info, Debug, Trace, Warn, Error, Critical.
+///     Usage in a class:
+///     public class OrderRepository(IAppLogger&lt;OrderRepository&gt; logger) { ... }
+///     _logger.Info("Order {Id} placed", orderId);
+///     _logger.Warn(ex, "Payment timeout after {Ms}ms", elapsed);
+///     _logger.Error(ex, "Failed to save order {Id}", orderId);
 /// </summary>
 public interface IAppLogger<T>
 {

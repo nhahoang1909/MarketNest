@@ -1,258 +1,272 @@
 @page "/seller/dashboard"
-@model IndexModel
+@model MarketNest.Web.Pages.Seller.Dashboard.IndexModel
 @{
-    Layout = "_LayoutSeller";
-    ViewData["Title"] = AppConstants.Defaults.FallbackPageTitle;
+  Layout = "_LayoutSeller";
+  ViewData["Title"] = AppConstants.Defaults.FallbackPageTitle;
 }
 
 <!-- Welcome section -->
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900 font-display">Chao mung tro lai!</h1>
-    <p class="text-sm text-gray-500 mt-1">@DateTime.Now.ToString("dddd, dd MMMM yyyy", new
-                System.Globalization.CultureInfo("vi-VN"))</p>
-    </div>
+  <h1 class="text-2xl font-bold text-gray-900 font-display">Chao mung tro lai!</h1>
+  <p class="text-sm text-gray-500 mt-1">@DateTime.Now.ToString("dddd, dd MMMM yyyy", new
+      CultureInfo("vi-VN"))</p>
+</div>
 
-    <!-- Stat cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <!-- Doanh thu thang -->
-        <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.LogoBgSeller;">
-            <div class="flex items-center justify-between mb-3">
+<!-- Stat cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <!-- Doanh thu thang -->
+  <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.LogoBgSeller;">
+    <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-medium uppercase tracking-wider" style="color:rgba(255,255,255,0.5);">Doanh thu
                     thang</span>
-                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                          style="background:rgba(0,117,74,0.15); color:@AppConstants.Colors.Accent;">+12%</span>
-                </div>
-                <p class="text-2xl font-bold mn-mono text-white">12.450.000d</p>
-                <p class="text-xs mt-1" style="color:rgba(255,255,255,0.4);">So voi thang truoc</p>
-            </div>
+      <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+            style="background:rgba(0,117,74,0.15); color:@AppConstants.Colors.Accent;">+12%</span>
+    </div>
+    <p class="text-2xl font-bold mn-mono text-white">12.450.000d</p>
+    <p class="text-xs mt-1" style="color:rgba(255,255,255,0.4);">So voi thang truoc</p>
+  </div>
 
-            <!-- Don hang moi -->
-            <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.AccentBg;">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-medium uppercase tracking-wider" style="color:@AppConstants.Colors.AccentDarker;">Don hang moi</span>
-                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                          style="background:rgba(0,79,52,0.1); color:@AppConstants.Colors.AccentDarker;">+5</span>
-                </div>
-                <p class="text-2xl font-bold mn-mono" style="color:@AppConstants.Colors.AccentDeep;">23</p>
-                <p class="text-xs mt-1" style="color:@AppConstants.Colors.AccentMuted;">Trong 7 ngay qua</p>
-            </div>
+  <!-- Don hang moi -->
+  <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.AccentBg;">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs font-medium uppercase tracking-wider" style="color:@AppConstants.Colors.AccentDarker;">Don hang moi</span>
+      <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+            style="background:rgba(0,79,52,0.1); color:@AppConstants.Colors.AccentDarker;">+5</span>
+    </div>
+    <p class="text-2xl font-bold mn-mono" style="color:@AppConstants.Colors.AccentDeep;">23</p>
+    <p class="text-xs mt-1" style="color:@AppConstants.Colors.AccentMuted;">Trong 7 ngay qua</p>
+  </div>
 
-            <!-- San pham dang ban -->
-            <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.SuccessBg;">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-medium uppercase tracking-wider" style="color:@AppConstants.Colors.SuccessTextDark;">San pham dang ban</span>
-                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                          style="background:rgba(22,163,74,0.1); color:@AppConstants.Colors.SuccessText;">+3</span>
-                </div>
-                <p class="text-2xl font-bold mn-mono" style="color:@AppConstants.Colors.BadgeActiveText;">45</p>
-                <p class="text-xs mt-1" style="color:@AppConstants.Colors.SuccessTextLight;">Dang hoat dong</p>
-            </div>
+  <!-- San pham dang ban -->
+  <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.SuccessBg;">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs font-medium uppercase tracking-wider" style="color:@AppConstants.Colors.SuccessTextDark;">San pham dang ban</span>
+      <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+            style="background:rgba(22,163,74,0.1); color:@AppConstants.Colors.SuccessText;">+3</span>
+    </div>
+    <p class="text-2xl font-bold mn-mono" style="color:@AppConstants.Colors.BadgeActiveText;">45</p>
+    <p class="text-xs mt-1" style="color:@AppConstants.Colors.SuccessTextLight;">Dang hoat dong</p>
+  </div>
 
-            <!-- Danh gia trung binh -->
-            <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.WarningBg;">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-medium uppercase tracking-wider" style="color:@AppConstants.Colors.WarningText;">Danh gia trung binh</span>
-                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                          style="background:rgba(232,181,71,0.15); color:@AppConstants.Colors.WarningText;">+0.2</span>
-                </div>
-                <p class="text-2xl font-bold mn-mono" style="color:@AppConstants.Colors.WarningTextDark;">4.8<span class="text-base ml-0.5">&#9733;</span>
-                </p>
-                <p class="text-xs mt-1" style="color:@AppConstants.Colors.WarningBorder;">Tu 128 danh gia</p>
-            </div>
+  <!-- Danh gia trung binh -->
+  <div class="rounded-2xl p-5" style="background:@AppConstants.Colors.WarningBg;">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs font-medium uppercase tracking-wider" style="color:@AppConstants.Colors.WarningText;">Danh gia trung binh</span>
+      <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+            style="background:rgba(232,181,71,0.15); color:@AppConstants.Colors.WarningText;">+0.2</span>
+    </div>
+    <p class="text-2xl font-bold mn-mono" style="color:@AppConstants.Colors.WarningTextDark;">4.8<span
+        class="text-base ml-0.5">&#9733;</span>
+    </p>
+    <p class="text-xs mt-1" style="color:@AppConstants.Colors.WarningBorder;">Tu 128 danh gia</p>
+  </div>
+</div>
+
+<!-- Revenue chart placeholder -->
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-semibold text-gray-900">Bieu do doanh thu</h2>
+    <div class="flex gap-1" x-data="{ period: '30d' }">
+      <button @@click="period = '7d'"
+              :class="period === '7d' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'"
+              class="px-3 py-1 text-xs font-medium rounded-lg transition-colors">7 ngay
+      </button>
+      <button @@click="period = '30d'"
+              :class="period === '30d' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'"
+              class="px-3 py-1 text-xs font-medium rounded-lg transition-colors">30 ngay
+      </button>
+      <button @@click="period = '90d'"
+              :class="period === '90d' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'"
+              class="px-3 py-1 text-xs font-medium rounded-lg transition-colors">90 ngay
+      </button>
+    </div>
+  </div>
+  <svg viewBox="0 0 500 150" class="w-full h-auto" style="max-height:150px;">
+    <defs>
+      <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#00754A" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="#00754A" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <!-- Grid lines -->
+    <line x1="0" y1="37" x2="500" y2="37" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4"/>
+    <line x1="0" y1="75" x2="500" y2="75" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4"/>
+    <line x1="0" y1="112" x2="500" y2="112" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4"/>
+    <!-- Area fill -->
+    <polygon
+      points="0,130 0,100 35,90 70,95 105,70 140,80 175,55 210,60 245,40 280,45 315,30 350,35 385,25 420,30 455,20 490,15 500,15 500,130"
+      fill="url(#chartGrad)"/>
+    <!-- Line -->
+    <polyline
+      points="0,100 35,90 70,95 105,70 140,80 175,55 210,60 245,40 280,45 315,30 350,35 385,25 420,30 455,20 490,15"
+      fill="none" stroke="#9abf30" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Dots at data points -->
+    <circle cx="490" cy="15" r="4" fill="#9abf30" stroke="white" stroke-width="2"/>
+  </svg>
+</div>
+
+<!-- Two-column: Recent orders + Top products -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <!-- Recent orders -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-base font-semibold text-gray-900">Don hang gan day</h2>
+      <a href="@AppRoutes.Seller.Orders"
+         class="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">Xem
+        tat ca &rarr;</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="admin-table w-full text-sm">
+        <thead>
+        <tr class="border-b border-gray-100">
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ma
+            don
+          </th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khach
+            hang
+          </th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">San
+            pham
+          </th>
+          <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Gia
+          </th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trang
+            thai
+          </th>
+        </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+        <tr class="hover:bg-gray-50/50 transition-colors">
+          <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1247</td>
+          <td class="px-4 py-3 text-gray-800">Nguyen Van A</td>
+          <td class="px-4 py-3 text-gray-600 truncate max-w-[120px]">Ao thun cotton</td>
+          <td class="px-4 py-3 mn-mono text-right text-gray-800">350.000d</td>
+          <td class="px-4 py-3"><span
+              class="badge badge-yellow text-[11px] px-2 py-0.5 rounded-full font-medium"
+              style="background:@AppConstants.Colors.PendingBg; color:@AppConstants.Colors.PendingText;">Cho xac nhan</span>
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-50/50 transition-colors">
+          <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1246</td>
+          <td class="px-4 py-3 text-gray-800">Tran Thi B</td>
+          <td class="px-4 py-3 text-gray-600 truncate max-w-[120px]">Tui xach da</td>
+          <td class="px-4 py-3 mn-mono text-right text-gray-800">1.250.000d</td>
+          <td class="px-4 py-3"><span
+              class="badge badge-blue text-[11px] px-2 py-0.5 rounded-full font-medium"
+              style="background:@AppConstants.Colors.BadgeBuyerBg; color:@AppConstants.Colors.BadgeBuyerText;">Dang giao</span>
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-50/50 transition-colors">
+          <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1245</td>
+          <td class="px-4 py-3 text-gray-800">Le Van C</td>
+          <td class="px-4 py-3 text-gray-600 truncate max-w-[120px]">Giay sneaker</td>
+          <td class="px-4 py-3 mn-mono text-right text-gray-800">890.000d</td>
+          <td class="px-4 py-3"><span
+              class="badge badge-green text-[11px] px-2 py-0.5 rounded-full font-medium"
+              style="background:@AppConstants.Colors.BadgeActiveBg; color:@AppConstants.Colors.BadgeActiveText;">Da giao</span>
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-50/50 transition-colors">
+          <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1244</td>
+          <td class="px-4 py-3 text-gray-800">Pham Thi D</td>
+          <td class="px-4 py-3 text-gray-600 truncate max-w-[120px]">Vong tay bac</td>
+          <td class="px-4 py-3 mn-mono text-right text-gray-800">450.000d</td>
+          <td class="px-4 py-3"><span
+              class="badge badge-green text-[11px] px-2 py-0.5 rounded-full font-medium"
+              style="background:@AppConstants.Colors.BadgeActiveBg; color:@AppConstants.Colors.BadgeActiveText;">Da giao</span>
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-50/50 transition-colors">
+          <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1243</td>
+          <td class="px-4 py-3 text-gray-800">Hoang Van E</td>
+          <td class="px-4 py-3 text-gray-600 truncate max-w-[120px]">Non luoi trai</td>
+          <td class="px-4 py-3 mn-mono text-right text-gray-800">180.000d</td>
+          <td class="px-4 py-3"><span
+              class="badge badge-red text-[11px] px-2 py-0.5 rounded-full font-medium"
+              style="background:@AppConstants.Colors.BadgeSuspendedBg; color:@AppConstants.Colors.BadgeSuspendedText;">Da huy</span>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Top products -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-base font-semibold text-gray-900">San pham ban chay</h2>
+      <a href="@AppRoutes.Seller.Products"
+         class="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">Xem tat ca &rarr;</a>
+    </div>
+    <div class="divide-y divide-gray-50">
+      <!-- Product 1 -->
+      <div class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/50 transition-colors">
+        <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+          <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5"
+               viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M18 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3Z"/>
+          </svg>
         </div>
-
-        <!-- Revenue chart placeholder -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold text-gray-900">Bieu do doanh thu</h2>
-                <div class="flex gap-1" x-data="{ period: '30d' }">
-                    <button @@click="period = '7d'"
-                    :class="period === '7d' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'"
-                    class="px-3 py-1 text-xs font-medium rounded-lg transition-colors">7 ngay</button>
-                    <button @@click="period = '30d'"
-                    :class="period === '30d' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'"
-                    class="px-3 py-1 text-xs font-medium rounded-lg transition-colors">30 ngay</button>
-                    <button @@click="period = '90d'"
-                    :class="period === '90d' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'"
-                    class="px-3 py-1 text-xs font-medium rounded-lg transition-colors">90 ngay</button>
-                </div>
-            </div>
-            <svg viewBox="0 0 500 150" class="w-full h-auto" style="max-height:150px;">
-                <defs>
-                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#00754A" stop-opacity="0.3" />
-                        <stop offset="100%" stop-color="#00754A" stop-opacity="0" />
-                    </linearGradient>
-                </defs>
-                <!-- Grid lines -->
-                <line x1="0" y1="37" x2="500" y2="37" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4" />
-                <line x1="0" y1="75" x2="500" y2="75" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4" />
-                <line x1="0" y1="112" x2="500" y2="112" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4" />
-                <!-- Area fill -->
-                <polygon
-                points="0,130 0,100 35,90 70,95 105,70 140,80 175,55 210,60 245,40 280,45 315,30 350,35 385,25 420,30 455,20 490,15 500,15 500,130"
-                fill="url(#chartGrad)" />
-                <!-- Line -->
-                <polyline
-                points="0,100 35,90 70,95 105,70 140,80 175,55 210,60 245,40 280,45 315,30 350,35 385,25 420,30 455,20 490,15"
-                fill="none" stroke="#9abf30" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                <!-- Dots at data points -->
-                <circle cx="490" cy="15" r="4" fill="#9abf30" stroke="white" stroke-width="2" />
-            </svg>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-900 truncate">Ao thun cotton premium</p>
+          <p class="text-xs text-gray-500">Da ban: <span
+              class="mn-mono font-semibold text-gray-700">156</span></p>
         </div>
+        <p class="text-sm mn-mono font-semibold text-gray-800">8.580.000d</p>
+      </div>
 
-        <!-- Two-column: Recent orders + Top products -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Product 2 -->
+      <div class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/50 transition-colors">
+        <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+          <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5"
+               viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M18 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3Z"/>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-900 truncate">Tui xach da handmade</p>
+          <p class="text-xs text-gray-500">Da ban: <span
+              class="mn-mono font-semibold text-gray-700">98</span></p>
+        </div>
+        <p class="text-sm mn-mono font-semibold text-gray-800">12.250.000d</p>
+      </div>
 
-            <!-- Recent orders -->
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
-                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h2 class="text-base font-semibold text-gray-900">Don hang gan day</h2>
-                    <a href="@AppRoutes.Seller.Orders" class="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">Xem
-                        tat ca &rarr;</a>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="admin-table w-full text-sm">
-                            <thead>
-                                <tr class="border-b border-gray-100">
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ma
-                                        don</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khach
-                                            hang</th>
-                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">San
-                                                pham</th>
-                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Gia
-                                                </th>
-                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trang
-                                                    thai</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="divide-y divide-gray-50">
-                                                <tr class="hover:bg-gray-50/50 transition-colors">
-                                                    <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1247</td>
-                                                    <td class="px-4 py-3 text-gray-800">Nguyen Van A</td>
-                                                    <td class="px-4 py-3 text-gray-600 truncate max-w-[120px]">Ao thun cotton</td>
-                                                    <td class="px-4 py-3 mn-mono text-right text-gray-800">350.000d</td>
-                                                    <td class="px-4 py-3"><span
-                                                        class="badge badge-yellow text-[11px] px-2 py-0.5 rounded-full font-medium"
-                                                        style="background:@AppConstants.Colors.PendingBg; color:@AppConstants.Colors.PendingText;">Cho xac nhan</span></td>
-                                                    </tr>
-                                                    <tr class="hover:bg-gray-50/50 transition-colors">
-                                                        <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1246</td>
-                                                        <td class="px-4 py-3 text-gray-800">Tran Thi B</td>
-                                                        <td class="px-4 py-3 text-gray-600 truncate max-w-[120px]">Tui xach da</td>
-                                                        <td class="px-4 py-3 mn-mono text-right text-gray-800">1.250.000d</td>
-                                                        <td class="px-4 py-3"><span
-                                                            class="badge badge-blue text-[11px] px-2 py-0.5 rounded-full font-medium"
-                                                            style="background:@AppConstants.Colors.BadgeBuyerBg; color:@AppConstants.Colors.BadgeBuyerText;">Dang giao</span></td>
-                                                        </tr>
-                                                        <tr class="hover:bg-gray-50/50 transition-colors">
-                                                            <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1245</td>
-                                                            <td class="px-4 py-3 text-gray-800">Le Van C</td>
-                                                            <td class="px-4 py-3 text-gray-600 truncate max-w-[120px]">Giay sneaker</td>
-                                                            <td class="px-4 py-3 mn-mono text-right text-gray-800">890.000d</td>
-                                                            <td class="px-4 py-3"><span
-                                                                class="badge badge-green text-[11px] px-2 py-0.5 rounded-full font-medium"
-                                                                style="background:@AppConstants.Colors.BadgeActiveBg; color:@AppConstants.Colors.BadgeActiveText;">Da giao</span></td>
-                                                            </tr>
-                                                            <tr class="hover:bg-gray-50/50 transition-colors">
-                                                                <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1244</td>
-                                                                <td class="px-4 py-3 text-gray-800">Pham Thi D</td>
-                                                                <td class="px-4 py-3 text-gray-600 truncate max-w-[120px]">Vong tay bac</td>
-                                                                <td class="px-4 py-3 mn-mono text-right text-gray-800">450.000d</td>
-                                                                <td class="px-4 py-3"><span
-                                                                    class="badge badge-green text-[11px] px-2 py-0.5 rounded-full font-medium"
-                                                                    style="background:@AppConstants.Colors.BadgeActiveBg; color:@AppConstants.Colors.BadgeActiveText;">Da giao</span></td>
-                                                                </tr>
-                                                                <tr class="hover:bg-gray-50/50 transition-colors">
-                                                                    <td class="px-4 py-3 mn-mono text-xs text-gray-600">#ORD-1243</td>
-                                                                    <td class="px-4 py-3 text-gray-800">Hoang Van E</td>
-                                                                    <td class="px-4 py-3 text-gray-600 truncate max-w-[120px]">Non luoi trai</td>
-                                                                    <td class="px-4 py-3 mn-mono text-right text-gray-800">180.000d</td>
-                                                                    <td class="px-4 py-3"><span
-                                                                        class="badge badge-red text-[11px] px-2 py-0.5 rounded-full font-medium"
-                                                                        style="background:@AppConstants.Colors.BadgeSuspendedBg; color:@AppConstants.Colors.BadgeSuspendedText;">Da huy</span></td>
-                                                                    </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    </div>
+      <!-- Product 3 -->
+      <div class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/50 transition-colors">
+        <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+          <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5"
+               viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M18 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3Z"/>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-900 truncate">Giay sneaker Urban</p>
+          <p class="text-xs text-gray-500">Da ban: <span
+              class="mn-mono font-semibold text-gray-700">72</span></p>
+        </div>
+        <p class="text-sm mn-mono font-semibold text-gray-800">6.408.000d</p>
+      </div>
 
-                                                    <!-- Top products -->
-                                                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
-                                                        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                                                            <h2 class="text-base font-semibold text-gray-900">San pham ban chay</h2>
-                                                            <a href="@AppRoutes.Seller.Products"
-                                                               class="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">Xem tat ca &rarr;</a>
-                                                        </div>
-                                                        <div class="divide-y divide-gray-50">
-                                                            <!-- Product 1 -->
-                                                            <div class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/50 transition-colors">
-                                                                <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-                                                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5"
-                                                                         viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                                              d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M18 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3Z" />
-                                                                    </svg>
-                                                                </div>
-                                                                <div class="flex-1 min-w-0">
-                                                                    <p class="text-sm font-semibold text-gray-900 truncate">Ao thun cotton premium</p>
-                                                                    <p class="text-xs text-gray-500">Da ban: <span
-                                                                        class="mn-mono font-semibold text-gray-700">156</span></p>
-                                                                    </div>
-                                                                    <p class="text-sm mn-mono font-semibold text-gray-800">8.580.000d</p>
-                                                                </div>
-
-                                                                <!-- Product 2 -->
-                                                                <div class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/50 transition-colors">
-                                                                    <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-                                                                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5"
-                                                                             viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                                  d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M18 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3Z" />
-                                                                        </svg>
-                                                                    </div>
-                                                                    <div class="flex-1 min-w-0">
-                                                                        <p class="text-sm font-semibold text-gray-900 truncate">Tui xach da handmade</p>
-                                                                        <p class="text-xs text-gray-500">Da ban: <span
-                                                                            class="mn-mono font-semibold text-gray-700">98</span></p>
-                                                                        </div>
-                                                                        <p class="text-sm mn-mono font-semibold text-gray-800">12.250.000d</p>
-                                                                    </div>
-
-                                                                    <!-- Product 3 -->
-                                                                    <div class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/50 transition-colors">
-                                                                        <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-                                                                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5"
-                                                                                 viewBox="0 0 24 24">
-                                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                                      d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M18 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3Z" />
-                                                                            </svg>
-                                                                        </div>
-                                                                        <div class="flex-1 min-w-0">
-                                                                            <p class="text-sm font-semibold text-gray-900 truncate">Giay sneaker Urban</p>
-                                                                            <p class="text-xs text-gray-500">Da ban: <span
-                                                                                class="mn-mono font-semibold text-gray-700">72</span></p>
-                                                                            </div>
-                                                                            <p class="text-sm mn-mono font-semibold text-gray-800">6.408.000d</p>
-                                                                        </div>
-
-                                                                        <!-- Product 4 -->
-                                                                        <div class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/50 transition-colors">
-                                                                            <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-                                                                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5"
-                                                                                     viewBox="0 0 24 24">
-                                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                                          d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M18 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3Z" />
-                                                                                </svg>
-                                                                            </div>
-                                                                            <div class="flex-1 min-w-0">
-                                                                                <p class="text-sm font-semibold text-gray-900 truncate">Vong tay bac thu cong</p>
-                                                                                <p class="text-xs text-gray-500">Da ban: <span
-                                                                                    class="mn-mono font-semibold text-gray-700">64</span></p>
-                                                                                </div>
-                                                                                <p class="text-sm mn-mono font-semibold text-gray-800">2.880.000d</p>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
+      <!-- Product 4 -->
+      <div class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/50 transition-colors">
+        <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+          <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5"
+               viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M18 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3Z"/>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-900 truncate">Vong tay bac thu cong</p>
+          <p class="text-xs text-gray-500">Da ban: <span
+              class="mn-mono font-semibold text-gray-700">64</span></p>
+        </div>
+        <p class="text-sm mn-mono font-semibold text-gray-800">2.880.000d</p>
+      </div>
+    </div>
+  </div>
+</div>

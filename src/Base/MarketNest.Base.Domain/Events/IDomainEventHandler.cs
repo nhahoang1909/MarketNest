@@ -1,5 +1,7 @@
 using MediatR;
 
+#pragma warning disable CA1711 // Keep name IDomainEventHandler for compatibility during migration
+
 namespace MarketNest.Base.Domain;
 
 /// <summary>

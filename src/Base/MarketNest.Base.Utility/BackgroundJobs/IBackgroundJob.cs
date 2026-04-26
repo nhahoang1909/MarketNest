@@ -6,4 +6,3 @@ public interface IBackgroundJob
 
     Task ExecuteAsync(JobExecutionContext context, CancellationToken cancellationToken = default);
 }
-

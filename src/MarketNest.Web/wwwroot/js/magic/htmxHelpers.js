@@ -3,7 +3,7 @@
  * - Listens for custom HX-Trigger events from server responses
  * - Injects anti-forgery tokens into HTMX requests
  */
-import { Routes, ToastConfig, HtmxConfig, HttpStatus, ErrorMessages } from "../constants.js";
+import {ErrorMessages, HtmxConfig, HttpStatus, Routes, ToastConfig} from "../constants.js";
 
 (function () {
     "use strict";

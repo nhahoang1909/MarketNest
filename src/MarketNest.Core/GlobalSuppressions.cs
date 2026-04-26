@@ -22,5 +22,8 @@ using System.Diagnostics.CodeAnalysis;
 // PagedResult<T>.Empty is a convenience factory; a non-generic PagedResult class would add
 // unnecessary boilerplate for a single method.
 [assembly: SuppressMessage("Design", "CA1000:Do not declare static members on generic types",
-    Justification = "PagedResult<T>.Empty is a convenience factory with no better alternative without extra boilerplate.",
-    Scope = "member", Target = "~M:MarketNest.Core.Common.Queries.PagedResult`1.Empty(System.Int32,System.Int32)~MarketNest.Core.Common.Queries.PagedResult`1")]
+    Justification =
+        "PagedResult<T>.Empty is a convenience factory with no better alternative without extra boilerplate.",
+    Scope = "member",
+    Target =
+        "~M:MarketNest.Core.Common.Queries.PagedResult`1.Empty(System.Int32,System.Int32)~MarketNest.Core.Common.Queries.PagedResult`1")]

@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace MarketNest.Core.Common.Cqrs;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Marker interface for queries. Queries are read-only and NEVER change state.

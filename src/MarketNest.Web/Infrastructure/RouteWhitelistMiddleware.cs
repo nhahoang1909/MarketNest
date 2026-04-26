@@ -1,13 +1,13 @@
 namespace MarketNest.Web.Infrastructure;
 
 /// <summary>
-/// Blocks any request whose path is not in <see cref="AppRoutes.WhitelistedPrefixes"/>.
-/// Must be registered AFTER UseStaticFiles so that CSS/JS/images are not affected.
+///     Blocks any request whose path is not in <see cref="AppRoutes.WhitelistedPrefixes" />.
+///     Must be registered AFTER UseStaticFiles so that CSS/JS/images are not affected.
 /// </summary>
 public sealed class RouteWhitelistMiddleware
 {
-    private readonly RequestDelegate _next;
     private readonly ILogger<RouteWhitelistMiddleware> _logger;
+    private readonly RequestDelegate _next;
 
     public RouteWhitelistMiddleware(RequestDelegate next, ILogger<RouteWhitelistMiddleware> logger)
     {

@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace MarketNest.Core.Common.Cqrs;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Handler for commands. Always returns Result&lt;T, Error&gt;.

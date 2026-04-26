@@ -1,5 +1,5 @@
 @page "/account/orders/{orderId:guid}"
-@model DetailModel
+@model MarketNest.Web.Pages.Account.Orders.DetailModel
 @{
   ViewData["Title"] = "Chi tiet don hang";
 }
@@ -10,7 +10,7 @@
   <nav class="flex items-center gap-2 text-sm text-ink-400 mb-6">
     <a href="/account/orders" class="hover:text-ink-700 transition-colors">Don hang</a>
     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+      <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
     </svg>
     <span class="mn-mono font-semibold text-ink-700">#MN-2024-001</span>
   </nav>
@@ -50,7 +50,7 @@
                 class="absolute -left-8 w-6 h-6 rounded-full bg-success-500 flex items-center justify-center shrink-0">
                 <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5"
                      viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                 </svg>
               </div>
               <div>
@@ -65,7 +65,7 @@
                 class="absolute -left-8 w-6 h-6 rounded-full bg-success-500 flex items-center justify-center shrink-0">
                 <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5"
                      viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                 </svg>
               </div>
               <div>
@@ -80,7 +80,7 @@
                 class="absolute -left-8 w-6 h-6 rounded-full bg-success-500 flex items-center justify-center shrink-0">
                 <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5"
                      viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                 </svg>
               </div>
               <div>
@@ -95,7 +95,7 @@
                 class="absolute -left-8 w-6 h-6 rounded-full bg-success-500 flex items-center justify-center shrink-0">
                 <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5"
                      viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                 </svg>
               </div>
               <div>
@@ -152,112 +152,114 @@
             <span class="text-sm text-ink-400">Dia chi nhan</span>
             <span class="text-sm font-medium text-ink-700 text-right max-w-[60%]">123 Nguyen Hue, Quan 1, TP. Ho Chi
               Minh</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: Items & Pricing (flex: 1) -->
+    <div class="flex-1 space-y-6">
+
+      <!-- Items list -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="mn-h5">San pham</h2>
+        </div>
+        <div class="card-body divide-y divide-ink-100/60">
+          <!-- Item 1 -->
+          <div class="flex gap-4 py-3 first:pt-0 last:pb-0">
+            <div
+              class="w-[60px] h-[60px] rounded-xl bg-cream-200 shrink-0 flex items-center justify-center text-xs text-ink-400">
+              SP
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-ink-700 truncate">Binh gom thu cong Bat Trang</p>
+              <p class="text-xs text-ink-400 mt-0.5">Mau: Xanh lam / Kich thuoc: Lon</p>
+              <div class="flex items-center justify-between mt-1.5">
+                <span class="text-xs text-ink-400">SL: 1</span>
+                <span class="mn-mono text-sm font-semibold text-ink-700">750.000 VND</span>
+              </div>
+            </div>
+          </div>
+          <!-- Item 2 -->
+          <div class="flex gap-4 py-3 first:pt-0 last:pb-0">
+            <div
+              class="w-[60px] h-[60px] rounded-xl bg-cream-200 shrink-0 flex items-center justify-center text-xs text-ink-400">
+              SP
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-ink-700 truncate">Khay tra go oc cho</p>
+              <p class="text-xs text-ink-400 mt-0.5">Mau: Tu nhien / Kich thuoc: Vua</p>
+              <div class="flex items-center justify-between mt-1.5">
+                <span class="text-xs text-ink-400">SL: 2</span>
+                <span class="mn-mono text-sm font-semibold text-ink-700">500.000 VND</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Right column: Items & Pricing (flex: 1) -->
-      <div class="flex-1 space-y-6">
-
-        <!-- Items list -->
-        <div class="card">
-          <div class="card-header">
-            <h2 class="mn-h5">San pham</h2>
+      <!-- Pricing breakdown -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="mn-h5">Chi tiet thanh toan</h2>
+        </div>
+        <div class="card-body space-y-3">
+          <div class="flex justify-between">
+            <span class="text-sm text-ink-400">Tam tinh</span>
+            <span class="mn-mono text-sm text-ink-600">1.250.000 VND</span>
           </div>
-          <div class="card-body divide-y divide-ink-100/60">
-            <!-- Item 1 -->
-            <div class="flex gap-4 py-3 first:pt-0 last:pb-0">
-              <div
-                class="w-[60px] h-[60px] rounded-xl bg-cream-200 shrink-0 flex items-center justify-center text-xs text-ink-400">
-                SP</div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-ink-700 truncate">Binh gom thu cong Bat Trang</p>
-                  <p class="text-xs text-ink-400 mt-0.5">Mau: Xanh lam / Kich thuoc: Lon</p>
-                  <div class="flex items-center justify-between mt-1.5">
-                    <span class="text-xs text-ink-400">SL: 1</span>
-                    <span class="mn-mono text-sm font-semibold text-ink-700">750.000 VND</span>
-                  </div>
-                </div>
-              </div>
-              <!-- Item 2 -->
-              <div class="flex gap-4 py-3 first:pt-0 last:pb-0">
-                <div
-                  class="w-[60px] h-[60px] rounded-xl bg-cream-200 shrink-0 flex items-center justify-center text-xs text-ink-400">
-                  SP</div>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-ink-700 truncate">Khay tra go oc cho</p>
-                    <p class="text-xs text-ink-400 mt-0.5">Mau: Tu nhien / Kich thuoc: Vua</p>
-                    <div class="flex items-center justify-between mt-1.5">
-                      <span class="text-xs text-ink-400">SL: 2</span>
-                      <span class="mn-mono text-sm font-semibold text-ink-700">500.000 VND</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Pricing breakdown -->
-            <div class="card">
-              <div class="card-header">
-                <h2 class="mn-h5">Chi tiet thanh toan</h2>
-              </div>
-              <div class="card-body space-y-3">
-                <div class="flex justify-between">
-                  <span class="text-sm text-ink-400">Tam tinh</span>
-                  <span class="mn-mono text-sm text-ink-600">1.250.000 VND</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-ink-400">Phi van chuyen</span>
-                  <span class="mn-mono text-sm text-ink-600">35.000 VND</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-ink-400">Giam gia</span>
-                  <span class="mn-mono text-sm text-success-600">-85.000 VND</span>
-                </div>
-                <div class="border-t border-ink-100/60 pt-3 flex justify-between">
-                  <span class="text-sm font-bold text-ink-700">Tong cong</span>
-                  <span class="mn-mono text-base font-bold text-ink-700">1.200.000 VND</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Payment method -->
-            <div class="card">
-              <div class="card-header">
-                <h2 class="mn-h5">Phuong thuc thanh toan</h2>
-              </div>
-              <div class="card-body">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-cream-200 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-ink-500" fill="none" stroke="currentColor" stroke-width="1.5"
-                         viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium text-ink-700">The ngan hang</p>
-                    <p class="text-xs text-ink-400">**** **** **** 4289</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex flex-col sm:flex-row gap-3">
-              <button class="btn-ghost flex-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-                </svg>
-                Lien he ho tro
-              </button>
-              <a href="#" class="btn-secondary flex-1 text-center">
-                Khieu nai
-              </a>
-            </div>
-
+          <div class="flex justify-between">
+            <span class="text-sm text-ink-400">Phi van chuyen</span>
+            <span class="mn-mono text-sm text-ink-600">35.000 VND</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm text-ink-400">Giam gia</span>
+            <span class="mn-mono text-sm text-success-600">-85.000 VND</span>
+          </div>
+          <div class="border-t border-ink-100/60 pt-3 flex justify-between">
+            <span class="text-sm font-bold text-ink-700">Tong cong</span>
+            <span class="mn-mono text-base font-bold text-ink-700">1.200.000 VND</span>
           </div>
         </div>
-      </section>
+      </div>
+
+      <!-- Payment method -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="mn-h5">Phuong thuc thanh toan</h2>
+        </div>
+        <div class="card-body">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-cream-200 flex items-center justify-center">
+              <svg class="w-5 h-5 text-ink-500" fill="none" stroke="currentColor" stroke-width="1.5"
+                   viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-ink-700">The ngan hang</p>
+              <p class="text-xs text-ink-400">**** **** **** 4289</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button class="btn-ghost flex-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"/>
+          </svg>
+          Lien he ho tro
+        </button>
+        <a href="#" class="btn-secondary flex-1 text-center">
+          Khieu nai
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>

@@ -1,12 +1,16 @@
-﻿using MarketNest.Core.Common;
+﻿using MarketNest.Base.Domain;
 
 namespace MarketNest.Auditing.Domain;
 
 /// <summary>
-/// Append-only login event. Records authentication attempts (success and failure).
+///     Append-only login event. Records authentication attempts (success and failure).
 /// </summary>
 public class LoginEvent : Entity<Guid>
 {
+    private LoginEvent()
+    {
+    }
+
     public Guid? UserId { get; private set; }
     public string Email { get; private set; } = null!;
     public string? IpAddress { get; private set; }
@@ -14,8 +18,6 @@ public class LoginEvent : Entity<Guid>
     public bool Success { get; private set; }
     public string? FailureReason { get; private set; }
     public DateTimeOffset OccurredAt { get; private set; }
-
-    private LoginEvent() { }
 
     public static LoginEvent Create(
         Guid? userId,
@@ -38,4 +40,3 @@ public class LoginEvent : Entity<Guid>
         };
     }
 }
-

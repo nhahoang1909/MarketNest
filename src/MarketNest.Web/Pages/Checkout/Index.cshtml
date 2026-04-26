@@ -1,5 +1,5 @@
 @page "/checkout"
-@model IndexModel
+@model MarketNest.Web.Pages.Checkout.IndexModel
 @{
   ViewData["Title"] = "Thanh toan";
 }
@@ -66,27 +66,27 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2">
             <label class="form-label">Ho va ten</label>
-            <input type="text" x-model="form.fullName" class="form-input w-full" placeholder="Nguyen Van A" />
+            <input type="text" x-model="form.fullName" class="form-input w-full" placeholder="Nguyen Van A"/>
           </div>
           <div class="sm:col-span-2">
             <label class="form-label">So dien thoai</label>
-            <input type="tel" x-model="form.phone" class="form-input w-full" placeholder="0901 234 567" />
+            <input type="tel" x-model="form.phone" class="form-input w-full" placeholder="0901 234 567"/>
           </div>
           <div class="sm:col-span-2">
             <label class="form-label">Dia chi</label>
-            <input type="text" x-model="form.address" class="form-input w-full" placeholder="So nha, ten duong" />
+            <input type="text" x-model="form.address" class="form-input w-full" placeholder="So nha, ten duong"/>
           </div>
           <div>
             <label class="form-label">Tinh / Thanh pho</label>
-            <input type="text" x-model="form.city" class="form-input w-full" placeholder="TP. Ho Chi Minh" />
+            <input type="text" x-model="form.city" class="form-input w-full" placeholder="TP. Ho Chi Minh"/>
           </div>
           <div>
             <label class="form-label">Quan / Huyen</label>
-            <input type="text" x-model="form.district" class="form-input w-full" placeholder="Quan 1" />
+            <input type="text" x-model="form.district" class="form-input w-full" placeholder="Quan 1"/>
           </div>
           <div class="sm:col-span-2">
             <label class="form-label">Phuong / Xa</label>
-            <input type="text" x-model="form.ward" class="form-input w-full" placeholder="Phuong Ben Nghe" />
+            <input type="text" x-model="form.ward" class="form-input w-full" placeholder="Phuong Ben Nghe"/>
           </div>
         </div>
         <div class="flex justify-end mt-8">
@@ -103,7 +103,7 @@
               :class="form.shipping === opt.id ? 'border-ink-700 bg-cream-50' : 'border-ink-200 hover:border-ink-300'"
               class="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-colors">
               <input type="radio" name="shipping" :value="opt.id" x-model="form.shipping"
-                     class="form-radio text-ink-700 focus:ring-ink-700" />
+                     class="form-radio text-ink-700 focus:ring-ink-700"/>
               <div class="flex-1">
                 <p class="font-semibold text-sm text-ink-700" x-text="opt.name"></p>
                 <p class="text-xs text-ink-400" x-text="opt.desc"></p>
@@ -127,7 +127,7 @@
               :class="form.payment === opt.id ? 'border-ink-700 bg-cream-50' : 'border-ink-200 hover:border-ink-300'"
               class="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-colors">
               <input type="radio" name="payment" :value="opt.id" x-model="form.payment"
-                     class="form-radio text-ink-700 focus:ring-ink-700" />
+                     class="form-radio text-ink-700 focus:ring-ink-700"/>
               <span class="text-xl" x-html="opt.icon"></span>
               <p class="font-semibold text-sm text-ink-700" x-text="opt.name"></p>
             </label>
