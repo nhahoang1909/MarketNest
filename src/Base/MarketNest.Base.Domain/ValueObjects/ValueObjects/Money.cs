@@ -1,4 +1,4 @@
-using MarketNest.Core.Common;
+using MarketNest.Base.Common;
 
 namespace MarketNest.Base.Domain;
 
