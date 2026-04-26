@@ -1,36 +1,28 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
+using MarketNest.Base.Infrastructure;
 using MarketNest.Base.Utility;
-
 
 namespace MarketNest.Web.Hosting;
 
-public class JobRunnerHostedService : BackgroundService
+// NOTE: JobRunnerHostedService is registered as a singleton IHostedService. It must NOT directly
+// depend on scoped services. Resolve IJobExecutionStore from the per-job IServiceScope below.
+public partial class JobRunnerHostedService(
+    IServiceProvider provider,
+    IAppLogger<JobRunnerHostedService> logger,
+    IJobRegistry registry) : BackgroundService
 {
-    private readonly ILogger<JobRunnerHostedService> _logger;
     private readonly TimeSpan _pollInterval = TimeSpan.FromSeconds(30);
-    private readonly IServiceProvider _provider;
-    private readonly IJobRegistry _registry;
     private readonly ConcurrentDictionary<string, byte> _running = new();
-    // NOTE: JobRunnerHostedService is registered as a singleton IHostedService. It must NOT directly
-    // depend on scoped services. Resolve IJobExecutionStore from the per-job IServiceScope below.
-
-    public JobRunnerHostedService(IServiceProvider provider, ILogger<JobRunnerHostedService> logger,
-        IJobRegistry registry)
-    {
-        _provider = provider;
-        _logger = logger;
-        _registry = registry;
-    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("JobRunnerHostedService starting");
+        Log.InfoStarting(logger);
 
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                var jobs = _registry.GetJobs().Where(j => j.Type == JobType.Timer && j.IsEnabled).ToList();
+                var jobs = registry.GetJobs().Where(j => j.Type == JobType.Timer && j.IsEnabled).ToList();
                 foreach (var descriptor in jobs)
                 {
                     if (_running.ContainsKey(descriptor.JobKey)) continue; // already running
@@ -45,13 +37,13 @@ public class JobRunnerHostedService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while scheduling background jobs");
+                Log.ErrorScheduling(logger, ex);
             }
 
             await Task.Delay(_pollInterval, stoppingToken);
         }
 
-        _logger.LogInformation("JobRunnerHostedService stopping");
+        Log.InfoStopping(logger);
     }
 
     private async Task RunOneAsync(JobDescriptor descriptor, CancellationToken stoppingToken)
@@ -59,12 +51,12 @@ public class JobRunnerHostedService : BackgroundService
         if (!_running.TryAdd(descriptor.JobKey, 0)) return;
         try
         {
-            using IServiceScope scope = _provider.CreateScope();
+            using IServiceScope scope = provider.CreateScope();
             var job = scope.ServiceProvider.GetServices<IBackgroundJob>()
                 .FirstOrDefault(j => j.Descriptor.JobKey == descriptor.JobKey);
             if (job is null)
             {
-                _logger.LogWarning("No IBackgroundJob instance found for {JobKey}", descriptor.JobKey);
+                Log.WarnJobNotFound(logger, descriptor.JobKey);
                 return;
             }
 
@@ -78,8 +70,8 @@ public class JobRunnerHostedService : BackgroundService
             await store.MarkRunningAsync(executionId, DateTime.UtcNow, stoppingToken);
             try
             {
-                var runCtx = new JobExecutionContext(executionId, descriptor.JobKey, null, JobTriggerSource.System,
-                    null, new Dictionary<string, string>());
+                var runCtx = new JobExecutionContext(executionId, descriptor.JobKey, null,
+                    JobTriggerSource.System, null, new Dictionary<string, string>());
                 await job.ExecuteAsync(runCtx, stoppingToken);
                 await store.MarkSucceededAsync(executionId, DateTime.UtcNow, stoppingToken);
             }
@@ -89,7 +81,7 @@ public class JobRunnerHostedService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Background job {JobKey} failed", descriptor.JobKey);
+                Log.ErrorJobFailed(logger, descriptor.JobKey, ex);
                 await store.MarkFailedAsync(executionId, DateTime.UtcNow, ex.Message, ex.ToString(),
                     CancellationToken.None);
             }
@@ -98,5 +90,28 @@ public class JobRunnerHostedService : BackgroundService
         {
             _running.TryRemove(descriptor.JobKey, out _);
         }
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.JobRunnerStarting, LogLevel.Information,
+            "JobRunnerHostedService starting")]
+        public static partial void InfoStarting(ILogger logger);
+
+        [LoggerMessage((int)LogEventId.JobRunnerStopping, LogLevel.Information,
+            "JobRunnerHostedService stopping")]
+        public static partial void InfoStopping(ILogger logger);
+
+        [LoggerMessage((int)LogEventId.JobRunnerJobFailed - 1, LogLevel.Warning,
+            "No IBackgroundJob instance found for {JobKey}")]
+        public static partial void WarnJobNotFound(ILogger logger, string jobKey);
+
+        [LoggerMessage((int)LogEventId.JobRunnerJobFailed, LogLevel.Error,
+            "Background job {JobKey} failed")]
+        public static partial void ErrorJobFailed(ILogger logger, string jobKey, Exception ex);
+
+        [LoggerMessage((int)LogEventId.JobRunnerJobFailed + 1, LogLevel.Error,
+            "Error while scheduling background jobs")]
+        public static partial void ErrorScheduling(ILogger logger, Exception ex);
     }
 }
