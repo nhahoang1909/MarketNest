@@ -1,15 +1,17 @@
 using MarketNest.Core.BackgroundJobs;
 using MarketNest.Core.Logging;
-using Microsoft.Extensions.Logging;
 
 namespace MarketNest.Admin.Application;
 
 public class TestTimerJob(IAppLogger<TestTimerJob> logger) : IBackgroundJob
 {
+    private const string JobKeyValue = "admin.test.timer";
+    private const string ModuleName = "Admin";
+
     public JobDescriptor Descriptor { get; } = new(
-        JobKey: "admin.test.timer",
+        JobKey: JobKeyValue,
         DisplayName: "Admin demo timer job",
-        OwningModule: "Admin",
+        OwningModule: ModuleName,
         Type: JobType.Timer,
         Schedule: null,
         IsEnabled: true,
@@ -19,8 +21,7 @@ public class TestTimerJob(IAppLogger<TestTimerJob> logger) : IBackgroundJob
 
     public Task ExecuteAsync(JobExecutionContext context, CancellationToken cancellationToken = default)
     {
-        if (logger.IsEnabled(LogLevel.Information))
-            logger.Info("TestTimerJob executed: {ExecutionId}", context.ExecutionId);
+        logger.Info("TestTimerJob executed: {ExecutionId}", context.ExecutionId);
         return Task.CompletedTask;
     }
 }
