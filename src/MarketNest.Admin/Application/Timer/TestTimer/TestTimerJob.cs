@@ -3,7 +3,7 @@ using MarketNest.Base.Utility;
 
 namespace MarketNest.Admin.Application;
 
-public class TestTimerJob(IAppLogger<TestTimerJob> logger) : IBackgroundJob
+public partial class TestTimerJob(IAppLogger<TestTimerJob> logger) : IBackgroundJob
 {
     private const string JobKeyValue = "admin.test.timer";
     private const string ModuleName = "Admin";
@@ -21,7 +21,14 @@ public class TestTimerJob(IAppLogger<TestTimerJob> logger) : IBackgroundJob
 
     public Task ExecuteAsync(JobExecutionContext context, CancellationToken cancellationToken = default)
     {
-        logger.Info("TestTimerJob executed: {ExecutionId}", context.ExecutionId);
+        Log.InfoExecuted(logger, context.ExecutionId);
         return Task.CompletedTask;
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.TestTimerJobStart, LogLevel.Information,
+            "TestTimerJob executed: ExecutionId={ExecutionId}")]
+        public static partial void InfoExecuted(ILogger logger, Guid executionId);
     }
 }
