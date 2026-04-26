@@ -35,7 +35,7 @@ public enum LogEventId
     DbInitSeedCompleted = 1014,
     DbInitSeedFailed = 1015,
 
-    // DatabaseTracker — 1016-1022
+    // DatabaseTracker — 1016-1020
     DbTrackerTablesEnsured = 1016,
     DbTrackerLockAcquired = 1017,
     DbTrackerLockReleased = 1018,
