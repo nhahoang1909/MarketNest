@@ -1,8 +1,8 @@
 ﻿namespace MarketNest.Base.Common;
 
 /// <summary>
-/// Records audit logs and login events. Phase 1: writes to "auditing" schema in shared DB.
-/// Phase 3+: publishes to RabbitMQ; Audit Service consumes and persists.
+///     Records audit logs and login events. Phase 1: writes to "auditing" schema in shared DB.
+///     Phase 3+: publishes to RabbitMQ; Audit Service consumes and persists.
 /// </summary>
 public interface IAuditService
 {
@@ -37,4 +37,3 @@ public record LoginEntry
     public required bool Success { get; init; }
     public string? FailureReason { get; init; }
 }
-

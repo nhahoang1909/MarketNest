@@ -145,6 +145,61 @@ SendEmailAsync(email); // WRONG — missing await
 await SendEmailAsync(email); // ✅
 ```
 
+// ✅ Prefer async/await everywhere
+// Always prefer using `async`/`await` and propagate `CancellationToken` instead of blocking on tasks
+// with `.Result` or `GetAwaiter().GetResult()`. Blocking a task can cause thread-pool exhaustion
+// or deadlocks (especially in sync-over-async scenarios). If you must call async code from
+// synchronous entry points (very rare), wrap carefully and prefer rewriting the caller to be async.
+// Example (preferred):
+// var order = await GetOrderAsync(id, ct);
+// Example (avoid):
+// var order = GetOrderAsync(id).GetAwaiter().GetResult(); // BAD — can deadlock
+
+// ⚠️ Exception: startup/bootstrapping code
+// In very rare cases (application bootstrap or tooling that runs synchronously at process start)
+// a sync-over-async call may be used. These occurrences must be documented with a clear comment
+// explaining why the synchronous call is necessary and approved during code review. Prefer
+// redesigning the startup to be async if feasible.
+
+
+### 2.9 CancellationToken — mandatory policy
+
+Cooperative cancellation is required across the codebase. The following rules are mandatory and enforced by code review and agent checks:
+
+- Public API methods that perform I/O or long-running work MUST accept a `CancellationToken` parameter (preferably named `ct` or `cancellationToken`). Private helper methods that are not part of an API surface may omit the parameter only when cancellation is not meaningful.
+- All methods declared on interfaces or abstract classes that represent asynchronous or cancellable work MUST include a `CancellationToken` parameter in their signature so callers and implementors can observe cancellation.
+- Base classes (protected or public virtual/abstract methods) that are part of an overridable API MUST include a `CancellationToken` parameter so overrides can honor cancellation.
+- MediatR handlers, controller/PageModel handlers, hosted services, background workers and pipeline behaviors MUST accept a `CancellationToken` parameter and forward it to all downstream async calls (repositories, queries, HttpClient, DbContext, IUnitOfWork, etc.). Handlers must pass the received token into repository and unit-of-work calls (for example `await repository.GetByIdAsync(id, ct)` and `await _unitOfWork.SaveChangesAsync(ct)`).
+- When providing overloads, prefer the overload that accepts a `CancellationToken` and chain to it (avoid duplicating logic without token propagation).
+- Avoid defaulting `CancellationToken` to `default` on public APIs if callers are likely to want cancellation. Place the `CancellationToken` as the last parameter.
+
+Examples:
+```csharp
+// ✅ Interface with CancellationToken
+public interface IOrderRepository
+{
+    Task<Order?> GetByIdAsync(Guid id, CancellationToken ct);
+}
+
+// ✅ Handler forwards token to repository and unit-of-work
+public class PlaceOrderCommandHandler : ICommandHandler<PlaceOrderCommand, PlaceOrderResult>
+{
+    public async Task<Result<PlaceOrderResult, Error>> Handle(PlaceOrderCommand command, CancellationToken ct)
+    {
+        var order = await _orders.GetByIdAsync(command.OrderId, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+        return Result.Success(new PlaceOrderResult(order.Id));
+    }
+}
+```
+
+Enforcement notes:
+
+- Add a check in the PR checklist and agent rules ensuring interface/abstract/base method signatures include `CancellationToken` where appropriate.
+- For generated code or scaffolding, ensure templates include `CancellationToken` in public async method signatures.
+- Consider adding a Roslyn analyzer (recommended) to automatically detect public async methods or interface/abstract method signatures missing a `CancellationToken`, and to detect failure to forward tokens inside handlers.
+
+
 ### 2.5 Dependency Injection
 ```csharp
 // ✅ Register by interface, inject by interface
@@ -291,19 +346,19 @@ src/MarketNest.Admin/
 ```
 
 Mapping rule (important):
-- Files under `src/MarketNest.Admin/Modules/Account/Commands/` or `.../CommandHandlers/` should use the layer-level namespace `MarketNest.Admin.Application` — do NOT include `Account` or `Commands` in the namespace.
-- Files under `src/MarketNest.Admin/Domain/Entities/` should use `MarketNest.Admin.Domain`.
-- Files under `src/MarketNest.Admin/Infrastructure/Persistence/` should use `MarketNest.Admin.Infrastructure`.
+  - Files under `src/MarketNest.Admin/Modules/Account/Commands/` or `.../CommandHandlers/` should use the layer-level namespace `MarketNest.Admin.Application` — do NOT include `Account` or `Commands` in the namespace.
+  - Files under `src/MarketNest.Admin/Domain/Entities/` should use `MarketNest.Admin.Domain`.
+  - Files under `src/MarketNest.Admin/Infrastructure/Persistence/` should use `MarketNest.Admin.Infrastructure`.
 
 Examples:
-- File: `src/MarketNest.Admin/Modules/Account/Commands/CreateAccountCommand.cs`
-  - Namespace: `namespace MarketNest.Admin.Application;`
-- File: `src/MarketNest.Admin/Modules/Account/CommandHandlers/CreateAccountCommandHandler.cs`
-  - Namespace: `namespace MarketNest.Admin.Application;`
-- File: `src/MarketNest.Admin/Domain/Entities/Account.cs`
-  - Namespace: `namespace MarketNest.Admin.Domain;`
-- File: `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs`
-  - Namespace: `namespace MarketNest.Admin.Infrastructure;`
+ - File: `src/MarketNest.Admin/Modules/Account/Commands/CreateAccountCommand.cs`
+   - Namespace: `namespace MarketNest.Admin.Application;`
+  - File: `src/MarketNest.Admin/Modules/Account/CommandHandlers/CreateAccountCommandHandler.cs`
+   - Namespace: `namespace MarketNest.Admin.Application;`
+  - File: `src/MarketNest.Admin/Domain/Entities/Account.cs`
+   - Namespace: `namespace MarketNest.Admin.Domain;`
+  - File: `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs`
+   - Namespace: `namespace MarketNest.Admin.Infrastructure;`
 
 Note on tooling: some analyzers or IDE rules require file-path-to-namespace correspondence and may emit warnings when namespaces do not match folder hierarchy. These warnings are benign for this project because we intentionally decouple folder layout from namespaces for module-level clarity. If your IDE flags these as warnings, either adjust your local analyzer settings or ignore them — do not change namespaces to include folder names. If CI contains rules that enforce folder-based namespaces, coordinate with the team to update the rule to accept layer-level namespaces.
 
@@ -844,6 +899,62 @@ _logger.LogInformation($"Order {order.Id} placed");
 // Never log: passwords, tokens, full credit card numbers, PII beyond user ID
 ```
 
+### 9.1 API entrypoint logging (traceability)
+
+All public API entrypoints (API Controllers, Razor PageModel handlers, and MediatR handlers that represent API operations) MUST:
+
+- Inject an `IAppLogger<T>` (open-generic `IAppLogger<T>` wrapper used across the project) via primary constructor injection — do not use `ILogger<T>` directly.
+- Emit structured trace logs at these four logical points: Start -> Handle -> Success -> End. This makes each request easily traceable in logs and correlates with the middleware-provided correlation id.
+- Use message templates (not string interpolation) and include correlation id, api/handler name, user id (when available), and minimal payload identifiers (IDs only) — avoid logging full request bodies or PII.
+
+Log template example (recommended pattern):
+
+```csharp
+// At method start
+_logger.LogInformation("API {ApiName} Start - CorrelationId={CorrelationId} UserId={UserId} Payload={Payload}",
+    "GetOrder", correlationId, userId ?? "-", new { OrderId = orderId });
+
+// During handling (optional, for important steps)
+_logger.LogInformation("API {ApiName} Handle - Step={Step} Details={Details}",
+    "GetOrder", "LoadFromDb", new { Repository = "IOrderRepository", Id = orderId });
+
+// On success
+_logger.LogInformation("API {ApiName} Success - ElapsedMs={ElapsedMs} CorrelationId={CorrelationId}",
+    "GetOrder", elapsedMs, correlationId);
+
+// At end (final marker)
+_logger.LogInformation("API {ApiName} End - CorrelationId={CorrelationId}", "GetOrder", correlationId);
+```
+
+Minimal example for a PageModel handler:
+
+```csharp
+public class OrderDetailModel(IAppLogger<OrderDetailModel> _logger, IMediator mediator) : PageModel
+{
+    public async Task<IActionResult> OnGetAsync(Guid orderId, CancellationToken ct)
+    {
+        var correlationId = HttpContext.TraceIdentifier;
+        _logger.LogInformation("API {Api} Start - CorrelationId={Cid} Payload={Payload}", nameof(OnGetAsync), correlationId, new { orderId });
+
+        var sw = Stopwatch.StartNew();
+        var result = await mediator.Send(new GetOrderDetailQuery(orderId), ct);
+
+        sw.Stop();
+        _logger.LogInformation("API {Api} Success - ElapsedMs={Ms} CorrelationId={Cid}", nameof(OnGetAsync), sw.ElapsedMilliseconds, correlationId);
+        _logger.LogInformation("API {Api} End - CorrelationId={Cid}", nameof(OnGetAsync), correlationId);
+
+        if (result is null) return NotFound();
+        return Page();
+    }
+}
+```
+
+Notes and enforcement:
+- This does not mean logging full request/response payloads. Log only identifiers and small non-sensitive summaries.
+- Correlation id is provided by middleware (see `Infrastructure/RequestCorrelationMiddleware`) — include it in every API log line.
+- Add a PR checklist item to require these trace logs for new or changed API endpoints. Consider adding a lightweight analyzer or PR template checklist to detect missing `IAppLogger<T>` in PageModels/Controllers/Handlers.
+
+
 ---
 
 ## 10. Git Commit Conventions
@@ -877,8 +988,10 @@ Before merging:
 - [ ] Entity properties use `{ get; private set; }` — no `{ get; set; }` or `{ get; init; }` (ADR-007)
 - [ ] Value object properties use `{ get; }` (class-based) or `{ get; init; }` (record-based) (ADR-007)
 - [ ] No async void (except event handlers)
+- [ ] No blocking of async operations via `.Result` or `GetAwaiter().GetResult()` — prefer `async`/`await` (see §2.4)
 - [ ] No `await Task.FromResult(...)` — remove async if no I/O (see §2.4)
-- [ ] All CancellationToken parameters propagated (including PageModel handlers)
+- [ ] Public async/cancellable APIs include `CancellationToken` (interfaces/abstract/base methods included)
+- [ ] Handlers and PageModel/Controller methods forward `CancellationToken` to downstream calls (repositories, IUnitOfWork, DbContext)
 - [ ] `AsNoTracking()` on all read queries (see §5.2)
 - [ ] Query handlers return DTOs, not domain entities (see §4.1)
 - [ ] DI uses primary constructor injection and interface-based registration (see §2.5)
@@ -891,6 +1004,29 @@ Before merging:
 - [ ] Namespaces are flat at layer level — no folder names beyond Application/Domain/Infrastructure (see §2.7)
 - [ ] All date/time fields use `DateTimeOffset`, never `DateTime` — display formatting uses `DateTimeOffsetExtensions` (see §2.8)
 - [ ] Logging uses structured templates (no interpolation) (see §9)
+- [ ] API entrypoints (Controllers/PageModels/Handlers) inject `IAppLogger<T>` and emit trace logs Start->Handle->Success->End (see §9.1)
 - [ ] No hard-coded hex/rgb/hsl in component CSS or inline styles — use `var(--*)` tokens (see §7.1)
 - [ ] Repeated visual values (radius, shadow, transition) extracted to CSS variables (see §7.3)
 - [ ] `AppConstants.Colors` stays in sync with `input.css` `@theme` tokens (see §7.5)
+
+---
+
+## 12. Test-Driven Development (TDD) Policy
+
+This project requires a test-first approach for business logic and feature work. The full policy and workflow are documented in `docs/test-driven-design.md` — follow that guide for new features, bug fixes that affect business rules, and any change that affects domain invariants.
+
+Summary of the rule:
+
+- All new or changed business behavior MUST be accompanied by automated tests written before implementation (write the failing test first). "Business behavior" includes domain methods, application handlers, validation that implements business rules, and any calculation/decision logic that affects users.
+- Unit tests are preferred for business rules. Integration tests are required for API endpoints, database interactions, and cross-module flows. Acceptance/business tests (higher-level) are recommended for complex flows.
+- Tests must be added to the appropriate test project under `tests/` using existing conventions (e.g., `tests/MarketNest.UnitTests/{Module}/{Feature}Tests.cs`).
+- CI will run the test suite and must pass before merging. PRs missing the test-first evidence (test added before or alongside implementation) may be rejected; reviewers should look for failing-first commits or an explicit note in the PR describing the TDD approach taken.
+
+Enforcement:
+
+- Add a PR checklist item (already present) verifying tests were written. Maintainers should confirm tests demonstrate the failing-first workflow when feasible.
+- CI pipelines must run unit and integration tests. Consider enforcing coverage gates for critical modules in the future.
+- Automated agents and code-review helpers should flag features that introduce business logic without accompanying tests.
+
+See `docs/test-driven-design.md` for the detailed workflow, examples, naming conventions, and PR checklist templates.
+

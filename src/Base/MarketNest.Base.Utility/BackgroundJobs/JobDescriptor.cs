@@ -27,4 +27,3 @@ public enum JobExecutionStatus
     Cancelled = 5,
     Skipped = 6
 }
-

@@ -1,4 +1,4 @@
-﻿using MarketNest.Core.BackgroundJobs;
+﻿using MarketNest.Base.Utility;
 
 namespace MarketNest.Web.BackgroundJobs;
 
@@ -15,7 +15,7 @@ public class ServiceCollectionJobRegistry : IJobRegistry
     public IReadOnlyCollection<JobDescriptor> GetJobs()
     {
         if (_cache is not null) return _cache;
-        using var scope = _provider.CreateScope();
+        using IServiceScope scope = _provider.CreateScope();
         var jobs = scope.ServiceProvider.GetServices<IBackgroundJob>()
             .Select(j => j.Descriptor)
             .ToArray();
@@ -26,4 +26,3 @@ public class ServiceCollectionJobRegistry : IJobRegistry
     public JobDescriptor? FindByKey(string jobKey)
         => GetJobs().FirstOrDefault(j => j.JobKey == jobKey);
 }
-

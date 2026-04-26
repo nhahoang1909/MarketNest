@@ -25,4 +25,3 @@ public record LoginEventDto
     public string? FailureReason { get; init; }
     public DateTimeOffset OccurredAt { get; init; }
 }
-

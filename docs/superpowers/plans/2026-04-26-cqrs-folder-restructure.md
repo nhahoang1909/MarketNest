@@ -104,9 +104,9 @@ git commit -m "feat(core): add IBaseQuery<TEntity, TKey> interface"
 ## Task 2: Extract Entity Configurations + Update AdminDbContext
 
 **Files:**
-- Create: `src/MarketNest.Admin/Infrastructure/Persistence/Configurations/TestEntityConfiguration.cs`
-- Create: `src/MarketNest.Admin/Infrastructure/Persistence/Configurations/TestSubEntityConfiguration.cs`
-- Modify: `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs`
+  - Create: `src/MarketNest.Admin/Infrastructure/Persistence/Configurations/TestEntityConfiguration.cs`
+  - Create: `src/MarketNest.Admin/Infrastructure/Persistence/Configurations/TestSubEntityConfiguration.cs`
+  - Modify: `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs`
 
 - [ ] **Step 1: Create TestEntityConfiguration**
 
@@ -219,7 +219,7 @@ git commit -m "refactor(admin): extract entity configurations to IEntityTypeConf
 ## Task 3: Add AdminReadDbContext
 
 **Files:**
-- Create: `src/MarketNest.Admin/Infrastructure/Persistence/AdminReadDbContext.cs`
+ - Create: `src/MarketNest.Admin/Infrastructure/Persistence/AdminReadDbContext.cs`
 - Modify: `src/MarketNest.Web/Program.cs`
 
 - [ ] **Step 1: Create AdminReadDbContext**
@@ -284,8 +284,8 @@ git commit -m "feat(admin): add AdminReadDbContext with global NoTracking"
 ## Task 4: Add BaseRepository and BaseQuery Abstract Classes
 
 **Files:**
-- Create: `src/MarketNest.Admin/Infrastructure/Persistence/BaseRepository.cs`
-- Create: `src/MarketNest.Admin/Infrastructure/Persistence/BaseQuery.cs`
+ - Create: `src/MarketNest.Admin/Infrastructure/Persistence/BaseRepository.cs`
+ - Create: `src/MarketNest.Admin/Infrastructure/Persistence/BaseQuery.cs`
 
 - [ ] **Step 1: Create BaseRepository**
 
@@ -385,9 +385,9 @@ git commit -m "feat(admin): add BaseRepository and BaseQuery abstract classes"
 ## Task 5: Add Application Layer Interfaces
 
 **Files:**
-- Create: `src/MarketNest.Admin/Application/Submodule/Test/Repositories/ITestRepository.cs`
-- Create: `src/MarketNest.Admin/Application/Submodule/Test/Queries/ITestQuery.cs`
-- Create: `src/MarketNest.Admin/Application/Submodule/Test/Queries/IGetTestsPagedQuery.cs`
+ - Create: `src/MarketNest.Admin/Application/Submodule/Test/Repositories/ITestRepository.cs`
+ - Create: `src/MarketNest.Admin/Application/Submodule/Test/Queries/ITestQuery.cs`
+ - Create: `src/MarketNest.Admin/Application/Submodule/Test/Queries/IGetTestsPagedQuery.cs`
 
 - [ ] **Step 1: Create ITestRepository**
 
@@ -453,7 +453,7 @@ git commit -m "feat(admin): add ITestRepository, ITestQuery, IGetTestsPagedQuery
 
 ## Task 6: Implement TestRepository
 
-**Files:**
+- **Files:**
 - Create: `src/MarketNest.Admin/Infrastructure/Repositories/Test/TestRepository.cs`
 - Modify: `src/MarketNest.Web/Program.cs`
 
@@ -509,7 +509,7 @@ git commit -m "feat(admin): implement TestRepository extending BaseRepository"
 
 ## Task 7: Implement TestQuery
 
-**Files:**
+- **Files:**
 - Create: `src/MarketNest.Admin/Infrastructure/Queries/Test/TestQuery.cs`
 - Modify: `src/MarketNest.Web/Program.cs`
 
@@ -1103,7 +1103,7 @@ git commit -m "feat(admin): replace TestsController with TestReadController and 
 ## Task 14: Move TestTimerJob to Admin Module
 
 **Files:**
-- Create: `src/MarketNest.Admin/Application/Timer/TestTimer/TestTimerJob.cs`
+ - Create: `src/MarketNest.Admin/Application/Timer/TestTimer/TestTimerJob.cs`
 - Delete: `src/MarketNest.Web/BackgroundJobs/Test/TestTimerJob.cs`
 - Modify: `src/MarketNest.Web/Program.cs`
 

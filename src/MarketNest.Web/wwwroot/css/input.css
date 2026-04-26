@@ -198,6 +198,7 @@
         background: rgba(255, 255, 255, 0.14);
         border-color: var(--color-cream-100);
     }
+
     [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
         background: rgba(255, 255, 255, 0.22);
     }
@@ -250,14 +251,17 @@
         width: 10px;
         height: 10px;
     }
+
     ::-webkit-scrollbar-track {
         background: transparent;
     }
+
     ::-webkit-scrollbar-thumb {
         background: rgba(30, 57, 50, 0.14);
         border-radius: 9999px;
         border: 2px solid var(--color-cream-100);
     }
+
     ::-webkit-scrollbar-thumb:hover {
         background: rgba(30, 57, 50, 0.22);
     }
@@ -271,6 +275,7 @@
         letter-spacing: -0.02em;
         line-height: 1.1;
     }
+
     .mn-h1 {
         font-family: var(--font-display);
         font-weight: 700;
@@ -278,6 +283,7 @@
         line-height: 1.1;
         font-size: clamp(36px, 4.4vw, 64px);
     }
+
     .mn-h2 {
         font-family: var(--font-display);
         font-weight: 600;
@@ -285,6 +291,7 @@
         line-height: 1.15;
         font-size: clamp(28px, 3.4vw, 48px);
     }
+
     .mn-h3 {
         font-family: var(--font-sans);
         font-weight: 600;
@@ -292,6 +299,7 @@
         font-size: 24px;
         line-height: 1.25;
     }
+
     .mn-h4 {
         font-family: var(--font-sans);
         font-weight: 600;
@@ -299,6 +307,7 @@
         font-size: 19px;
         line-height: 1.35;
     }
+
     .mn-h5 {
         font-family: var(--font-sans);
         font-weight: 600;
@@ -306,6 +315,7 @@
         font-size: 16px;
         line-height: 1.45;
     }
+
     .mn-eyebrow {
         font-family: var(--font-sans);
         font-weight: 600;
@@ -314,6 +324,7 @@
         text-transform: uppercase;
         @apply text-ink-400;
     }
+
     .mn-mono {
         font-family: var(--font-mono);
         font-feature-settings: "tnum";

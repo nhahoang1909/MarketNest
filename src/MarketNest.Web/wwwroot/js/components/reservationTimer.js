@@ -2,7 +2,7 @@
  * Reservation countdown timer Alpine.js component
  * Usage: x-data="reservationTimer({ expiresAt: '2026-04-25T12:00:00Z' })"
  */
-import { TimerConfig } from "../constants.js";
+import {TimerConfig} from "../constants.js";
 
 document.addEventListener("alpine:init", () => {
     Alpine.data("reservationTimer", ({expiresAt = ""} = {}) => ({

@@ -8,9 +8,8 @@
         <Project Path="src/Base/MarketNest.Base.Domain/MarketNest.Base.Domain.csproj" />
         <Project Path="src/Base/MarketNest.Base.Infrastructure/MarketNest.Base.Infrastructure.csproj" />
         <Project Path="src/Base/MarketNest.Base.Utility/MarketNest.Base.Utility.csproj" />
-        <Project Path="src/MarketNest.Core/MarketNest.Core.csproj" />
     </Folder>
-    <Folder Name="/src/Modules/">
+    <Folder Name="/src/Services/">
         <Project Path="src/MarketNest.Admin/MarketNest.Admin.csproj" />
         <Project Path="src/MarketNest.Auditing/MarketNest.Auditing.csproj" />
         <Project Path="src/MarketNest.Cart/MarketNest.Cart.csproj" />

@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace MarketNest.Core.Common.Cqrs;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Marker interface for commands. Commands change state and return Result&lt;T, Error&gt;.

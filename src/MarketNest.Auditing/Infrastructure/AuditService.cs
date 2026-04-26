@@ -1,13 +1,13 @@
 ﻿using System.Text.Json;
 using MarketNest.Auditing.Domain;
-using MarketNest.Core.Contracts;
-using MarketNest.Core.Logging;
+using MarketNest.Base.Common;
+using MarketNest.Base.Infrastructure;
 
 namespace MarketNest.Auditing.Infrastructure;
 
 /// <summary>
-/// Phase 1 implementation: writes audit entries directly to "auditing" schema in shared PostgreSQL.
-/// Never throws — audit failures are logged but do not break the main request.
+///     Phase 1 implementation: writes audit entries directly to "auditing" schema in shared PostgreSQL.
+///     Never throws — audit failures are logged but do not break the main request.
 /// </summary>
 public class AuditService(AuditingDbContext db, IAppLogger<AuditService> logger) : IAuditService
 {
@@ -22,15 +22,15 @@ public class AuditService(AuditingDbContext db, IAppLogger<AuditService> logger)
         try
         {
             var log = AuditLog.Create(
-                eventType: entry.EventType,
-                actorId: entry.ActorId,
-                actorEmail: entry.ActorEmail,
-                actorRole: entry.ActorRole,
-                entityType: entry.EntityType,
-                entityId: entry.EntityId,
-                oldValues: Serialize(entry.OldValues),
-                newValues: Serialize(entry.NewValues),
-                metadata: Serialize(entry.Metadata));
+                entry.EventType,
+                entry.ActorId,
+                entry.ActorEmail,
+                entry.ActorRole,
+                entry.EntityType,
+                entry.EntityId,
+                Serialize(entry.OldValues),
+                Serialize(entry.NewValues),
+                Serialize(entry.Metadata));
 
             db.AuditLogs.Add(log);
             await db.SaveChangesAsync(ct);
@@ -47,12 +47,12 @@ public class AuditService(AuditingDbContext db, IAppLogger<AuditService> logger)
         try
         {
             var loginEvent = LoginEvent.Create(
-                userId: entry.UserId,
-                email: entry.Email,
-                ipAddress: entry.IpAddress,
-                userAgent: entry.UserAgent,
-                success: entry.Success,
-                failureReason: entry.FailureReason);
+                entry.UserId,
+                entry.Email,
+                entry.IpAddress,
+                entry.UserAgent,
+                entry.Success,
+                entry.FailureReason);
 
             db.LoginEvents.Add(loginEvent);
             await db.SaveChangesAsync(ct);
@@ -67,4 +67,3 @@ public class AuditService(AuditingDbContext db, IAppLogger<AuditService> logger)
     private static string? Serialize(object? value) =>
         value is null ? null : JsonSerializer.Serialize(value, JsonOptions);
 }
-

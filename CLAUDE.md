@@ -109,36 +109,13 @@ All rules are specified in `docs/code-rules.md`. Key items:
 - **Database initialization**: `DatabaseInitializer` auto-migrates and seeds on startup using model hash tracking and PostgreSQL advisory locks. Seeders implement `IDataSeeder` with `Order` and `Version` properties. Each module's `DbContext` must implement `IModuleDbContext`.
 - **Auditing**: Mark entities `[Auditable]` for automatic EF Core change tracking; mark commands `[Audited("EVENT_TYPE")]` for automatic MediatR audit logging. `IAuditService` in `Core/Contracts/` — never fails the main request. See ADR-012.
 
-## Agent Behavior Guidelines
+## Agent Behavior Guidelines (rules)
 
-> These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+Agent behavior and coding guidelines are maintained under `agents/rules/`.
 
-### Think Before Coding
-- State assumptions explicitly. If uncertain, ask — don't guess.
-- If multiple interpretations exist, present them; don't pick silently.
-- If a simpler approach exists, say so and push back when warranted.
-- If something is unclear, stop, name what's confusing, and ask.
+Please read `agents/rules/README.md` and the rule files in `agents/rules/` (architecture.md, codestyle.md, git.md, security.md, testing.md) for authoritative, agent-facing guidance (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution) and links to deeper docs (`docs/code-rules.md`, `docs/architecture.md`, etc.).
 
-### Simplicity First
-- Write the minimum code that solves the problem. Nothing speculative.
-- No features beyond what was asked. No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If it can be 50 lines instead of 200, rewrite it.
-
-### Surgical Changes
-- Touch only what you must. Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken. Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it — don't delete it.
-- Remove imports/variables/functions that **your** changes made unused; don't remove pre-existing dead code unless asked.
-- Every changed line should trace directly to the user's request.
-
-### Goal-Driven Execution
-- Transform tasks into verifiable goals before implementing:
-  - "Fix the bug" → write a test that reproduces it, then make it pass.
-  - "Add validation" → write tests for invalid inputs, then make them pass.
-  - "Refactor X" → ensure tests pass before and after.
-- For multi-step tasks, state a brief plan with verify steps before starting.
+Note: a single consolidated `agents/GUIDELINES.md` was planned; if present it will be authoritative. For now rely on the `agents/rules/` files and `agents/rules/README.md` which describes the consolidation status.
 
 ## Specification Documents
 

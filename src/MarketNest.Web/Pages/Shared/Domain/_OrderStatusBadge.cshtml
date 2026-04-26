@@ -1,5 +1,4 @@
 @* Order status badge — specialized for order statuses *@
-@using MarketNest.Core.Common
 @{
   var status = ViewData["Status"]?.ToString() ?? OrderStatusNames.Unknown;
   var badgeCss = status.ToLower() switch

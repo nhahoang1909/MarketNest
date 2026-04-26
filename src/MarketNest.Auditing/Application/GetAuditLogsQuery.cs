@@ -1,13 +1,13 @@
-﻿using MarketNest.Auditing.Infrastructure;
-using MarketNest.Core.Common.Cqrs;
-using MarketNest.Core.Common.Queries;
+﻿using MarketNest.Auditing.Domain;
+using MarketNest.Auditing.Infrastructure;
+using MarketNest.Base.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketNest.Auditing.Application;
 
 /// <summary>
-/// Paged query for audit logs with optional filters.
-/// Used by admin portal to search and review audit history.
+///     Paged query for audit logs with optional filters.
+///     Used by admin portal to search and review audit history.
 /// </summary>
 public record GetAuditLogsQuery : PagedQuery, IQuery<PagedResult<AuditLogDto>>
 {
@@ -24,7 +24,7 @@ public class GetAuditLogsQueryHandler(AuditingDbContext db)
 {
     public async Task<PagedResult<AuditLogDto>> Handle(GetAuditLogsQuery query, CancellationToken cancellationToken)
     {
-        var q = db.AuditLogs.AsNoTracking().AsQueryable();
+        IQueryable<AuditLog> q = db.AuditLogs.AsNoTracking().AsQueryable();
 
         if (query.ActorId.HasValue)
             q = q.Where(x => x.ActorId == query.ActorId);
@@ -47,12 +47,12 @@ public class GetAuditLogsQueryHandler(AuditingDbContext db)
         if (!string.IsNullOrEmpty(query.Search))
             q = q.Where(x =>
                 (x.ActorEmail != null && x.ActorEmail.Contains(query.Search)) ||
-                (x.EventType.Contains(query.Search)) ||
+                x.EventType.Contains(query.Search) ||
                 (x.EntityType != null && x.EntityType.Contains(query.Search)));
 
-        var totalCount = await q.CountAsync(cancellationToken);
+        int totalCount = await q.CountAsync(cancellationToken);
 
-        var items = await q
+        List<AuditLogDto> items = await q
             .OrderByDescending(x => x.OccurredAt)
             .Skip(query.Skip)
             .Take(query.PageSize)
@@ -80,4 +80,3 @@ public class GetAuditLogsQueryHandler(AuditingDbContext db)
         };
     }
 }
-

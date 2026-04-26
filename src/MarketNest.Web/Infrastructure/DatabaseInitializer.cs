@@ -1,31 +1,30 @@
 using System.Diagnostics;
-using MarketNest.Core.Common;
-using MarketNest.Core.Common.Persistence;
-using MarketNest.Core.Logging;
+using Npgsql;
+using MarketNest.Base.Infrastructure;
+using MarketNest.Base.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketNest.Web.Infrastructure;
 
 /// <summary>
-/// Applies pending EF Core migrations and runs <see cref="IDataSeeder"/> implementations on startup.
-///
-/// Optimizations over a naive "always migrate + always seed" approach:
-/// <list type="bullet">
-///   <item>
-///     <b>Model hash tracking</b> — computes a SHA-256 hash of each module's EF model snapshot.
-///     Migrations are only applied when the hash differs from the stored value in
-///     <c>_system.__auto_migration_history</c>.
-///   </item>
-///   <item>
-///     <b>Seed version tracking</b> — each <see cref="IDataSeeder"/> declares a <c>Version</c>.
-///     Seeders only execute when their version differs from the stored value in
-///     <c>_system.__seed_history</c>.
-///   </item>
-///   <item>
-///     <b>Advisory lock</b> — a PostgreSQL advisory lock prevents concurrent instances (e.g.,
-///     multiple pods) from racing during initialization.
-///   </item>
-/// </list>
+///     Applies pending EF Core migrations and runs <see cref="IDataSeeder" /> implementations on startup.
+///     Optimizations over a naive "always migrate + always seed" approach:
+///     <list type="bullet">
+///         <item>
+///             <b>Model hash tracking</b> — computes a SHA-256 hash of each module's EF model snapshot.
+///             Migrations are only applied when the hash differs from the stored value in
+///             <c>_system.__auto_migration_history</c>.
+///         </item>
+///         <item>
+///             <b>Seed version tracking</b> — each <see cref="IDataSeeder" /> declares a <c>Version</c>.
+///             Seeders only execute when their version differs from the stored value in
+///             <c>_system.__seed_history</c>.
+///         </item>
+///         <item>
+///             <b>Advisory lock</b> — a PostgreSQL advisory lock prevents concurrent instances (e.g.,
+///             multiple pods) from racing during initialization.
+///         </item>
+///     </list>
 /// </summary>
 public sealed class DatabaseInitializer(
     IServiceProvider serviceProvider,
@@ -42,11 +41,11 @@ public sealed class DatabaseInitializer(
         await tracker.EnsureTrackingTablesExistAsync(ct);
 
         // 2. Acquire advisory lock to prevent concurrent initialization
-        var lockConn = await tracker.AcquireAdvisoryLockAsync(ct);
+        NpgsqlConnection lockConn = await tracker.AcquireAdvisoryLockAsync(ct);
 
         try
         {
-            await using var scope = serviceProvider.CreateAsyncScope();
+            await using AsyncServiceScope scope = serviceProvider.CreateAsyncScope();
 
             await ApplyMigrationsAsync(scope.ServiceProvider, ct);
             await RunSeedersAsync(scope.ServiceProvider, ct);
@@ -89,7 +88,7 @@ public sealed class DatabaseInitializer(
 
                 // Compute current model hash
                 var currentHash = ModelHasher.ComputeHash(dbContext.Model);
-                var storedHash = await tracker.GetLastModelHashAsync(contextName, ct);
+                string? storedHash = await tracker.GetLastModelHashAsync(contextName, ct);
 
                 if (string.Equals(currentHash, storedHash, StringComparison.Ordinal))
                 {
@@ -163,7 +162,7 @@ public sealed class DatabaseInitializer(
             try
             {
                 // Check version against stored history
-                var storedVersion = await tracker.GetLastSeedVersionAsync(seederName, ct);
+                string? storedVersion = await tracker.GetLastSeedVersionAsync(seederName, ct);
 
                 if (string.Equals(seederVersion, storedVersion, StringComparison.Ordinal))
                 {

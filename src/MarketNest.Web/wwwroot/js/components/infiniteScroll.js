@@ -2,7 +2,7 @@
  * Infinite scroll Alpine.js component using IntersectionObserver
  * Usage: x-data="infiniteScroll({ url: '/api/products', targetId: '#product-list' })"
  */
-import { InfiniteScrollConfig } from "../constants.js";
+import {InfiniteScrollConfig} from "../constants.js";
 
 document.addEventListener("alpine:init", () => {
     Alpine.data("infiniteScroll", ({url = "", targetId = ""} = {}) => ({

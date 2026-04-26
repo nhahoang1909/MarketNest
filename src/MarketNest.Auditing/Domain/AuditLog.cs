@@ -1,12 +1,16 @@
-﻿using MarketNest.Core.Common;
+﻿using MarketNest.Base.Domain;
 
 namespace MarketNest.Auditing.Domain;
 
 /// <summary>
-/// Append-only audit log entry. Records entity changes and business actions.
+///     Append-only audit log entry. Records entity changes and business actions.
 /// </summary>
 public class AuditLog : Entity<Guid>
 {
+    private AuditLog()
+    {
+    }
+
     public string EventType { get; private set; } = null!;
     public Guid? ActorId { get; private set; }
     public string? ActorEmail { get; private set; }
@@ -17,8 +21,6 @@ public class AuditLog : Entity<Guid>
     public string? NewValues { get; private set; }
     public string? Metadata { get; private set; }
     public DateTimeOffset OccurredAt { get; private set; }
-
-    private AuditLog() { }
 
     public static AuditLog Create(
         string eventType,
@@ -47,4 +49,3 @@ public class AuditLog : Entity<Guid>
         };
     }
 }
-

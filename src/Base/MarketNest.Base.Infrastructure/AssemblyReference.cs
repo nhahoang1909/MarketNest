@@ -1,4 +1,5 @@
 ﻿namespace MarketNest.Base.Infrastructure;
 
-public sealed class AssemblyReference { }
-
+public sealed class AssemblyReference
+{
+}

@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using MarketNest.Admin.Domain;
 
 namespace MarketNest.Admin.Infrastructure;

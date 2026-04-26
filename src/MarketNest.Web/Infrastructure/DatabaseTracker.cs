@@ -1,16 +1,15 @@
 ﻿using System.Data;
-using MarketNest.Core.Common;
-using MarketNest.Core.Logging;
 using Npgsql;
+using MarketNest.Base.Infrastructure;
+using MarketNest.Base.Common;
 
 namespace MarketNest.Web.Infrastructure;
 
 /// <summary>
-/// Manages the <c>public.__auto_migration_history</c> and <c>public.__seed_history</c> tables
-/// via raw SQL (independent of any module DbContext to avoid circular dependencies).
-///
-/// These tables live in the <c>public</c> schema — the default PostgreSQL schema for
-/// system-level tables, while each module owns its own named schema.
+///     Manages the <c>public.__auto_migration_history</c> and <c>public.__seed_history</c> tables
+///     via raw SQL (independent of any module DbContext to avoid circular dependencies).
+///     These tables live in the <c>public</c> schema — the default PostgreSQL schema for
+///     system-level tables, while each module owns its own named schema.
 /// </summary>
 public sealed class DatabaseTracker(
     IConfiguration configuration,
@@ -25,13 +24,14 @@ public sealed class DatabaseTracker(
 
     private string ConnectionString =>
         configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)
-        ?? throw new InvalidOperationException($"Connection string '{AppConstants.DefaultConnectionStringName}' is not configured.");
+        ?? throw new InvalidOperationException(
+            $"Connection string '{AppConstants.DefaultConnectionStringName}' is not configured.");
 
     // ─── Bootstrap ────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Creates tracking tables in the <c>public</c> schema if they don't exist.
-    /// Safe to call multiple times (idempotent).
+    ///     Creates tracking tables in the <c>public</c> schema if they don't exist.
+    ///     Safe to call multiple times (idempotent).
     /// </summary>
     public async Task EnsureTrackingTablesExistAsync(CancellationToken ct = default)
     {
@@ -40,27 +40,27 @@ public sealed class DatabaseTracker(
 
         const string sql = $"""
 
-            CREATE TABLE IF NOT EXISTS {Schema}.{MigrationTable} (
-                id              SERIAL PRIMARY KEY,
-                context_name    VARCHAR(256) NOT NULL,
-                model_hash      VARCHAR(64)  NOT NULL,
-                applied_at_utc  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
-            );
+                            CREATE TABLE IF NOT EXISTS {Schema}.{MigrationTable} (
+                                id              SERIAL PRIMARY KEY,
+                                context_name    VARCHAR(256) NOT NULL,
+                                model_hash      VARCHAR(64)  NOT NULL,
+                                applied_at_utc  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+                            );
 
-            CREATE TABLE IF NOT EXISTS {Schema}.{SeedTable} (
-                id              SERIAL PRIMARY KEY,
-                seeder_name     VARCHAR(512) NOT NULL,
-                version         VARCHAR(64)  NOT NULL,
-                applied_at_utc  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
-            );
+                            CREATE TABLE IF NOT EXISTS {Schema}.{SeedTable} (
+                                id              SERIAL PRIMARY KEY,
+                                seeder_name     VARCHAR(512) NOT NULL,
+                                version         VARCHAR(64)  NOT NULL,
+                                applied_at_utc  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+                            );
 
-            -- Unique indexes for fast lookups
-            CREATE UNIQUE INDEX IF NOT EXISTS ix_migration_context
-                ON {Schema}.{MigrationTable} (context_name);
+                            -- Unique indexes for fast lookups
+                            CREATE UNIQUE INDEX IF NOT EXISTS ix_migration_context
+                                ON {Schema}.{MigrationTable} (context_name);
 
-            CREATE UNIQUE INDEX IF NOT EXISTS ix_seed_seeder
-                ON {Schema}.{SeedTable} (seeder_name);
-            """;
+                            CREATE UNIQUE INDEX IF NOT EXISTS ix_seed_seeder
+                                ON {Schema}.{SeedTable} (seeder_name);
+                            """;
 
         await using var cmd = new NpgsqlCommand(sql, conn);
         await cmd.ExecuteNonQueryAsync(ct);
@@ -71,8 +71,8 @@ public sealed class DatabaseTracker(
     // ─── Advisory Lock ────────────────────────────────────────────────────
 
     /// <summary>
-    /// Acquires a PostgreSQL session-level advisory lock. Returns the connection
-    /// (caller must dispose it to release the lock).
+    ///     Acquires a PostgreSQL session-level advisory lock. Returns the connection
+    ///     (caller must dispose it to release the lock).
     /// </summary>
     public async Task<NpgsqlConnection> AcquireAdvisoryLockAsync(CancellationToken ct = default)
     {
@@ -114,15 +114,15 @@ public sealed class DatabaseTracker(
         await conn.OpenAsync(ct);
 
         const string sql = $"""
-            SELECT model_hash FROM {Schema}.{MigrationTable}
-            WHERE context_name = @ctx
-            LIMIT 1
-            """;
+                            SELECT model_hash FROM {Schema}.{MigrationTable}
+                            WHERE context_name = @ctx
+                            LIMIT 1
+                            """;
 
         await using var cmd = new NpgsqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("ctx", contextName);
 
-        var result = await cmd.ExecuteScalarAsync(ct);
+        object? result = await cmd.ExecuteScalarAsync(ct);
         return result as string;
     }
 
@@ -133,11 +133,11 @@ public sealed class DatabaseTracker(
         await conn.OpenAsync(ct);
 
         const string sql = $"""
-            INSERT INTO {Schema}.{MigrationTable} (context_name, model_hash, applied_at_utc)
-            VALUES (@ctx, @hash, NOW())
-            ON CONFLICT (context_name)
-            DO UPDATE SET model_hash = @hash, applied_at_utc = NOW()
-            """;
+                            INSERT INTO {Schema}.{MigrationTable} (context_name, model_hash, applied_at_utc)
+                            VALUES (@ctx, @hash, NOW())
+                            ON CONFLICT (context_name)
+                            DO UPDATE SET model_hash = @hash, applied_at_utc = NOW()
+                            """;
 
         await using var cmd = new NpgsqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("ctx", contextName);
@@ -156,15 +156,15 @@ public sealed class DatabaseTracker(
         await conn.OpenAsync(ct);
 
         const string sql = $"""
-            SELECT version FROM {Schema}.{SeedTable}
-            WHERE seeder_name = @name
-            LIMIT 1
-            """;
+                            SELECT version FROM {Schema}.{SeedTable}
+                            WHERE seeder_name = @name
+                            LIMIT 1
+                            """;
 
         await using var cmd = new NpgsqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("name", seederName);
 
-        var result = await cmd.ExecuteScalarAsync(ct);
+        object? result = await cmd.ExecuteScalarAsync(ct);
         return result as string;
     }
 
@@ -175,11 +175,11 @@ public sealed class DatabaseTracker(
         await conn.OpenAsync(ct);
 
         const string sql = $"""
-            INSERT INTO {Schema}.{SeedTable} (seeder_name, version, applied_at_utc)
-            VALUES (@name, @ver, NOW())
-            ON CONFLICT (seeder_name)
-            DO UPDATE SET version = @ver, applied_at_utc = NOW()
-            """;
+                            INSERT INTO {Schema}.{SeedTable} (seeder_name, version, applied_at_utc)
+                            VALUES (@name, @ver, NOW())
+                            ON CONFLICT (seeder_name)
+                            DO UPDATE SET version = @ver, applied_at_utc = NOW()
+                            """;
 
         await using var cmd = new NpgsqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("name", seederName);
@@ -189,4 +189,3 @@ public sealed class DatabaseTracker(
         logger.Debug("Seed version saved for '{Seeder}': {Version}", seederName, version);
     }
 }
-

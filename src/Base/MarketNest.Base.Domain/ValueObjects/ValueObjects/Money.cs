@@ -1,12 +1,14 @@
-using MarketNest.Base.Common;
 
-namespace MarketNest.Base.Domain;
+namespace MarketNest.Base.Common;
 
 /// <summary>
-///     Money value object — amount + currency. Immutable.
+///     Money value object used across modules (amount + currency). Kept in Base.Common for contract use.
 /// </summary>
-public class Money : ValueObject
+public sealed record Money
 {
+    public decimal Amount { get; init; }
+    public string Currency { get; init; } = string.Empty;
+
     public Money(decimal amount, string currency)
     {
         if (amount < 0) throw new ArgumentException("Amount cannot be negative", nameof(amount));
@@ -16,14 +18,6 @@ public class Money : ValueObject
         Currency = currency.ToUpperInvariant();
     }
 
-    public decimal Amount { get; }
-    public string Currency { get; }
-
-    protected override IEnumerable<object?> GetEqualityComponents()
-    {
-        yield return Amount;
-        yield return Currency;
-    }
 
     public override string ToString() => $"{Amount:F2} {Currency}";
 }

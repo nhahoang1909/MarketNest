@@ -1,6 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using MarketNest.Admin.Domain;
-using MarketNest.Core.Common;
+using MarketNest.Base.Common;
+using Microsoft.EntityFrameworkCore;
 
 namespace MarketNest.Admin.Infrastructure;
 

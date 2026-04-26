@@ -6,7 +6,6 @@
     </PropertyGroup>
 
     <ItemGroup Label="Module References">
-        <ProjectReference Include="..\MarketNest.Core\MarketNest.Core.csproj"/>
         <ProjectReference Include="..\MarketNest.Auditing\MarketNest.Auditing.csproj"/>
         <ProjectReference Include="..\MarketNest.Identity\MarketNest.Identity.csproj"/>
         <ProjectReference Include="..\MarketNest.Catalog\MarketNest.Catalog.csproj"/>
@@ -17,6 +16,12 @@
         <ProjectReference Include="..\MarketNest.Disputes\MarketNest.Disputes.csproj"/>
         <ProjectReference Include="..\MarketNest.Notifications\MarketNest.Notifications.csproj"/>
         <ProjectReference Include="..\MarketNest.Admin\MarketNest.Admin.csproj"/>
+        <!-- Temporary references to new Base projects during incremental migration -->
+        <ProjectReference Include="..\Base\MarketNest.Base.Common\MarketNest.Base.Common.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Domain\MarketNest.Base.Domain.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Infrastructure\MarketNest.Base.Infrastructure.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Utility\MarketNest.Base.Utility.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Api\MarketNest.Base.Api.csproj"/>
     </ItemGroup>
 
     <ItemGroup Label="Infrastructure Packages">
@@ -55,16 +60,15 @@
     </ItemGroup>
 
     <ItemGroup Label="Local Config Files">
-      <None Include=".env" />
-      <None Include=".env.example" />
-      <None Include=".gitignore" />
-      <None Include="docker-compose.yml" />
-      <None Include="docker-compose.prod.yml" />
-      <None Include="Dockerfile" />
-      <None Include="package.json" />
-      <None Include="package-lock.json" />
+        <None Include=".env"/>
+        <None Include=".env.example"/>
+        <None Include=".gitignore"/>
+        <None Include="docker-compose.yml"/>
+        <None Include="docker-compose.prod.yml"/>
+        <None Include="Dockerfile"/>
+        <None Include="package.json"/>
+        <None Include="package-lock.json"/>
     </ItemGroup>
-
 
 
 </Project>

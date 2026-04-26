@@ -1,13 +1,13 @@
 ﻿using MarketNest.Auditing.Domain;
-using MarketNest.Core.Common;
-using MarketNest.Core.Common.Persistence;
+using MarketNest.Base.Common;
+using MarketNest.Base.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketNest.Auditing.Infrastructure;
 
 /// <summary>
-/// DbContext for the "auditing" schema. Manages audit_logs and login_events tables.
-/// Separate from other module DbContexts to avoid audit writes blocking app transactions.
+///     DbContext for the "auditing" schema. Manages audit_logs and login_events tables.
+///     Separate from other module DbContexts to avoid audit writes blocking app transactions.
 /// </summary>
 public class AuditingDbContext(DbContextOptions<AuditingDbContext> options)
     : DbContext(options), IModuleDbContext
@@ -27,4 +27,3 @@ public class AuditingDbContext(DbContextOptions<AuditingDbContext> options)
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AuditingDbContext).Assembly);
     }
 }
-

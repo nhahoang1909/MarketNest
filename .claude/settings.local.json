@@ -14,7 +14,10 @@
       "Bash(git -C /c/Users/ADMIN/Documents/03_Projects/01_MyProjects/marketnest add src/MarketNest.Admin/Application/Submodule/)",
       "Bash(git -C /c/Users/ADMIN/Documents/03_Projects/01_MyProjects/marketnest commit -m \"feat\\(admin\\): add ITestRepository, ITestQuery, IGetTestsPagedQuery interfaces\")",
       "Bash(echo \"EXIT: $?\")",
-      "Bash(dotnet test *)"
+      "Bash(dotnet test *)",
+      "Bash(python3 *)",
+      "Bash(cat)",
+      "Read(//tmp/**)"
     ]
   }
 }

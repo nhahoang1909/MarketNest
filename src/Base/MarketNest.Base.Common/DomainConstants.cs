@@ -1,8 +1,8 @@
-﻿namespace MarketNest.Core.Common;
+﻿namespace MarketNest.Base.Common;
 
 /// <summary>
-/// Domain-wide constants. Every magic number or repeated string literal
-/// from domain logic must be defined here.
+///     Domain-wide constants. Every magic number or repeated string literal
+///     from domain logic must be defined here.
 /// </summary>
 public static class DomainConstants
 {
@@ -87,4 +87,3 @@ public static class DomainConstants
         public const string PageSizeRange = "PageSize must be between 1 and 100";
     }
 }
-

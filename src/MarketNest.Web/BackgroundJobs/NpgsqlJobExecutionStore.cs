@@ -1,10 +1,8 @@
-﻿using System;
-using System.Data;
-using System.Text.Json;
-using MarketNest.Core.BackgroundJobs;
+﻿using System.Text.Json;
 using MarketNest.Web.Infrastructure;
-using Microsoft.Extensions.Configuration;
+using MarketNest.Base.Utility;
 using Npgsql;
+using NpgsqlTypes;
 
 namespace MarketNest.Web.BackgroundJobs;
 
@@ -15,7 +13,7 @@ public class NpgsqlJobExecutionStore : IJobExecutionStore
     public NpgsqlJobExecutionStore(IConfiguration config)
     {
         _connectionString = config.GetConnectionString(AppConstants.DefaultConnectionStringName)
-            ?? throw new InvalidOperationException("Default connection string is not configured.");
+                            ?? throw new InvalidOperationException("Default connection string is not configured.");
 
         // Ensure table exists (best-effort, idempotent)
         EnsureTableAsync().GetAwaiter().GetResult();
@@ -52,7 +50,8 @@ CREATE INDEX IF NOT EXISTS idx_job_executions_status ON admin.job_executions (st
         await cmd.ExecuteNonQueryAsync();
     }
 
-    public async Task<Guid> CreateExecutionAsync(JobDescriptor descriptor, JobExecutionContext context, CancellationToken cancellationToken)
+    public async Task<Guid> CreateExecutionAsync(JobDescriptor descriptor, JobExecutionContext context,
+        CancellationToken cancellationToken)
     {
         var id = Guid.NewGuid();
         const string sql = @"INSERT INTO admin.job_executions
@@ -68,17 +67,20 @@ CREATE INDEX IF NOT EXISTS idx_job_executions_status ON admin.job_executions (st
         cmd.Parameters.AddWithValue("@owning_module", descriptor.OwningModule);
         cmd.Parameters.AddWithValue("@status", (int)JobExecutionStatus.Pending);
         cmd.Parameters.AddWithValue("@trigger_source", (int)context.TriggerSource);
-        cmd.Parameters.AddWithValue("@triggered_by_user_id", context.TriggeredByUserId == null ? (object)DBNull.Value : context.TriggeredByUserId);
-        cmd.Parameters.AddWithValue("@retry_of_execution_id", context.RetryOfExecutionId == null ? (object)DBNull.Value : context.RetryOfExecutionId);
-        var paramsJson = JsonSerializer.Serialize(context.Parameters);
-        cmd.Parameters.AddWithValue("@parameters_json", NpgsqlTypes.NpgsqlDbType.Jsonb, paramsJson);
+        cmd.Parameters.AddWithValue("@triggered_by_user_id",
+            context.TriggeredByUserId == null ? (object)DBNull.Value : context.TriggeredByUserId);
+        cmd.Parameters.AddWithValue("@retry_of_execution_id",
+            context.RetryOfExecutionId == null ? (object)DBNull.Value : context.RetryOfExecutionId);
+        string paramsJson = JsonSerializer.Serialize(context.Parameters);
+        cmd.Parameters.AddWithValue("@parameters_json", NpgsqlDbType.Jsonb, paramsJson);
         await cmd.ExecuteNonQueryAsync(cancellationToken);
         return id;
     }
 
     public async Task MarkRunningAsync(Guid executionId, DateTime startedAtUtc, CancellationToken cancellationToken)
     {
-        const string sql = @"UPDATE admin.job_executions SET status = @status, started_at_utc = @started WHERE id = @id";
+        const string sql =
+            @"UPDATE admin.job_executions SET status = @status, started_at_utc = @started WHERE id = @id";
         await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync(cancellationToken);
         await using var cmd = new NpgsqlCommand(sql, conn);
@@ -90,7 +92,8 @@ CREATE INDEX IF NOT EXISTS idx_job_executions_status ON admin.job_executions (st
 
     public async Task MarkSucceededAsync(Guid executionId, DateTime finishedAtUtc, CancellationToken cancellationToken)
     {
-        const string sql = @"UPDATE admin.job_executions SET status = @status, finished_at_utc = @finished, duration_ms = EXTRACT(EPOCH FROM (@finished - started_at_utc))::int WHERE id = @id";
+        const string sql =
+            @"UPDATE admin.job_executions SET status = @status, finished_at_utc = @finished, duration_ms = EXTRACT(EPOCH FROM (@finished - started_at_utc))::int WHERE id = @id";
         await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync(cancellationToken);
         await using var cmd = new NpgsqlCommand(sql, conn);
@@ -100,9 +103,11 @@ CREATE INDEX IF NOT EXISTS idx_job_executions_status ON admin.job_executions (st
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    public async Task MarkFailedAsync(Guid executionId, DateTime finishedAtUtc, string errorMessage, string? errorDetails, CancellationToken cancellationToken)
+    public async Task MarkFailedAsync(Guid executionId, DateTime finishedAtUtc, string errorMessage,
+        string? errorDetails, CancellationToken cancellationToken)
     {
-        const string sql = @"UPDATE admin.job_executions SET status = @status, finished_at_utc = @finished, duration_ms = EXTRACT(EPOCH FROM (@finished - started_at_utc))::int, error_message = @err, error_details = @errd WHERE id = @id";
+        const string sql =
+            @"UPDATE admin.job_executions SET status = @status, finished_at_utc = @finished, duration_ms = EXTRACT(EPOCH FROM (@finished - started_at_utc))::int, error_message = @err, error_details = @errd WHERE id = @id";
         await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync(cancellationToken);
         await using var cmd = new NpgsqlCommand(sql, conn);
@@ -114,5 +119,3 @@ CREATE INDEX IF NOT EXISTS idx_job_executions_status ON admin.job_executions (st
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 }
-
-

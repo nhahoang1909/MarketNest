@@ -1,7 +1,5 @@
 namespace MarketNest.Base.Domain;
 
-using System.Collections.Generic;
-
 /// <summary>
 ///     Base entity with strongly-typed ID and domain event support.
 /// </summary>

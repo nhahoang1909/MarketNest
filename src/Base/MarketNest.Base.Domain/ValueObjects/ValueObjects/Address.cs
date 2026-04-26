@@ -1,12 +1,16 @@
-using MarketNest.Core.Common;
-
-namespace MarketNest.Base.Domain;
+namespace MarketNest.Base.Common;
 
 /// <summary>
-///     Address value object for shipping/billing.
+/// Address value object for shipping/billing. Kept in Base.Common for contract use.
 /// </summary>
-public class Address : ValueObject
+public sealed record Address
 {
+    public string Street { get; init; } = string.Empty;
+    public string City { get; init; } = string.Empty;
+    public string State { get; init; } = string.Empty;
+    public string PostalCode { get; init; } = string.Empty;
+    public string Country { get; init; } = string.Empty;
+
     public Address(string street, string city, string state, string postalCode, string country)
     {
         Street = street;
@@ -14,20 +18,5 @@ public class Address : ValueObject
         State = state;
         PostalCode = postalCode;
         Country = country;
-    }
-
-    public string Street { get; }
-    public string City { get; }
-    public string State { get; }
-    public string PostalCode { get; }
-    public string Country { get; }
-
-    protected override IEnumerable<object?> GetEqualityComponents()
-    {
-        yield return Street;
-        yield return City;
-        yield return State;
-        yield return PostalCode;
-        yield return Country;
     }
 }

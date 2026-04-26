@@ -1,8 +1,8 @@
 ﻿namespace MarketNest.Base.Common;
 
 /// <summary>
-/// Database table and schema name constants shared across all modules.
-/// Eliminates magic strings for schema names, system table names, and column names.
+///     Database table and schema name constants shared across all modules.
+///     Eliminates magic strings for schema names, system table names, and column names.
 /// </summary>
 public static class TableConstants
 {
@@ -26,8 +26,8 @@ public static class TableConstants
     // ── System Tables (public schema) ───────────────────────────────────
 
     /// <summary>
-    /// System-level tracking tables managed by <c>DatabaseInitializer</c> / <c>DatabaseTracker</c>.
-    /// These live in the <c>public</c> schema.
+    ///     System-level tracking tables managed by <c>DatabaseInitializer</c> / <c>DatabaseTracker</c>.
+    ///     These live in the <c>public</c> schema.
     /// </summary>
     public static class SystemTable
     {
@@ -35,4 +35,3 @@ public static class TableConstants
         public const string SeedHistory = "__seed_history";
     }
 }
-

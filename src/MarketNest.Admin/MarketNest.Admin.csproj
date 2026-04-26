@@ -8,8 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\MarketNest.Core\MarketNest.Core.csproj"/>
         <ProjectReference Include="..\Base\MarketNest.Base.Api\MarketNest.Base.Api.csproj"/>
+        <!-- Temporary references to Base projects to consume migrated types during incremental migration -->
+        <ProjectReference Include="..\Base\MarketNest.Base.Common\MarketNest.Base.Common.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Domain\MarketNest.Base.Domain.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Infrastructure\MarketNest.Base.Infrastructure.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Utility\MarketNest.Base.Utility.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -29,14 +33,22 @@
 
     <ItemGroup>
         <!-- Use the shared ASP.NET Core framework for controller types and MVC abstractions -->
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
     </ItemGroup>
 
     <ItemGroup>
+        <Folder Include="Application\Common\" />
+        <Folder Include="Application\Modules\Test\DomainEventHandlers\" />
+        <Folder Include="Application\Modules\Test\IntegrationEventHandlers\" />
         <Folder Include="Application\Validators\"/>
-        <Folder Include="Domain\Enums"/>
-        <Folder Include="Domain\Events"/>
-        <Folder Include="Infrastructure\Repositories"/>
+        <Folder Include="Domain\Common\Enums\" />
+        <Folder Include="Domain\Common\Events\" />
+        <Folder Include="Domain\Modules\Test\Enums\" />
+        <Folder Include="Domain\Modules\Test\Events\" />
+        <Folder Include="Infrastructure\Api\Common\" />
+        <Folder Include="Infrastructure\Api\Modules\" />
+        <Folder Include="Infrastructure\Queries\Modules\" />
+        <Folder Include="Infrastructure\Repositories\Modules\" />
     </ItemGroup>
 
 </Project>

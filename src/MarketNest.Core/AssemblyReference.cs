@@ -1,3 +1,5 @@
 namespace MarketNest.Core;
 
-public sealed class AssemblyReference { }
+public sealed class AssemblyReference
+{
+}

@@ -8,7 +8,7 @@
  *   3. This file (defer)
  */
 
-import { CurrencyDefaults, TimeIntervals, TimerConfig, DisplayStrings } from "./constants.js";
+import {CurrencyDefaults, DisplayStrings, TimeIntervals, TimerConfig} from "./constants.js";
 
 // ── Stores ────────────────────────────────────────────────────────
 import "./stores/cart.js";
