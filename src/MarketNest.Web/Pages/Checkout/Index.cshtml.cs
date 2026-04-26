@@ -2,11 +2,15 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace MarketNest.Web.Pages.Checkout;
 
-public class IndexModel(IAppLogger<IndexModel> logger) : PageModel
+public partial class IndexModel(IAppLogger<IndexModel> logger) : PageModel
 {
     public void OnGet()
+        => Log.InfoOnGet(logger, HttpContext?.TraceIdentifier ?? "-");
+
+    private static partial class Log
     {
-        // minimal trace log to satisfy logging requirement
-        logger.Info("API {Api} Start - CorrelationId={Cid}", nameof(OnGet), HttpContext?.TraceIdentifier ?? "-");
+        [LoggerMessage((int)LogEventId.CheckoutIndexStart, LogLevel.Information,
+            "Checkout OnGet Start - CorrelationId={CorrelationId}")]
+        public static partial void InfoOnGet(ILogger logger, string correlationId);
     }
 }
