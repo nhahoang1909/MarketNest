@@ -205,7 +205,9 @@ Key rules:
 - No PII: log IDs only, not email / name / address
 - No anonymous objects: `new { OrderId, BuyerId }` → separate typed params
 - Template must be a const string literal (no interpolation)
-- EventId increments sequentially within each file (Start, Success, Warn, Error...)
+- **All EventIds must reference `LogEventId` enum** — no raw integer literals:
+  `[LoggerMessage((int)LogEventId.PlaceOrderStart, LogLevel.Information, "...")]`
+- EventId enum lives in `MarketNest.Base.Infrastructure/Logging/LogEventId.cs`
 
 ---
 

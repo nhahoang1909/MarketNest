@@ -958,6 +958,7 @@ Method names follow `{LogLevel}{Subject}{Event}`:
 - **No PII** — log IDs only; never log email, full name, address, card numbers
 - **No anonymous objects** — `new { OrderId, BuyerId }` → separate typed params
 - **Template must be a const string** — no interpolation (`$"..."`) inside `[LoggerMessage]` attribute
+- **No raw EventId integers** — always reference `LogEventId` enum: `[LoggerMessage((int)LogEventId.OrderDetailStart, ...)]`. Enum defined at `MarketNest.Base.Infrastructure/Logging/LogEventId.cs`
 - **EventId increments sequentially within each file** — Start=X, Success=X+1, Warn=X+2, Error=X+3
 - **No `IsEnabled` guard needed** — `[LoggerMessage]` skips automatically when level is disabled
 
