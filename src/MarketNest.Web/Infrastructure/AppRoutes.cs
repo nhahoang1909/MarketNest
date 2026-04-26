@@ -31,6 +31,7 @@ public static class AppRoutes
         public const string SetLanguage = "/api/set-language";
         public const string OpenApiDoc = "/openapi";
         public const string ScalarDocs = "/scalar";
+        public const string AdminV1Prefix = "/api/v1/admin";
     }
 
     // ── Account ──────────────────────────────────────────────────────
@@ -128,6 +129,7 @@ public static class AppRoutes
         Api.SetLanguage,
         Api.OpenApiDoc,
         Api.ScalarDocs,
+        Api.AdminV1Prefix,
     };
 
     /// <summary>
