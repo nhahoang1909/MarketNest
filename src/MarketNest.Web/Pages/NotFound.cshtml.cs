@@ -1,15 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace MarketNest.Web.Pages;
 
 [IgnoreAntiforgeryToken]
-public class NotFoundModel(IAppLogger<NotFoundModel> logger) : PageModel
+public partial class NotFoundModel(IAppLogger<NotFoundModel> logger) : PageModel
 {
     public void OnGet()
     {
-        var cid = HttpContext?.TraceIdentifier ?? "-";
-        using var scope = logger.BeginApiScope(nameof(OnGet), null, cid);
-        scope.Success();
+        Log.InfoDisplayed(logger, HttpContext?.TraceIdentifier ?? "-");
         Response.StatusCode = StatusCodes.Status404NotFound;
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.GlobalNotFoundDisplayed, LogLevel.Information,
+            "NotFound page displayed - CorrelationId={CorrelationId}")]
+        public static partial void InfoDisplayed(ILogger logger, string correlationId);
     }
 }
