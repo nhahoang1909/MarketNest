@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MarketNest.Core.Common;
 
@@ -15,7 +16,7 @@ public abstract class ApiV1ControllerBase(IMediator mediator) : ControllerBase
         ErrorType.Conflict     => Conflict(new { error.Code, error.Message }),
         ErrorType.Validation   => BadRequest(new { error.Code, error.Message }),
         ErrorType.Unauthorized => Unauthorized(new { error.Code, error.Message }),
-        ErrorType.Forbidden    => Forbid(),
+        ErrorType.Forbidden    => StatusCode(StatusCodes.Status403Forbidden, new { error.Code, error.Message }),
         _                      => Problem(error.Message)
     };
 }
