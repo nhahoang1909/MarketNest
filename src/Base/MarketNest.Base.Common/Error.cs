@@ -1,5 +1,6 @@
 namespace MarketNest.Base.Common;
 
+#pragma warning disable CA1716 // 'Error' is an intentional DDD type name
 /// <summary>
 ///     Structured error record with domain error code, message, and type.
 ///     Error codes use DOMAIN.ENTITY_ERROR format.

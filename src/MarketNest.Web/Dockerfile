@@ -2,9 +2,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy project files first for layer caching
+# Copy Central Package Management and build config first (needed before restore)
+COPY Directory.Build.props .
+COPY Directory.Packages.props .
+COPY global.json .
+
+# Copy all .csproj files to enable layer caching for restore
 COPY ["src/MarketNest.Web/MarketNest.Web.csproj", "MarketNest.Web/"]
 COPY ["src/MarketNest.Core/MarketNest.Core.csproj", "MarketNest.Core/"]
+COPY ["src/MarketNest.Auditing/MarketNest.Auditing.csproj", "MarketNest.Auditing/"]
 COPY ["src/MarketNest.Identity/MarketNest.Identity.csproj", "MarketNest.Identity/"]
 COPY ["src/MarketNest.Catalog/MarketNest.Catalog.csproj", "MarketNest.Catalog/"]
 COPY ["src/MarketNest.Cart/MarketNest.Cart.csproj", "MarketNest.Cart/"]
@@ -14,6 +20,11 @@ COPY ["src/MarketNest.Reviews/MarketNest.Reviews.csproj", "MarketNest.Reviews/"]
 COPY ["src/MarketNest.Disputes/MarketNest.Disputes.csproj", "MarketNest.Disputes/"]
 COPY ["src/MarketNest.Notifications/MarketNest.Notifications.csproj", "MarketNest.Notifications/"]
 COPY ["src/MarketNest.Admin/MarketNest.Admin.csproj", "MarketNest.Admin/"]
+COPY ["src/Base/MarketNest.Base.Api/MarketNest.Base.Api.csproj", "Base/MarketNest.Base.Api/"]
+COPY ["src/Base/MarketNest.Base.Common/MarketNest.Base.Common.csproj", "Base/MarketNest.Base.Common/"]
+COPY ["src/Base/MarketNest.Base.Domain/MarketNest.Base.Domain.csproj", "Base/MarketNest.Base.Domain/"]
+COPY ["src/Base/MarketNest.Base.Infrastructure/MarketNest.Base.Infrastructure.csproj", "Base/MarketNest.Base.Infrastructure/"]
+COPY ["src/Base/MarketNest.Base.Utility/MarketNest.Base.Utility.csproj", "Base/MarketNest.Base.Utility/"]
 RUN dotnet restore "MarketNest.Web/MarketNest.Web.csproj"
 
 COPY src/ .
@@ -33,7 +44,7 @@ RUN npx @tailwindcss/cli -i ./wwwroot/css/input.css -o ./wwwroot/css/site.css --
 # Stage 3: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-RUN adduser --disabled-password --gecos '' appuser && chown -R appuser /app
+RUN useradd -m -u 1001 appuser && chown -R appuser /app
 USER appuser
 
 COPY --from=build /app/publish .

@@ -11,8 +11,8 @@ public interface IEventBus
     /// <summary>
     ///     Publishes an integration event to all registered handlers.
     /// </summary>
-    /// <param name="event">The integration event to publish.</param>
+    /// <param name="integrationEvent">The integration event to publish.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default)
+    Task PublishAsync<TEvent>(TEvent integrationEvent, CancellationToken cancellationToken = default)
         where TEvent : class, IIntegrationEvent;
 }

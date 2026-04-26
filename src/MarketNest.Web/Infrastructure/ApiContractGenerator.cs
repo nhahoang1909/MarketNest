@@ -92,7 +92,7 @@ public sealed class ApiContractGenerator : BackgroundService
         // Resolve from Kestrel configuration or fall back to localhost:5000
         IConfiguration config = _serviceProvider.GetRequiredService<IConfiguration>();
         string urls = config["Urls"] ?? config["ASPNETCORE_URLS"] ?? "http://localhost:5000";
-        return urls.Split(';')[0].TrimEnd('/');
+        return urls.Split(';')[0].TrimEnd('/').Replace("+", "localhost", StringComparison.Ordinal);
     }
 
     private string ResolveOutputPath()
