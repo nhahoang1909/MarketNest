@@ -11,11 +11,12 @@ public class CreateTestHandler(ITestRepository repository) : ICommandHandler<Cre
         var id = Guid.NewGuid();
         var entity = new TestEntity(id, request.Name, request.Value);
 
+        repository.Add(entity);
+
         if (request.SubTitles is not null)
             foreach (var title in request.SubTitles)
-                entity.AddSubEntity(new TestSubEntity(Guid.NewGuid(), id, title));
+                repository.AddSubEntity(new TestSubEntity(Guid.NewGuid(), id, title));
 
-        repository.Add(entity);
         await repository.SaveChangesAsync(cancellationToken);
         return Result<Guid, Error>.Success(id);
     }
