@@ -1,4 +1,4 @@
-namespace MarketNest.Core.Common;
+namespace MarketNest.Base.Domain;
 
 /// <summary>
 ///     Aggregate root — only aggregates are persisted via repositories.
@@ -12,4 +12,6 @@ public abstract class AggregateRoot : Entity<Guid>
     }
 }
 
-public abstract class AggregateRoot<TKey> : Entity<TKey>;
+public abstract class AggregateRoot<TKey> : Entity<TKey>
+{
+}

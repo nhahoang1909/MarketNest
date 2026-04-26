@@ -1,11 +1,13 @@
 namespace MarketNest.Base.Domain;
 
+using System.Collections.Generic;
+
 /// <summary>
 ///     Base entity with strongly-typed ID and domain event support.
 /// </summary>
 public abstract class Entity<TKey> : IEquatable<Entity<TKey>>
 {
-    private readonly List<IDomainEvent> _domainEvents = [];
+    private readonly List<IDomainEvent> _domainEvents = new();
     public TKey Id { get; protected set; } = default!;
     public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 

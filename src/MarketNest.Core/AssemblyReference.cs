@@ -1,3 +1,3 @@
-global using MarketNest.Base.Common;
-global using MarketNest.Base.Domain;
-global using MarketNest.Base.Infrastructure;
+namespace MarketNest.Core;
+
+public sealed class AssemblyReference { }
