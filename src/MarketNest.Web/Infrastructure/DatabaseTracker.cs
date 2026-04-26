@@ -11,7 +11,7 @@ namespace MarketNest.Web.Infrastructure;
 ///     These tables live in the <c>public</c> schema — the default PostgreSQL schema for
 ///     system-level tables, while each module owns its own named schema.
 /// </summary>
-public sealed class DatabaseTracker(
+public sealed partial class DatabaseTracker(
     IConfiguration configuration,
     IAppLogger<DatabaseTracker> logger)
 {
@@ -65,7 +65,7 @@ public sealed class DatabaseTracker(
         await using var cmd = new NpgsqlCommand(sql, conn);
         await cmd.ExecuteNonQueryAsync(ct);
 
-        logger.Debug("Tracking tables ensured in schema '{Schema}'", Schema);
+        Log.DebugTablesEnsured(logger, Schema);
     }
 
     // ─── Advisory Lock ────────────────────────────────────────────────────
@@ -82,7 +82,7 @@ public sealed class DatabaseTracker(
         await using var cmd = new NpgsqlCommand($"SELECT pg_advisory_lock({AdvisoryLockId})", conn);
         await cmd.ExecuteNonQueryAsync(ct);
 
-        logger.Debug("Advisory lock {LockId} acquired", AdvisoryLockId);
+        Log.DebugLockAcquired(logger, AdvisoryLockId);
         return conn;
     }
 
@@ -96,7 +96,7 @@ public sealed class DatabaseTracker(
                 await using var cmd = new NpgsqlCommand($"SELECT pg_advisory_unlock({AdvisoryLockId})", conn);
                 await cmd.ExecuteNonQueryAsync();
 
-                logger.Debug("Advisory lock {LockId} released", AdvisoryLockId);
+                Log.DebugLockReleased(logger, AdvisoryLockId);
             }
         }
         finally
@@ -144,7 +144,7 @@ public sealed class DatabaseTracker(
         cmd.Parameters.AddWithValue("hash", modelHash);
         await cmd.ExecuteNonQueryAsync(ct);
 
-        logger.Debug("Model hash saved for context '{Context}': {Hash}", contextName, modelHash[..12] + "…");
+        Log.DebugHashSaved(logger, contextName, modelHash[..12] + "…");
     }
 
     // ─── Seed History ─────────────────────────────────────────────────────
@@ -186,6 +186,29 @@ public sealed class DatabaseTracker(
         cmd.Parameters.AddWithValue("ver", version);
         await cmd.ExecuteNonQueryAsync(ct);
 
-        logger.Debug("Seed version saved for '{Seeder}': {Version}", seederName, version);
+        Log.DebugSeedVersionSaved(logger, seederName, version);
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.DbTrackerTablesEnsured, LogLevel.Debug,
+            "Tracking tables ensured in schema '{Schema}'")]
+        public static partial void DebugTablesEnsured(ILogger logger, string schema);
+
+        [LoggerMessage((int)LogEventId.DbTrackerLockAcquired, LogLevel.Debug,
+            "Advisory lock {LockId} acquired")]
+        public static partial void DebugLockAcquired(ILogger logger, long lockId);
+
+        [LoggerMessage((int)LogEventId.DbTrackerLockReleased, LogLevel.Debug,
+            "Advisory lock {LockId} released")]
+        public static partial void DebugLockReleased(ILogger logger, long lockId);
+
+        [LoggerMessage((int)LogEventId.DbTrackerHashSaved, LogLevel.Debug,
+            "Model hash saved for context '{Context}': {Hash}")]
+        public static partial void DebugHashSaved(ILogger logger, string context, string hash);
+
+        [LoggerMessage((int)LogEventId.DbTrackerSeedVersionSaved, LogLevel.Debug,
+            "Seed version saved for '{Seeder}': {Version}")]
+        public static partial void DebugSeedVersionSaved(ILogger logger, string seeder, string version);
     }
 }
