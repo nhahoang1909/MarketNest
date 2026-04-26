@@ -1,6 +1,6 @@
 using FluentValidation.Results;
 
-namespace MarketNest.Core.Common.Queries;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Base class for all paged list queries.

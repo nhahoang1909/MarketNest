@@ -1,4 +1,4 @@
-namespace MarketNest.Core.Exceptions;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Thrown when an entity is not found. Infrastructure-level exception.

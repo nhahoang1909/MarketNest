@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace MarketNest.Core.Common.Validation;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Reusable FluentValidation rule extensions for common patterns.

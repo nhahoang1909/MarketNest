@@ -1,4 +1,4 @@
-﻿namespace MarketNest.Core.Contracts;
+﻿namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Provides the current user's time zone and preferred date/time format.

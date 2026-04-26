@@ -1,7 +1,7 @@
 using MarketNest.Core.Common;
 using MarketNest.Core.ValueObjects;
 
-namespace MarketNest.Core.Contracts;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Implemented by Orders module; consumed by Cart module.

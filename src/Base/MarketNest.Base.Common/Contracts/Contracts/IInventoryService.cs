@@ -1,7 +1,7 @@
 using MarketNest.Core.Common;
 using MediatR;
 
-namespace MarketNest.Core.Contracts;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Implemented by Catalog module; consumed by Orders and Cart modules.

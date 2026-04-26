@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace MarketNest.Core.Common;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Result monad — the ONLY way to return errors from handlers.

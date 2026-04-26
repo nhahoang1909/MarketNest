@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace MarketNest.Core.Common.Persistence;
+namespace MarketNest.Base.Infrastructure;
 
 /// <summary>
 /// Marker interface for module-level DbContexts.

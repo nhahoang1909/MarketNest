@@ -1,4 +1,4 @@
-namespace MarketNest.Core.Common.Persistence;
+namespace MarketNest.Base.Infrastructure;
 
 /// <summary>
 ///     Base repository contract. Only for aggregates — queries bypass repositories.

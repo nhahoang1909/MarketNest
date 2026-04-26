@@ -1,4 +1,4 @@
-﻿namespace MarketNest.Core.Common;
+﻿namespace MarketNest.Base.Common;
 
 /// <summary>
 /// Order status string constants used for display and matching.

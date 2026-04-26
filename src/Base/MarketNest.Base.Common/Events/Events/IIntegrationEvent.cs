@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace MarketNest.Core.Common.Events;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Base interface for integration events — cross-module communication.

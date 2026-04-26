@@ -1,4 +1,4 @@
-namespace MarketNest.Core.Common.Queries;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Standard paged result envelope for list endpoints.

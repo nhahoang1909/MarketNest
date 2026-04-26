@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace MarketNest.Core.Common.Queries;
+namespace MarketNest.Base.Common;
 
 public interface IBaseQuery<TEntity, TKey> where TEntity : Entity<TKey>
 {

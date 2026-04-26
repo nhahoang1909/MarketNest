@@ -1,4 +1,4 @@
-﻿namespace MarketNest.Core.Common;
+﻿namespace MarketNest.Base.Common;
 
 /// <summary>
 /// Database table and schema name constants shared across all modules.

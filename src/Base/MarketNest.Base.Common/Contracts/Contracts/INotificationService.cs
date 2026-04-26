@@ -1,4 +1,4 @@
-namespace MarketNest.Core.Contracts;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Implemented by Notifications module; consumed by all modules via domain event handlers.

@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Text;
 
-namespace MarketNest.Core.Common;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Extension methods for <see cref="DateTimeOffset"/> that convert to user-local time

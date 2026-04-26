@@ -1,4 +1,4 @@
-﻿namespace MarketNest.Core.Contracts;
+﻿namespace MarketNest.Base.Common;
 
 /// <summary>
 /// Records audit logs and login events. Phase 1: writes to "auditing" schema in shared DB.

@@ -2,7 +2,7 @@ using MarketNest.Core.Common;
 using MarketNest.Core.ValueObjects;
 using MediatR;
 
-namespace MarketNest.Core.Contracts;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Implemented by Payments module; consumed by Orders module.

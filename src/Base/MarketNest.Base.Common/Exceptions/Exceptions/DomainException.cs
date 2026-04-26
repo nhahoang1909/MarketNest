@@ -1,4 +1,4 @@
-namespace MarketNest.Core.Exceptions;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Thrown for domain invariant violations that should never happen if validation is correct.

@@ -3,7 +3,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace MarketNest.Core.Common.Persistence;
+namespace MarketNest.Base.Infrastructure;
 /// <summary>
 /// Computes a deterministic SHA-256 hash of an EF Core model snapshot.
 /// Used by <c>DatabaseInitializer</c> to detect schema changes between startups.

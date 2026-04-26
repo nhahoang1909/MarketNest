@@ -1,4 +1,4 @@
-﻿namespace MarketNest.Core.Common.Events.IntegrationEvents;
+﻿namespace MarketNest.Base.Common;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Example integration events — cross-module contracts.

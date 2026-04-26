@@ -1,4 +1,4 @@
-namespace MarketNest.Core.Contracts;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Implemented by Catalog module; consumed by Payments module for commission rates.

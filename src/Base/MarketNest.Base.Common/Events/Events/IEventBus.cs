@@ -1,4 +1,4 @@
-﻿namespace MarketNest.Core.Common.Events;
+﻿namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Abstraction for publishing integration events across bounded contexts.

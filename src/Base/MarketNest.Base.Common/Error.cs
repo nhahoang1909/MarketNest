@@ -1,4 +1,4 @@
-namespace MarketNest.Core.Common;
+namespace MarketNest.Base.Common;
 
 /// <summary>
 ///     Structured error record with domain error code, message, and type.
