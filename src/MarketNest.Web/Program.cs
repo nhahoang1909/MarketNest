@@ -145,7 +145,7 @@ try
     builder.Services.AddSingleton<IJobRegistry, ServiceCollectionJobRegistry>();
     builder.Services.AddScoped<IJobExecutionStore, NpgsqlJobExecutionStore>();
     // Example/demo job registration — modules should register their own jobs instead
-    builder.Services.AddSingleton<IBackgroundJob, MarketNest.Web.BackgroundJobs.Test.TestTimerJob>();
+    builder.Services.AddSingleton<IBackgroundJob, MarketNest.Admin.Application.TestTimerJob>();
     builder.Services.AddHostedService<JobRunnerHostedService>();
 
     // ── Database: auto-migrate + seed ─────────────────────────────────
