@@ -4,15 +4,14 @@ namespace MarketNest.Base.Infrastructure;
 /// <summary>
 ///     Thin logging abstraction used across all MarketNest modules.
 ///     Wraps ILogger with short method names: Info, Debug, Trace, Warn, Error, Critical.
+///     Extends ILogger so [LoggerMessage] delegates can accept IAppLogger<T> directly.
 ///     Usage in a class:
 ///     public class OrderRepository(IAppLogger&lt;OrderRepository&gt; logger) { ... }
-///     _logger.Info("Order {Id} placed", orderId);
-///     _logger.Warn(ex, "Payment timeout after {Ms}ms", elapsed);
-///     _logger.Error(ex, "Failed to save order {Id}", orderId);
+///     Log.InfoOrderPlaced(logger, orderId);
 /// </summary>
-public interface IAppLogger<T>
+public interface IAppLogger<T> : ILogger
 {
-    bool IsEnabled(LogLevel level);
+    new bool IsEnabled(LogLevel level);
 
     void Trace(string message);
     void Trace(string messageTemplate, params object?[] args);
@@ -28,7 +27,7 @@ public interface IAppLogger<T>
     void Warn(Exception ex, string message);
     void Warn(Exception ex, string messageTemplate, params object?[] args);
 
-#pragma warning disable CA1716 // 'Error' is an intentional logging-level method name
+#pragma warning disable CA1716
     void Error(Exception ex, string message);
     void Error(Exception ex, string messageTemplate, params object?[] args);
 #pragma warning restore CA1716

@@ -17,51 +17,50 @@ public enum LogEventId
 {
     #region Infrastructure / Middleware — 1000-1999
 
-    // DatabaseInitializer — 1000-1019
+    // DatabaseInitializer — 1000-1015
     DbInitStart = 1000,
-    DbInitLockAcquired = 1001,
-    DbInitSchemaCreated = 1002,
-    DbInitMigrationApplied = 1003,
-    DbInitUpToDate = 1004,
-    DbInitSeedStart = 1005,
-    DbInitSeedApplied = 1006,
-    DbInitSeedSkipped = 1007,
-    DbInitCompleted = 1008,
-    DbInitError = 1009,
-    DbInitLockTimeout = 1010,
+    DbInitCompleted = 1001,
+    DbInitNoContexts = 1002,
+    DbInitModelUnchanged = 1003,
+    DbInitNoMigrationFiles = 1004,
+    DbInitHashChangedNoMigrations = 1005,
+    DbInitApplyingMigrations = 1006,
+    DbInitMigrationsApplied = 1007,
+    DbInitMigrationCritical = 1008,
+    DbInitNoSeeders = 1009,
+    DbInitSeedEvaluating = 1010,
+    DbInitSeedSkippedProd = 1011,
+    DbInitSeedSkippedVersion = 1012,
+    DbInitSeedRunning = 1013,
+    DbInitSeedCompleted = 1014,
+    DbInitSeedFailed = 1015,
 
-    // DatabaseTracker — 1020-1039
-    DbTrackerHashMatch = 1020,
-    DbTrackerHashMismatch = 1021,
-    DbTrackerHashUpdated = 1022,
-    DbTrackerSeedRecorded = 1023,
-    DbTrackerError = 1024,
+    // DatabaseTracker — 1016-1022
+    DbTrackerTablesEnsured = 1016,
+    DbTrackerLockAcquired = 1017,
+    DbTrackerLockReleased = 1018,
+    DbTrackerHashSaved = 1019,
+    DbTrackerSeedVersionSaved = 1020,
 
-    // InProcessEventBus — 1040-1049
+    // InProcessEventBus — 1040-1042
     EventBusPublishStart = 1040,
     EventBusPublishSuccess = 1041,
     EventBusPublishError = 1042,
 
-    // MassTransitEventBus — 1050-1059
+    // MassTransitEventBus — 1050-1052 (Phase 3)
     MassTransitPublishStart = 1050,
     MassTransitPublishSuccess = 1051,
     MassTransitPublishError = 1052,
 
-    // ApiContractGenerator — 1060-1069
+    // ApiContractGenerator — 1060-1062
     ApiContractFetchStart = 1060,
     ApiContractUpdated = 1061,
-    ApiContractFetchError = 1062,
+    ApiContractFetchFailed = 1062,
 
-    // RouteWhitelistMiddleware — 1070-1079
+    // RouteWhitelistMiddleware — 1070
     RouteBlocked = 1070,
 
-    // Reserved — 1080-1199
-
-    // Application layer — 1200-1599 (reserved)
-
-    // Web Pages — 1600-1799 (reserved — global pages use 13000-13999)
-
-    // Reserved — 1800-1999
+    // Reserved — 1071-1999
 
     #endregion
 

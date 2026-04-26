@@ -5,10 +5,23 @@ namespace MarketNest.Base.Infrastructure;
 ///     ILogger&lt;T&gt; wrapper that implements IAppLogger&lt;T&gt;.
 ///     CA2254 and CA1848 are suppressed here intentionally — the template variability is by design
 ///     since this class is the single delegation point for all log calls.
+///     The explicit ILogger.Log implementation uses the core method (not extension methods)
+///     so CA1848 does not fire on it — [LoggerMessage] delegates route through this path.
 /// </summary>
 #pragma warning disable CA2254, CA1848
 public sealed class AppLogger<T>(ILogger<T> inner) : IAppLogger<T>
 {
+    // ── ILogger explicit implementation ──────────────────────────────────────
+    // Uses inner.Log (core method, not extension methods) — CA1848 does not fire here.
+    void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state,
+        Exception? exception, Func<TState, Exception?, string> formatter)
+        => inner.Log(logLevel, eventId, state, exception, formatter);
+
+    bool ILogger.IsEnabled(LogLevel logLevel) => inner.IsEnabled(logLevel);
+
+    IDisposable? ILogger.BeginScope<TState>(TState state) => inner.BeginScope(state);
+
+    // ── IAppLogger<T> implementation ─────────────────────────────────────────
     public bool IsEnabled(LogLevel level) => inner.IsEnabled(level);
 
     public void Trace(string message) => inner.LogTrace(message);
