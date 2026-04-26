@@ -7,7 +7,6 @@ namespace MarketNest.Admin.Infrastructure;
 public class TestRepository(AdminDbContext db)
     : BaseRepository<TestEntity, Guid>(db), ITestRepository
 {
-    // Override to load aggregate with children — update handler needs them tracked
     public override Task<TestEntity?> GetByKeyAsync(Guid id, CancellationToken ct = default)
         => Db.Tests.Include(x => x.SubEntities).FirstOrDefaultAsync(x => x.Id == id, ct);
 
