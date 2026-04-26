@@ -5,7 +5,7 @@ using MarketNest.Admin.Application;
 namespace MarketNest.Admin.Infrastructure;
 
 [Route("api/v1/admin/tests")]
-public class TestReadController(IMediator mediator) : ReadApiV1ControllerBase(mediator)
+public class TestReadController(IMediator mediator) : ApiV1ControllerBase(mediator)
 {
     [HttpGet]
     public async Task<IActionResult> GetPaged(

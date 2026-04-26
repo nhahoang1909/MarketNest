@@ -1,22 +1,11 @@
 using MediatR;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using MarketNest.Core.Common;
+using MarketNest.Base.Api;
 
 namespace MarketNest.Admin.Infrastructure;
 
-[ApiController]
-public abstract class ApiV1ControllerBase(IMediator mediator) : ControllerBase
+// Thin wrapper kept in the Admin.Infrastructure namespace so existing controllers
+// that reference ApiV1ControllerBase do not need changes. The implementation
+// now lives in MarketNest.Base.Api.
+public abstract class ApiV1ControllerBase(IMediator mediator) : MarketNest.Base.Api.ApiV1ControllerBase(mediator)
 {
-    protected IMediator Mediator => mediator;
-
-    protected IActionResult MapError(Error error) => error.Type switch
-    {
-        ErrorType.NotFound     => NotFound(new { error.Code, error.Message }),
-        ErrorType.Conflict     => Conflict(new { error.Code, error.Message }),
-        ErrorType.Validation   => BadRequest(new { error.Code, error.Message }),
-        ErrorType.Unauthorized => Unauthorized(new { error.Code, error.Message }),
-        ErrorType.Forbidden    => StatusCode(StatusCodes.Status403Forbidden, new { error.Code, error.Message }),
-        _                      => Problem(error.Message)
-    };
 }

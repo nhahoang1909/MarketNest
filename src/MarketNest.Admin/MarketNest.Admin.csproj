@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\MarketNest.Core\MarketNest.Core.csproj"/>
+        <ProjectReference Include="..\MarketNest.Base.Api\MarketNest.Base.Api.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

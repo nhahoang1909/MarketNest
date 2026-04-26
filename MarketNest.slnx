@@ -1,5 +1,10 @@
 <Solution>
     <Folder Name="/src/">
+        <Project Path="src/MarketNest.Base.Api/MarketNest.Base.Api.csproj" />
+        <Project Path="src/MarketNest.Base.Common/MarketNest.Base.Common.csproj" />
+        <Project Path="src/MarketNest.Base.Domain/MarketNest.Base.Domain.csproj" />
+        <Project Path="src/MarketNest.Base.Infrastructure/MarketNest.Base.Infrastructure.csproj" />
+        <Project Path="src/MarketNest.Base.Utility/MarketNest.Base.Utility.csproj" />
         <Project Path="src/MarketNest.Web/MarketNest.Web.csproj" />
     </Folder>
     <Folder Name="/src/Base/">
