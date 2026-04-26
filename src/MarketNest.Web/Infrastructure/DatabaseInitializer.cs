@@ -97,22 +97,35 @@ public sealed class DatabaseInitializer(
                     continue;
                 }
 
-                // Hash changed (or first run) — check for pending migrations
+                // Hash changed (or first run) — check migration state
                 var pending = (await dbContext.Database.GetPendingMigrationsAsync(ct)).ToList();
+                var applied = (await dbContext.Database.GetAppliedMigrationsAsync(ct)).ToList();
 
-                if (pending.Count == 0)
+                var sw = Stopwatch.StartNew();
+
+                if (applied.Count == 0 && pending.Count == 0)
+                {
+                    // No migration files exist — create schema directly from the current model.
+                    // This avoids requiring migration files during early development.
+                    // Once migrations are added to the project, MigrateAsync() takes over.
+                    logger.Info("[{Context}] No migration files found — using EnsureCreated to build schema from model",
+                        contextName);
+                    await dbContext.Database.EnsureCreatedAsync(ct);
+                }
+                else if (pending.Count == 0)
                 {
                     logger.Info("[{Context}] No pending migrations, but model hash changed — updating tracker",
                         contextName);
                     await tracker.SaveModelHashAsync(contextName, currentHash, ct);
                     continue;
                 }
+                else
+                {
+                    logger.Info("[{Context}] Applying {Count} pending migrations: {Migrations}",
+                        contextName, pending.Count, string.Join(", ", pending));
+                    await dbContext.Database.MigrateAsync(ct);
+                }
 
-                logger.Info("[{Context}] Applying {Count} pending migrations: {Migrations}",
-                    contextName, pending.Count, string.Join(", ", pending));
-
-                var sw = Stopwatch.StartNew();
-                await dbContext.Database.MigrateAsync(ct);
                 sw.Stop();
 
                 // Only save hash AFTER successful migration
