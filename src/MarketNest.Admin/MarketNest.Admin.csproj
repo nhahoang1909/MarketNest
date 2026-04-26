@@ -3,10 +3,13 @@
     <PropertyGroup>
         <RootNamespace>MarketNest.Admin</RootNamespace>
         <Description>Admin module: back-office arbitration, platform configuration.</Description>
+        <!-- Suppress NU1510 warning-as-error for package pruning in this module. -->
+        <NoWarn>NU1510</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\MarketNest.Core\MarketNest.Core.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Api\MarketNest.Base.Api.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -19,18 +22,20 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational"/>
         <PackageReference Include="OpenTelemetry.Api"/>
         <PackageReference Include="System.Security.Cryptography.Xml"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Application\Commands\"/>
-        <Folder Include="Application\Queries\"/>
+        <!-- Use the shared ASP.NET Core framework for controller types and MVC abstractions -->
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
         <Folder Include="Application\Validators\"/>
-        <Folder Include="Domain\Entities"/>
         <Folder Include="Domain\Enums"/>
         <Folder Include="Domain\Events"/>
-        <Folder Include="Infrastructure\Persistence"/>
         <Folder Include="Infrastructure\Repositories"/>
     </ItemGroup>
 

@@ -1,2 +1,3 @@
-global using MarketNest.Core.Common;
-global using MarketNest.Core.Logging;
+namespace MarketNest.Core;
+
+public sealed class AssemblyReference { }

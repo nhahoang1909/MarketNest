@@ -5,7 +5,16 @@
       "Bash(claude plugin *)",
       "Bash(dotnet build *)",
       "Bash(pip install *)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(xargs grep *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git -C \"C:/Users/ADMIN/Documents/03_Projects/01_MyProjects/marketnest\" add src/MarketNest.Admin/Infrastructure/Persistence/BaseRepository.cs)",
+      "Bash(git -C \"C:/Users/ADMIN/Documents/03_Projects/01_MyProjects/marketnest\" commit -m \"refactor\\(admin\\): remove unused using from BaseRepository\")",
+      "Bash(git -C /c/Users/ADMIN/Documents/03_Projects/01_MyProjects/marketnest add src/MarketNest.Admin/Application/Submodule/)",
+      "Bash(git -C /c/Users/ADMIN/Documents/03_Projects/01_MyProjects/marketnest commit -m \"feat\\(admin\\): add ITestRepository, ITestQuery, IGetTestsPagedQuery interfaces\")",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(dotnet test *)"
     ]
   }
 }

@@ -11,6 +11,7 @@
         <PackageReference Include="Azure.Identity"/>
         <PackageReference Include="MediatR"/>
         <PackageReference Include="FluentValidation"/>
+        <!-- Removed ASP.NET-specific package references; move framework-specific APIs into a dedicated Base.Api project -->
         <PackageReference Include="Microsoft.EntityFrameworkCore"/>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle">
             <PrivateAssets>all</PrivateAssets>

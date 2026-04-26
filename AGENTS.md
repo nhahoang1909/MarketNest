@@ -22,14 +22,17 @@ npm run build:css        # one-shot minified build
 npm run watch:css        # JIT watcher for development
 
 # Infrastructure
-docker compose -f src/MarketNest.Web/docker-compose.yml up -d
+docker compose up -d   # uses root-level `docker-compose.yml` (project root)
 
 # EF Core Migrations (auto-applied on startup via DatabaseInitializer)
 dotnet ef migrations add <Name> --project src/MarketNest.<Module>
 dotnet ef database update
 
 # First-time setup: copy env template and install pre-commit hooks (ADR-009)
+# Unix/macOS (or WSL):
 cp src/MarketNest.Web/.env.example src/MarketNest.Web/.env   # fill in real values
+# Windows PowerShell:
+Copy-Item -Path src/MarketNest.Web\.env.example -Destination src/MarketNest.Web\.env
 pre-commit install                                            # gitleaks secret detection
 ```
 
@@ -84,7 +87,7 @@ docker-compose.prod.yml     # Production-oriented Compose (root level)
 docs/api-contract.md        # Auto-generated from OpenAPI spec by ApiContractGenerator
 .gitleaks.toml              # Gitleaks secret detection config (ADR-009)
 .pre-commit-config.yaml     # Pre-commit hooks (gitleaks on pre-commit + pre-push)
-.claude/rules/              # Claude Code rule files: architecture.md, codestyle.md, git.md, security.md, testing.md
+agents/rules/               # Agent rule files for all assistants: architecture.md, codestyle.md, git.md, security.md, testing.md
 ```
 
 Frontend static assets in `src/MarketNest.Web/wwwroot/`:
@@ -159,7 +162,39 @@ Secrets belong in:
 - No magic strings / magic numbers — extract to `const`, `static readonly`, enum, or config options. See `AppConstants` and `AppRoutes` in `src/MarketNest.Web/Infrastructure/` as the canonical examples
 - English only — all naming, comments, error messages, log messages, and commit messages must be in English. No Vietnamese or other languages in source code. Only localization resource files (`.resx`) are exempt. See `docs/code-rules.md` §2.1
 - Flat layer-level namespaces: `MarketNest.<Module>.Application`, `MarketNest.<Module>.Domain`, `MarketNest.<Module>.Infrastructure` — sub-folders (Commands/, Queries/, Entities/) do NOT appear in the namespace. See `docs/code-rules.md` §2.7
+
+### Agent enforcement: namespace policy
+
+- Agents MUST read `docs/code-rules.md` (section §2.7) before creating or modifying C# source files and must enforce the flat layer-level namespace rule.
+- When generating new files the namespace must stop at the layer level (for example `MarketNest.Admin.Application` or `MarketNest.Admin.Domain`). Do NOT include sub-folder names such as `.Commands`, `.Queries`, `.Entities` in the namespace. Example:
+  - Correct: `namespace MarketNest.Admin.Application;`
+  - Incorrect: `namespace MarketNest.Admin.Application.Commands;`
+- If you find existing files that violate this rule, mention the mismatch in your change summary and propose a minimal fix (preferably editing only the file header namespace) rather than refactoring unrelated code.
 - Module boundaries: no cross-schema DB access; use service interfaces (in `Core/Contracts/`) or domain events
+- Module folder layout vs namespace mapping:
+- Modules may contain feature sub-folders (e.g., `Modules/Account/Commands`, `Modules/Product/QueryHandlers`) for organization. When you generate or edit files, keep namespaces at the layer level:
+  - `src/MarketNest.Admin/Modules/Account/Commands/CreateAccountCommand.cs` -> `namespace MarketNest.Admin.Application;`
+  - `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs` -> `namespace MarketNest.Admin.Infrastructure;`
+  - Do NOT include `Account`, `Commands`, `Persistence` in the namespace.
+### Query + Repository Pattern Enforcement
+
+Before writing any handler:
+- CommandHandlers MUST inject `I{Entity}Repository`, never `{Module}DbContext` directly
+- QueryHandlers for simple reads MUST inject `I{Entity}Query : IBaseQuery<T,K>`
+- QueryHandlers for complex reads (pagination, projection, joins) MUST inject a dedicated `IGet{UseCase}Query` interface
+- Query interface implementations live in `Infrastructure/Queries/{Feature}/`
+- Repository implementations live in `Infrastructure/Repositories/{Feature}/`
+
+Read context rules:
+- `{Module}ReadDbContext` is ONLY injected by `BaseQuery` subclasses
+- `{Module}DbContext` (write) is ONLY injected by `BaseRepository` subclasses
+- Neither context is injected by any Application layer class
+
+Controller base classes:
+- All read controllers extend `ReadApiV1ControllerBase`
+- All write controllers extend `WriteApiV1ControllerBase`
+- Route prefix: `api/v1/{module}/{resource}` — NOT `api/{module}/{resource}`
+
 - CQRS naming: `PlaceOrderCommand`, `GetOrderByIdQuery`, `OrderPlacedEvent`
 - Central Package Management: all NuGet versions are pinned in the repo-root `Directory.Packages.props`. Module `.csproj` files reference packages without versions
 - Build settings (`net10.0`, `TreatWarningsAsErrors`, `EnforceCodeStyleInBuild`) are in the repo-root `Directory.Build.props`
