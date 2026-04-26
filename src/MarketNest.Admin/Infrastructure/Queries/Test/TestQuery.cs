@@ -14,7 +14,7 @@ public class TestQuery(AdminReadDbContext db)
     public async Task<PagedResult<TestDto>> ExecuteAsync(
         GetTestsPagedQuery request, CancellationToken ct)
     {
-        var query = Db.Tests.Include(x => x.SubEntities).AsQueryable();
+        IQueryable<TestEntity> query = Db.Tests;
         if (!string.IsNullOrWhiteSpace(request.SearchName))
             query = query.Where(x => x.Name.Contains(request.SearchName));
 
