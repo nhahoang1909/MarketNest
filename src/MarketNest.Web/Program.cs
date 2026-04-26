@@ -119,6 +119,8 @@ try
     builder.Services.AddDbContext<MarketNest.Admin.Infrastructure.AdminReadDbContext>(opts =>
         opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName))
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+    builder.Services.AddScoped<MarketNest.Admin.Application.ITestRepository,
+        MarketNest.Admin.Infrastructure.TestRepository>();
 
     // IUserTimeZoneProvider — resolves user's time zone and date format from HTTP context
     builder.Services.AddHttpContextAccessor();
