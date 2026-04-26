@@ -1,4 +1,4 @@
-﻿using MarketNest.Core.Common;
+using MarketNest.Core.Common;
 using MarketNest.Core.Common.Events;
 using MarketNest.Admin.Domain;
 
@@ -33,4 +33,3 @@ public class TestEntity : Entity<Guid>
         SubEntities = list.AsReadOnly();
     }
 }
-

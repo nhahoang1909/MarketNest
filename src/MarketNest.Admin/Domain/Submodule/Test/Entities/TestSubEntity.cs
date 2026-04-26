@@ -1,4 +1,4 @@
-﻿using MarketNest.Core.Common;
+using MarketNest.Core.Common;
 
 namespace MarketNest.Admin.Domain;
 
@@ -16,4 +16,3 @@ public class TestSubEntity : Entity<Guid>
     public Guid ParentId { get; private set; }
     public string Title { get; private set; } = string.Empty;
 }
-
