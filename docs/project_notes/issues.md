@@ -20,6 +20,11 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-26 - LoggerMessage refactor design complete
+- **Status**: In Progress
+- **Description**: Designed full migration of production logging from `IAppLogger<T>` dynamic templates to `[LoggerMessage]` source-generated delegates. Scope: 31 files refactored + 19 new pages instrumented. Execution: Step 0 (extend IAppLogger<T> : ILogger) → 4 parallel agents → Cleanup (strip dead methods, remove pragma). EventId blocks of 1000 per module defined.
+- **Notes**: ADR-014 logged. Spec at `docs/superpowers/specs/2026-04-26-loggermessage-refactor-design.md`. Implementation plan to be created via writing-plans skill.
+
 ### 2026-04-26 - Auditing module foundation
 - **Status**: Completed
 - **Description**: Created `MarketNest.Auditing` module with automatic audit logging foundation. Two capture points: `AuditableInterceptor` (EF Core SaveChanges hook for `[Auditable]` entities) and `AuditBehavior<,>` (MediatR pipeline for `[Audited]` commands). `IAuditService` contract in Core/Contracts with in-process implementation. Domain: `AuditLog`, `LoginEvent` entities in `auditing` schema. Application: `GetAuditLogsQuery`, `GetLoginEventsQuery` with paged/filterable results. Registered in Program.cs with MediatR assembly scan + DI.
