@@ -1,4 +1,4 @@
-﻿using MarketNest.Admin.Domain;
+using MarketNest.Admin.Domain;
 
 namespace MarketNest.Admin.Application;
 
@@ -11,4 +11,3 @@ public record TestDto
     public TestValueObject Value { get; init; } = new();
     public IReadOnlyList<TestSubDto> SubEntities { get; init; } = [];
 }
-
