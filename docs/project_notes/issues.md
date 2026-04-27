@@ -20,10 +20,10 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
-### 2026-04-26 - LoggerMessage refactor design complete
-- **Status**: In Progress
-- **Description**: Designed full migration of production logging from `IAppLogger<T>` dynamic templates to `[LoggerMessage]` source-generated delegates. Scope: 31 files refactored + 19 new pages instrumented. Execution: Step 0 (extend IAppLogger<T> : ILogger) → 4 parallel agents → Cleanup (strip dead methods, remove pragma). EventId blocks of 1000 per module defined.
-- **Notes**: ADR-014 logged. Spec at `docs/superpowers/specs/2026-04-26-loggermessage-refactor-design.md`. Implementation plan to be created via writing-plans skill.
+### 2026-04-26 - LoggerMessage refactor complete
+- **Status**: Completed
+- **Description**: Migrated all production logging from `IAppLogger<T>` dynamic templates to `[LoggerMessage]` source-generated delegates. 50+ files touched. `IAppLogger<T>` stripped to a marker interface (`IAppLogger<T> : ILogger`). `AppLogger<T>` reduced to 3 explicit ILogger members. CA1848/CA2254 suppressions eliminated from production code. EventId registry (`LogEventId` enum) covers all modules with 1000-block allocations.
+- **Notes**: ADR-014. Spec: `docs/superpowers/specs/2026-04-26-loggermessage-refactor-design.md`. Release build: 0 warnings, 0 errors. Architecture tests: 2/2 passed.
 
 ### 2026-04-26 - Auditing module foundation
 - **Status**: Completed
