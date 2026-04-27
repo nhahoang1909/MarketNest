@@ -1,0 +1,19 @@
+@* Skeleton placeholder for order list rows.
+   Pass Count (int, default 5) via ViewData. *@
+@{
+  var count = int.TryParse(ViewData["Count"]?.ToString(), out var c) ? c : 5;
+}
+
+<div class="space-y-3" aria-hidden="true" aria-label="Loading...">
+  @for (var i = 0; i < count; i++)
+  {
+    <div class="skeleton-order-row">
+      <div class="sk-thumb"></div>
+      <div class="sk-info">
+        <div class="sk-id"></div>
+        <div class="sk-status"></div>
+        <div class="sk-date"></div>
+      </div>
+    </div>
+  }
+</div>

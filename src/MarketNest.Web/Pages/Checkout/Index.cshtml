@@ -6,6 +6,7 @@
 
 <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12" x-data="{
   step: 1,
+  submitting: false,
   form: {
   fullName: '', phone: '', address: '', city: '', district: '', ward: '',
   shipping: 'standard',
@@ -179,9 +180,16 @@
 
         <div class="flex justify-between mt-8">
           <button @@click="step = 3" class="btn-ghost">Quay lai</button>
-          <!-- TODO: Replace with real order placement via form POST. Mock GUID for prototyping. -->
-          <a href="@AppRoutes.OrderPages.Confirmation(Guid.Empty)" class="btn-primary btn-lg">
-            Dat hang
+          <!-- TODO: Replace with real form POST when order placement handler is implemented. -->
+          <a href="@AppRoutes.OrderPages.Confirmation(Guid.Empty)"
+             class="btn-primary btn-lg"
+             :class="submitting ? 'btn-loading' : ''"
+             @@click.prevent="submitting = true; setTimeout(() => window.location = $el.href, 100)">
+            <svg x-show="submitting" class="animate-spin h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span x-text="submitting ? 'Dang xu ly...' : 'Dat hang'"></span>
           </a>
         </div>
       </div>
@@ -223,6 +231,19 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ░░ PROCESSING OVERLAY ░░ — shown while order is being submitted -->
+  <div x-show="submitting" x-cloak
+       class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl px-10 py-8 flex flex-col items-center gap-4 shadow-2xl">
+      <svg class="animate-spin h-10 w-10 text-accent-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <p class="font-semibold text-ink-700">Dang xu ly don hang...</p>
+      <p class="text-sm text-ink-400">Vui long khong dong trang nay</p>
     </div>
   </div>
 </div>
