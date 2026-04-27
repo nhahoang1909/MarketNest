@@ -503,6 +503,73 @@ if (!ModelState.IsValid)
 | CLS | < 0.1 | Reserved image space |
 | JS bundle | < 50KB gzip | HTMX ~14KB + Alpine ~10KB |
 
+### Loading Strategy
+
+Full strategy documented in `docs/loading-strategy.md`. Summary of technique selection:
+
+| Technique | When to use |
+|-----------|-------------|
+| **SSR (no loading)** | LCP elements — hero, title, price, cart items |
+| **Skeleton loading** | Above-fold content that fetches from DB asynchronously via HTMX |
+| **Lazy load (HTMX `intersect once`)** | Below-fold content — reviews, related products, chart |
+| **HTMX indicator / spinner** | Any user-triggered action (form submit, filter, pagination) |
+| **Alpine loading state** | Multi-step flows, button state during form POST |
+
+**Decision rule:**
+```
+LCP element?          → SSR immediately, no skeleton
+DB data, above fold?  → Skeleton (hx-trigger="load") 
+Below fold?           → Lazy (hx-trigger="intersect once")
+User action?          → HTMX indicator or Alpine spinner
+Transaction page?     → SSR max + spinner on submit action only
+```
+
+**Phase 1 foundation (implemented 2026-04-27):**
+- `.skeleton-shimmer` CSS class (gradient sweep animation) + 4 skeleton shape classes in `components.css`
+- Reusable skeleton partials: `_SkeletonProductCard`, `_SkeletonStoreCard`, `_SkeletonOrderRow`, `_SkeletonStatCard`
+- All image components (`_ProductCard`, `_StoreCard`, `_Avatar`, `_ReviewCard`) have explicit `width`/`height` + `loading="lazy"` → CLS fixed
+- Checkout: Alpine `submitting` state + full-page processing overlay on order submit
+- `_SearchInput`: inline spinner inside input field
+- `_FilterBar` / `_Pagination`: optional `IndicatorId` ViewData param → `hx-indicator`
+
+**Phase 2 (per page, when real DB data is connected):**
+Each page that integrates a real data query should add skeleton loading at that point. Use the existing skeleton partials as the placeholder content in `hx-trigger="load"` sections.
+
+### Image Rules
+
+- `loading="eager"` + `fetchpriority="high"` → LCP images only (hero banner, above-fold store banner)
+- `loading="lazy"` + explicit `width` + `height` → all other images (product cards, avatars, thumbnails)
+- Always set `width`/`height` or `aspect-ratio` — prevents CLS while image loads
+- Background images set via CSS: no `loading` attribute, use `contain-intrinsic-size` if needed
+
+### HTMX Indicator Pattern
+
+Every HTMX request must have a visible loading state. Use the appropriate level:
+
+```html
+<!-- Small inline spinner for quick actions (< 1s expected) -->
+<button hx-post="/cart/items" hx-indicator="#cart-spinner">
+  Add to cart
+  <span id="cart-spinner" class="htmx-indicator">
+    <svg class="animate-spin h-4 w-4">...</svg>
+  </span>
+</button>
+
+<!-- Skeleton overlay for content replacement (1-3s expected) -->
+<div id="product-grid" hx-get="/shop/products" hx-trigger="load" hx-swap="outerHTML">
+  @await Html.PartialAsync("Display/_SkeletonProductCard",
+    new ViewDataDictionary(ViewData) { ["Count"] = 8, ["Cols"] = "4" })
+</div>
+
+<!-- Full-page overlay for transaction submit -->
+<div x-show="submitting" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl p-8 flex flex-col items-center gap-4">
+    <svg class="animate-spin h-10 w-10 text-accent-400">...</svg>
+    <p class="font-semibold text-ink-700">Dang xu ly...</p>
+  </div>
+</div>
+```
+
 ### Caching
 - Catalog pages: `public, max-age=60`
 - Cart/account: `private, no-cache`
@@ -513,6 +580,7 @@ if (!ModelState.IsValid)
 - Focus traps for modals
 - ARIA labels, `aria-live` regions for HTMX updates
 - Color contrast ≥ 4.5:1
+- Skeleton elements use `aria-hidden="true"` + `aria-label="Loading..."` on wrapper
 
 ---
 

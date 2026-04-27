@@ -1,7 +1,7 @@
 /**
  * Alpine.js user store — hydrated from server-rendered meta tags or data attributes
  */
-import { Routes, UserRoles, HtmxConfig } from "../constants.js";
+import {HtmxConfig, Routes, UserRoles} from "../constants.js";
 
 document.addEventListener("alpine:init", () => {
     Alpine.store("user", {

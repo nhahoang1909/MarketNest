@@ -1,7 +1,7 @@
 namespace MarketNest.Web.Infrastructure;
 
 /// <summary>
-/// Centralized route definitions. All UI hrefs and redirects must reference these constants.
+///     Centralized route definitions. All UI hrefs and redirects must reference these constants.
 /// </summary>
 public static class AppRoutes
 {
@@ -14,6 +14,63 @@ public static class AppRoutes
     public const string Error = "/Error";
     public const string NotFound = "/not-found";
     public const string Health = "/health";
+
+    // ── Whitelist: all allowed path prefixes ─────────────────────────
+    /// <summary>
+    ///     Only requests whose path starts with one of these prefixes are allowed.
+    ///     Static files (/css, /js, /lib, etc.) are served before this middleware runs.
+    /// </summary>
+    public static readonly HashSet<string> WhitelistedPrefixes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        Home,
+        Shop,
+        Cart,
+        Search,
+        Error,
+        NotFound,
+        Health,
+        Auth.Login,
+        Auth.Register,
+        Auth.ForgotPassword,
+        Account.Settings,
+        Account.Orders,
+        Account.Wishlist,
+        Account.Disputes,
+        Seller.Dashboard,
+        Seller.Storefront,
+        Seller.Products,
+        Seller.Orders,
+        Seller.Payouts,
+        Seller.Reviews,
+        Seller.Disputes,
+        Admin.Dashboard,
+        Admin.Users,
+        Admin.Storefronts,
+        Admin.Disputes,
+        Admin.Notifications,
+        Admin.ConfigPrefix,
+        Checkout.Index,
+        Api.SetLanguage,
+        Api.OpenApiDoc,
+        Api.ScalarDocs,
+        Api.AdminV1Prefix
+    };
+
+    /// <summary>
+    ///     Checks if the given path is allowed by the whitelist.
+    /// </summary>
+    public static bool IsAllowed(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return false;
+
+        // Exact match for "/"
+        if (path == Home)
+            return true;
+
+        return WhitelistedPrefixes.Any(prefix =>
+            prefix != Home && path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+    }
 
     // ── Auth ──────────────────────────────────────────────────────────
     public static class Auth
@@ -31,6 +88,7 @@ public static class AppRoutes
         public const string SetLanguage = "/api/set-language";
         public const string OpenApiDoc = "/openapi";
         public const string ScalarDocs = "/scalar";
+        public const string AdminV1Prefix = "/api/v1/admin";
     }
 
     // ── Account ──────────────────────────────────────────────────────
@@ -86,63 +144,8 @@ public static class AppRoutes
         public static string Category(string slug) => $"{Shop}?category={slug}";
         public static string Sort(string sort) => $"{Shop}?sort={sort}";
         public static string Sale() => $"{Shop}?sale=1";
+
         public static string Product(string shopSlug, Guid productId) =>
             $"{Shop}/{shopSlug}/products/{productId}";
-    }
-
-    // ── Whitelist: all allowed path prefixes ─────────────────────────
-    /// <summary>
-    /// Only requests whose path starts with one of these prefixes are allowed.
-    /// Static files (/css, /js, /lib, etc.) are served before this middleware runs.
-    /// </summary>
-    public static readonly HashSet<string> WhitelistedPrefixes = new(StringComparer.OrdinalIgnoreCase)
-    {
-        Home,
-        Shop,
-        Cart,
-        Search,
-        Error,
-        NotFound,
-        Health,
-        Auth.Login,
-        Auth.Register,
-        Auth.ForgotPassword,
-        Account.Settings,
-        Account.Orders,
-        Account.Wishlist,
-        Account.Disputes,
-        Seller.Dashboard,
-        Seller.Storefront,
-        Seller.Products,
-        Seller.Orders,
-        Seller.Payouts,
-        Seller.Reviews,
-        Seller.Disputes,
-        Admin.Dashboard,
-        Admin.Users,
-        Admin.Storefronts,
-        Admin.Disputes,
-        Admin.Notifications,
-        Admin.ConfigPrefix,
-        Checkout.Index,
-        Api.SetLanguage,
-        Api.OpenApiDoc,
-        Api.ScalarDocs,
-    };
-
-    /// <summary>
-    /// Checks if the given path is allowed by the whitelist.
-    /// </summary>
-    public static bool IsAllowed(string path)
-    {
-        if (string.IsNullOrEmpty(path))
-            return false;
-
-        // Exact match for "/"
-        if (path == Home)
-            return true;
-
-        return WhitelistedPrefixes.Any(prefix =>
-            prefix != Home && path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
     }
 }

@@ -1,16 +1,16 @@
 ﻿using System.Reflection;
-using MarketNest.Core.Common;
-using MarketNest.Core.Contracts;
-using MarketNest.Core.Logging;
+using MarketNest.Base.Common;
+using MarketNest.Base.Infrastructure;
+// Audit attributes moved to Base.Common; use that namespace
 using MediatR;
 
 namespace MarketNest.Auditing.Infrastructure;
 
 /// <summary>
-/// MediatR pipeline behavior that automatically records audit entries for commands
-/// decorated with <see cref="AuditedAttribute"/>. Runs after the handler completes.
+///     MediatR pipeline behavior that automatically records audit entries for commands
+///     decorated with <see cref="AuditedAttribute" />. Runs after the handler completes.
 /// </summary>
-public class AuditBehavior<TRequest, TResponse>(
+public partial class AuditBehavior<TRequest, TResponse>(
     IAuditService auditService,
     IAppLogger<AuditBehavior<TRequest, TResponse>> logger)
     : IPipelineBehavior<TRequest, TResponse>
@@ -21,21 +21,21 @@ public class AuditBehavior<TRequest, TResponse>(
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        var response = await next(cancellationToken);
+        TResponse response = await next(cancellationToken);
 
-        var attr = typeof(TRequest).GetCustomAttribute<AuditedAttribute>();
+        AuditedAttribute? attr = typeof(TRequest).GetCustomAttribute<AuditedAttribute>();
         if (attr is null)
             return response;
 
         try
         {
-            var isSuccess = IsSuccessResult(response);
+            bool isSuccess = IsSuccessResult(response);
 
             if (!isSuccess && !attr.AuditFailures)
                 return response;
 
-            var eventType = attr.EventType
-                ?? typeof(TRequest).Name.ToUpperInvariant().Replace("COMMAND", "");
+            string eventType = attr.EventType
+                               ?? typeof(TRequest).Name.ToUpperInvariant().Replace("COMMAND", "");
 
             await auditService.RecordAsync(new AuditEntry
             {
@@ -51,7 +51,7 @@ public class AuditBehavior<TRequest, TResponse>(
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Failed to record audit for {RequestType}", typeof(TRequest).Name);
+            Log.ErrorAuditFailed(logger, typeof(TRequest).Name, ex);
         }
 
         return response;
@@ -63,7 +63,8 @@ public class AuditBehavior<TRequest, TResponse>(
             null => false,
             _ when response.GetType().IsGenericType
                    && response.GetType().GetGenericTypeDefinition() == typeof(Result<,>)
-                => (bool)(response.GetType().GetProperty(nameof(Result<int, int>.IsSuccess))?.GetValue(response) ?? false),
+                => (bool)(response.GetType().GetProperty(nameof(Result<int, int>.IsSuccess))?.GetValue(response) ??
+                          false),
             _ => true
         };
 
@@ -72,5 +73,11 @@ public class AuditBehavior<TRequest, TResponse>(
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .FirstOrDefault(p => string.Equals(p.Name, "Id", StringComparison.OrdinalIgnoreCase))
             ?.GetValue(request) as Guid?;
-}
 
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.AuditBehaviorError, LogLevel.Error,
+            "Failed to record audit for {RequestType}")]
+        public static partial void ErrorAuditFailed(ILogger logger, string requestType, Exception ex);
+    }
+}

@@ -1,14 +1,14 @@
 @page "/admin/config"
 @model MarketNest.Web.Pages.Admin.Config.IndexModel
 @{
-    Layout = "_LayoutAdmin";
-    ViewData["Title"] = "Cau hinh he thong";
+  Layout = "_LayoutAdmin";
+  ViewData["Title"] = "Cau hinh he thong";
 }
 
 <!-- Header -->
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-slate-900">Cau hinh he thong</h1>
-    <p class="text-sm text-slate-500 mt-1">Quan ly cac thiet lap chung cua nen tang</p>
+  <h1 class="text-2xl font-bold text-slate-900">Cau hinh he thong</h1>
+  <p class="text-sm text-slate-500 mt-1">Quan ly cac thiet lap chung cua nen tang</p>
 </div>
 
 <!-- Settings form -->
@@ -19,104 +19,104 @@
     maintenanceMode: false,
     language: 'vi'
     }">
-    <div class="p-6 space-y-8">
+  <div class="p-6 space-y-8">
 
-        <!-- Commission rate -->
-        <div>
-            <label class="text-sm font-semibold text-slate-900 block mb-1">Ty le hoa hong</label>
-            <p class="text-xs text-slate-500 mb-3">Phan tram hoa hong tren moi giao dich</p>
-            <div class="flex items-center gap-4">
-                <input type="range" min="0" max="20" step="0.5" x-model="commission"
-                       class="flex-1 h-2 rounded-full appearance-none cursor-pointer" style="accent-color:#1F3A2E;" />
-                <div class="w-20 text-center">
-                    <span class="mn-mono text-lg font-bold text-slate-900" x-text="commission + '%'"></span>
-                </div>
-            </div>
-            <div class="flex justify-between mt-1">
-                <span class="text-[10px] text-slate-400">0%</span>
-                <span class="text-[10px] text-slate-400">20%</span>
-            </div>
+    <!-- Commission rate -->
+    <div>
+      <label class="text-sm font-semibold text-slate-900 block mb-1">Ty le hoa hong</label>
+      <p class="text-xs text-slate-500 mb-3">Phan tram hoa hong tren moi giao dich</p>
+      <div class="flex items-center gap-4">
+        <input type="range" min="0" max="20" step="0.5" x-model="commission"
+               class="flex-1 h-2 rounded-full appearance-none cursor-pointer" style="accent-color:#1F3A2E;"/>
+        <div class="w-20 text-center">
+          <span class="mn-mono text-lg font-bold text-slate-900" x-text="commission + '%'"></span>
         </div>
+      </div>
+      <div class="flex justify-between mt-1">
+        <span class="text-[10px] text-slate-400">0%</span>
+        <span class="text-[10px] text-slate-400">20%</span>
+      </div>
+    </div>
 
-        <hr class="border-slate-100" />
+    <hr class="border-slate-100"/>
 
-        <!-- Payout window -->
+    <!-- Payout window -->
+    <div>
+      <label class="text-sm font-semibold text-slate-900 block mb-1">Thoi gian thanh toan</label>
+      <p class="text-xs text-slate-500 mb-3">Thoi gian giu tien truoc khi thanh toan cho nguoi ban</p>
+      <select x-model="payoutWindow"
+              class="px-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-white focus:border-slate-400 focus:ring-2 focus:ring-accent-400/20 focus:outline-none transition-all w-48">
+        <option value="7">7 ngay</option>
+        <option value="14">14 ngay</option>
+        <option value="30">30 ngay</option>
+      </select>
+    </div>
+
+    <hr class="border-slate-100"/>
+
+    <!-- Toggle rows -->
+    <div>
+      <label class="text-sm font-semibold text-slate-900 block mb-4">Cac tuy chon</label>
+
+      <!-- Seller registration toggle -->
+      <div class="flex items-center justify-between py-3">
         <div>
-            <label class="text-sm font-semibold text-slate-900 block mb-1">Thoi gian thanh toan</label>
-            <p class="text-xs text-slate-500 mb-3">Thoi gian giu tien truoc khi thanh toan cho nguoi ban</p>
-            <select x-model="payoutWindow"
-                    class="px-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-white focus:border-slate-400 focus:ring-2 focus:ring-accent-400/20 focus:outline-none transition-all w-48">
-                <option value="7">7 ngay</option>
-                <option value="14">14 ngay</option>
-                <option value="30">30 ngay</option>
-            </select>
+          <p class="text-sm font-medium text-slate-800">Dang ky nguoi ban moi</p>
+          <p class="text-xs text-slate-500 mt-0.5">Cho phep nguoi dung dang ky lam nguoi ban</p>
         </div>
-
-        <hr class="border-slate-100" />
-
-        <!-- Toggle rows -->
-        <div>
-            <label class="text-sm font-semibold text-slate-900 block mb-4">Cac tuy chon</label>
-
-            <!-- Seller registration toggle -->
-            <div class="flex items-center justify-between py-3">
-                <div>
-                    <p class="text-sm font-medium text-slate-800">Dang ky nguoi ban moi</p>
-                    <p class="text-xs text-slate-500 mt-0.5">Cho phep nguoi dung dang ky lam nguoi ban</p>
-                </div>
-                <button @@click="sellerRegistration = !sellerRegistration"
-                    :class="sellerRegistration ? '' : 'bg-slate-200'"
-                    :style="sellerRegistration ? 'background:#1F3A2E' : ''"
-                    class="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none">
+        <button @@click="sellerRegistration = !sellerRegistration"
+                :class="sellerRegistration ? '' : 'bg-slate-200'"
+                :style="sellerRegistration ? 'background:#1F3A2E' : ''"
+                class="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none">
                     <span :class="sellerRegistration ? 'translate-x-5' : 'translate-x-0.5'"
                           class="inline-block w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-200"></span>
-                </button>
-            </div>
+        </button>
+      </div>
 
-            <!-- Maintenance mode toggle -->
-            <div class="flex items-center justify-between py-3 border-t border-slate-50">
-                <div>
-                    <p class="text-sm font-medium text-slate-800">Che do bao tri</p>
-                    <p class="text-xs text-slate-500 mt-0.5">Tam dung truy cap vao he thong de bao tri</p>
-                    <p x-show="maintenanceMode" x-cloak class="text-xs font-semibold mt-1" style="color:#ef4444;">
-                        Canh bao: He thong se khong truy cap duoc khi bat che do nay!
-                    </p>
-                </div>
-                <button @@click="maintenanceMode = !maintenanceMode"
-                    :class="maintenanceMode ? 'bg-red-500' : 'bg-slate-200'"
-                    class="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none">
+      <!-- Maintenance mode toggle -->
+      <div class="flex items-center justify-between py-3 border-t border-slate-50">
+        <div>
+          <p class="text-sm font-medium text-slate-800">Che do bao tri</p>
+          <p class="text-xs text-slate-500 mt-0.5">Tam dung truy cap vao he thong de bao tri</p>
+          <p x-show="maintenanceMode" x-cloak class="text-xs font-semibold mt-1" style="color:#ef4444;">
+            Canh bao: He thong se khong truy cap duoc khi bat che do nay!
+          </p>
+        </div>
+        <button @@click="maintenanceMode = !maintenanceMode"
+                :class="maintenanceMode ? 'bg-red-500' : 'bg-slate-200'"
+                class="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none">
                     <span :class="maintenanceMode ? 'translate-x-5' : 'translate-x-0.5'"
                           class="inline-block w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-200"></span>
-                </button>
-            </div>
-        </div>
-
-        <hr class="border-slate-100" />
-
-        <!-- Language selector -->
-        <div>
-            <label class="text-sm font-semibold text-slate-900 block mb-1">Ngon ngu</label>
-            <p class="text-xs text-slate-500 mb-3">Ngon ngu mac dinh cua he thong</p>
-            <div class="flex items-center gap-4">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="language" value="vi" x-model="language" class="w-4 h-4"
-                           style="accent-color:#1F3A2E;" />
-                    <span class="text-sm text-slate-700 font-medium">Tieng Viet</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="language" value="en" x-model="language" class="w-4 h-4"
-                           style="accent-color:#1F3A2E;" />
-                    <span class="text-sm text-slate-700 font-medium">English</span>
-                </label>
-            </div>
-        </div>
-    </div>
-
-    <!-- Save button -->
-    <div class="px-6 py-4 border-t border-slate-100 flex justify-end">
-        <button class="px-6 py-2.5 text-sm font-semibold rounded-xl transition-colors"
-                style="background:#00754A; color:#ffffff;">
-            Luu cau hinh
         </button>
+      </div>
     </div>
+
+    <hr class="border-slate-100"/>
+
+    <!-- Language selector -->
+    <div>
+      <label class="text-sm font-semibold text-slate-900 block mb-1">Ngon ngu</label>
+      <p class="text-xs text-slate-500 mb-3">Ngon ngu mac dinh cua he thong</p>
+      <div class="flex items-center gap-4">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="radio" name="language" value="vi" x-model="language" class="w-4 h-4"
+                 style="accent-color:#1F3A2E;"/>
+          <span class="text-sm text-slate-700 font-medium">Tieng Viet</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="radio" name="language" value="en" x-model="language" class="w-4 h-4"
+                 style="accent-color:#1F3A2E;"/>
+          <span class="text-sm text-slate-700 font-medium">English</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save button -->
+  <div class="px-6 py-4 border-t border-slate-100 flex justify-end">
+    <button class="px-6 py-2.5 text-sm font-semibold rounded-xl transition-colors"
+            style="background:#00754A; color:#ffffff;">
+      Luu cau hinh
+    </button>
+  </div>
 </div>

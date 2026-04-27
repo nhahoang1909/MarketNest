@@ -1,11 +1,12 @@
 @page "/checkout"
-@model IndexModel
+@model MarketNest.Web.Pages.Checkout.IndexModel
 @{
   ViewData["Title"] = "Thanh toan";
 }
 
 <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12" x-data="{
   step: 1,
+  submitting: false,
   form: {
   fullName: '', phone: '', address: '', city: '', district: '', ward: '',
   shipping: 'standard',
@@ -66,27 +67,27 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2">
             <label class="form-label">Ho va ten</label>
-            <input type="text" x-model="form.fullName" class="form-input w-full" placeholder="Nguyen Van A" />
+            <input type="text" x-model="form.fullName" class="form-input w-full" placeholder="Nguyen Van A"/>
           </div>
           <div class="sm:col-span-2">
             <label class="form-label">So dien thoai</label>
-            <input type="tel" x-model="form.phone" class="form-input w-full" placeholder="0901 234 567" />
+            <input type="tel" x-model="form.phone" class="form-input w-full" placeholder="0901 234 567"/>
           </div>
           <div class="sm:col-span-2">
             <label class="form-label">Dia chi</label>
-            <input type="text" x-model="form.address" class="form-input w-full" placeholder="So nha, ten duong" />
+            <input type="text" x-model="form.address" class="form-input w-full" placeholder="So nha, ten duong"/>
           </div>
           <div>
             <label class="form-label">Tinh / Thanh pho</label>
-            <input type="text" x-model="form.city" class="form-input w-full" placeholder="TP. Ho Chi Minh" />
+            <input type="text" x-model="form.city" class="form-input w-full" placeholder="TP. Ho Chi Minh"/>
           </div>
           <div>
             <label class="form-label">Quan / Huyen</label>
-            <input type="text" x-model="form.district" class="form-input w-full" placeholder="Quan 1" />
+            <input type="text" x-model="form.district" class="form-input w-full" placeholder="Quan 1"/>
           </div>
           <div class="sm:col-span-2">
             <label class="form-label">Phuong / Xa</label>
-            <input type="text" x-model="form.ward" class="form-input w-full" placeholder="Phuong Ben Nghe" />
+            <input type="text" x-model="form.ward" class="form-input w-full" placeholder="Phuong Ben Nghe"/>
           </div>
         </div>
         <div class="flex justify-end mt-8">
@@ -103,7 +104,7 @@
               :class="form.shipping === opt.id ? 'border-ink-700 bg-cream-50' : 'border-ink-200 hover:border-ink-300'"
               class="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-colors">
               <input type="radio" name="shipping" :value="opt.id" x-model="form.shipping"
-                     class="form-radio text-ink-700 focus:ring-ink-700" />
+                     class="form-radio text-ink-700 focus:ring-ink-700"/>
               <div class="flex-1">
                 <p class="font-semibold text-sm text-ink-700" x-text="opt.name"></p>
                 <p class="text-xs text-ink-400" x-text="opt.desc"></p>
@@ -127,7 +128,7 @@
               :class="form.payment === opt.id ? 'border-ink-700 bg-cream-50' : 'border-ink-200 hover:border-ink-300'"
               class="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-colors">
               <input type="radio" name="payment" :value="opt.id" x-model="form.payment"
-                     class="form-radio text-ink-700 focus:ring-ink-700" />
+                     class="form-radio text-ink-700 focus:ring-ink-700"/>
               <span class="text-xl" x-html="opt.icon"></span>
               <p class="font-semibold text-sm text-ink-700" x-text="opt.name"></p>
             </label>
@@ -179,9 +180,16 @@
 
         <div class="flex justify-between mt-8">
           <button @@click="step = 3" class="btn-ghost">Quay lai</button>
-          <!-- TODO: Replace with real order placement via form POST. Mock GUID for prototyping. -->
-          <a href="@AppRoutes.OrderPages.Confirmation(Guid.Empty)" class="btn-primary btn-lg">
-            Dat hang
+          <!-- TODO: Replace with real form POST when order placement handler is implemented. -->
+          <a href="@AppRoutes.OrderPages.Confirmation(Guid.Empty)"
+             class="btn-primary btn-lg"
+             :class="submitting ? 'btn-loading' : ''"
+             @@click.prevent="submitting = true; setTimeout(() => window.location = $el.href, 100)">
+            <svg x-show="submitting" class="animate-spin h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span x-text="submitting ? 'Dang xu ly...' : 'Dat hang'"></span>
           </a>
         </div>
       </div>
@@ -223,6 +231,19 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ░░ PROCESSING OVERLAY ░░ — shown while order is being submitted -->
+  <div x-show="submitting" x-cloak
+       class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl px-10 py-8 flex flex-col items-center gap-4 shadow-2xl">
+      <svg class="animate-spin h-10 w-10 text-accent-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <p class="font-semibold text-ink-700">Dang xu ly don hang...</p>
+      <p class="text-sm text-ink-400">Vui long khong dong trang nay</p>
     </div>
   </div>
 </div>

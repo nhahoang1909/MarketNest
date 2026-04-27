@@ -1,7 +1,7 @@
 /**
  * Alpine.js toast notification store
  */
-import { ToastConfig } from "../constants.js";
+import {ToastConfig} from "../constants.js";
 
 document.addEventListener("alpine:init", () => {
     Alpine.store("toasts", {
@@ -10,7 +10,7 @@ document.addEventListener("alpine:init", () => {
 
         add(message, type = ToastConfig.DEFAULT_TYPE, duration = ToastConfig.DEFAULT_DURATION_MS) {
             const id = this._nextId++;
-            this.items.push({ id, message, type, visible: true });
+            this.items.push({id, message, type, visible: true});
 
             if (duration > 0) {
                 setTimeout(() => this.remove(id), duration);

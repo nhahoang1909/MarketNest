@@ -20,6 +20,16 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-27 - Loading foundation (skeleton system + checkout overlay + image CLS)
+- **Status**: Completed
+- **Description**: Phase 1 loading foundation. CSS: `.skeleton-shimmer` (gradient sweep), `.btn-loading`, 4 skeleton shape classes. 4 reusable skeleton partials (`_SkeletonProductCard/StoreCard/OrderRow/StatCard`). Image CLS fix: explicit `width`/`height` on all lazy images. Checkout: Alpine `submitting` state + full-page processing overlay. HTMX: `_SearchInput` inline spinner, `_FilterBar`/`_Pagination` optional `IndicatorId` param.
+- **Notes**: Full skeleton-per-page patterns deferred until real DB data is connected. Strategy documented in `docs/frontend-guide.md` §10. See `docs/loading-strategy.md` for full design.
+
+### 2026-04-26 - LoggerMessage refactor complete
+- **Status**: Completed
+- **Description**: Migrated all production logging from `IAppLogger<T>` dynamic templates to `[LoggerMessage]` source-generated delegates. 50+ files touched. `IAppLogger<T>` stripped to a marker interface (`IAppLogger<T> : ILogger`). `AppLogger<T>` reduced to 3 explicit ILogger members. CA1848/CA2254 suppressions eliminated from production code. EventId registry (`LogEventId` enum) covers all modules with 1000-block allocations.
+- **Notes**: ADR-014. Spec: `docs/superpowers/specs/2026-04-26-loggermessage-refactor-design.md`. Release build: 0 warnings, 0 errors. Architecture tests: 2/2 passed.
+
 ### 2026-04-26 - Auditing module foundation
 - **Status**: Completed
 - **Description**: Created `MarketNest.Auditing` module with automatic audit logging foundation. Two capture points: `AuditableInterceptor` (EF Core SaveChanges hook for `[Auditable]` entities) and `AuditBehavior<,>` (MediatR pipeline for `[Audited]` commands). `IAuditService` contract in Core/Contracts with in-process implementation. Domain: `AuditLog`, `LoginEvent` entities in `auditing` schema. Application: `GetAuditLogsQuery`, `GetLoginEventsQuery` with paged/filterable results. Registered in Program.cs with MediatR assembly scan + DI.
@@ -84,3 +94,15 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 - **Description**: Admin users should eventually manage timer jobs and batch jobs: view registered jobs, inspect schedules, view execution history/status, retry failed jobs, and register/trigger batch jobs. Full implementation is deferred, but contracts and execution logging should be designed early to avoid inconsistent per-module job implementations as the codebase grows.
 - **Decision**: Add shared job contracts (`IBackgroundJob`, `IJobRegistry`, `IJobExecutionStore`) and require all future jobs to expose `JobDescriptor` metadata and execution logs.
 - **Risk if ignored**: Each module may implement its own job scheduling/logging/retry pattern, making admin operations and future distributed worker migration expensive.
+
+### 2026-04-26 - Assistant project memory update behavior
+- **Status**: Completed
+- **Description**: Added a small helper and documentation to ensure project memory (files under `docs/project_notes/`) is updated when edits are made by an agent. Files added: `scripts/log_project_memory.ps1` (PowerShell helper to append entries) and `docs/project_notes/README.md` (how/when to log). From now on, the assistant will offer to append a short entry describing any code or docs change it makes and can run the helper script to persist the note.
+- **PR/Issue**: n/a
+- **Notes**: This entry documents a behavior change requested by the maintainer. If you prefer automatic commit-time appending, we can add a developer Git hook or CI check; tell me which option you prefer and I will implement it.
+---
+### 2026-04-26 - Assistant set to prompt before logging
+- **Status**: Completed
+- **Description**: Assistant will offer to append project memory entries when it modifies code/docs; will run script upon explicit confirmation.
+- **Notes**: Logged by assistant via scripts/log_project_memory.ps1
+

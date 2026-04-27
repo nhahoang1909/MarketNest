@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Shared agent rule files are stored at `agents/rules/` (architecture.md, codestyle.md, git.md, security.md, testing.md). If you update rules, also update `AGENTS.md`.
+
 ## Project Overview
 
 MarketNest is a multi-vendor marketplace (Etsy/Shopee-style) built as a solo learning project. The architecture is intentionally phased: **Modular Monolith → Microservices → Kubernetes** over ~9 months.
@@ -80,50 +82,40 @@ All rules are specified in `docs/code-rules.md`. Key items:
 - **DDD property accessors (ADR-007)**: Entity/Aggregate properties use `{ get; private set; }` (mutate only via domain methods). Value objects use `{ get; }` (class-based) or `{ get; init; }` (record-based). DTOs/Commands/Queries use `record` with `{ get; init; }`. Infrastructure interfaces (`ISoftDeletable`, `IAuditable`) may use `{ get; set; }`.
 - **CQRS naming**: `PlaceOrderCommand`, `GetOrderByIdQuery`, `OrderPlacedEvent` — always explicit, never abbreviated.
 - **Flat layer-level namespaces**: Namespaces stop at the layer level — `MarketNest.<Module>.Application`, `MarketNest.<Module>.Domain`, `MarketNest.<Module>.Infrastructure`. Sub-folders (Commands/, Queries/, Entities/) are for file organization only and must NOT appear in the namespace. See `docs/code-rules.md` §2.7.
+
+### Agent enforcement: namespace policy
+
+- Before creating or modifying C# files, read `docs/code-rules.md` (section §2.7) and enforce the flat layer-level namespace convention.
+- New file namespaces must stop at the layer level. Example:
+  - Correct: `namespace MarketNest.Admin.Application;`
+  - Incorrect: `namespace MarketNest.Admin.Application.Commands;`
+- If you encounter existing files using folder-style namespaces (e.g., `.Commands`), report the mismatch in your change summary and prefer minimal edits to correct only the namespace declaration.
 - **Module boundaries**: No module accesses another module's database schema. Cross-module sync calls go through service interfaces; async through domain events.
+- Module folder layout vs namespace mapping (summary):
+- Modules may use feature sub-folders (e.g., `Modules/Account/Commands`, `Modules/Product/QueryHandlers`) for organization. Keep namespaces at the layer level:
+  - `src/MarketNest.Admin/Modules/Account/Commands/CreateAccountCommand.cs` -> `namespace MarketNest.Admin.Application;`
+  - `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs` -> `namespace MarketNest.Admin.Infrastructure;`
+  - Do NOT include `Account`, `Commands`, `Persistence` in the namespace.
 - **Immutability**: Records for DTOs and value objects (`{ get; init; }`). Primary constructors for dependency injection. Class-based value objects use `{ get; }` only.
 - **No magic strings / magic numbers**: Every repeated string literal and unexplained number must be a `const`, `static readonly`, enum, or bound configuration option. See `docs/code-rules.md` §2.6.
 - **English only**: All naming, comments, error messages, log messages, and commit messages must be in English. No Vietnamese or other languages in source code. Localization resource files (`.resx`) are the only exception. See `docs/code-rules.md` §2.1.
 - **Architecture tests** (NetArchTest) enforce that presentation layer cannot reference domain directly.
 - **Central Package Management**: all NuGet versions are pinned in the repo-root `Directory.Packages.props`. Module `.csproj` files reference packages without versions.
 - **Build settings** (`net10.0`, `TreatWarningsAsErrors`, `EnforceCodeStyleInBuild`) are in the repo-root `Directory.Build.props`.
-- **Logging**: use `IAppLogger<T>` (not `ILogger<T>` directly) — see `MarketNest.Core/Logging/`.
+- **Logging**: inject `IAppLogger<T>` (not `ILogger<T>`) and use `[LoggerMessage]` source-generated delegates in a nested `private static partial class Log`. All classes that log must be `partial`. EventIds come from `LogEventId` enum in `MarketNest.Base.Infrastructure/Logging/`. See `docs/code-rules.md` §9 and ADR-014.
 - **Route whitelist**: `RouteWhitelistMiddleware` blocks unregistered paths. Add new routes to `AppRoutes` and its `WhitelistedPrefixes` set.
 - **Frontend components** live in `src/MarketNest.Web/Pages/Shared/` organized by category: `Data/`, `Display/`, `Domain/`, `Forms/`, `Navigation/`, `Overlays/`. Naming: `_ComponentName.cshtml`. Layouts (`_Layout.cshtml`, `_LayoutAdmin.cshtml`, `_LayoutSeller.cshtml`) also live in `Pages/Shared/`.
 - **Event bus**: modules publish integration events via `IEventBus` (`MarketNest.Core/Common/Events/`). Phase 1 uses `InProcessEventBus` (MediatR); Phase 3 swaps to `MassTransitEventBus` (RabbitMQ).
 - **Database initialization**: `DatabaseInitializer` auto-migrates and seeds on startup using model hash tracking and PostgreSQL advisory locks. Seeders implement `IDataSeeder` with `Order` and `Version` properties. Each module's `DbContext` must implement `IModuleDbContext`.
 - **Auditing**: Mark entities `[Auditable]` for automatic EF Core change tracking; mark commands `[Audited("EVENT_TYPE")]` for automatic MediatR audit logging. `IAuditService` in `Core/Contracts/` — never fails the main request. See ADR-012.
 
-## Agent Behavior Guidelines
+## Agent Behavior Guidelines (rules)
 
-> These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+Agent behavior and coding guidelines are maintained under `agents/rules/`.
 
-### Think Before Coding
-- State assumptions explicitly. If uncertain, ask — don't guess.
-- If multiple interpretations exist, present them; don't pick silently.
-- If a simpler approach exists, say so and push back when warranted.
-- If something is unclear, stop, name what's confusing, and ask.
+Please read `agents/rules/README.md` and the rule files in `agents/rules/` (architecture.md, codestyle.md, git.md, security.md, testing.md) for authoritative, agent-facing guidance (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution) and links to deeper docs (`docs/code-rules.md`, `docs/architecture.md`, etc.).
 
-### Simplicity First
-- Write the minimum code that solves the problem. Nothing speculative.
-- No features beyond what was asked. No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If it can be 50 lines instead of 200, rewrite it.
-
-### Surgical Changes
-- Touch only what you must. Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken. Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it — don't delete it.
-- Remove imports/variables/functions that **your** changes made unused; don't remove pre-existing dead code unless asked.
-- Every changed line should trace directly to the user's request.
-
-### Goal-Driven Execution
-- Transform tasks into verifiable goals before implementing:
-  - "Fix the bug" → write a test that reproduces it, then make it pass.
-  - "Add validation" → write tests for invalid inputs, then make them pass.
-  - "Refactor X" → ensure tests pass before and after.
-- For multi-step tasks, state a brief plan with verify steps before starting.
+Note: a single consolidated `agents/GUIDELINES.md` was planned; if present it will be authoritative. For now rely on the `agents/rules/` files and `agents/rules/README.md` which describes the consolidation status.
 
 ## Specification Documents
 

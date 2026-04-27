@@ -1,15 +1,15 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using MarketNest.Auditing.Domain;
-using MarketNest.Core.Contracts;
-using MarketNest.Core.Logging;
+using MarketNest.Base.Common;
+using MarketNest.Base.Infrastructure;
 
 namespace MarketNest.Auditing.Infrastructure;
 
 /// <summary>
-/// Phase 1 implementation: writes audit entries directly to "auditing" schema in shared PostgreSQL.
-/// Never throws — audit failures are logged but do not break the main request.
+///     Phase 1 implementation: writes audit entries directly to "auditing" schema in shared PostgreSQL.
+///     Never throws — audit failures are logged but do not break the main request.
 /// </summary>
-public class AuditService(AuditingDbContext db, IAppLogger<AuditService> logger) : IAuditService
+public partial class AuditService(AuditingDbContext db, IAppLogger<AuditService> logger) : IAuditService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -22,23 +22,22 @@ public class AuditService(AuditingDbContext db, IAppLogger<AuditService> logger)
         try
         {
             var log = AuditLog.Create(
-                eventType: entry.EventType,
-                actorId: entry.ActorId,
-                actorEmail: entry.ActorEmail,
-                actorRole: entry.ActorRole,
-                entityType: entry.EntityType,
-                entityId: entry.EntityId,
-                oldValues: Serialize(entry.OldValues),
-                newValues: Serialize(entry.NewValues),
-                metadata: Serialize(entry.Metadata));
+                entry.EventType,
+                entry.ActorId,
+                entry.ActorEmail,
+                entry.ActorRole,
+                entry.EntityType,
+                entry.EntityId,
+                Serialize(entry.OldValues),
+                Serialize(entry.NewValues),
+                Serialize(entry.Metadata));
 
             db.AuditLogs.Add(log);
             await db.SaveChangesAsync(ct);
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Failed to record audit log: {EventType} {EntityType}:{EntityId}",
-                entry.EventType, entry.EntityType, entry.EntityId);
+            Log.ErrorRecordFailed(logger, entry.EventType, entry.EntityType, entry.EntityId, ex);
         }
     }
 
@@ -47,24 +46,35 @@ public class AuditService(AuditingDbContext db, IAppLogger<AuditService> logger)
         try
         {
             var loginEvent = LoginEvent.Create(
-                userId: entry.UserId,
-                email: entry.Email,
-                ipAddress: entry.IpAddress,
-                userAgent: entry.UserAgent,
-                success: entry.Success,
-                failureReason: entry.FailureReason);
+                entry.UserId,
+                entry.Email,
+                entry.IpAddress,
+                entry.UserAgent,
+                entry.Success,
+                entry.FailureReason);
 
             db.LoginEvents.Add(loginEvent);
             await db.SaveChangesAsync(ct);
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Failed to record login event: {Email} {Success}",
-                entry.Email, entry.Success);
+            Log.ErrorLoginRecordFailed(logger, entry.UserId, entry.Success, ex);
         }
     }
 
     private static string? Serialize(object? value) =>
         value is null ? null : JsonSerializer.Serialize(value, JsonOptions);
-}
 
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.AuditSaveError, LogLevel.Error,
+            "Failed to record audit log: {EventType} {EntityType}:{EntityId}")]
+        public static partial void ErrorRecordFailed(
+            ILogger logger, string eventType, string? entityType, Guid? entityId, Exception ex);
+
+        [LoggerMessage((int)LogEventId.AuditSaveError + 1, LogLevel.Error,
+            "Failed to record login event: UserId={UserId} Success={Success}")]
+        public static partial void ErrorLoginRecordFailed(
+            ILogger logger, Guid? userId, bool success, Exception ex);
+    }
+}

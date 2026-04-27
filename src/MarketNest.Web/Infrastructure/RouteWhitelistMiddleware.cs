@@ -1,31 +1,31 @@
 namespace MarketNest.Web.Infrastructure;
 
 /// <summary>
-/// Blocks any request whose path is not in <see cref="AppRoutes.WhitelistedPrefixes"/>.
-/// Must be registered AFTER UseStaticFiles so that CSS/JS/images are not affected.
+///     Blocks any request whose path is not in <see cref="AppRoutes.WhitelistedPrefixes" />.
+///     Must be registered AFTER UseStaticFiles so that CSS/JS/images are not affected.
 /// </summary>
-public sealed class RouteWhitelistMiddleware
+public sealed partial class RouteWhitelistMiddleware(
+    RequestDelegate next,
+    IAppLogger<RouteWhitelistMiddleware> logger)
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<RouteWhitelistMiddleware> _logger;
-
-    public RouteWhitelistMiddleware(RequestDelegate next, ILogger<RouteWhitelistMiddleware> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
-
     public async Task InvokeAsync(HttpContext context)
     {
         string path = context.Request.Path.Value ?? "/";
 
         if (!AppRoutes.IsAllowed(path))
         {
-            _logger.LogWarning("Blocked request to non-whitelisted route: {Path}", path);
+            Log.WarnRouteBlocked(logger, path);
             context.Response.Redirect(AppRoutes.NotFound);
             return;
         }
 
-        await _next(context);
+        await next(context);
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.RouteBlocked, LogLevel.Warning,
+            "Blocked request to non-whitelisted route: {Path}")]
+        public static partial void WarnRouteBlocked(ILogger logger, string path);
     }
 }

@@ -1,5 +1,5 @@
 @page
-@model IndexModel
+@model MarketNest.Web.Pages.IndexModel
 @{
   ViewData["Title"] = "Trang chủ";
 }
@@ -13,8 +13,8 @@
       <div class="flex-1 text-center lg:text-left">
         <h1 class="mn-display font-display text-ink-800 leading-[1.05] tracking-tight"
             style="font-size: clamp(56px, 7vw, 112px);">
-          Khám phá<br class="hidden sm:block" />
-          thế giới<br class="hidden sm:block" />
+          Khám phá<br class="hidden sm:block"/>
+          thế giới<br class="hidden sm:block"/>
           mua sắm
         </h1>
         <p class="mt-6 text-lg text-ink-400 max-w-md mx-auto lg:mx-0">
@@ -220,7 +220,8 @@
       <p class="text-accent-800 mb-6 leading-relaxed">
         Tham gia cộng đồng người bán trên MarketNest và tiếp cận hàng triệu người mua tiềm năng.
       </p>
-      <a href="@AppRoutes.Auth.RegisterSeller" class="btn-primary self-start bg-ink-700 text-cream-100 hover:bg-ink-800">
+      <a href="@AppRoutes.Auth.RegisterSeller"
+         class="btn-primary self-start bg-ink-700 text-cream-100 hover:bg-ink-800">
         Mở gian hàng miễn phí
       </a>
     </div>

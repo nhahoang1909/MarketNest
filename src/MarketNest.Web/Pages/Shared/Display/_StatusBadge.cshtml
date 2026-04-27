@@ -1,5 +1,4 @@
 @* Status badge — pass Status, ColorMap (optional Dictionary<string,string>) via ViewData *@
-@using MarketNest.Core.Common
 @{
   var status = ViewData["Status"]?.ToString() ?? EntityStatusNames.Unknown;
   var colorMap = ViewData["ColorMap"] as Dictionary<string, string>;

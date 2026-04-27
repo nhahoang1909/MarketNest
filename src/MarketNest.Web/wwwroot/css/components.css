@@ -11,56 +11,56 @@
     /* Primary — Starbucks Green Accent filled pill */
     .btn-primary {
         @apply inline-flex items-center justify-center gap-2
-               bg-accent-400 px-6 py-3
-               text-sm font-semibold text-white rounded-full
-               hover:bg-accent-500
-               active:scale-[0.95]
-               focus-visible:outline focus-visible:outline-2
-               focus-visible:outline-offset-2 focus-visible:outline-accent-400
-               disabled:opacity-50 disabled:cursor-not-allowed
-               transition-all duration-200;
+        bg-accent-400 px-6 py-3
+        text-sm font-semibold text-white rounded-full
+        hover:bg-accent-500
+        active:scale-[0.95]
+        focus-visible:outline focus-visible:outline-2
+        focus-visible:outline-offset-2 focus-visible:outline-accent-400
+        disabled:opacity-50 disabled:cursor-not-allowed
+        transition-all duration-200;
         letter-spacing: -0.01em;
         white-space: nowrap;
     }
+
     .btn-primary:hover {
-        box-shadow:
-            0 4px 12px rgba(0, 117, 74, 0.25),
-            0 1px 3px rgba(0, 117, 74, 0.15);
+        box-shadow: 0 4px 12px rgba(0, 117, 74, 0.25),
+        0 1px 3px rgba(0, 117, 74, 0.15);
         transform: translateY(-1px);
     }
 
     /* Accent — outlined green pill */
     .btn-accent {
         @apply inline-flex items-center justify-center gap-2
-               bg-transparent px-6 py-3
-               text-sm font-semibold text-accent-400 rounded-full
-               border border-accent-400
-               hover:bg-accent-400 hover:text-white
-               active:scale-[0.95]
-               focus-visible:outline focus-visible:outline-2
-               focus-visible:outline-offset-2 focus-visible:outline-accent-400
-               disabled:opacity-50 disabled:cursor-not-allowed
-               transition-all duration-200;
+        bg-transparent px-6 py-3
+        text-sm font-semibold text-accent-400 rounded-full
+        border border-accent-400
+        hover:bg-accent-400 hover:text-white
+        active:scale-[0.95]
+        focus-visible:outline focus-visible:outline-2
+        focus-visible:outline-offset-2 focus-visible:outline-accent-400
+        disabled:opacity-50 disabled:cursor-not-allowed
+        transition-all duration-200;
         letter-spacing: -0.01em;
         white-space: nowrap;
     }
+
     .btn-accent:hover {
-        box-shadow:
-            0 4px 12px rgba(0, 117, 74, 0.20),
-            0 1px 3px rgba(0, 117, 74, 0.10);
+        box-shadow: 0 4px 12px rgba(0, 117, 74, 0.20),
+        0 1px 3px rgba(0, 117, 74, 0.10);
     }
 
     /* Ghost — bordered neutral */
     .btn-ghost {
         @apply inline-flex items-center justify-center gap-2
-               bg-transparent px-6 py-3
-               text-sm font-semibold rounded-full
-               border hover:bg-surface-inset
-               active:scale-[0.95]
-               focus-visible:outline focus-visible:outline-2
-               focus-visible:outline-offset-2 focus-visible:outline-accent-400
-               disabled:opacity-50 disabled:cursor-not-allowed
-               transition-all duration-200;
+        bg-transparent px-6 py-3
+        text-sm font-semibold rounded-full
+        border hover:bg-surface-inset
+        active:scale-[0.95]
+        focus-visible:outline focus-visible:outline-2
+        focus-visible:outline-offset-2 focus-visible:outline-accent-400
+        disabled:opacity-50 disabled:cursor-not-allowed
+        transition-all duration-200;
         color: rgba(0, 0, 0, 0.87);
         border-color: rgba(0, 0, 0, 0.87);
         letter-spacing: -0.01em;
@@ -70,41 +70,41 @@
     /* Secondary — subtle white */
     .btn-secondary {
         @apply inline-flex items-center justify-center gap-2
-               bg-surface px-6 py-3
-               text-sm font-semibold text-ink-600
-               border border-ink-100 rounded-full
-               hover:bg-cream-50 active:scale-[0.95]
-               focus-visible:outline focus-visible:outline-2
-               focus-visible:outline-offset-2 focus-visible:outline-accent-400
-               disabled:opacity-50 disabled:cursor-not-allowed
-               transition-all duration-200;
+        bg-surface px-6 py-3
+        text-sm font-semibold text-ink-600
+        border border-ink-100 rounded-full
+        hover:bg-cream-50 active:scale-[0.95]
+        focus-visible:outline focus-visible:outline-2
+        focus-visible:outline-offset-2 focus-visible:outline-accent-400
+        disabled:opacity-50 disabled:cursor-not-allowed
+        transition-all duration-200;
         white-space: nowrap;
     }
 
     /* Danger */
     .btn-danger {
         @apply inline-flex items-center justify-center gap-2
-               bg-danger-500 px-6 py-3
-               text-sm font-semibold text-white rounded-full
-               hover:bg-danger-600 active:scale-[0.95]
-               focus-visible:outline focus-visible:outline-2
-               focus-visible:outline-offset-2 focus-visible:outline-danger-500
-               disabled:opacity-50 disabled:cursor-not-allowed
-               transition-all duration-200;
+        bg-danger-500 px-6 py-3
+        text-sm font-semibold text-white rounded-full
+        hover:bg-danger-600 active:scale-[0.95]
+        focus-visible:outline focus-visible:outline-2
+        focus-visible:outline-offset-2 focus-visible:outline-danger-500
+        disabled:opacity-50 disabled:cursor-not-allowed
+        transition-all duration-200;
         white-space: nowrap;
     }
 
     /* Black filled — conversion moments */
     .btn-dark {
         @apply inline-flex items-center justify-center gap-2
-               bg-black px-6 py-3
-               text-sm font-semibold text-white rounded-full
-               border border-black
-               hover:bg-ink-800 active:scale-[0.95]
-               focus-visible:outline focus-visible:outline-2
-               focus-visible:outline-offset-2 focus-visible:outline-accent-400
-               disabled:opacity-50 disabled:cursor-not-allowed
-               transition-all duration-200;
+        bg-black px-6 py-3
+        text-sm font-semibold text-white rounded-full
+        border border-black
+        hover:bg-ink-800 active:scale-[0.95]
+        focus-visible:outline focus-visible:outline-2
+        focus-visible:outline-offset-2 focus-visible:outline-accent-400
+        disabled:opacity-50 disabled:cursor-not-allowed
+        transition-all duration-200;
         letter-spacing: -0.01em;
         white-space: nowrap;
     }
@@ -112,13 +112,13 @@
     /* Admin/Dashboard button — House Green */
     .btn-admin {
         @apply inline-flex items-center justify-center gap-2
-               bg-forest-600 px-5 py-2.5
-               text-sm font-medium text-white rounded-xl
-               hover:bg-forest-500 active:scale-[0.95]
-               focus-visible:outline focus-visible:outline-2
-               focus-visible:outline-offset-2 focus-visible:outline-accent-400
-               disabled:opacity-50 disabled:cursor-not-allowed
-               transition-all duration-200;
+        bg-forest-600 px-5 py-2.5
+        text-sm font-medium text-white rounded-xl
+        hover:bg-forest-500 active:scale-[0.95]
+        focus-visible:outline focus-visible:outline-2
+        focus-visible:outline-offset-2 focus-visible:outline-accent-400
+        disabled:opacity-50 disabled:cursor-not-allowed
+        transition-all duration-200;
     }
 
     /* Small button */
@@ -134,38 +134,37 @@
     /* Icon-only button */
     .btn-icon {
         @apply inline-flex items-center justify-center rounded-xl
-               w-9 h-9 text-ink-400
-               hover:bg-cream-200 hover:text-ink-700
-               transition-all duration-150;
+        w-9 h-9 text-ink-400
+        hover:bg-cream-200 hover:text-ink-700
+        transition-all duration-150;
     }
 
     /* ══════════════════════════════════════════════════════════
        FORM ELEMENTS
        ══════════════════════════════════════════════════════════ */
-
     .form-label {
         @apply block text-sm font-medium text-ink-600 mb-1;
     }
 
     .form-input {
         @apply block w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm
-               bg-surface placeholder:text-ink-300
-               focus:border-accent-400 focus:outline-none focus:ring-[3px] focus:ring-accent-100
-               disabled:bg-cream-100 disabled:text-ink-400 disabled:cursor-not-allowed
-               transition-all duration-150;
+        bg-surface placeholder:text-ink-300
+        focus:border-accent-400 focus:outline-none focus:ring-[3px] focus:ring-accent-100
+        disabled:bg-cream-100 disabled:text-ink-400 disabled:cursor-not-allowed
+        transition-all duration-150;
     }
 
     .form-input-admin {
         @apply block w-full rounded-[10px] border border-ink-200 px-3.5 py-2 text-sm
-               bg-surface placeholder:text-ink-300
-               focus:border-accent-400 focus:outline-none focus:ring-[3px] focus:ring-accent-100
-               disabled:bg-cream-100 disabled:text-ink-400 disabled:cursor-not-allowed
-               transition-all duration-150;
+        bg-surface placeholder:text-ink-300
+        focus:border-accent-400 focus:outline-none focus:ring-[3px] focus:ring-accent-100
+        disabled:bg-cream-100 disabled:text-ink-400 disabled:cursor-not-allowed
+        transition-all duration-150;
     }
 
     .input-error {
         @apply border-danger-400 bg-danger-50 text-danger-700 placeholder:text-danger-300
-               focus:border-danger-500 focus:ring-danger-100;
+        focus:border-danger-500 focus:ring-danger-100;
     }
 
     .form-error {
@@ -179,23 +178,20 @@
     /* ══════════════════════════════════════════════════════════
        CARDS — Starbucks layered shadows
        ══════════════════════════════════════════════════════════ */
-
     .card {
         @apply bg-surface border border-ink-100/60 overflow-hidden;
         border-radius: 12px;
-        box-shadow:
-            0 0 0.5px rgba(0, 0, 0, 0.14),
-            0 1px 1px rgba(0, 0, 0, 0.24);
-        transition:
-            border-color 0.2s ease,
-            transform 0.3s ease,
-            box-shadow 0.3s ease;
+        box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.14),
+        0 1px 1px rgba(0, 0, 0, 0.24);
+        transition: border-color 0.2s ease,
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
     }
+
     .card:hover {
         border-color: rgba(30, 57, 50, 0.14);
-        box-shadow:
-            0 1px 3px rgba(30, 57, 50, 0.10),
-            0 8px 24px rgba(30, 57, 50, 0.08);
+        box-shadow: 0 1px 3px rgba(30, 57, 50, 0.10),
+        0 8px 24px rgba(30, 57, 50, 0.08);
     }
 
     .card-header {
@@ -210,9 +206,8 @@
     .card-admin {
         @apply bg-surface border border-ink-100/60 overflow-hidden;
         border-radius: 12px;
-        box-shadow:
-            0 0 0.5px rgba(0, 0, 0, 0.14),
-            0 1px 1px rgba(0, 0, 0, 0.24);
+        box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.14),
+        0 1px 1px rgba(0, 0, 0, 0.24);
     }
 
     .card-admin-header {
@@ -245,22 +240,20 @@
     /* ══════════════════════════════════════════════════════════
        PRODUCT CARD — Starbucks card styling
        ══════════════════════════════════════════════════════════ */
-
     .product-card {
         @apply bg-surface border border-ink-100/60 overflow-hidden flex flex-col;
         border-radius: 12px;
-        box-shadow:
-            0 0 0.5px rgba(0, 0, 0, 0.14),
-            0 1px 1px rgba(0, 0, 0, 0.24);
+        box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.14),
+        0 1px 1px rgba(0, 0, 0, 0.24);
         transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
     }
+
     .product-card:hover {
         border-color: rgba(30, 57, 50, 0.14);
         transform: translateY(-3px);
-        box-shadow:
-            0 1px 3px rgba(30, 57, 50, 0.10),
-            0 2px 2px rgba(30, 57, 50, 0.06),
-            0 8px 24px rgba(30, 57, 50, 0.08);
+        box-shadow: 0 1px 3px rgba(30, 57, 50, 0.10),
+        0 2px 2px rgba(30, 57, 50, 0.06),
+        0 8px 24px rgba(30, 57, 50, 0.08);
     }
 
     .product-card-image {
@@ -298,7 +291,6 @@
     /* ══════════════════════════════════════════════════════════
        BADGES
        ══════════════════════════════════════════════════════════ */
-
     .badge {
         @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
     }
@@ -306,30 +298,39 @@
     .badge-gray {
         @apply bg-ink-100 text-ink-500;
     }
+
     .badge-green {
         @apply bg-success-100 text-success-600;
     }
+
     .badge-yellow {
         @apply bg-warn-100 text-warn-600;
     }
+
     .badge-red {
         @apply bg-danger-100 text-danger-600;
     }
+
     .badge-blue {
         @apply bg-info-100 text-info-600;
     }
+
     .badge-accent {
         @apply bg-accent-100 text-accent-800;
     }
+
     .badge-purple {
         @apply bg-lilac-100 text-lilac-700;
     }
+
     .badge-orange {
         @apply bg-mustard-100 text-mustard-700;
     }
+
     .badge-forest {
         @apply bg-forest-100 text-forest-600;
     }
+
     /* Gold rewards badge */
     .badge-gold {
         border: 1px solid #cba258;
@@ -340,79 +341,80 @@
     /* ══════════════════════════════════════════════════════════
        CHIPS / PILLS
        ══════════════════════════════════════════════════════════ */
-
     .mn-chip {
         @apply inline-flex items-center gap-1.5 rounded-full
-               px-3 py-1.5 text-xs font-medium
-               bg-surface-inset border border-ink-100/60
-               cursor-pointer whitespace-nowrap transition-all duration-150;
+        px-3 py-1.5 text-xs font-medium
+        bg-surface-inset border border-ink-100/60
+        cursor-pointer whitespace-nowrap transition-all duration-150;
         color: rgba(0, 0, 0, 0.87);
     }
+
     .mn-chip-active {
         @apply bg-accent-400 text-white border-accent-400;
     }
+
     .mn-chip-accent {
         @apply bg-accent-100 text-accent-800 border-transparent;
     }
 
     .category-chip {
         @apply inline-flex items-center gap-1.5 rounded-full border border-ink-200
-               px-4 py-1.5 text-sm font-medium text-ink-500 bg-surface
-               hover:border-accent-400 hover:text-accent-400 hover:bg-accent-50
-               cursor-pointer whitespace-nowrap transition-all duration-150;
+        px-4 py-1.5 text-sm font-medium text-ink-500 bg-surface
+        hover:border-accent-400 hover:text-accent-400 hover:bg-accent-50
+        cursor-pointer whitespace-nowrap transition-all duration-150;
     }
 
     .category-chip-active {
         @apply inline-flex items-center gap-1.5 rounded-full
-               px-4 py-1.5 text-sm font-semibold whitespace-nowrap
-               bg-accent-400 text-white border border-accent-400
-               cursor-pointer transition-all duration-150;
+        px-4 py-1.5 text-sm font-semibold whitespace-nowrap
+        bg-accent-400 text-white border border-accent-400
+        cursor-pointer transition-all duration-150;
     }
 
     .filter-chip {
         @apply inline-flex items-center rounded-full border border-ink-200
-               px-3 py-1.5 text-sm text-ink-500 bg-surface
-               hover:bg-cream-50 hover:border-ink-300
-               cursor-pointer transition-colors;
+        px-3 py-1.5 text-sm text-ink-500 bg-surface
+        hover:bg-cream-50 hover:border-ink-300
+        cursor-pointer transition-colors;
     }
 
     .filter-chip-active {
         @apply inline-flex items-center rounded-full border border-accent-400
-               px-3 py-1.5 text-sm text-white bg-accent-400 font-medium
-               cursor-pointer transition-colors;
+        px-3 py-1.5 text-sm text-white bg-accent-400 font-medium
+        cursor-pointer transition-colors;
     }
 
     /* ══════════════════════════════════════════════════════════
        SIDEBAR NAV
        ══════════════════════════════════════════════════════════ */
-
     .sidebar-link {
         @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
-               text-ink-400 hover:bg-cream-100 hover:text-ink-700
-               transition-all duration-150;
+        text-ink-400 hover:bg-cream-100 hover:text-ink-700
+        transition-all duration-150;
     }
 
     .sidebar-link-active {
         @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold
-               bg-accent-100 text-accent-500
-               transition-all duration-150;
+        bg-accent-100 text-accent-500
+        transition-all duration-150;
     }
 
     /* Admin sidebar — dark House Green */
     .sidebar-link-dark {
         @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
-               hover:bg-white/10
-               transition-all duration-150;
+        hover:bg-white/10
+        transition-all duration-150;
         color: rgba(255, 255, 255, 0.65);
     }
+
     .sidebar-link-dark:hover {
         color: rgba(255, 255, 255, 0.95);
     }
 
     .sidebar-link-dark-active {
         @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold
-               bg-accent-400/15 text-accent-300
-               transition-all duration-150;
+        bg-accent-400/15 text-accent-300
+        transition-all duration-150;
     }
 
     .sidebar-section-label {
@@ -422,22 +424,20 @@
     /* ══════════════════════════════════════════════════════════
        SEARCH
        ══════════════════════════════════════════════════════════ */
-
     .search-pill {
         @apply flex items-stretch rounded-full overflow-hidden
-               border border-ink-200
-               bg-surface focus-within:bg-surface
-               focus-within:border-accent-400 focus-within:shadow-md
-               transition-all duration-200;
+        border border-ink-200
+        bg-surface focus-within:bg-surface
+        focus-within:border-accent-400 focus-within:shadow-md
+        transition-all duration-200;
     }
 
     /* ══════════════════════════════════════════════════════════
        AVATAR — green gradient
        ══════════════════════════════════════════════════════════ */
-
     .avatar {
         @apply inline-flex items-center justify-center rounded-full
-               font-bold text-white shrink-0 select-none;
+        font-bold text-white shrink-0 select-none;
         background: linear-gradient(
             135deg,
             var(--color-accent-400),
@@ -448,9 +448,11 @@
     .avatar-sm {
         @apply w-8 h-8 text-xs;
     }
+
     .avatar-md {
         @apply w-9 h-9 text-sm;
     }
+
     .avatar-lg {
         @apply w-11 h-11 text-base;
     }
@@ -458,7 +460,6 @@
     /* ══════════════════════════════════════════════════════════
        HTMX INDICATOR
        ══════════════════════════════════════════════════════════ */
-
     .htmx-indicator {
         display: none;
     }
@@ -472,21 +473,133 @@
        SKELETON LOADER
        ══════════════════════════════════════════════════════════ */
 
+    /* Pulse variant — simple, lightweight */
     .skeleton {
         @apply rounded-lg bg-cream-200 animate-pulse;
+    }
+
+    /* Shimmer variant — gradient sweep for richer UX */
+    .skeleton-shimmer {
+        border-radius: theme('borderRadius.lg');
+        background: linear-gradient(
+            90deg,
+            theme('colors.cream.200') 25%,
+            theme('colors.cream.50')  50%,
+            theme('colors.cream.200') 75%
+        );
+        background-size: 200% 100%;
+        animation: skeleton-sweep 1.6s ease-in-out infinite;
+    }
+
+    /* Button loading state */
+    .btn-loading {
+        @apply opacity-70 cursor-not-allowed pointer-events-none;
+    }
+
+    /* ── Skeleton component shapes ───────────────────────────── */
+
+    /* Product card skeleton: fixed aspect matches real _ProductCard */
+    .skeleton-product-card {
+        @apply rounded-xl overflow-hidden bg-cream-50;
+    }
+
+    .skeleton-product-card .sk-image {
+        @apply skeleton-shimmer w-full aspect-square;
+    }
+
+    .skeleton-product-card .sk-body {
+        @apply p-3 space-y-2;
+    }
+
+    .skeleton-product-card .sk-title {
+        @apply skeleton-shimmer h-4 rounded w-4/5;
+    }
+
+    .skeleton-product-card .sk-sub {
+        @apply skeleton-shimmer h-3 rounded w-2/5;
+    }
+
+    .skeleton-product-card .sk-price {
+        @apply skeleton-shimmer h-4 rounded w-1/3 mt-1;
+    }
+
+    /* Store card skeleton: fixed height matches real _StoreCard */
+    .skeleton-store-card {
+        @apply card p-4 flex items-center gap-4;
+    }
+
+    .skeleton-store-card .sk-logo {
+        @apply skeleton-shimmer w-14 h-14 rounded-xl shrink-0;
+    }
+
+    .skeleton-store-card .sk-info {
+        @apply flex-1 space-y-2;
+    }
+
+    .skeleton-store-card .sk-name {
+        @apply skeleton-shimmer h-4 rounded w-3/5;
+    }
+
+    .skeleton-store-card .sk-desc {
+        @apply skeleton-shimmer h-3 rounded w-4/5;
+    }
+
+    .skeleton-store-card .sk-meta {
+        @apply skeleton-shimmer h-3 rounded w-2/5;
+    }
+
+    /* Order row skeleton */
+    .skeleton-order-row {
+        @apply border border-ink-100 rounded-2xl p-4 flex gap-4;
+    }
+
+    .skeleton-order-row .sk-thumb {
+        @apply skeleton-shimmer w-16 h-16 rounded-xl shrink-0;
+    }
+
+    .skeleton-order-row .sk-info {
+        @apply flex-1 space-y-2 py-1;
+    }
+
+    .skeleton-order-row .sk-id {
+        @apply skeleton-shimmer h-4 rounded w-1/3;
+    }
+
+    .skeleton-order-row .sk-status {
+        @apply skeleton-shimmer h-3 rounded w-1/4;
+    }
+
+    .skeleton-order-row .sk-date {
+        @apply skeleton-shimmer h-3 rounded w-2/5;
+    }
+
+    /* Stat card skeleton (dashboard) */
+    .skeleton-stat-card {
+        @apply card p-5 space-y-3;
+    }
+
+    .skeleton-stat-card .sk-label {
+        @apply skeleton-shimmer h-3 rounded w-2/3;
+    }
+
+    .skeleton-stat-card .sk-value {
+        @apply skeleton-shimmer h-7 rounded w-1/2;
+    }
+
+    .skeleton-stat-card .sk-trend {
+        @apply skeleton-shimmer h-3 rounded w-2/5;
     }
 
     /* ══════════════════════════════════════════════════════════
        TABLE (admin)
        ══════════════════════════════════════════════════════════ */
-
     .admin-table {
         @apply w-full text-sm;
     }
 
     .admin-table thead th {
         @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider
-               text-ink-400 bg-cream-50 border-b border-ink-100/60;
+        text-ink-400 bg-cream-50 border-b border-ink-100/60;
     }
 
     .admin-table tbody tr {
@@ -501,7 +614,6 @@
     /* ══════════════════════════════════════════════════════════
        DIVIDER
        ══════════════════════════════════════════════════════════ */
-
     .divider {
         @apply border-t border-ink-100/60 my-2;
     }
@@ -513,7 +625,6 @@
     /* ══════════════════════════════════════════════════════════
        PROMO BAR — House Green
        ══════════════════════════════════════════════════════════ */
-
     .promo-bar {
         @apply relative text-white text-sm py-2.5 px-4 text-center;
         background: #1E3932;
@@ -522,13 +633,19 @@
     /* ══════════════════════════════════════════════════════════
        FEATURE BAND — dark green section
        ══════════════════════════════════════════════════════════ */
-
     .feature-band {
         @apply w-full py-16 px-4;
         background: #1E3932;
         color: white;
     }
+
     .feature-band .text-secondary {
         color: rgba(255, 255, 255, 0.70);
     }
+}
+
+/* Skeleton shimmer keyframe — defined outside @layer so it is always available */
+@keyframes skeleton-sweep {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }

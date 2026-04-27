@@ -1,0 +1,26 @@
+@* Skeleton placeholder for store card grid.
+   Pass Count (int, default 4) and Cols ("2" | "3" | "4", default "4") via ViewData. *@
+@{
+  var count = int.TryParse(ViewData["Count"]?.ToString(), out var c) ? c : 4;
+  var cols = ViewData["Cols"]?.ToString() ?? "4";
+  var gridCss = cols switch
+  {
+    "2" => "grid-cols-1 md:grid-cols-2",
+    "3" => "grid-cols-1 md:grid-cols-3",
+    _ => "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+  };
+}
+
+<div class="grid @gridCss gap-4" aria-hidden="true" aria-label="Loading...">
+  @for (var i = 0; i < count; i++)
+  {
+    <div class="skeleton-store-card">
+      <div class="sk-logo"></div>
+      <div class="sk-info">
+        <div class="sk-name"></div>
+        <div class="sk-desc"></div>
+        <div class="sk-meta"></div>
+      </div>
+    </div>
+  }
+</div>

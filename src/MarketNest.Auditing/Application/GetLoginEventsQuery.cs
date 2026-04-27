@@ -1,13 +1,13 @@
-﻿using MarketNest.Auditing.Infrastructure;
-using MarketNest.Core.Common.Cqrs;
-using MarketNest.Core.Common.Queries;
+﻿using MarketNest.Auditing.Domain;
+using MarketNest.Auditing.Infrastructure;
+using MarketNest.Base.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketNest.Auditing.Application;
 
 /// <summary>
-/// Paged query for login events with optional filters.
-/// Used by admin portal to review authentication attempts and detect suspicious activity.
+///     Paged query for login events with optional filters.
+///     Used by admin portal to review authentication attempts and detect suspicious activity.
 /// </summary>
 public record GetLoginEventsQuery : PagedQuery, IQuery<PagedResult<LoginEventDto>>
 {
@@ -24,7 +24,7 @@ public class GetLoginEventsQueryHandler(AuditingDbContext db)
 {
     public async Task<PagedResult<LoginEventDto>> Handle(GetLoginEventsQuery query, CancellationToken cancellationToken)
     {
-        var q = db.LoginEvents.AsNoTracking().AsQueryable();
+        IQueryable<LoginEvent> q = db.LoginEvents.AsNoTracking().AsQueryable();
 
         if (query.UserId.HasValue)
             q = q.Where(x => x.UserId == query.UserId);
@@ -49,9 +49,9 @@ public class GetLoginEventsQueryHandler(AuditingDbContext db)
                 x.Email.Contains(query.Search) ||
                 (x.IpAddress != null && x.IpAddress.Contains(query.Search)));
 
-        var totalCount = await q.CountAsync(cancellationToken);
+        int totalCount = await q.CountAsync(cancellationToken);
 
-        var items = await q
+        List<LoginEventDto> items = await q
             .OrderByDescending(x => x.OccurredAt)
             .Skip(query.Skip)
             .Take(query.PageSize)
@@ -77,4 +77,3 @@ public class GetLoginEventsQueryHandler(AuditingDbContext db)
         };
     }
 }
-

@@ -3,9 +3,13 @@
         <Project Path="src/MarketNest.Web/MarketNest.Web.csproj" />
     </Folder>
     <Folder Name="/src/Base/">
-        <Project Path="src/MarketNest.Core/MarketNest.Core.csproj" />
+        <Project Path="src/Base/MarketNest.Base.Api/MarketNest.Base.Api.csproj" />
+        <Project Path="src/Base/MarketNest.Base.Common/MarketNest.Base.Common.csproj" />
+        <Project Path="src/Base/MarketNest.Base.Domain/MarketNest.Base.Domain.csproj" />
+        <Project Path="src/Base/MarketNest.Base.Infrastructure/MarketNest.Base.Infrastructure.csproj" />
+        <Project Path="src/Base/MarketNest.Base.Utility/MarketNest.Base.Utility.csproj" />
     </Folder>
-    <Folder Name="/src/Modules/">
+    <Folder Name="/src/Services/">
         <Project Path="src/MarketNest.Admin/MarketNest.Admin.csproj" />
         <Project Path="src/MarketNest.Auditing/MarketNest.Auditing.csproj" />
         <Project Path="src/MarketNest.Cart/MarketNest.Cart.csproj" />

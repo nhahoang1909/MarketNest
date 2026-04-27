@@ -145,6 +145,61 @@ SendEmailAsync(email); // WRONG — missing await
 await SendEmailAsync(email); // ✅
 ```
 
+// ✅ Prefer async/await everywhere
+// Always prefer using `async`/`await` and propagate `CancellationToken` instead of blocking on tasks
+// with `.Result` or `GetAwaiter().GetResult()`. Blocking a task can cause thread-pool exhaustion
+// or deadlocks (especially in sync-over-async scenarios). If you must call async code from
+// synchronous entry points (very rare), wrap carefully and prefer rewriting the caller to be async.
+// Example (preferred):
+// var order = await GetOrderAsync(id, ct);
+// Example (avoid):
+// var order = GetOrderAsync(id).GetAwaiter().GetResult(); // BAD — can deadlock
+
+// ⚠️ Exception: startup/bootstrapping code
+// In very rare cases (application bootstrap or tooling that runs synchronously at process start)
+// a sync-over-async call may be used. These occurrences must be documented with a clear comment
+// explaining why the synchronous call is necessary and approved during code review. Prefer
+// redesigning the startup to be async if feasible.
+
+
+### 2.9 CancellationToken — mandatory policy
+
+Cooperative cancellation is required across the codebase. The following rules are mandatory and enforced by code review and agent checks:
+
+- Public API methods that perform I/O or long-running work MUST accept a `CancellationToken` parameter (preferably named `ct` or `cancellationToken`). Private helper methods that are not part of an API surface may omit the parameter only when cancellation is not meaningful.
+- All methods declared on interfaces or abstract classes that represent asynchronous or cancellable work MUST include a `CancellationToken` parameter in their signature so callers and implementors can observe cancellation.
+- Base classes (protected or public virtual/abstract methods) that are part of an overridable API MUST include a `CancellationToken` parameter so overrides can honor cancellation.
+- MediatR handlers, controller/PageModel handlers, hosted services, background workers and pipeline behaviors MUST accept a `CancellationToken` parameter and forward it to all downstream async calls (repositories, queries, HttpClient, DbContext, IUnitOfWork, etc.). Handlers must pass the received token into repository and unit-of-work calls (for example `await repository.GetByIdAsync(id, ct)` and `await _unitOfWork.SaveChangesAsync(ct)`).
+- When providing overloads, prefer the overload that accepts a `CancellationToken` and chain to it (avoid duplicating logic without token propagation).
+- Avoid defaulting `CancellationToken` to `default` on public APIs if callers are likely to want cancellation. Place the `CancellationToken` as the last parameter.
+
+Examples:
+```csharp
+// ✅ Interface with CancellationToken
+public interface IOrderRepository
+{
+    Task<Order?> GetByIdAsync(Guid id, CancellationToken ct);
+}
+
+// ✅ Handler forwards token to repository and unit-of-work
+public class PlaceOrderCommandHandler : ICommandHandler<PlaceOrderCommand, PlaceOrderResult>
+{
+    public async Task<Result<PlaceOrderResult, Error>> Handle(PlaceOrderCommand command, CancellationToken ct)
+    {
+        var order = await _orders.GetByIdAsync(command.OrderId, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+        return Result.Success(new PlaceOrderResult(order.Id));
+    }
+}
+```
+
+Enforcement notes:
+
+- Add a check in the PR checklist and agent rules ensuring interface/abstract/base method signatures include `CancellationToken` where appropriate.
+- For generated code or scaffolding, ensure templates include `CancellationToken` in public async method signatures.
+- Consider adding a Roslyn analyzer (recommended) to automatically detect public async methods or interface/abstract method signatures missing a `CancellationToken`, and to detect failure to forward tokens inside handlers.
+
+
 ### 2.5 Dependency Injection
 ```csharp
 // ✅ Register by interface, inject by interface
@@ -266,6 +321,46 @@ namespace MarketNest.Admin.Infrastructure.Persistence; // WRONG
 Sub-folders (e.g., `Commands/`, `Queries/`, `Entities/`, `Persistence/`) are for **file organization only** — they must not appear in the namespace.
 
 **Rule**: When creating a new file, always use the layer-level namespace (`MarketNest.<Module>.Application`, `MarketNest.<Module>.Domain`, or `MarketNest.<Module>.Infrastructure`). Never append folder names beyond the layer.
+
+### Module sub-folder layout and mapping
+
+Modules often contain feature-level sub-folders to organize code (for example `Modules/Account`, `Modules/Product`). This repository uses a folder-per-feature layout for developer ergonomics but retains the flat layer-level namespace convention.
+
+Example folder structure (allowed):
+
+```
+src/MarketNest.Admin/
+  Common/
+  Modules/
+    Account/
+      Commands/
+      CommandHandlers/
+      QueryHandlers/
+      DomainEventHandlers/
+      IntegrationEventHandlers/
+  Infrastructure/
+    Persistence/
+    Messaging/
+  Application/
+  Domain/
+```
+
+Mapping rule (important):
+  - Files under `src/MarketNest.Admin/Modules/Account/Commands/` or `.../CommandHandlers/` should use the layer-level namespace `MarketNest.Admin.Application` — do NOT include `Account` or `Commands` in the namespace.
+  - Files under `src/MarketNest.Admin/Domain/Entities/` should use `MarketNest.Admin.Domain`.
+  - Files under `src/MarketNest.Admin/Infrastructure/Persistence/` should use `MarketNest.Admin.Infrastructure`.
+
+Examples:
+ - File: `src/MarketNest.Admin/Modules/Account/Commands/CreateAccountCommand.cs`
+   - Namespace: `namespace MarketNest.Admin.Application;`
+  - File: `src/MarketNest.Admin/Modules/Account/CommandHandlers/CreateAccountCommandHandler.cs`
+   - Namespace: `namespace MarketNest.Admin.Application;`
+  - File: `src/MarketNest.Admin/Domain/Entities/Account.cs`
+   - Namespace: `namespace MarketNest.Admin.Domain;`
+  - File: `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs`
+   - Namespace: `namespace MarketNest.Admin.Infrastructure;`
+
+Note on tooling: some analyzers or IDE rules require file-path-to-namespace correspondence and may emit warnings when namespaces do not match folder hierarchy. These warnings are benign for this project because we intentionally decouple folder layout from namespaces for module-level clarity. If your IDE flags these as warnings, either adjust your local analyzer settings or ignore them — do not change namespaces to include folder names. If CI contains rules that enforce folder-based namespaces, coordinate with the team to update the rule to accept layer-level namespaces.
 
 ### 2.8 Date & Time — Always Use `DateTimeOffset`
 
@@ -785,24 +880,114 @@ public static class Errors
 
 ## 9. Logging Standards
 
+> **Mandatory pattern**: all production logging must use `[LoggerMessage]` source-generated delegates (CA1848).
+> Direct calls to `_logger.Info(...)` / `_logger.LogInformation(...)` are banned in new code. See ADR-014.
+
+### 9.1 Log levels
+
+| Level | When to use |
+|-------|-------------|
+| `Debug` | Developer diagnostics — disabled in prod |
+| `Information` | Business events (order placed, payment captured) |
+| `Warning` | Handled errors, business rejections, slow queries |
+| `Error` | Unexpected failures, unhandled exceptions |
+| `Critical` | System down, data corruption risk |
+
+### 9.2 Mandatory [LoggerMessage] pattern
+
+Every class that emits logs must:
+
+1. Add `partial` to the class declaration
+2. Inject `IAppLogger<T>` (not `ILogger<T>`) via primary constructor
+3. Create `private static partial class Log` at the bottom of the file
+4. Call only `Log.Xxx(_logger, ...)` — never call `_logger.LogXxx(...)` extension methods directly
+
 ```csharp
-// ✅ Structured logging — use message templates, not string interpolation
-_logger.LogInformation("Order {OrderId} placed by buyer {BuyerId} for {Total:C}",
-    order.Id, command.BuyerId, order.Total.Amount);
+public partial class OrderDetailModel(IAppLogger<OrderDetailModel> _logger, IMediator mediator) : PageModel
+{
+    public async Task<IActionResult> OnGetAsync(Guid orderId, CancellationToken ct)
+    {
+        var correlationId = HttpContext.TraceIdentifier;
+        Log.InfoStart(_logger, orderId, correlationId);
 
-// ❌ String interpolation loses structure
-_logger.LogInformation($"Order {order.Id} placed");
+        var sw = Stopwatch.StartNew();
+        var result = await mediator.Send(new GetOrderDetailQuery(orderId), ct);
+        sw.Stop();
 
-// Log levels:
-// Debug:    Developer debugging (disabled in prod)
-// Info:     Business events (order placed, payment captured)
-// Warning:  Handled errors, slow queries, retry attempts
-// Error:    Unexpected failures, unhandled exceptions
-// Critical: System down, data corruption risk
+        if (result is null)
+        {
+            Log.WarnNotFound(_logger, orderId, correlationId);
+            return NotFound();
+        }
 
-// Always log correlation ID (added by middleware)
-// Never log: passwords, tokens, full credit card numbers, PII beyond user ID
+        Log.InfoSuccess(_logger, orderId, sw.ElapsedMilliseconds, correlationId);
+        return Page();
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.AccountOrdersDetailStart, LogLevel.Information,
+            "OrderDetail Start - OrderId={OrderId} CorrelationId={CorrelationId}")]
+        public static partial void InfoStart(ILogger logger, Guid orderId, string correlationId);
+
+        [LoggerMessage((int)LogEventId.AccountOrdersDetailSuccess, LogLevel.Information,
+            "OrderDetail Success - OrderId={OrderId} ElapsedMs={ElapsedMs} CorrelationId={CorrelationId}")]
+        public static partial void InfoSuccess(ILogger logger, Guid orderId, long elapsedMs, string correlationId);
+
+        [LoggerMessage((int)LogEventId.AccountOrdersDetailNotFound, LogLevel.Warning,
+            "OrderDetail NotFound - OrderId={OrderId} CorrelationId={CorrelationId}")]
+        public static partial void WarnNotFound(ILogger logger, Guid orderId, string correlationId);
+    }
+}
 ```
+
+### 9.3 Delegate naming convention
+
+Method names follow `{LogLevel}{Subject}{Event}`:
+
+| Example | When |
+|---------|------|
+| `InfoStart` | Entry point of a handler |
+| `InfoOrderPlaced` | Happy path success |
+| `WarnCartItemOutOfStock` | Business rejection |
+| `ErrorPaymentGatewayTimeout` | Unexpected failure |
+
+### 9.4 Rules
+
+- **Exception always last** — never include `{Exception}` in the template; the last `Exception` param is automatically attached to the log event
+- **No PII** — log IDs only; never log email, full name, address, card numbers
+- **No anonymous objects** — `new { OrderId, BuyerId }` → separate typed params
+- **Template must be a const string** — no interpolation (`$"..."`) inside `[LoggerMessage]` attribute
+- **No raw EventId integers** — always reference `LogEventId` enum: `[LoggerMessage((int)LogEventId.OrderDetailStart, ...)]`. Enum defined at `MarketNest.Base.Infrastructure/Logging/LogEventId.cs`
+- **EventId increments sequentially within each file** — Start=X, Success=X+1, Warn=X+2, Error=X+3
+- **No `IsEnabled` guard needed** — `[LoggerMessage]` skips automatically when level is disabled
+
+### 9.5 EventId allocation per module
+
+Each module owns a block of 1000 EventIds. Sub-allocation within each block:
+
+| Offset | Layer |
+|--------|-------|
+| X000–X199 | Infrastructure / Persistence |
+| X200–X599 | Application layer (Command/Query handlers) |
+| X600–X799 | Web Pages (PageModel handlers) |
+| X800–X999 | Reserved |
+
+| Module | EventId Range |
+|--------|--------------|
+| Infrastructure / Middleware | 1000–1999 |
+| Identity | 2000–2999 |
+| Catalog | 3000–3999 |
+| Cart | 4000–4999 |
+| Orders | 5000–5999 |
+| Payments | 6000–6999 |
+| Reviews | 7000–7999 |
+| Disputes | 8000–8999 |
+| Notifications | 9000–9999 |
+| Admin | 10000–10999 |
+| Auditing | 11000–11999 |
+| Background Jobs | 12000–12999 |
+| Web / Global Pages | 13000–13999 |
 
 ---
 
@@ -837,8 +1022,10 @@ Before merging:
 - [ ] Entity properties use `{ get; private set; }` — no `{ get; set; }` or `{ get; init; }` (ADR-007)
 - [ ] Value object properties use `{ get; }` (class-based) or `{ get; init; }` (record-based) (ADR-007)
 - [ ] No async void (except event handlers)
+- [ ] No blocking of async operations via `.Result` or `GetAwaiter().GetResult()` — prefer `async`/`await` (see §2.4)
 - [ ] No `await Task.FromResult(...)` — remove async if no I/O (see §2.4)
-- [ ] All CancellationToken parameters propagated (including PageModel handlers)
+- [ ] Public async/cancellable APIs include `CancellationToken` (interfaces/abstract/base methods included)
+- [ ] Handlers and PageModel/Controller methods forward `CancellationToken` to downstream calls (repositories, IUnitOfWork, DbContext)
 - [ ] `AsNoTracking()` on all read queries (see §5.2)
 - [ ] Query handlers return DTOs, not domain entities (see §4.1)
 - [ ] DI uses primary constructor injection and interface-based registration (see §2.5)
@@ -850,7 +1037,33 @@ Before merging:
 - [ ] No magic strings or magic numbers — all extracted to constants/enums (see §2.6)
 - [ ] Namespaces are flat at layer level — no folder names beyond Application/Domain/Infrastructure (see §2.7)
 - [ ] All date/time fields use `DateTimeOffset`, never `DateTime` — display formatting uses `DateTimeOffsetExtensions` (see §2.8)
-- [ ] Logging uses structured templates (no interpolation) (see §9)
+- [ ] All logging uses `[LoggerMessage]` delegates — no direct `_logger.LogXxx(...)` or `_logger.Info(...)` calls in new code (see §9, ADR-014)
+- [ ] Each logging class has `partial` keyword and a nested `private static partial class Log` (see §9.2)
+- [ ] EventIds are unique within their module block and follow the sub-allocation convention (see §9.5)
+- [ ] No PII in log messages — IDs only, no email/name/address (see §9.4)
+- [ ] API entrypoints (Controllers/PageModels/Handlers) inject `IAppLogger<T>` and emit at minimum: InfoStart + InfoSuccess/WarnXxx (see §9.2)
 - [ ] No hard-coded hex/rgb/hsl in component CSS or inline styles — use `var(--*)` tokens (see §7.1)
 - [ ] Repeated visual values (radius, shadow, transition) extracted to CSS variables (see §7.3)
 - [ ] `AppConstants.Colors` stays in sync with `input.css` `@theme` tokens (see §7.5)
+
+---
+
+## 12. Test-Driven Development (TDD) Policy
+
+This project requires a test-first approach for business logic and feature work. The full policy and workflow are documented in `docs/test-driven-design.md` — follow that guide for new features, bug fixes that affect business rules, and any change that affects domain invariants.
+
+Summary of the rule:
+
+- All new or changed business behavior MUST be accompanied by automated tests written before implementation (write the failing test first). "Business behavior" includes domain methods, application handlers, validation that implements business rules, and any calculation/decision logic that affects users.
+- Unit tests are preferred for business rules. Integration tests are required for API endpoints, database interactions, and cross-module flows. Acceptance/business tests (higher-level) are recommended for complex flows.
+- Tests must be added to the appropriate test project under `tests/` using existing conventions (e.g., `tests/MarketNest.UnitTests/{Module}/{Feature}Tests.cs`).
+- CI will run the test suite and must pass before merging. PRs missing the test-first evidence (test added before or alongside implementation) may be rejected; reviewers should look for failing-first commits or an explicit note in the PR describing the TDD approach taken.
+
+Enforcement:
+
+- Add a PR checklist item (already present) verifying tests were written. Maintainers should confirm tests demonstrate the failing-first workflow when feasible.
+- CI pipelines must run unit and integration tests. Consider enforcing coverage gates for critical modules in the future.
+- Automated agents and code-review helpers should flag features that introduce business logic without accompanying tests.
+
+See `docs/test-driven-design.md` for the detailed workflow, examples, naming conventions, and PR checklist templates.
+
