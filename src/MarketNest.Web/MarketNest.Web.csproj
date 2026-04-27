@@ -16,6 +16,7 @@
         <ProjectReference Include="..\MarketNest.Disputes\MarketNest.Disputes.csproj"/>
         <ProjectReference Include="..\MarketNest.Notifications\MarketNest.Notifications.csproj"/>
         <ProjectReference Include="..\MarketNest.Admin\MarketNest.Admin.csproj"/>
+        <ProjectReference Include="..\MarketNest.Promotions\MarketNest.Promotions.csproj"/>
         <!-- Temporary references to new Base projects during incremental migration -->
         <ProjectReference Include="..\Base\MarketNest.Base.Common\MarketNest.Base.Common.csproj"/>
         <ProjectReference Include="..\Base\MarketNest.Base.Domain\MarketNest.Base.Domain.csproj"/>

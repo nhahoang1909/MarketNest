@@ -19,6 +19,7 @@
         <Project Path="src/MarketNest.Notifications/MarketNest.Notifications.csproj" />
         <Project Path="src/MarketNest.Orders/MarketNest.Orders.csproj" />
         <Project Path="src/MarketNest.Payments/MarketNest.Payments.csproj" />
+        <Project Path="src/MarketNest.Promotions/MarketNest.Promotions.csproj" />
         <Project Path="src/MarketNest.Reviews/MarketNest.Reviews.csproj" />
     </Folder>
     <Folder Name="/tests/">

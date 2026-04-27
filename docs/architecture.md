@@ -112,7 +112,7 @@ Phase 4: Kubernetes
 
 ## 4. Solution Structure
 
-Solution has **14 projects** (11 source + 3 test), managed in `MarketNest.slnx`.
+Solution has **15 projects** (12 source + 3 test), managed in `MarketNest.slnx`.
 
 ### Root Files
 
@@ -219,6 +219,7 @@ Each module maps to a future microservice candidate. **No module crosses another
 | **MarketNest.Reviews** | `reviews.*` | Reviews, Votes, fraud gate | CreateReview, VoteReview |
 | **MarketNest.Disputes** | `disputes.*` | Disputes, Messages, Resolution | OpenDispute, ResolveDispute |
 | **MarketNest.Notifications** | — | Email/SMS (in-process Phase 1, standalone Phase 3) | SendEmail |
+| **MarketNest.Promotions** | `promotions.*` | Vouchers (Platform + Shop), VoucherUsages, discount validation | CreateVoucher, ApplyVoucher, ValidateVoucher |
 | **MarketNest.Admin** | — | Back-office: arbitration, platform config | Admin commands/queries |
 
 **Communication rules:**
@@ -236,9 +237,10 @@ CREATE SCHEMA identity;    -- Users, Roles, RefreshTokens, Addresses, Preference
 CREATE SCHEMA catalog;     -- Storefronts, Products, Inventory, FavoriteSellers
 CREATE SCHEMA cart;        -- WishlistItems (Cart itself is Redis-backed)
 CREATE SCHEMA orders;      -- Orders, OrderLines, Fulfillments, ShippingPreferences, OrderPreferences
-CREATE SCHEMA payments;    -- Payments, Payouts, Commissions, PaymentMethods (Phase 2+)
+CREATE SCHEMA payments;    -- Payments, Payouts (Commissions in Payout aggregate), PaymentMethods (Phase 2+)
 CREATE SCHEMA reviews;     -- Reviews, Votes
 CREATE SCHEMA disputes;    -- Disputes, Messages, Resolutions
+CREATE SCHEMA promotions;  -- Vouchers, VoucherUsages
 ```
 
 ### Redis Key Namespaces
@@ -248,6 +250,7 @@ marketnest:session:{sessionId}                            TTL: 24h
 marketnest:ratelimit:{userId}:{endpoint}                  TTL: 1min
 marketnest:refresh:{tokenId}                              TTL: 7d
 marketnest:blacklist:{tokenId}                            TTL: 7d
+marketnest:voucher:validate:{code}                        TTL: 30s  (invalidate on Pause/Deplete/Expire)
 ```
 
 ---
@@ -338,6 +341,7 @@ MarketNest.Web (host)
 ├── MarketNest.Payments     → Core
 ├── MarketNest.Reviews      → Core
 ├── MarketNest.Disputes     → Core
+├── MarketNest.Promotions   → Core
 ├── MarketNest.Notifications → Core
 └── MarketNest.Admin        → Core
 

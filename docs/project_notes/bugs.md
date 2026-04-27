@@ -43,7 +43,7 @@ _No other bugs logged yet. Add entries as issues are encountered and resolved._
 ### 2026-04-25 - Docker env var CONNECTION_STRINGS__DEFAULT didn't override appsettings ConnectionStrings:DefaultConnection
 - **Issue**: `.env` used `CONNECTION_STRINGS__DEFAULT` but `appsettings.json` key is `ConnectionStrings:DefaultConnection` — ASP.NET env var override requires `ConnectionStrings__DefaultConnection`
 - **Root Cause**: Mismatch between `.env` variable naming and ASP.NET Configuration's `__` separator convention (`ConnectionStrings__DefaultConnection` maps to `ConnectionStrings:DefaultConnection`)
-- **Solution**: Renamed env var to `CONNECTION_STRINGS__DEFAULTCONNECTION` in `.env`, `.env.example`, and `docker-compose.yml`
+- **Solution**: Renamed env var to `CONNECTION_STRINGS__DEFAULT` in `.env`, `.env.example`, and `docker-compose.yml`
 - **Prevention**: When adding env var overrides, always verify the full key path matches the `appsettings.json` structure exactly (section__key convention)
 
 ### 2026-04-25 - Layout view '/Shared/_Layout' could not be located (app crash + stack trace in browser)

@@ -21,6 +21,7 @@ public static class TableConstants
         public const string Notifications = "notifications";
         public const string Admin = "admin";
         public const string Auditing = "auditing";
+        public const string Promotions = "promotions";
     }
 
     // ── System Tables (public schema) ───────────────────────────────────
