@@ -1,11 +1,14 @@
 <Project>
-  <!-- Import root Directory.Build.props to inherit shared settings -->
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..\, 'Directory.Build.props'))\Directory.Build.props"
-          Condition="'$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..\, Directory.Build.props))' != ''" />
+  <PropertyGroup>
+    <_RootPropsDir>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..\, 'Directory.Build.props'))</_RootPropsDir>
+  </PropertyGroup>
+  <Import Project="$(_RootPropsDir)\Directory.Build.props"
+          Condition="'$(_RootPropsDir)' != ''" />
   <PropertyGroup>
     <!-- Roslyn analyzers must target netstandard2.0 -->
     <TargetFramework>netstandard2.0</TargetFramework>
     <IsRoslynComponent>true</IsRoslynComponent>
     <LangVersion>latest</LangVersion>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
   </PropertyGroup>
 </Project>
