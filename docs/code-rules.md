@@ -900,7 +900,7 @@ Every class that emits logs must:
 1. Add `partial` to the class declaration
 2. Inject `IAppLogger<T>` (not `ILogger<T>`) via primary constructor
 3. Create `private static partial class Log` at the bottom of the file
-4. Call only `Log.Xxx(_logger, ...)` — never call `_logger.Info(...)` directly
+4. Call only `Log.Xxx(_logger, ...)` — never call `_logger.LogXxx(...)` extension methods directly
 
 ```csharp
 public partial class OrderDetailModel(IAppLogger<OrderDetailModel> _logger, IMediator mediator) : PageModel
@@ -926,15 +926,15 @@ public partial class OrderDetailModel(IAppLogger<OrderDetailModel> _logger, IMed
 
     private static partial class Log
     {
-        [LoggerMessage(5600, LogLevel.Information,
+        [LoggerMessage((int)LogEventId.AccountOrdersDetailStart, LogLevel.Information,
             "OrderDetail Start - OrderId={OrderId} CorrelationId={CorrelationId}")]
         public static partial void InfoStart(ILogger logger, Guid orderId, string correlationId);
 
-        [LoggerMessage(5601, LogLevel.Information,
+        [LoggerMessage((int)LogEventId.AccountOrdersDetailSuccess, LogLevel.Information,
             "OrderDetail Success - OrderId={OrderId} ElapsedMs={ElapsedMs} CorrelationId={CorrelationId}")]
         public static partial void InfoSuccess(ILogger logger, Guid orderId, long elapsedMs, string correlationId);
 
-        [LoggerMessage(5602, LogLevel.Warning,
+        [LoggerMessage((int)LogEventId.AccountOrdersDetailNotFound, LogLevel.Warning,
             "OrderDetail NotFound - OrderId={OrderId} CorrelationId={CorrelationId}")]
         public static partial void WarnNotFound(ILogger logger, Guid orderId, string correlationId);
     }

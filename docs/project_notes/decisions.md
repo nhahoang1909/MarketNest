@@ -390,17 +390,19 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 
 ### ADR-014: [LoggerMessage] Source-Generated Delegates as Mandatory Logging Pattern (2026-04-26)
 
+**Status**: Implemented ✅ (2026-04-27)
+
 **Context:**
-- Current `IAppLogger<T>` uses `params object?[]` overloads → CA1848 + CA2254 suppressed via `#pragma`
+- `IAppLogger<T>` previously used `params object?[]` overloads → CA1848 + CA2254 suppressed via `#pragma`
 - Runtime cost: template parsed every call, value types boxed, zero allocation skip when level disabled
-- No EventId on any log statement → cannot filter precisely in Seq
-- 8 domain modules and 19 pages have zero logging coverage
+- No EventId on any log statement → could not filter precisely in Seq
+- 8 domain modules and 19 pages had zero logging coverage
 
 **Decision:**
 - All production logging must use `[LoggerMessage]` source-generated delegates (CA1848 compliant)
 - `IAppLogger<T>` extended to implement `ILogger` (explicit `ILogger.Log<TState>` via `inner.Log()` — not extension methods, so no CA1848)
-- After full migration: strip `.Info()` / `.Warn()` / `.Error()` methods from `IAppLogger<T>` → it becomes a DI marker interface; `AppLogger<T>` retains only 3 explicit ILogger methods; `#pragma` removed
-- Each module owns a block of 1000 EventIds (see EventId table in `docs/superpowers/specs/2026-04-26-loggermessage-refactor-design.md`)
+- `.Info()` / `.Warn()` / `.Error()` methods stripped from `IAppLogger<T>` — it is now a DI marker interface; `AppLogger<T>` retains only 3 explicit ILogger members; `#pragma` removed
+- Each module owns a block of 1000 EventIds — registry lives in `MarketNest.Base.Infrastructure/Logging/LogEventId.cs`
 - `private static partial class Log` nested inside each class; outer class must be `partial`
 - Exception param always last, never in message template
 
@@ -409,11 +411,12 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 - Expose `ILogger InnerLogger { get; }` on IAppLogger → Rejected: call sites become `_logger.InnerLogger` — noisier, no benefit
 - Replace `IAppLogger<T>` with `ILogger<T>` everywhere → Rejected: large scope, breaks DI conventions already in use
 
-**Consequences:**
+**Consequences (achieved):**
 - ✅ Zero allocation for disabled log levels — hot paths unaffected
 - ✅ Compile-time type safety: wrong param count/type → build error, not runtime bug
-- ✅ Stable EventIds per module → precise Seq filter (`EventId = 5201`)
-- ✅ `#pragma warning disable CA1848, CA2254` eliminated from `AppLogger.cs`
+- ✅ Stable EventIds per module → precise Seq filter (`EventId = 2652`)
+- ✅ `#pragma warning disable CA1848, CA2254` eliminated from all production code
+- ✅ 50+ files migrated; 19 pages added first-time observability
 - ❌ Requires `partial` on every class that logs
 - ❌ More boilerplate per file (mitigated by nested `Log` class keeping it local)
 

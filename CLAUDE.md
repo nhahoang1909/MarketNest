@@ -102,7 +102,7 @@ All rules are specified in `docs/code-rules.md`. Key items:
 - **Architecture tests** (NetArchTest) enforce that presentation layer cannot reference domain directly.
 - **Central Package Management**: all NuGet versions are pinned in the repo-root `Directory.Packages.props`. Module `.csproj` files reference packages without versions.
 - **Build settings** (`net10.0`, `TreatWarningsAsErrors`, `EnforceCodeStyleInBuild`) are in the repo-root `Directory.Build.props`.
-- **Logging**: use `IAppLogger<T>` (not `ILogger<T>` directly) — see `MarketNest.Core/Logging/`.
+- **Logging**: inject `IAppLogger<T>` (not `ILogger<T>`) and use `[LoggerMessage]` source-generated delegates in a nested `private static partial class Log`. All classes that log must be `partial`. EventIds come from `LogEventId` enum in `MarketNest.Base.Infrastructure/Logging/`. See `docs/code-rules.md` §9 and ADR-014.
 - **Route whitelist**: `RouteWhitelistMiddleware` blocks unregistered paths. Add new routes to `AppRoutes` and its `WhitelistedPrefixes` set.
 - **Frontend components** live in `src/MarketNest.Web/Pages/Shared/` organized by category: `Data/`, `Display/`, `Domain/`, `Forms/`, `Navigation/`, `Overlays/`. Naming: `_ComponentName.cshtml`. Layouts (`_Layout.cshtml`, `_LayoutAdmin.cshtml`, `_LayoutSeller.cshtml`) also live in `Pages/Shared/`.
 - **Event bus**: modules publish integration events via `IEventBus` (`MarketNest.Core/Common/Events/`). Phase 1 uses `InProcessEventBus` (MediatR); Phase 3 swaps to `MassTransitEventBus` (RabbitMQ).
