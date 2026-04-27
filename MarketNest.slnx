@@ -1,5 +1,6 @@
 <Solution>
     <Folder Name="/src/">
+        <Project Path="src/MarketNest.Analyzers/MarketNest.Analyzers.csproj" />
         <Project Path="src/MarketNest.Web/MarketNest.Web.csproj" />
     </Folder>
     <Folder Name="/src/Base/">
@@ -23,6 +24,7 @@
         <Project Path="src/MarketNest.Reviews/MarketNest.Reviews.csproj" />
     </Folder>
     <Folder Name="/tests/">
+        <Project Path="tests/MarketNest.Analyzers.Tests/MarketNest.Analyzers.Tests.csproj" />
         <Project Path="tests/MarketNest.ArchitectureTests/MarketNest.ArchitectureTests.csproj" />
         <Project Path="tests/MarketNest.IntegrationTests/MarketNest.IntegrationTests.csproj" />
         <Project Path="tests/MarketNest.UnitTests/MarketNest.UnitTests.csproj" />
