@@ -52,10 +52,11 @@ public enum LogEventId
     MassTransitPublishSuccess = 1051,
     MassTransitPublishError = 1052,
 
-    // ApiContractGenerator — 1060-1062
+    // ApiContractGenerator — 1060-1063
     ApiContractFetchStart = 1060,
     ApiContractUpdated = 1061,
     ApiContractFetchFailed = 1062,
+    ApiContractGenerationFailed = 1063,
 
     // RouteWhitelistMiddleware — 1070
     RouteBlocked = 1070,

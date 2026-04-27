@@ -37,7 +37,7 @@ public sealed partial class ApiContractGenerator(
         }
         catch (Exception ex)
         {
-            logger.Warn(ex, "Failed to auto-generate api-contract.md");
+            Log.WarnGenerationFailed(logger, ex);
         }
     }
 
@@ -350,6 +350,10 @@ public sealed partial class ApiContractGenerator(
 
     private static partial class Log
     {
+        [LoggerMessage((int)LogEventId.ApiContractGenerationFailed, LogLevel.Warning,
+            "Failed to auto-generate api-contract.md")]
+        public static partial void WarnGenerationFailed(ILogger logger, Exception ex);
+
         [LoggerMessage((int)LogEventId.ApiContractFetchStart, LogLevel.Information,
             "Fetching OpenAPI spec from {Url}")]
         public static partial void InfoFetchStart(ILogger logger, string url);
