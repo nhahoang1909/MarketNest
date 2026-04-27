@@ -880,80 +880,114 @@ public static class Errors
 
 ## 9. Logging Standards
 
-```csharp
-// ✅ Structured logging — use message templates, not string interpolation
-_logger.LogInformation("Order {OrderId} placed by buyer {BuyerId} for {Total:C}",
-    order.Id, command.BuyerId, order.Total.Amount);
+> **Mandatory pattern**: all production logging must use `[LoggerMessage]` source-generated delegates (CA1848).
+> Direct calls to `_logger.Info(...)` / `_logger.LogInformation(...)` are banned in new code. See ADR-014.
 
-// ❌ String interpolation loses structure
-_logger.LogInformation($"Order {order.Id} placed");
+### 9.1 Log levels
 
-// Log levels:
-// Debug:    Developer debugging (disabled in prod)
-// Info:     Business events (order placed, payment captured)
-// Warning:  Handled errors, slow queries, retry attempts
-// Error:    Unexpected failures, unhandled exceptions
-// Critical: System down, data corruption risk
+| Level | When to use |
+|-------|-------------|
+| `Debug` | Developer diagnostics — disabled in prod |
+| `Information` | Business events (order placed, payment captured) |
+| `Warning` | Handled errors, business rejections, slow queries |
+| `Error` | Unexpected failures, unhandled exceptions |
+| `Critical` | System down, data corruption risk |
 
-// Always log correlation ID (added by middleware)
-// Never log: passwords, tokens, full credit card numbers, PII beyond user ID
-```
+### 9.2 Mandatory [LoggerMessage] pattern
 
-### 9.1 API entrypoint logging (traceability)
+Every class that emits logs must:
 
-All public API entrypoints (API Controllers, Razor PageModel handlers, and MediatR handlers that represent API operations) MUST:
-
-- Inject an `IAppLogger<T>` (open-generic `IAppLogger<T>` wrapper used across the project) via primary constructor injection — do not use `ILogger<T>` directly.
-- Emit structured trace logs at these four logical points: Start -> Handle -> Success -> End. This makes each request easily traceable in logs and correlates with the middleware-provided correlation id.
-- Use message templates (not string interpolation) and include correlation id, api/handler name, user id (when available), and minimal payload identifiers (IDs only) — avoid logging full request bodies or PII.
-
-Log template example (recommended pattern):
+1. Add `partial` to the class declaration
+2. Inject `IAppLogger<T>` (not `ILogger<T>`) via primary constructor
+3. Create `private static partial class Log` at the bottom of the file
+4. Call only `Log.Xxx(_logger, ...)` — never call `_logger.LogXxx(...)` extension methods directly
 
 ```csharp
-// At method start
-_logger.LogInformation("API {ApiName} Start - CorrelationId={CorrelationId} UserId={UserId} Payload={Payload}",
-    "GetOrder", correlationId, userId ?? "-", new { OrderId = orderId });
-
-// During handling (optional, for important steps)
-_logger.LogInformation("API {ApiName} Handle - Step={Step} Details={Details}",
-    "GetOrder", "LoadFromDb", new { Repository = "IOrderRepository", Id = orderId });
-
-// On success
-_logger.LogInformation("API {ApiName} Success - ElapsedMs={ElapsedMs} CorrelationId={CorrelationId}",
-    "GetOrder", elapsedMs, correlationId);
-
-// At end (final marker)
-_logger.LogInformation("API {ApiName} End - CorrelationId={CorrelationId}", "GetOrder", correlationId);
-```
-
-Minimal example for a PageModel handler:
-
-```csharp
-public class OrderDetailModel(IAppLogger<OrderDetailModel> _logger, IMediator mediator) : PageModel
+public partial class OrderDetailModel(IAppLogger<OrderDetailModel> _logger, IMediator mediator) : PageModel
 {
     public async Task<IActionResult> OnGetAsync(Guid orderId, CancellationToken ct)
     {
         var correlationId = HttpContext.TraceIdentifier;
-        _logger.LogInformation("API {Api} Start - CorrelationId={Cid} Payload={Payload}", nameof(OnGetAsync), correlationId, new { orderId });
+        Log.InfoStart(_logger, orderId, correlationId);
 
         var sw = Stopwatch.StartNew();
         var result = await mediator.Send(new GetOrderDetailQuery(orderId), ct);
-
         sw.Stop();
-        _logger.LogInformation("API {Api} Success - ElapsedMs={Ms} CorrelationId={Cid}", nameof(OnGetAsync), sw.ElapsedMilliseconds, correlationId);
-        _logger.LogInformation("API {Api} End - CorrelationId={Cid}", nameof(OnGetAsync), correlationId);
 
-        if (result is null) return NotFound();
+        if (result is null)
+        {
+            Log.WarnNotFound(_logger, orderId, correlationId);
+            return NotFound();
+        }
+
+        Log.InfoSuccess(_logger, orderId, sw.ElapsedMilliseconds, correlationId);
         return Page();
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.AccountOrdersDetailStart, LogLevel.Information,
+            "OrderDetail Start - OrderId={OrderId} CorrelationId={CorrelationId}")]
+        public static partial void InfoStart(ILogger logger, Guid orderId, string correlationId);
+
+        [LoggerMessage((int)LogEventId.AccountOrdersDetailSuccess, LogLevel.Information,
+            "OrderDetail Success - OrderId={OrderId} ElapsedMs={ElapsedMs} CorrelationId={CorrelationId}")]
+        public static partial void InfoSuccess(ILogger logger, Guid orderId, long elapsedMs, string correlationId);
+
+        [LoggerMessage((int)LogEventId.AccountOrdersDetailNotFound, LogLevel.Warning,
+            "OrderDetail NotFound - OrderId={OrderId} CorrelationId={CorrelationId}")]
+        public static partial void WarnNotFound(ILogger logger, Guid orderId, string correlationId);
     }
 }
 ```
 
-Notes and enforcement:
-- This does not mean logging full request/response payloads. Log only identifiers and small non-sensitive summaries.
-- Correlation id is provided by middleware (see `Infrastructure/RequestCorrelationMiddleware`) — include it in every API log line.
-- Add a PR checklist item to require these trace logs for new or changed API endpoints. Consider adding a lightweight analyzer or PR template checklist to detect missing `IAppLogger<T>` in PageModels/Controllers/Handlers.
+### 9.3 Delegate naming convention
 
+Method names follow `{LogLevel}{Subject}{Event}`:
+
+| Example | When |
+|---------|------|
+| `InfoStart` | Entry point of a handler |
+| `InfoOrderPlaced` | Happy path success |
+| `WarnCartItemOutOfStock` | Business rejection |
+| `ErrorPaymentGatewayTimeout` | Unexpected failure |
+
+### 9.4 Rules
+
+- **Exception always last** — never include `{Exception}` in the template; the last `Exception` param is automatically attached to the log event
+- **No PII** — log IDs only; never log email, full name, address, card numbers
+- **No anonymous objects** — `new { OrderId, BuyerId }` → separate typed params
+- **Template must be a const string** — no interpolation (`$"..."`) inside `[LoggerMessage]` attribute
+- **No raw EventId integers** — always reference `LogEventId` enum: `[LoggerMessage((int)LogEventId.OrderDetailStart, ...)]`. Enum defined at `MarketNest.Base.Infrastructure/Logging/LogEventId.cs`
+- **EventId increments sequentially within each file** — Start=X, Success=X+1, Warn=X+2, Error=X+3
+- **No `IsEnabled` guard needed** — `[LoggerMessage]` skips automatically when level is disabled
+
+### 9.5 EventId allocation per module
+
+Each module owns a block of 1000 EventIds. Sub-allocation within each block:
+
+| Offset | Layer |
+|--------|-------|
+| X000–X199 | Infrastructure / Persistence |
+| X200–X599 | Application layer (Command/Query handlers) |
+| X600–X799 | Web Pages (PageModel handlers) |
+| X800–X999 | Reserved |
+
+| Module | EventId Range |
+|--------|--------------|
+| Infrastructure / Middleware | 1000–1999 |
+| Identity | 2000–2999 |
+| Catalog | 3000–3999 |
+| Cart | 4000–4999 |
+| Orders | 5000–5999 |
+| Payments | 6000–6999 |
+| Reviews | 7000–7999 |
+| Disputes | 8000–8999 |
+| Notifications | 9000–9999 |
+| Admin | 10000–10999 |
+| Auditing | 11000–11999 |
+| Background Jobs | 12000–12999 |
+| Web / Global Pages | 13000–13999 |
 
 ---
 
@@ -1003,8 +1037,11 @@ Before merging:
 - [ ] No magic strings or magic numbers — all extracted to constants/enums (see §2.6)
 - [ ] Namespaces are flat at layer level — no folder names beyond Application/Domain/Infrastructure (see §2.7)
 - [ ] All date/time fields use `DateTimeOffset`, never `DateTime` — display formatting uses `DateTimeOffsetExtensions` (see §2.8)
-- [ ] Logging uses structured templates (no interpolation) (see §9)
-- [ ] API entrypoints (Controllers/PageModels/Handlers) inject `IAppLogger<T>` and emit trace logs Start->Handle->Success->End (see §9.1)
+- [ ] All logging uses `[LoggerMessage]` delegates — no direct `_logger.LogXxx(...)` or `_logger.Info(...)` calls in new code (see §9, ADR-014)
+- [ ] Each logging class has `partial` keyword and a nested `private static partial class Log` (see §9.2)
+- [ ] EventIds are unique within their module block and follow the sub-allocation convention (see §9.5)
+- [ ] No PII in log messages — IDs only, no email/name/address (see §9.4)
+- [ ] API entrypoints (Controllers/PageModels/Handlers) inject `IAppLogger<T>` and emit at minimum: InfoStart + InfoSuccess/WarnXxx (see §9.2)
 - [ ] No hard-coded hex/rgb/hsl in component CSS or inline styles — use `var(--*)` tokens (see §7.1)
 - [ ] Repeated visual values (radius, shadow, transition) extracted to CSS variables (see §7.3)
 - [ ] `AppConstants.Colors` stays in sync with `input.css` `@theme` tokens (see §7.5)

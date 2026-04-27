@@ -472,8 +472,122 @@
     /* ══════════════════════════════════════════════════════════
        SKELETON LOADER
        ══════════════════════════════════════════════════════════ */
+
+    /* Pulse variant — simple, lightweight */
     .skeleton {
         @apply rounded-lg bg-cream-200 animate-pulse;
+    }
+
+    /* Shimmer variant — gradient sweep for richer UX */
+    .skeleton-shimmer {
+        border-radius: theme('borderRadius.lg');
+        background: linear-gradient(
+            90deg,
+            theme('colors.cream.200') 25%,
+            theme('colors.cream.50')  50%,
+            theme('colors.cream.200') 75%
+        );
+        background-size: 200% 100%;
+        animation: skeleton-sweep 1.6s ease-in-out infinite;
+    }
+
+    /* Button loading state */
+    .btn-loading {
+        @apply opacity-70 cursor-not-allowed pointer-events-none;
+    }
+
+    /* ── Skeleton component shapes ───────────────────────────── */
+
+    /* Product card skeleton: fixed aspect matches real _ProductCard */
+    .skeleton-product-card {
+        @apply rounded-xl overflow-hidden bg-cream-50;
+    }
+
+    .skeleton-product-card .sk-image {
+        @apply skeleton-shimmer w-full aspect-square;
+    }
+
+    .skeleton-product-card .sk-body {
+        @apply p-3 space-y-2;
+    }
+
+    .skeleton-product-card .sk-title {
+        @apply skeleton-shimmer h-4 rounded w-4/5;
+    }
+
+    .skeleton-product-card .sk-sub {
+        @apply skeleton-shimmer h-3 rounded w-2/5;
+    }
+
+    .skeleton-product-card .sk-price {
+        @apply skeleton-shimmer h-4 rounded w-1/3 mt-1;
+    }
+
+    /* Store card skeleton: fixed height matches real _StoreCard */
+    .skeleton-store-card {
+        @apply card p-4 flex items-center gap-4;
+    }
+
+    .skeleton-store-card .sk-logo {
+        @apply skeleton-shimmer w-14 h-14 rounded-xl shrink-0;
+    }
+
+    .skeleton-store-card .sk-info {
+        @apply flex-1 space-y-2;
+    }
+
+    .skeleton-store-card .sk-name {
+        @apply skeleton-shimmer h-4 rounded w-3/5;
+    }
+
+    .skeleton-store-card .sk-desc {
+        @apply skeleton-shimmer h-3 rounded w-4/5;
+    }
+
+    .skeleton-store-card .sk-meta {
+        @apply skeleton-shimmer h-3 rounded w-2/5;
+    }
+
+    /* Order row skeleton */
+    .skeleton-order-row {
+        @apply border border-ink-100 rounded-2xl p-4 flex gap-4;
+    }
+
+    .skeleton-order-row .sk-thumb {
+        @apply skeleton-shimmer w-16 h-16 rounded-xl shrink-0;
+    }
+
+    .skeleton-order-row .sk-info {
+        @apply flex-1 space-y-2 py-1;
+    }
+
+    .skeleton-order-row .sk-id {
+        @apply skeleton-shimmer h-4 rounded w-1/3;
+    }
+
+    .skeleton-order-row .sk-status {
+        @apply skeleton-shimmer h-3 rounded w-1/4;
+    }
+
+    .skeleton-order-row .sk-date {
+        @apply skeleton-shimmer h-3 rounded w-2/5;
+    }
+
+    /* Stat card skeleton (dashboard) */
+    .skeleton-stat-card {
+        @apply card p-5 space-y-3;
+    }
+
+    .skeleton-stat-card .sk-label {
+        @apply skeleton-shimmer h-3 rounded w-2/3;
+    }
+
+    .skeleton-stat-card .sk-value {
+        @apply skeleton-shimmer h-7 rounded w-1/2;
+    }
+
+    .skeleton-stat-card .sk-trend {
+        @apply skeleton-shimmer h-3 rounded w-2/5;
     }
 
     /* ══════════════════════════════════════════════════════════
@@ -528,4 +642,10 @@
     .feature-band .text-secondary {
         color: rgba(255, 255, 255, 0.70);
     }
+}
+
+/* Skeleton shimmer keyframe — defined outside @layer so it is always available */
+@keyframes skeleton-sweep {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }

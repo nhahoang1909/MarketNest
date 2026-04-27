@@ -10,31 +10,18 @@ namespace MarketNest.Web.Infrastructure;
 ///     from the OpenAPI specification on application startup.
 ///     Ensures the markdown contract stays in sync with registered endpoints.
 /// </summary>
-public sealed class ApiContractGenerator : BackgroundService
+public sealed partial class ApiContractGenerator(
+    IServiceProvider serviceProvider,
+    IHttpClientFactory httpClientFactory,
+    IWebHostEnvironment environment,
+    IAppLogger<ApiContractGenerator> logger) : BackgroundService
 {
     private const string RelativeOutputPath = "docs/api-contract.md";
     private const int StartupDelayMs = 3000;
-    private readonly IWebHostEnvironment _environment;
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<ApiContractGenerator> _logger;
-
-    private readonly IServiceProvider _serviceProvider;
-
-    public ApiContractGenerator(
-        IServiceProvider serviceProvider,
-        IHttpClientFactory httpClientFactory,
-        IWebHostEnvironment environment,
-        ILogger<ApiContractGenerator> logger)
-    {
-        _serviceProvider = serviceProvider;
-        _httpClientFactory = httpClientFactory;
-        _environment = environment;
-        _logger = logger;
-    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (!_environment.IsDevelopment())
+        if (!environment.IsDevelopment())
             return;
 
         // Wait for the app to fully start so all endpoints are registered
@@ -50,24 +37,23 @@ public sealed class ApiContractGenerator : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to auto-generate api-contract.md");
+            Log.WarnGenerationFailed(logger, ex);
         }
     }
 
     private async Task GenerateContractAsync(CancellationToken cancellationToken)
     {
         // Fetch the OpenAPI JSON from the local endpoint
-        using HttpClient httpClient = _httpClientFactory.CreateClient();
+        using HttpClient httpClient = httpClientFactory.CreateClient();
         string serverUrl = GetServerUrl();
         string openApiUrl = string.Concat(serverUrl, "/openapi/", AppConstants.OpenApi.DocumentName, ".json");
 
-        _logger.LogFetchingOpenApiSpec(openApiUrl);
+        Log.InfoFetchStart(logger, openApiUrl);
 
         HttpResponseMessage response = await httpClient.GetAsync(openApiUrl, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogWarning("OpenAPI endpoint returned {StatusCode} — skipping api-contract.md generation",
-                response.StatusCode);
+            Log.WarnFetchFailed(logger, (int)response.StatusCode);
             return;
         }
 
@@ -84,13 +70,13 @@ public sealed class ApiContractGenerator : BackgroundService
         await File.WriteAllTextAsync(outputPath, markdown, Encoding.UTF8, cancellationToken);
 
         int endpointCount = CountEndpoints(doc.RootElement);
-        _logger.LogApiContractUpdated(outputPath, endpointCount);
+        Log.InfoContractUpdated(logger, outputPath, endpointCount);
     }
 
     private string GetServerUrl()
     {
         // Resolve from Kestrel configuration or fall back to localhost:5000
-        IConfiguration config = _serviceProvider.GetRequiredService<IConfiguration>();
+        IConfiguration config = serviceProvider.GetRequiredService<IConfiguration>();
         string urls = config["Urls"] ?? config["ASPNETCORE_URLS"] ?? "http://localhost:5000";
         return urls.Split(';')[0].TrimEnd('/').Replace("+", "localhost", StringComparison.Ordinal);
     }
@@ -99,7 +85,7 @@ public sealed class ApiContractGenerator : BackgroundService
     {
         // Navigate from src/MarketNest.Web/ up to solution root
         string solutionRoot = Path.GetFullPath(
-            Path.Combine(_environment.ContentRootPath, "..", ".."));
+            Path.Combine(environment.ContentRootPath, "..", ".."));
 
         return Path.Combine(solutionRoot, RelativeOutputPath);
     }
@@ -361,14 +347,23 @@ public sealed class ApiContractGenerator : BackgroundService
                 return null;
         }
     }
-}
 
-internal static partial class ApiContractGeneratorLogMessages
-{
-    [LoggerMessage(Level = LogLevel.Information, Message = "Fetching OpenAPI spec from {Url}")]
-    public static partial void LogFetchingOpenApiSpec(this ILogger logger, string url);
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.ApiContractGenerationFailed, LogLevel.Warning,
+            "Failed to auto-generate api-contract.md")]
+        public static partial void WarnGenerationFailed(ILogger logger, Exception ex);
 
-    [LoggerMessage(Level = LogLevel.Information,
-        Message = "api-contract.md updated at {Path} with {EndpointCount} endpoints")]
-    public static partial void LogApiContractUpdated(this ILogger logger, string path, int endpointCount);
+        [LoggerMessage((int)LogEventId.ApiContractFetchStart, LogLevel.Information,
+            "Fetching OpenAPI spec from {Url}")]
+        public static partial void InfoFetchStart(ILogger logger, string url);
+
+        [LoggerMessage((int)LogEventId.ApiContractFetchFailed, LogLevel.Warning,
+            "OpenAPI endpoint returned {StatusCode} — skipping api-contract.md generation")]
+        public static partial void WarnFetchFailed(ILogger logger, int statusCode);
+
+        [LoggerMessage((int)LogEventId.ApiContractUpdated, LogLevel.Information,
+            "api-contract.md updated at {Path} with {EndpointCount} endpoints")]
+        public static partial void InfoContractUpdated(ILogger logger, string path, int endpointCount);
+    }
 }

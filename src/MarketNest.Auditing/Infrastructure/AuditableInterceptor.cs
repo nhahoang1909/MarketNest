@@ -16,7 +16,7 @@ namespace MarketNest.Auditing.Infrastructure;
 ///     Important: This interceptor must NOT be added to <see cref="AuditingDbContext" /> itself
 ///     to prevent infinite recursion (audit writing triggers another audit).
 /// </summary>
-public class AuditableInterceptor(IAppLogger<AuditableInterceptor> logger) : SaveChangesInterceptor
+public partial class AuditableInterceptor(IAppLogger<AuditableInterceptor> logger) : SaveChangesInterceptor
 {
     private List<PendingAuditEntry>? _pendingEntries;
 
@@ -115,7 +115,7 @@ public class AuditableInterceptor(IAppLogger<AuditableInterceptor> logger) : Sav
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Failed to flush audit entries after SaveChanges");
+            Log.ErrorFlushFailed(logger, ex);
         }
         finally
         {
@@ -135,4 +135,11 @@ public class AuditableInterceptor(IAppLogger<AuditableInterceptor> logger) : Sav
         Guid? EntityId,
         Dictionary<string, object?>? OldValues,
         Dictionary<string, object?>? NewValues);
+
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.AuditInterceptorError, LogLevel.Error,
+            "Failed to flush audit entries after SaveChanges")]
+        public static partial void ErrorFlushFailed(ILogger logger, Exception ex);
+    }
 }

@@ -9,13 +9,14 @@
     "lg" => "h-14 w-14 text-lg",
     _ => "h-10 w-10 text-sm"
   };
+  var (pxW, pxH) = size switch { "sm" => (32, 32), "lg" => (56, 56), _ => (40, 40) };
   var initials = string.Join("", (name ?? "?").Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w =>
     w[0])).ToUpper();
 }
 
 @if (!string.IsNullOrEmpty(imageUrl))
 {
-  <img src="@imageUrl" alt="@name" class="@sizeCss rounded-full object-cover ring-2 ring-white" loading="lazy"/>
+  <img src="@imageUrl" alt="@name" width="@pxW" height="@pxH" class="@sizeCss rounded-full object-cover ring-2 ring-white" loading="lazy"/>
 }
 else
 {

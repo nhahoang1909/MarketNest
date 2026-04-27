@@ -10,7 +10,7 @@ namespace MarketNest.Auditing.Infrastructure;
 ///     MediatR pipeline behavior that automatically records audit entries for commands
 ///     decorated with <see cref="AuditedAttribute" />. Runs after the handler completes.
 /// </summary>
-public class AuditBehavior<TRequest, TResponse>(
+public partial class AuditBehavior<TRequest, TResponse>(
     IAuditService auditService,
     IAppLogger<AuditBehavior<TRequest, TResponse>> logger)
     : IPipelineBehavior<TRequest, TResponse>
@@ -51,7 +51,7 @@ public class AuditBehavior<TRequest, TResponse>(
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Failed to record audit for {RequestType}", typeof(TRequest).Name);
+            Log.ErrorAuditFailed(logger, typeof(TRequest).Name, ex);
         }
 
         return response;
@@ -73,4 +73,11 @@ public class AuditBehavior<TRequest, TResponse>(
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .FirstOrDefault(p => string.Equals(p.Name, "Id", StringComparison.OrdinalIgnoreCase))
             ?.GetValue(request) as Guid?;
+
+    private static partial class Log
+    {
+        [LoggerMessage((int)LogEventId.AuditBehaviorError, LogLevel.Error,
+            "Failed to record audit for {RequestType}")]
+        public static partial void ErrorAuditFailed(ILogger logger, string requestType, Exception ex);
+    }
 }

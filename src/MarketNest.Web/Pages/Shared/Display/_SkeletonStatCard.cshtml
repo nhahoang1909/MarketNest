@@ -1,0 +1,23 @@
+@* Skeleton placeholder for dashboard stat cards.
+   Pass Count (int, default 4) and Cols ("2" | "3" | "4", default "4") via ViewData. *@
+@{
+  var count = int.TryParse(ViewData["Count"]?.ToString(), out var c) ? c : 4;
+  var cols = ViewData["Cols"]?.ToString() ?? "4";
+  var gridCss = cols switch
+  {
+    "2" => "grid-cols-2",
+    "3" => "grid-cols-2 md:grid-cols-3",
+    _ => "grid-cols-2 md:grid-cols-4"
+  };
+}
+
+<div class="grid @gridCss gap-4" aria-hidden="true" aria-label="Loading...">
+  @for (var i = 0; i < count; i++)
+  {
+    <div class="skeleton-stat-card">
+      <div class="sk-label"></div>
+      <div class="sk-value"></div>
+      <div class="sk-trend"></div>
+    </div>
+  }
+</div>

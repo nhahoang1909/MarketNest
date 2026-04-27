@@ -1,18 +1,12 @@
-using System.Globalization;
 using System.Reflection;
 using FluentValidation;
 using MarketNest.Admin.Application;
 using MarketNest.Admin.Infrastructure;
-using MarketNest.Auditing;
 using MarketNest.Auditing.Infrastructure;
 using MarketNest.Web.BackgroundJobs;
 using MarketNest.Web.Hosting;
 using MarketNest.Web.Infrastructure;
-using MarketNest.Base.Common;
-using MarketNest.Base.Infrastructure;
-using MarketNest.Base.Utility;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
@@ -160,11 +154,9 @@ try
     // ... (repeat for each module that has a DbContext)
 
     // Register DatabaseInitializer + auto-discover seeders from module assemblies
-    // builder.Services.AddDatabaseInitializer(
-    //     typeof(MarketNest.Identity.AssemblyReference).Assembly,
-    //     typeof(MarketNest.Catalog.AssemblyReference).Assembly,
-    //     typeof(MarketNest.Orders.AssemblyReference).Assembly
-    // );
+    builder.Services.AddDatabaseInitializer(
+        typeof(MarketNest.Admin.AssemblyReference).Assembly
+    );
 
     // ── Build ─────────────────────────────────────────────────────────
     WebApplication app = builder.Build();
@@ -235,9 +227,8 @@ try
         }).DisableAntiforgery();
 
     // ── Initialize database: migrate + seed ───────────────────────────
-    // TODO: Uncomment when module DbContexts and DatabaseInitializer are registered
-    // await app.Services.GetRequiredService<DatabaseInitializer>()
-    //     .InitializeAsync();
+    await app.Services.GetRequiredService<DatabaseInitializer>()
+        .InitializeAsync();
 
     app.Run();
 }
