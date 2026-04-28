@@ -96,4 +96,15 @@ public class PrivateFieldNamingAnalyzerTests
         await VerifyFix<PrivateFieldNamingAnalyzer, PrivateFieldNamingCodeFix>
             .CodeFixAsync(source, fixedSource);
     }
+
+    [Fact]
+    public async Task Triggers_when_private_readonly_field_has_bad_name()
+    {
+        var source = """
+            class C {
+                private readonly string {|MN001:BadName|};
+            }
+            """;
+        await Verify<PrivateFieldNamingAnalyzer>.AnalyzerAsync(source);
+    }
 }
