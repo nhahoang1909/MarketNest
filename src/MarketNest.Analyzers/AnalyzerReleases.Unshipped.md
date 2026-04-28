@@ -7,6 +7,7 @@ MN003 | AsyncRules | Error | AsyncVoidMethod
 MN004 | AsyncRules | Error | BlockingAsyncCall
 MN005 | Logging | Error | DirectLoggerCall
 MN006 | Logging | Error | LoggingClassMustBePartial
+MN007 | Logging | Error | MustInjectAppLoggerNotILogger
 MN012 | Naming | Warning | CommandClassNamingConvention
 MN013 | Naming | Warning | QueryClassNamingConvention
 MN014 | Naming | Warning | HandlerClassNamingConvention
