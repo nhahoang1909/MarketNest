@@ -1,0 +1,7 @@
+<Project>
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'MarketNest.Analyzers'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)MarketNest.Analyzers/MarketNest.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>

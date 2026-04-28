@@ -3,6 +3,12 @@
     <PropertyGroup>
         <RootNamespace>MarketNest.Web</RootNamespace>
         <Description>ASP.NET Core host: Razor Pages, middleware, composition root.</Description>
+        <UserSecretsId>c6d45131-f462-4e03-9847-c5fb8c3a3358</UserSecretsId>
+        <!-- MN008 suppressed: Razor Pages PageModel classes use folder-matched namespaces
+             (e.g. MarketNest.Web.Pages.Auth) because the @model directive requires a
+             namespace that uniquely qualifies each IndexModel across sub-folders.
+             All other Web infrastructure code (BackgroundJobs, Infrastructure) stays flat. -->
+        <NoWarn>$(NoWarn);MN008</NoWarn>
     </PropertyGroup>
 
     <ItemGroup Label="Module References">
@@ -16,6 +22,7 @@
         <ProjectReference Include="..\MarketNest.Disputes\MarketNest.Disputes.csproj"/>
         <ProjectReference Include="..\MarketNest.Notifications\MarketNest.Notifications.csproj"/>
         <ProjectReference Include="..\MarketNest.Admin\MarketNest.Admin.csproj"/>
+        <ProjectReference Include="..\MarketNest.Promotions\MarketNest.Promotions.csproj"/>
         <!-- Temporary references to new Base projects during incremental migration -->
         <ProjectReference Include="..\Base\MarketNest.Base.Common\MarketNest.Base.Common.csproj"/>
         <ProjectReference Include="..\Base\MarketNest.Base.Domain\MarketNest.Base.Domain.csproj"/>
@@ -60,19 +67,53 @@
     </ItemGroup>
 
     <ItemGroup Label="Local Config Files">
-        <None Include=".env"/>
-        <None Include=".env.example"/>
-        <None Include=".gitignore"/>
-        <None Include="docker-compose.yml"/>
-        <None Include="docker-compose.prod.yml"/>
         <None Include="Dockerfile"/>
         <None Include="package.json"/>
         <None Include="package-lock.json"/>
     </ItemGroup>
 
     <ItemGroup>
+      <Content Include="..\..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
       <Content Include="..\..\.env">
         <Link>.env</Link>
+      </Content>
+      <Content Include="..\..\.env.example">
+        <Link>.env.example</Link>
+      </Content>
+      <Content Include="..\..\.gitignore">
+        <Link>.gitignore</Link>
+      </Content>
+      <Content Include="..\..\.gitleaks.toml">
+        <Link>.gitleaks.toml</Link>
+      </Content>
+      <Content Include="..\..\.pre-commit-config.yaml">
+        <Link>.pre-commit-config.yaml</Link>
+      </Content>
+      <Content Include="..\..\AGENTS.md">
+        <Link>AGENTS.md</Link>
+      </Content>
+      <Content Include="..\..\CLAUDE.md">
+        <Link>CLAUDE.md</Link>
+      </Content>
+      <Content Include="..\..\Directory.Build.props">
+        <Link>Directory.Build.props</Link>
+      </Content>
+      <Content Include="..\..\Directory.Packages.props">
+        <Link>Directory.Packages.props</Link>
+      </Content>
+      <Content Include="..\..\docker-compose.prod.yml">
+        <Link>docker-compose.prod.yml</Link>
+      </Content>
+      <Content Include="..\..\docker-compose.yml">
+        <Link>docker-compose.yml</Link>
+      </Content>
+      <Content Include="..\..\global.json">
+        <Link>global.json</Link>
+      </Content>
+      <Content Include="..\..\qodana.yaml">
+        <Link>qodana.yaml</Link>
       </Content>
     </ItemGroup>
 

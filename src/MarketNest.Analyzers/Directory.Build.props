@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <_RootPropsDir>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..\, 'Directory.Build.props'))</_RootPropsDir>
+  </PropertyGroup>
+  <Import Project="$(_RootPropsDir)\Directory.Build.props"
+          Condition="'$(_RootPropsDir)' != ''" />
+  <PropertyGroup>
+    <!-- Roslyn analyzers must target netstandard2.0 -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <LangVersion>latest</LangVersion>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <!-- Required by RS1036: enforce extended analyzer rules -->
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <!-- RS1038: code fix providers require Workspaces; this is intentional for a combined analyzer+codefix assembly -->
+    <NoWarn>$(NoWarn);RS1038</NoWarn>
+  </PropertyGroup>
+</Project>

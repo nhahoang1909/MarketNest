@@ -1,7 +1,8 @@
 ﻿# MarketNest — Domain Design & Business Rules
 
-> Version: 0.2 (Planning) | Status: Draft | Date: 2026-04
+> Version: 0.3 | Status: Draft | Date: 2026-04
 > Consolidated from: `domain-design.md` + `business-logic-requirements.md`
+> Updated: Added Promotions/Voucher domain (§3.8), Order financial calculation spec (§3.4–§3.5), updated invariants, domain events, and notification triggers.
 
 ---
 
@@ -16,6 +17,7 @@
 7. [Invariants Table](#7-invariants-table)
 8. [Notification Triggers](#8-notification-triggers)
 9. [User Settings & Preferences](#9-user-settings--preferences)
+10. [Order Financial Calculation Reference](#10-order-financial-calculation-reference)
 
 ---
 
@@ -39,13 +41,13 @@
 │         │            │  Order, OrderLine    │                                   │
 │         │            │  Fulfillment         │                                   │
 │         │            └──────────┬───────────┘                                   │
-│         │          ┌────────────┼────────────┐                                 │
-│         │  ┌───────▼──┐  ┌─────▼─────┐  ┌──▼──────────┐                      │
-│         │  │ Payments │  │  Reviews  │  │  Disputes   │                      │
-│         │  │ Payment  │  │ Review    │  │ Dispute     │                      │
-│         │  │ Payout   │  │ ReviewVote│  │ Message     │                      │
-│         │  │ Commission│ └───────────┘  │ Resolution  │                      │
-│         │  └──────────┘                 └─────────────┘                      │
+│         │     ┌──────────────────┼──────────────────┐                          │
+│         │  ┌──▼───────┐  ┌──────▼────┐  ┌──▼──────────┐  ┌───────────────┐   │
+│         │  │ Payments │  │  Reviews  │  │  Disputes   │  │  Promotions   │   │
+│         │  │ Payment  │  │ Review    │  │ Dispute     │  │  Voucher      │   │
+│         │  │ Payout   │  │ ReviewVote│  │ Message     │  │  VoucherUsage │   │
+│         │  └──────────┘  └───────────┘  │ Resolution  │  └───────────────┘   │
+│         │                               └─────────────┘                        │
 │         └────────────────────────► Notifications (cross-cutting)               │
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -198,14 +200,40 @@ Order (Aggregate Root)
 │       ├── VariantId, ProductTitle, VariantAttributes (snapshots)
 │       ├── UnitPrice: Money (immutable after Confirmed)
 │       ├── Quantity: int
-│       ├── LineTotal: Money (computed)
+│       ├── LineTotal: Money (UnitPrice × Quantity, computed)
 │       └── StoreId: Guid
 │
-└── Fulfillments: List<Fulfillment> (1 per seller)
-    └── Fulfillment
-        ├── StoreId, Status, TrackingNumber, TrackingUrl, ShippedAt
+├── Fulfillments: List<Fulfillment> (1 per seller)
+│   └── Fulfillment
+│       ├── StoreId, Status, TrackingNumber, TrackingUrl, ShippedAt
+│
+│  ── FINANCIAL FIELDS (snapshot at checkout, immutable after Confirmed) ──
+│
+├── GrossShippingFee: Money          ← total shipping fee before discounts
+├── PaymentMethod: PaymentMethod     ← { CreditCard | BankTransfer } (stub Phase 1)
+├── PaymentSurchargeRate: decimal    ← snapshot rate at checkout (e.g. 0.02 = 2%)
+├── PaymentSurcharge: Money          ← (NetProductAmount + NetShippingFee) × SurchargeRate
+│
+│  ── VOUCHER FIELDS (snapshot at checkout, see §3.8) ──
+│
+├── AppliedVouchers: List<AppliedVoucherSnapshot>   ← JSON column, snapshot at checkout
+├── PlatformProductDiscount: Money   ← platform voucher on ProductSubtotal (default Zero)
+├── PlatformShippingDiscount: Money  ← platform voucher on ShippingFee (default Zero)
+├── ShopProductDiscount: Money       ← Σ shop vouchers on ProductSubtotal (default Zero)
+├── ShopShippingDiscount: Money      ← Σ shop vouchers on ShippingFee (default Zero)
+│
+│  ── DERIVED TOTALS (computed once at checkout, stored as snapshots) ──
+│
+├── ProductSubtotal: Money           ← Σ LineTotals
+├── NetShippingFee: Money            ← max(GrossShippingFee - PlatformShippingDiscount - ShopShippingDiscount, 0)
+└── BuyerTotal: Money                ← canonical total buyer pays (see §10 for formula)
 
-Derived: Subtotal = sum LineTotals; Total = Subtotal + ShippingFee - Discount
+Derived formula (computed at checkout, immutable after Confirmed):
+  ProductSubtotal     = Σ LineTotal
+  NetProductAmount    = ProductSubtotal - PlatformProductDiscount - ShopProductDiscount
+  NetShippingFee      = max(GrossShippingFee - PlatformShippingDiscount - ShopShippingDiscount, 0)
+  PaymentSurcharge    = (NetProductAmount + NetShippingFee) × PaymentSurchargeRate
+  BuyerTotal          = NetProductAmount + NetShippingFee + PaymentSurcharge
 
 Domain Events:
   OrderPlacedEvent, OrderConfirmedEvent, OrderShippedEvent, OrderDeliveredEvent,
@@ -264,37 +292,69 @@ Domain Events:
 Payment (Aggregate Root)
 ├── PaymentId: Guid
 ├── OrderId, BuyerId: Guid
-├── Amount: Money
+├── ChargedAmount: Money             ← = Order.BuyerTotal (amount actually charged to buyer)
 ├── Method: PaymentMethod { CreditCard | BankTransfer } (stub Phase 1)
+├── SurchargeSnapshot: Money         ← snapshot from Order.PaymentSurcharge
 ├── Status: PaymentStatus { Pending | Captured | Refunded | Failed }
 ├── GatewayReference: string?
-│
-├── Commission
-│   ├── RateSnapshot: decimal (rate at order time — MUST snapshot)
-│   ├── CommissionAmount: Money
-│
-└── Payout?
-    ├── SellerId: Guid
-    ├── GrossAmount, CommissionDeducted, ProcessingFeeDeducted, NetAmount: Money
-    ├── Status: PayoutStatus { Pending | Processing | Paid | Failed | Clawback }
-    ├── ScheduledFor, ProcessedAt: DateTime?
+└── GatewayCost: Money               ← actual cost paid to gateway (2.9% + $0.30 stub) — internal
 
 Domain Events:
-  PaymentCapturedEvent, PaymentFailedEvent, PaymentRefundedEvent,
+  PaymentCapturedEvent, PaymentFailedEvent, PaymentRefundedEvent
+```
+
+> **Design change from v0.2:** `Amount` renamed to `ChargedAmount` for clarity. Commission is no longer part of Payment — it lives in the separate `Payout` aggregate. `ProcessingFee` renamed to `GatewayCost` (platform internal cost, not buyer-facing). The buyer-facing surcharge (`PaymentSurcharge`) lives on the Order aggregate.
+
+### 3.5.1 Payout Aggregate
+
+Payout is separated from Payment — it represents the **Platform ↔ Seller** relationship, independent of the **Buyer ↔ Platform** payment.
+
+```
+Payout (Aggregate Root)
+├── PayoutId: Guid
+├── OrderId: Guid
+├── SellerId: Guid
+│
+│  ── SNAPSHOT FIELDS (must be captured at Order placed time) ──
+│
+├── SellerSubtotal: Money            ← Σ LineTotal for this seller's items
+├── ShopProductDiscount: Money       ← shop voucher on products (this seller absorbs cost)
+├── CommissionRateSnapshot: decimal  ← MUST snapshot from Storefront.CommissionRate at order time
+│
+│  ── COMPUTED FIELDS (from snapshots) ──
+│
+├── CommissionBase: Money            ← SellerSubtotal - ShopProductDiscount
+├── CommissionAmount: Money          ← CommissionBase × CommissionRateSnapshot
+├── ShopShippingDiscount: Money      ← shop voucher on shipping (this seller absorbs cost)
+├── GrossShippingFee: Money          ← this seller's portion of shipping fee collected
+├── NetAmount: Money                 ← canonical payout to seller
+│
+├── Status: PayoutStatus { Pending | Processing | Paid | Failed | Clawback }
+├── ScheduledFor, ProcessedAt: DateTime?
+
+NetAmount formula:
+  CommissionBase     = SellerSubtotal - ShopProductDiscount
+  CommissionAmount   = CommissionBase × CommissionRateSnapshot
+  NetAmount          = CommissionBase - CommissionAmount - ShopShippingDiscount + GrossShippingFee
+
+Domain Events:
   PayoutScheduledEvent, PayoutProcessedEvent, PayoutClawbackRequiredEvent
 ```
 
-**Commission Engine:**
+**Commission rules:**
 ```
-Platform Commission = Order Subtotal × Commission Rate (default: 10%)
-Seller Payout = Order Subtotal - Commission - Processing Fee (2.9% + $0.30 stub)
-Payout batch runs daily at 02:00 UTC
+CommissionBase = SellerSubtotal - ShopProductDiscount  (shop voucher reduces base)
+CommissionAmount = CommissionBase × CommissionRateSnapshot (default: 10%)
+Platform voucher does NOT reduce CommissionBase — platform absorbs that cost separately
+Commission does NOT apply to ShippingFee or PaymentSurcharge
+CommissionRateSnapshot MUST be captured at Order placed — rate changes don't affect existing orders
+Payout batch runs daily at 02:00 UTC after order reaches COMPLETED
 ```
 
 **Refund Rules:**
-- Full refund on CANCELLED orders: immediately
+- Full refund on CANCELLED orders: immediately (Payment.ChargedAmount returned)
 - Partial refund after dispute: Admin-specified amount
-- Refunds reverse payout if already disbursed (Clawback)
+- Refunds reverse payout if already disbursed (Clawback → `PayoutClawbackRequiredEvent`)
 
 ### 3.6 Review Aggregate
 
@@ -351,6 +411,107 @@ Domain Events:
 - Both parties can submit evidence (text + up to 5 photos)
 - All messages immutable (audit trail)
 
+### 3.8 Voucher Aggregate (Promotions Module)
+
+> **Module:** `MarketNest.Promotions` — bounded context: `promotions` schema (new in Phase 1).
+> **Spec source:** `docs/newlogics/voucher-domain-plan.md` (full design including DB schema, API contracts, validation rules, checkout flow).
+
+```
+Voucher (Aggregate Root)
+├── VoucherId: Guid
+├── Code: VoucherCode                ← Value Object, unique, uppercase, 6–20 chars
+├── Scope: VoucherScope              ← { Platform | Shop }
+├── StoreId: Guid?                   ← null if Scope=Platform; required if Scope=Shop
+├── CreatedByUserId: Guid            ← AdminId or SellerId
+│
+├── DiscountType: VoucherDiscountType  ← { PercentageOff | FixedAmount }
+├── ApplyFor: VoucherApplyFor          ← { ProductSubtotal | ShippingFee }
+├── DiscountValue: decimal             ← % (1–100) if PercentageOff, amount ($) if FixedAmount
+├── MaxDiscountCap: Money?             ← cap for PercentageOff on ProductSubtotal only
+│
+├── MinOrderValue: Money?            ← minimum ProductSubtotal to apply (null = no minimum)
+├── EffectiveDate: DateTime          ← UTC
+├── ExpiryDate: DateTime             ← UTC
+│
+├── UsageLimit: int?                 ← total uses across platform (null = unlimited)
+├── UsageLimitPerUser: int?          ← max per user (null = unlimited)
+├── UsageCount: int                  ← incremented on apply (optimistic concurrency)
+│
+├── Status: VoucherStatus            ← { Draft | Active | Paused | Expired | Depleted }
+├── CreatedAt, UpdatedAt: DateTime
+│
+└── Usages: List<VoucherUsage>       ← child entity, 1 record per application
+
+VoucherUsage (Child Entity)
+├── UsageId: Guid
+├── VoucherId: Guid
+├── OrderId: Guid                    ← logical FK to Orders (no DB FK across schemas)
+├── UserId: Guid                     ← BuyerId
+├── DiscountApplied: Money           ← snapshot of actual discount applied
+└── UsedAt: DateTime
+
+Domain Events:
+  VoucherCreatedEvent, VoucherActivatedEvent, VoucherPausedEvent,
+  VoucherExpiredEvent (background job), VoucherDepletedEvent (background job),
+  VoucherAppliedEvent, VoucherUsageReversedEvent (on order cancel/refund)
+```
+
+#### AppliedVoucherSnapshot (embedded in Order as JSON)
+
+```csharp
+public record AppliedVoucherSnapshot(
+    Guid VoucherId,
+    string Code,
+    VoucherScope Scope,
+    Guid? StoreId,
+    VoucherDiscountType DiscountType,
+    VoucherApplyFor ApplyFor,
+    decimal DiscountValue,
+    Money ProductDiscountApplied,   // actual discount on products
+    Money ShippingDiscountApplied   // actual discount on shipping
+);
+```
+
+#### Voucher Stacking Rules
+
+- Max **1 Platform voucher** per checkout (cross-seller, platform absorbs cost)
+- Max **1 Shop voucher per shop** per checkout (per-seller, seller absorbs cost)
+- Multi-seller orders: each shop may have its own independent shop voucher
+
+#### Voucher Discount Attribution
+
+| Voucher Type | ApplyFor | Who absorbs cost | Effect on CommissionBase |
+|---|---|---|---|
+| Platform | ProductSubtotal | Platform | None (commission on gross seller subtotal) |
+| Platform | ShippingFee | Platform | None |
+| Shop | ProductSubtotal | Seller | CommissionBase = SellerSubtotal − ShopProductDiscount |
+| Shop | ShippingFee | Seller | CommissionBase unchanged (shipping not in commission) |
+
+#### Two-axis Discount Model
+
+```
+VoucherDiscountType (how discount is calculated)
+  ├── PercentageOff  → discount = target × rate/100 (capped by MaxDiscountCap if set)
+  └── FixedAmount    → discount = min(DiscountValue, target)
+
+VoucherApplyFor (what the discount applies to)
+  ├── ProductSubtotal  → reduces product amount
+  └── ShippingFee      → reduces shipping fee (e.g. 100% = free shipping)
+
+Discount never makes a component negative:
+  ProductDiscount ≤ applicable ProductSubtotal
+  ShippingDiscount ≤ GrossShippingFee
+```
+
+**Business Rules (summary — full rules in `voucher-domain-plan.md §5`):**
+- Admin creates Platform vouchers; Seller creates Shop vouchers for their own store only
+- Voucher starts in `Draft` → must be explicitly Activated
+- `MinOrderValue` always measured against ProductSubtotal regardless of `ApplyFor`
+- `MaxDiscountCap` only valid for `PercentageOff` + `ProductSubtotal` combination
+- Voucher with existing `VoucherUsage` records: `DiscountType`, `DiscountValue`, `MinOrderValue` are immutable
+- Auto-expire background job runs hourly; sets `Status = Expired` or `Depleted`
+- On order CANCEL/REFUND: `VoucherUsage` record kept (audit), `UsageCount` decremented
+
 ---
 
 ## 4. Value Objects
@@ -393,6 +554,42 @@ public record Rating { public int Value { get; } /* validated 1-5 */ }
 
 // Sku — platform-unique product variant code
 public record Sku { public string Value { get; } /* validated, uppercased, max 50 */ }
+
+// VoucherCode — uppercase alphanumeric + hyphens, globally unique
+public record VoucherCode
+{
+    public string Value { get; }
+    public VoucherCode(string value)
+    {
+        var upper = value?.Trim().ToUpperInvariant() ?? "";
+        if (!Regex.IsMatch(upper, @"^[A-Z0-9\-]{6,20}$"))
+            throw new DomainException("Voucher code must be 6-20 uppercase alphanumeric/hyphen characters");
+        Value = upper;
+    }
+    public static VoucherCode Generate() =>
+        new(Guid.NewGuid().ToString("N")[..10].ToUpperInvariant());
+}
+
+// VoucherDiscountType — how the discount is calculated
+public enum VoucherDiscountType { PercentageOff = 0, FixedAmount = 1 }
+
+// VoucherApplyFor — what component of the order is discounted
+public enum VoucherApplyFor { ProductSubtotal = 0, ShippingFee = 1 }
+
+// VoucherScope — who created it and what it applies to
+public enum VoucherScope { Platform = 0, Shop = 1 }
+
+// DiscountResult — output of IVoucherService.ValidateAsync()
+public record DiscountResult(
+    bool IsValid,
+    Money ProductDiscount,     // Zero when ApplyFor = ShippingFee
+    Money ShippingDiscount,    // Zero when ApplyFor = ProductSubtotal
+    string? ErrorReason = null
+)
+{
+    public static DiscountResult Fail(string reason) =>
+        new(false, Money.Zero, Money.Zero, reason);
+}
 ```
 
 ---
@@ -406,7 +603,46 @@ public record Sku { public string Value { get; } /* validated, uppercased, max 5
 - Prohibited categories: configurable list
 - Admin can suspend any Storefront or Product with reason
 - Commission rate configurable per Seller; default 10%
-- Rate changes take effect on Orders created after change date
+- Rate changes take effect on Orders created after change date (snapshot at order time)
+- Admin can Pause any voucher (Platform or Shop)
+
+### 5.2 Voucher Business Rules
+
+**Creation:**
+- Admin creates `Scope = Platform` vouchers only
+- Seller creates `Scope = Shop` vouchers only; `StoreId` must match their own store
+- `EffectiveDate` < `ExpiryDate`; `ExpiryDate` must be in the future
+- Validity window max 2 years
+- `DiscountValue` > 0 always; for `PercentageOff` must be in [1, 100]
+- `MaxDiscountCap` only set for `PercentageOff` + `ProductSubtotal` combination
+- `Code` globally unique (case-insensitive, stored uppercase)
+- Created in `Draft` state — must be explicitly Activated
+
+**Apply at Checkout (validate sequence):**
+1. Code exists → Status = Active → within EffectiveDate..ExpiryDate
+2. UsageCount < UsageLimit (if limited)
+3. Per-user count < UsageLimitPerUser (if limited)
+4. Scope check: Shop voucher only applies to items from matching StoreId
+5. MinOrderValue ≤ applicable ProductSubtotal
+6. Calculate discount: see two-axis model in §3.8
+
+**Stacking:** 1 Platform + 1 Shop per shop per checkout. No 2 Platform vouchers. No 2 Shop vouchers from same store.
+
+**Immutability:** After first VoucherUsage, `DiscountType`, `DiscountValue`, `MinOrderValue` are locked. `ExpiryDate` can be shortened but not extended.
+
+**Auto-expiry:** Background job (hourly) sets `Status = Expired` when past `ExpiryDate`, or `Status = Depleted` when `UsageCount ≥ UsageLimit`.
+
+**Cancel/Refund:** VoucherUsage record kept; `UsageCount` decremented.
+
+### 5.3 Financial Calculation Rules
+
+- `PaymentSurchargeRate` is Admin-configured per PaymentMethod; snapshot at checkout
+- `CommissionRateSnapshot` is snapshot from `Storefront.CommissionRate` at Order placed
+- All financial components computed once at checkout and stored as snapshots — never recalculated
+- `BuyerTotal ≥ 0`, `NetShippingFee ≥ 0`, `NetProductAmount ≥ 0` (discount capped at component value)
+- `BuyerTotal` must equal `Payment.ChargedAmount`
+- Platform voucher cost does not affect CommissionBase
+- Commission does not apply to ShippingFee or PaymentSurcharge
 
 ---
 
@@ -431,23 +667,65 @@ public record Sku { public string Value { get; } /* validated, uppercased, max 5
 | `DisputeOpenedEvent` | Dispute | Orders (set DISPUTED), Notifications |
 | `DisputeEscalatedEvent` | Dispute | Notifications (admin) |
 | `DisputeResolvedEvent` | Dispute | Orders, Payments |
+| `VoucherCreatedEvent` | Voucher | Notifications (seller confirmation) |
+| `VoucherActivatedEvent` | Voucher | — |
+| `VoucherPausedEvent` | Voucher | Notifications (seller — if paused by Admin) |
+| `VoucherExpiredEvent` | Background Job | Notifications (seller) |
+| `VoucherDepletedEvent` | Background Job | Notifications (seller) |
+| `VoucherAppliedEvent` | VoucherService | — (audit log) |
+| `VoucherUsageReversedEvent` | Order cancel handler | Promotions (decrement UsageCount) |
 
 ---
 
 ## 7. Invariants Table
 
+### Core Invariants
+
 | # | Invariant | Enforced In |
 |---|-----------|-------------|
 | 1 | QuantityAvailable ≥ 0 | DB check constraint + Application |
-| 2 | Order total immutable after CONFIRMED | Domain method guard |
+| 2 | `BuyerTotal` (all financial fields) immutable after CONFIRMED | Domain method guard |
 | 3 | Payout only for COMPLETED order | Application + Payments domain |
 | 4 | Review only by buyer of COMPLETED order | ReviewGate service |
 | 5 | Dispute only within 3 days of DELIVERED | Domain method guard |
-| 6 | Commission rate snapshotted at order time | Commission entity |
+| 6 | `CommissionRateSnapshot` snapshotted at order placed time | Payout aggregate |
 | 7 | Storefront slug immutable after activation | StorefrontSlug VO + Domain guard |
 | 8 | Price of OrderLine immutable after CONFIRMED | OrderLine private setters |
 | 9 | Max 1 open dispute per Order | DB unique constraint + Domain guard |
 | 10 | Seller cannot modify order prices after CONFIRMED | Order state guard |
+
+### Voucher Invariants
+
+| # | Invariant | Enforced In |
+|---|-----------|-------------|
+| V1 | VoucherCode unique across platform | DB unique index + Domain check |
+| V2 | UsageCount never exceeds UsageLimit | Optimistic concurrency + Domain guard |
+| V3 | Shop voucher only applies to matching StoreId | IVoucherService.ValidateAsync |
+| V4 | Admin cannot create Shop vouchers | Application layer authorization |
+| V5 | Seller cannot create Platform vouchers | Application layer authorization |
+| V6 | DiscountType/ApplyFor/DiscountValue immutable after first VoucherUsage | Domain guard (Usages.Any()) |
+| V7 | EffectiveDate < ExpiryDate | Domain constructor + FluentValidation |
+| V8 | DiscountValue in [1, 100] if PercentageOff | Domain constructor |
+| V9 | ShippingDiscount ≤ GrossShippingFee | IVoucherService calculation |
+| V10 | ProductDiscount ≤ applicable ProductSubtotal | IVoucherService calculation |
+| V11 | MaxDiscountCap only set for PercentageOff + ProductSubtotal | Domain constructor guard |
+| V12 | Max 1 Platform voucher per checkout | CheckoutHandler validation |
+| V13 | Max 1 Shop voucher per shop per checkout | CheckoutHandler validation |
+
+### Financial Invariants
+
+| # | Invariant | Enforced In |
+|---|-----------|-------------|
+| F1 | `BuyerTotal ≥ 0` | Domain computation guard |
+| F2 | `NetShippingFee ≥ 0` | Voucher calculation |
+| F3 | `NetProductAmount ≥ 0` | Voucher calculation |
+| F4 | `PaymentSurchargeRate` snapshot at checkout, not changeable after Confirmed | Order domain guard |
+| F5 | `CommissionRateSnapshot` snapshot at Order placed | Payout aggregate |
+| F6 | `SellerNetPayout ≥ 0` — if negative, flag alert | Payout calculation + alerting |
+| F7 | `BuyerTotal = Payment.ChargedAmount` | Payment creation guard |
+| F8 | `PaymentSurcharge` calculated after vouchers are applied, not before | Order calculation sequence |
+| F9 | Platform voucher discount does not affect `CommissionBase` | Payout calculation |
+| F10 | Commission not applied to `GrossShippingFee` or `PaymentSurcharge` | Payout calculation |
 
 ---
 
@@ -469,6 +747,9 @@ public record Sku { public string Value { get; } /* validated, uppercased, max 5
 | Review left on storefront | Seller | Email (digest, daily) | `NotifyReviewReceived` |
 | Password reset requested | User | Email | Always sent (security) |
 | New login from unknown device | User | Email | Always sent (security) |
+| Seller's voucher paused by Admin | Seller | Email + In-app | `NotifyVoucherPaused` |
+| Voucher auto-expired | Seller | In-app | `NotifyVoucherExpired` |
+| Voucher depleted (all uses consumed) | Seller | In-app | `NotifyVoucherDepleted` |
 
 ---
 
@@ -802,3 +1083,108 @@ Each tab: HTMX GET loads partial → form submission POST → success toast + re
 - [ ] Payment methods (requires payment gateway integration)
 - [ ] Wishlist sharing via hashed URL
 - [ ] Favorite seller sale notifications
+
+---
+
+## 10. Order Financial Calculation Reference
+
+> **Source:** `docs/newlogics/order-financial-calculation.md` — full design with end-to-end example, gap analysis, and implementation checklist.
+
+### 10.1 Two Perspectives
+
+Every order involves two completely separate financial flows that must never be mixed:
+
+| Perspective | Question | Key components |
+|---|---|---|
+| **Buyer pays** | How much does the buyer pay? | ProductSubtotal − discounts + NetShippingFee + PaymentSurcharge |
+| **Seller receives** | How much does the seller get? | SellerSubtotal − ShopVoucherDiscount − Commission − ShopShippingDiscount + GrossShippingFee |
+
+> **Rule:** Commission is a Platform ↔ Seller relationship. PaymentSurcharge is a Buyer ↔ Platform relationship. Never mix these flows.
+
+### 10.2 Canonical Formula
+
+```
+═══════════════════════════════════════════════════════
+BUYER PAYS  (Order.BuyerTotal)
+═══════════════════════════════════════════════════════
+
+ProductSubtotal              = Σ (UnitPrice × Qty)
+  - PlatformProductDiscount  = platform voucher on products
+  - ShopProductDiscount      = Σ shop voucher on products
+= NetProductAmount
+
+GrossShippingFee             = shipping (snapshot at checkout)
+  - PlatformShippingDiscount = platform voucher on shipping
+  - ShopShippingDiscount     = Σ shop voucher on shipping
+= NetShippingFee             (≥ 0)
+
+PaymentSurcharge             = (NetProductAmount + NetShippingFee) × SurchargeRate
+
+─────────────────────────────────────────────────────
+BuyerTotal = NetProductAmount + NetShippingFee + PaymentSurcharge
+
+
+═══════════════════════════════════════════════════════
+SELLER RECEIVES  (per seller — Payout.NetAmount)
+═══════════════════════════════════════════════════════
+
+SellerSubtotal               = Σ LineTotal for this seller's items
+  - ShopProductDiscount      = shop voucher on products (this seller)
+= CommissionBase
+
+  - CommissionAmount         = CommissionBase × CommissionRateSnapshot
+  - ShopShippingDiscount     = shop voucher on shipping (this seller)
+  + GrossShippingFee         = this seller's shipping fee collected
+
+─────────────────────────────────────────────────────
+SellerNetPayout = CommissionBase - CommissionAmount - ShopShippingDiscount + GrossShippingFee
+
+
+═══════════════════════════════════════════════════════
+PLATFORM P&L  (per order)
+═══════════════════════════════════════════════════════
+
+Revenue:
+  + Σ CommissionAmount        (from all sellers)
+  + PaymentSurcharge          (collected from buyer)
+
+Cost:
+  - PlatformProductDiscount   (platform voucher cost — marketing spend)
+  - PlatformShippingDiscount  (platform voucher cost on shipping)
+  - PaymentGatewayCost        (gateway fee, e.g. 2.9% + $0.30 — internal)
+
+─────────────────────────────────────────────────────
+PlatformNet = Σ CommissionAmount + PaymentSurcharge
+            - PlatformProductDiscount - PlatformShippingDiscount
+            - PaymentGatewayCost
+```
+
+### 10.3 PaymentSurcharge Configuration
+
+- `SurchargeRate` is Admin-configured per `PaymentMethod` in master data
+- Stored as `PaymentSurchargeRate` snapshot on the Order at checkout
+- Example: CreditCard = 2%, BankTransfer = 0%
+- Surcharge is displayed as a separate line in checkout summary (not hidden)
+- Surcharge does NOT affect CommissionBase
+
+### 10.4 Key Design Decisions
+
+| Decision | Choice | Reason |
+|---|---|---|
+| Shipping fee model | Platform-mediated (Option A) | Platform collects shipping, passes to seller — simpler Phase 1 |
+| Surcharge base | Full `BuyerPayableBeforeSurcharge` (product + shipping) | Matches real gateway cost basis |
+| CommissionBase when shop voucher on products | `SellerSubtotal - ShopProductDiscount` | Seller absorbs discount so commission follows net |
+| CommissionBase when platform voucher | `SellerSubtotal` (gross) | Platform absorbs its own marketing cost |
+| Snapshot strategy | All fields computed once at checkout | Prevents retroactive changes; matches OrderLine UnitPrice pattern |
+
+### 10.5 Phase 1 Implementation Checklist
+
+- [ ] Update `Order` aggregate: add `GrossShippingFee`, `PaymentSurchargeRate`, `PaymentSurcharge`, `BuyerTotal`
+- [ ] Update `Payment` aggregate: `Amount` → `ChargedAmount`, add `GatewayCost`, `SurchargeSnapshot`
+- [ ] Separate `Payout` aggregate from `Payment` with proper fields (§3.5.1)
+- [ ] Implement `OrderFinancialCalculator` service: receives cart + vouchers + paymentMethod → returns all components
+- [ ] Add `PaymentSurchargeRate` to master data config (Admin-configurable per PaymentMethod)
+- [ ] Snapshot `CommissionRateSnapshot` from `Storefront.CommissionRate` at Order placed
+- [ ] `CheckoutSummaryDto`: expose full financial breakdown to buyer before confirm
+- [ ] Unit tests: end-to-end example from `order-financial-calculation.md §7` must pass
+- [ ] Unit tests: edge cases (discount > subtotal, surcharge = 0, no voucher, free shipping)

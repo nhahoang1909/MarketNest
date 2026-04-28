@@ -325,6 +325,31 @@ public enum LogEventId
 
     #endregion
 
+    #region Promotions — 14000-14999
+
+    // Infrastructure layer — 14000-14199 (reserved for Promotions DbContext, repositories)
+
+    // Application Handlers — 14200-14299
+    PromotionsCreateVoucherStart = 14200,
+    PromotionsCreateVoucherSuccess = 14201,
+    PromotionsCreateVoucherError = 14202,
+    PromotionsActivateVoucherStart = 14210,
+    PromotionsActivateVoucherSuccess = 14211,
+    PromotionsActivateVoucherError = 14212,
+    PromotionsPauseVoucherStart = 14220,
+    PromotionsPauseVoucherSuccess = 14221,
+    PromotionsPauseVoucherError = 14222,
+
+    // Timer Jobs — 14300-14399
+    PromotionsExpiryJobStart = 14300,
+    PromotionsExpiryJobExpired = 14301,
+    PromotionsExpiryJobDepleted = 14302,
+    PromotionsExpiryJobError = 14303,
+
+    // Reserved — 14400-14999
+
+    #endregion
+
     #region Web / Global Pages — 13000-13999
 
     // Global Pages (Error, Index, NotFound) — 13000-13019

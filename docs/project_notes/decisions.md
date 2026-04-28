@@ -388,6 +388,71 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 
 ---
 
+### ADR-015: Voucher/Promotions Domain Design — Two-Axis Discount Model, Single Table (2026-04-27)
+
+**Context:**
+- MarketNest needs promotions for both platform-wide campaigns (Admin) and per-shop discounts (Seller)
+- Discount types span percentage-off and fixed amounts; targets span product subtotal and shipping fees
+- Need clear ownership of discount cost (who absorbs: Platform or Seller)
+
+**Decision:**
+- New `MarketNest.Promotions` module with `promotions` PostgreSQL schema
+- **Two-axis model**: `VoucherDiscountType` (PercentageOff | FixedAmount) × `VoucherApplyFor` (ProductSubtotal | ShippingFee)
+  - "Free shipping" = `PercentageOff 100%` on `ShippingFee` — no separate enum value needed
+- **Single table** discriminated by `Scope` (Platform | Shop) — ~90% shared schema; avoids two-table join for "all valid vouchers"
+- **Discount attribution**: Platform vouchers → Platform absorbs cost; Shop vouchers → Seller absorbs cost
+- Shop voucher on ProductSubtotal reduces CommissionBase (seller bears full discount)
+- Platform voucher never affects CommissionBase
+- **Checkout**: max 1 Platform voucher + 1 Shop voucher per shop per checkout
+- **Snapshot**: `AppliedVoucherSnapshot` embedded as JSONB on Order — cross-module, no DB FK to Promotions
+- **Immutability**: after first `VoucherUsage`, core discount fields are locked
+
+**Alternatives Considered:**
+- Separate `PlatformVoucher` + `ShopVoucher` tables → Rejected: nearly identical schema; harder to query "all eligible vouchers"
+- `FreeShipping` as a separate `VoucherDiscountType` → Rejected: conflates calculation method with target object (Single Responsibility violation)
+- Discount in Orders module → Rejected: promotions is a distinct bounded context with its own lifecycle
+
+**Consequences:**
+- ✅ Expressive: any real-world discount modeled by two orthogonal axes
+- ✅ Clear cost attribution for payout calculation
+- ✅ Promotions is an independent module — extractable to microservice in Phase 3
+- ❌ Checkout handler must coordinate with Promotions module (sync call via `IVoucherService`)
+
+---
+
+### ADR-016: Order Financial Calculation — Two-Perspective Model with Canonical Formula (2026-04-27)
+
+**Context:**
+- Existing `domain-and-business-rules.md` had `Total = Subtotal + ShippingFee - Discount` — insufficient with vouchers and payment surcharge
+- Need a precise definition of what "total" means from buyer vs seller perspective
+- Commission scope was unclear (was it on gross or net subtotal when vouchers apply?)
+
+**Decision:**
+- **Two-perspective model** (never mix):
+  - **Buyer perspective**: `BuyerTotal = NetProductAmount + NetShippingFee + PaymentSurcharge`
+  - **Seller perspective**: `NetAmount = CommissionBase - CommissionAmount - ShopShippingDiscount + GrossShippingFee`
+- **PaymentSurcharge** introduced: buyer-facing surcharge for card payments (e.g. 2%), Admin-configured per PaymentMethod — displayed as a separate checkout line
+- **CommissionBase** depends on voucher type: `SellerSubtotal - ShopProductDiscount` (shop voucher on products); `SellerSubtotal` (platform voucher — platform absorbs)
+- **Shipping model**: Platform-mediated (Option A) — platform collects `GrossShippingFee`, remits to seller minus `ShopShippingDiscount`
+- All financial components **computed once at checkout and stored as snapshots** — no recalculation (same pattern as `OrderLine.UnitPrice`)
+- `Payment.Amount` renamed to `Payment.ChargedAmount`; `Payout` separated from `Payment` as its own aggregate
+- `Gateway cost` (e.g. 2.9% + $0.30) is **internal platform cost** — separate from buyer-facing `PaymentSurcharge`
+
+**Alternatives Considered:**
+- Keep `Total = Subtotal + ShippingFee - Discount` → Rejected: doesn't account for payment surcharge or multi-voucher breakdown
+- Surcharge absorbed into product price → Rejected: misleading to buyer; complicates accounting
+- CommissionBase always on gross subtotal → Rejected: seller would pay commission on money they gave away via shop voucher
+- Option B shipping (buyer pays carrier directly) → Rejected: complex in Phase 1; platform-mediated is simpler
+
+**Consequences:**
+- ✅ Precise, auditable: every financial component has a named field with a snapshot
+- ✅ No ambiguity: BuyerTotal vs SellerNetPayout are clearly separated
+- ✅ Supports any future fee types (just add a new snapshot field)
+- ❌ More fields on Order aggregate (but all are snapshot fields, not computed live)
+- ❌ `SellerNetPayout` can theoretically go negative if commission + shop voucher > subtotal — requires alerting (F6)
+
+---
+
 ### ADR-014: [LoggerMessage] Source-Generated Delegates as Mandatory Logging Pattern (2026-04-26)
 
 **Status**: Implemented ✅ (2026-04-27)

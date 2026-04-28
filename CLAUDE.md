@@ -130,6 +130,7 @@ All located in `docs/` — read before implementing any feature:
 | `docs/frontend-guide.md` | Frontend stack, page inventory, HTMX/Alpine patterns, component library, BE-FE contracts |
 | `docs/code-rules.md` | Naming conventions, C# idioms, DDD principles, banned patterns |
 | `docs/devops-requirements.md` | Docker Compose topology, GitHub Actions, K8s manifests |
+| `docs/analyzers.md` | Roslyn analyzer reference: all 17 MN rules, suppression patterns, adding new rules |
 
 ## Phase 1 Exit Criteria (Month 3)
 
