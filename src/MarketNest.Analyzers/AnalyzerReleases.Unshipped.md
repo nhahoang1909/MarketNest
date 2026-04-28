@@ -14,3 +14,4 @@ MN014 | Naming | Warning | HandlerClassNamingConvention
 MN015 | Naming | Warning | EventRecordNamingConvention
 MN017 | AsyncRules | Warning | UnnecessaryTaskFromResult
 MN011 | AsyncRules | Warning | PublicAsyncApiMissingCancellationToken
+MN008 | Architecture | Error | NamespaceMustBeFlatLayerLevel
