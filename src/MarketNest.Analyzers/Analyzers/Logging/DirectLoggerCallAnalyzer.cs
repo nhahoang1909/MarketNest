@@ -41,7 +41,7 @@ public sealed class DirectLoggerCallAnalyzer : DiagnosticAnalyzer
         var typeInfo = context.SemanticModel.GetTypeInfo(memberAccess.Expression);
         var typeName = typeInfo.Type?.OriginalDefinition?.ToDisplayString() ?? string.Empty;
 
-        if (!typeName.Contains("ILogger", StringComparison.Ordinal)) return;
+        if (typeName.IndexOf("ILogger", StringComparison.Ordinal) < 0) return;
 
         context.ReportDiagnostic(Diagnostic.Create(Rule, invocation.GetLocation(), methodName));
     }
