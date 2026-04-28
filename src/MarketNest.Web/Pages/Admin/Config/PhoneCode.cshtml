@@ -1,0 +1,86 @@
+﻿@page "/admin/config/phone-code"
+@model MarketNest.Web.Pages.Admin.Config.PhoneCodeModel
+@{
+  Layout = "_LayoutAdmin";
+  ViewData["Title"] = "Telephone Codes";
+}
+
+<div class="flex gap-5 items-start">
+  <partial name="Navigation/_ConfigSubSidebar"/>
+
+  <div class="flex-1 min-w-0 space-y-4">
+    <!-- Header -->
+    <div class="flex items-end justify-between gap-4">
+      <div>
+        <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">— Reference data</p>
+        <h1 class="text-3xl font-bold text-slate-900 mt-1" style="font-family:@AppConstants.Fonts.DisplayShort">Telephone Codes</h1>
+        <p class="text-[13px] text-slate-500 mt-2 max-w-xl">
+          International dialing codes and validation patterns. Used by the phone-input field across signup and checkout.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <span class="px-3.5 py-2 rounded-full text-[11px] font-bold tracking-wider uppercase bg-slate-100 text-slate-500">
+          <span style="color:@AppConstants.Colors.Accent">●</span>
+          @Model.Items.Count active
+        </span>
+      </div>
+    </div>
+
+    <!-- Search bar -->
+    <div class="p-2.5 rounded-2xl bg-white border border-slate-200/80 flex items-center gap-2 flex-wrap">
+      <div class="flex-1 min-w-[220px] h-[38px] px-3.5 flex items-center gap-2.5 rounded-full bg-slate-50">
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
+        </svg>
+        <input type="text" placeholder="Search by code or country..."
+               class="flex-1 bg-transparent border-0 outline-none text-[13px] text-slate-700 placeholder:text-slate-400"
+               disabled/>
+      </div>
+      <span class="ml-auto text-xs text-slate-400">@Model.Items.Count results</span>
+    </div>
+
+    <!-- Data table -->
+    <div class="rounded-2xl bg-white border border-slate-200/80 overflow-hidden">
+      <div class="grid gap-3 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400 border-b border-slate-100 bg-slate-50/50"
+           style="grid-template-columns: 0.8fr 1.4fr 0.8fr 0.8fr 0.6fr 0.9fr;">
+        <span>Dial</span>
+        <span>Country</span>
+        <span>Code</span>
+        <span>Country Code</span>
+        <span>Sort</span>
+        <span>Status</span>
+      </div>
+
+      @if (!Model.Items.Any())
+      {
+        <partial name="Display/_EmptyState" view-data='@(new ViewDataDictionary(ViewData) { { "Title", "No phone codes found" }, { "Message", "No phone country code records exist yet." } })'/>
+      }
+      else
+      {
+        @for (var i = 0; i < Model.Items.Count; i++)
+        {
+          var item = Model.Items[i];
+          <div class="grid gap-3 px-4 py-3.5 items-center border-b border-slate-50 @(i % 2 == 1 ? "bg-slate-50/30" : "")"
+               style="grid-template-columns: 0.8fr 1.4fr 0.8fr 0.8fr 0.6fr 0.9fr;">
+            <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-bold mn-mono"
+                  style="background:@AppConstants.Colors.Ink; color:white;">
+              @item.DialCode
+            </span>
+            <span class="text-[13px] font-semibold text-slate-800">@item.Label</span>
+            <span class="mn-mono text-[12px] text-slate-500">@item.Code</span>
+            <span class="mn-mono text-[12px] text-slate-500">@item.CountryCode</span>
+            <span class="mn-mono text-[12px] text-slate-500">@item.SortOrder</span>
+            <div>
+              <partial name="Display/_StatusBadge" view-data='@(new ViewDataDictionary(ViewData) { { "Status", "Active" } })'/>
+            </div>
+          </div>
+        }
+      }
+
+      <div class="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50/50 text-[12px] text-slate-400">
+        <span>Showing <strong class="text-slate-600">@Model.Items.Count</strong> records</span>
+      </div>
+    </div>
+  </div>
+</div>
+

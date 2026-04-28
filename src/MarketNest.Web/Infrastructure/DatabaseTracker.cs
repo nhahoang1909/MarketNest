@@ -189,6 +189,17 @@ public sealed partial class DatabaseTracker(
         Log.DebugSeedVersionSaved(logger, seederName, version);
     }
 
+    /// <summary>Deletes all seed version records so all seeders re-run on next startup.</summary>
+    public async Task ClearAllSeedVersionsAsync(CancellationToken ct = default)
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync(ct);
+
+        const string sql = $"DELETE FROM {Schema}.{SeedTable}";
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
     private static partial class Log
     {
         [LoggerMessage((int)LogEventId.DbTrackerTablesEnsured, LogLevel.Debug,

@@ -19,8 +19,8 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 
 ## Current Phase
 
-- **Phase**: 1 — Modular Monolith (implementation in progress as of 2026-04-25)
-- **Branch**: `feature/foundation`
+- **Phase**: 1 — Modular Monolith (implementation in progress as of 2026-04-29)
+- **Branch**: `p1-main-nhahoang` (working branch; PRs target `p1-main`)
 - **Target**: Phase 1 exit by month 3 (real user can browse → register → create storefront → list product → another user buys → order fulfilled)
 
 ---
@@ -29,17 +29,25 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 
 | Project | Purpose |
 |---------|---------|
-| `src/MarketNest.Core` | Shared kernel: base classes, value objects, Result<T,Error> |
-| `src/MarketNest.Identity` | Auth: users, roles, JWT, refresh tokens |
+| `src/Base/MarketNest.Base.Api` | Base API controller abstractions (`ReadApiV1ControllerBase`, `WriteApiV1ControllerBase`) |
+| `src/Base/MarketNest.Base.Common` | Shared contracts: `IBaseQuery`, `ICacheService`, `CacheKeys`, cross-module service interfaces, `IReferenceDataReadService`, Tier-2 config contracts |
+| `src/Base/MarketNest.Base.Domain` | Shared domain primitives: `Entity<T>`, `AggregateRoot`, `ValueObject`, `ReferenceData` base |
+| `src/Base/MarketNest.Base.Infrastructure` | Shared infra: `IAppLogger<T>`, `AppLogger<T>`, `LogEventId` enum, `BaseRepository`, `BaseQuery` |
+| `src/Base/MarketNest.Base.Utility` | Utility helpers: slug generation, date extensions |
+| `src/MarketNest.Core` | Shared kernel: `Result<T,Error>`, `Error`, CQRS interfaces, `IModuleDbContext`, `IDataSeeder`, validation extensions, domain constants, status names |
+| `src/MarketNest.Identity` | Auth: users, roles, JWT, refresh tokens, user preferences, notification preferences |
 | `src/MarketNest.Catalog` | Storefronts, products, variants, inventory |
 | `src/MarketNest.Cart` | Cart, CartItem, Redis-backed reservation |
-| `src/MarketNest.Orders` | Orders, order lines, fulfillment, shipment state machine |
-| `src/MarketNest.Payments` | Payments, payouts, commission |
+| `src/MarketNest.Orders` | Orders, order lines, fulfillment, shipment state machine; owns `OrderPolicyConfig` |
+| `src/MarketNest.Payments` | Payments, payouts, commission; owns `CommissionPolicy` |
+| `src/MarketNest.Promotions` | Vouchers, voucher usage, discount calculation |
 | `src/MarketNest.Reviews` | Reviews, votes, fraud gate |
 | `src/MarketNest.Disputes` | Disputes, messages, resolution |
 | `src/MarketNest.Notifications` | Email/SMS dispatch |
-| `src/MarketNest.Admin` | Back-office: arbitration, platform config |
-| `src/MarketNest.Web` | ASP.NET Core host: Razor Pages + minimal APIs |
+| `src/MarketNest.Admin` | Back-office: reference data (Country, Gender, Category…), admin-config UI, arbitration |
+| `src/MarketNest.Auditing` | Audit logs, login events; `AuditableInterceptor` + `AuditBehavior<,>` |
+| `src/MarketNest.Web` | ASP.NET Core host: Razor Pages + minimal APIs, `DatabaseInitializer`, middleware, `SharedViewPaths` constants |
+| `src/MarketNest.Analyzers` | Roslyn analyzers: 17 MN rules (MN001–MN017), 5 code-fix providers |
 
 ---
 
@@ -82,10 +90,15 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 ## Key Redis Namespaces
 
 ```
-marketnest:refresh:{tokenId}            TTL: 7d   — refresh tokens
-marketnest:blacklist:{tokenId}          TTL: 7d   — revoked tokens
-marketnest:ratelimit:{userId}:{endpoint} TTL: 1min — rate limiting
-marketnest:cart:{userId}                TTL: 30m  — cart reservation
+marketnest:refresh:{tokenId}              TTL: 7d    — refresh tokens
+marketnest:blacklist:{tokenId}            TTL: 7d    — revoked tokens
+marketnest:ratelimit:{userId}:{endpoint}  TTL: 1min  — rate limiting
+marketnest:cart:{userId}                  TTL: 30m   — cart reservation
+marketnest:refdata:{entity}               TTL: 24h   — Tier 1 reference data (IReferenceDataReadService)
+marketnest:config:orders                  TTL: 1h    — Tier 2 OrderPolicyConfig
+marketnest:config:payments                TTL: 1h    — Tier 2 CommissionPolicy
+marketnest:config:catalog                 TTL: 1h    — Tier 2 StorefrontPolicyConfig
+marketnest:config:reviews                 TTL: 1h    — Tier 2 ReviewPolicyConfig
 ```
 
 ---
@@ -94,17 +107,13 @@ marketnest:cart:{userId}                TTL: 30m  — cart reservation
 
 | File | Contents |
 |------|---------|
-| `architecture-requirements.md` | Phased architecture, ADRs, module boundary rules |
-| `backend-requirements.md` | Full tech stack, solution structure, CQRS patterns |
-| `frontend-requirements.md` | Frontend stack rationale, complete page inventory |
+| `architecture.md` | Phased architecture, ADRs, module boundaries, solution structure, project layout |
+| `backend-patterns.md` | Tech stack, CQRS contracts, `Result<T,Error>`, base classes, services, seeding, background jobs |
+| `backend-infrastructure.md` | Query utilities, caching, transactions, UoW, `[Access]` permissions, file uploads, testing |
+| `domain-and-business-rules.md` | DDD aggregates, bounded contexts, entity designs, business rules for all modules |
+| `frontend-guide.md` | Frontend stack, page inventory, HTMX/Alpine patterns, component library, BE-FE contracts |
 | `code-rules.md` | Naming conventions, C# idioms, DDD principles, banned patterns |
-| `domain-design.md` | DDD aggregates, bounded contexts, entity designs |
-| `contract-first-guide.md` | CQRS marker interfaces, Result<T,Error>, event contracts |
-| `business-logic-requirements.md` | Business rules for all modules |
-| `backend-infrastructure-foundations.md` | Base classes, DatabaseInitializer, IDataSeeder |
-| `database-infrastructure-utilities.md` | Query builders, specifications, background jobs |
-| `be-fe-common-services.md` | HTMX/Alpine integration, HX-Trigger events, form conventions |
-| `frontend-component-library.md` | Component registry, form fields, Alpine magic helpers |
 | `devops-requirements.md` | Docker Compose topology, GitHub Actions, K8s manifests |
-| `advanced-patterns-transaction-auth-fileupload.md` | Saga patterns, auth flows, file uploads |
-| `project-planning.md` | Phase timelines, weekly tasks, Phase 1 exit criteria |
+| `analyzers.md` | Roslyn analyzer reference: all 17 MN rules, suppression patterns, adding new rules |
+| `test-driven-design.md` | TDD guidelines, unit/integration/architecture test patterns |
+| `api-contract.md` | Auto-generated from OpenAPI spec by `ApiContractGenerator` on startup (dev only) |

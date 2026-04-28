@@ -126,6 +126,11 @@ public static class AppRoutes
         public const string Notifications = "/admin/notifications";
         public const string ConfigPrefix = "/admin/config";
         public const string ConfigCommission = "/admin/config/commission";
+        public const string ConfigCountry = "/admin/config/country";
+        public const string ConfigGender = "/admin/config/gender";
+        public const string ConfigPhoneCode = "/admin/config/phone-code";
+        public const string ConfigProductCategory = "/admin/config/product-category";
+        public const string ConfigNationality = "/admin/config/nationality";
     }
 
     // ── Checkout ─────────────────────────────────────────────────────

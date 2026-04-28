@@ -15,8 +15,15 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational"/>
         <PackageReference Include="OpenTelemetry.Api"/>
         <PackageReference Include="System.Security.Cryptography.Xml"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Base\MarketNest.Base.Api\MarketNest.Base.Api.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Common\MarketNest.Base.Common.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Domain\MarketNest.Base.Domain.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Infrastructure\MarketNest.Base.Infrastructure.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -26,7 +33,6 @@
         <Folder Include="Domain\Entities"/>
         <Folder Include="Domain\Enums"/>
         <Folder Include="Domain\Events"/>
-        <Folder Include="Infrastructure\Persistence"/>
         <Folder Include="Infrastructure\Repositories"/>
     </ItemGroup>
 </Project>

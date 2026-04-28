@@ -37,6 +37,11 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- Embed JSON seed data as assembly resources -->
+        <EmbeddedResource Include="Infrastructure\Seeders\SeedData\*.json" />
+    </ItemGroup>
+
+    <ItemGroup>
         <Folder Include="Application\Common\" />
         <Folder Include="Application\Modules\Test\DomainEventHandlers\" />
         <Folder Include="Application\Modules\Test\IntegrationEventHandlers\" />

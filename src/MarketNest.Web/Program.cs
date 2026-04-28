@@ -2,8 +2,16 @@ using System.Reflection;
 using FluentValidation;
 using MarketNest.Admin.Application;
 using MarketNest.Admin.Infrastructure;
+using MarketNest.Cart.Infrastructure;
+using MarketNest.Catalog.Infrastructure;
+using MarketNest.Disputes.Infrastructure;
+using MarketNest.Identity.Infrastructure;
+using MarketNest.Notifications.Infrastructure;
+using MarketNest.Orders.Infrastructure;
+using MarketNest.Payments.Infrastructure;
 using MarketNest.Promotions.Application;
 using MarketNest.Promotions.Infrastructure;
+using MarketNest.Reviews.Infrastructure;
 using MarketNest.Auditing.Infrastructure;
 using MarketNest.Web.BackgroundJobs;
 using MarketNest.Web.Hosting;
@@ -13,6 +21,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using Serilog;
+using StackExchange.Redis;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
@@ -36,7 +45,22 @@ try
                          $"Configuration key '{AppConstants.SeqServerUrlKey}' is not set. Add it to appsettings.json."),
             formatProvider: CultureInfo.InvariantCulture));
 
-    // ── Services ──────────────────────────────────────────────────────
+    // ── Redis + ICacheService ─────────────────────────────────────────────
+    builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+        ConnectionMultiplexer.Connect(
+            builder.Configuration["Redis:ConnectionString"]
+            ?? throw new InvalidOperationException("Configuration key 'Redis:ConnectionString' is not set.")));
+    builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+
+    // ── Tier 3 Options (system configuration — no DB) ─────────────────────
+    builder.Services.Configure<PlatformOptions>(
+        builder.Configuration.GetSection(PlatformOptions.Section));
+    builder.Services.Configure<ValidationOptions>(
+        builder.Configuration.GetSection(ValidationOptions.Section));
+    builder.Services.Configure<SecurityOptions>(
+        builder.Configuration.GetSection(SecurityOptions.Section));
+
+    // ── Services ──────────────────────────────────────────────────────────
     builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
     builder.Services.AddRazorPages()
         .AddViewLocalization()
@@ -113,19 +137,24 @@ try
         opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
     builder.Services.AddScoped<IAuditService, AuditService>();
 
-    // ── Admin Module (tests) ─────────────────────────────────────────
+    // ── Admin Module ─────────────────────────────────────────────────────
     builder.Services.AddModuleDbContext<AdminDbContext>(opts =>
         opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
     // Read context — NoTracking, no migrations
     builder.Services.AddDbContext<AdminReadDbContext>(opts =>
         opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName))
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
-    builder.Services.AddScoped<ITestRepository,
-        TestRepository>();
-    builder.Services.AddScoped<ITestQuery,
-        TestQuery>();
-    builder.Services.AddScoped<IGetTestsPagedQuery,
-        TestQuery>();
+    builder.Services.AddScoped<ITestRepository, TestRepository>();
+    builder.Services.AddScoped<ITestQuery, TestQuery>();
+    builder.Services.AddScoped<IGetTestsPagedQuery, TestQuery>();
+
+    // ── Orders Module DbContext ───────────────────────────────────────────
+    builder.Services.AddModuleDbContext<OrdersDbContext>(opts =>
+        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
+
+    // ── Payments Module DbContext ─────────────────────────────────────────
+    builder.Services.AddModuleDbContext<PaymentsDbContext>(opts =>
+        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
 
     // ── Promotions Module ─────────────────────────────────────────────
     builder.Services.AddModuleDbContext<PromotionsDbContext>(opts =>
@@ -142,15 +171,15 @@ try
     builder.Services.AddScoped<IUserTimeZoneProvider, HttpContextUserTimeZoneProvider>();
 
     // TODO: Register module DI (each module exposes AddXxxModule extension)
-    // builder.Services.AddIdentityModule(builder.Configuration);
-    // builder.Services.AddCatalogModule(builder.Configuration);
-    // builder.Services.AddCartModule(builder.Configuration);
-    // builder.Services.AddOrdersModule(builder.Configuration);
-    // builder.Services.AddPaymentsModule(builder.Configuration);
-    // builder.Services.AddReviewsModule(builder.Configuration);
-    // builder.Services.AddDisputesModule(builder.Configuration);
-    // builder.Services.AddNotificationsModule(builder.Configuration);
-    // builder.Services.AddAdminModule(builder.Configuration);
+    builder.Services.AddIdentityModule(builder.Configuration);
+    builder.Services.AddCatalogModule(builder.Configuration);
+    builder.Services.AddCartModule(builder.Configuration);
+    builder.Services.AddOrdersModule(builder.Configuration);
+    builder.Services.AddPaymentsModule(builder.Configuration);
+    builder.Services.AddReviewsModule(builder.Configuration);
+    builder.Services.AddDisputesModule(builder.Configuration);
+    builder.Services.AddNotificationsModule(builder.Configuration);
+    builder.Services.AddAdminModule(builder.Configuration);
 
     // Background jobs: registry + execution store + hosted runner (Phase 1)
     builder.Services.AddSingleton<IJobRegistry, ServiceCollectionJobRegistry>();
@@ -171,6 +200,8 @@ try
     // Register DatabaseInitializer + auto-discover seeders from module assemblies
     builder.Services.AddDatabaseInitializer(
         typeof(MarketNest.Admin.AssemblyReference).Assembly,
+        typeof(MarketNest.Orders.AssemblyReference).Assembly,
+        typeof(MarketNest.Payments.AssemblyReference).Assembly,
         typeof(MarketNest.Promotions.AssemblyReference).Assembly
     );
 

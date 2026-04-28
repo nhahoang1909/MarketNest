@@ -4,6 +4,8 @@ namespace MarketNest.Admin.Domain;
 
 public class TestEntity : Entity<Guid>
 {
+    private readonly List<TestSubEntity> _subEntities = [];
+
     protected TestEntity()
     {
     }
@@ -13,12 +15,11 @@ public class TestEntity : Entity<Guid>
         Id = id;
         Name = name;
         Value = value;
-        SubEntities = new List<TestSubEntity>();
     }
 
     public string Name { get; private set; } = string.Empty;
     public TestValueObject Value { get; private set; } = new();
-    public IReadOnlyList<TestSubEntity> SubEntities { get; private set; } = new List<TestSubEntity>();
+    public IReadOnlyList<TestSubEntity> SubEntities => _subEntities.AsReadOnly();
 
     public void Update(string name, TestValueObject value)
     {
@@ -28,8 +29,6 @@ public class TestEntity : Entity<Guid>
 
     public void AddSubEntity(TestSubEntity sub)
     {
-        var list = SubEntities.ToList();
-        list.Add(sub);
-        SubEntities = list.AsReadOnly();
+        _subEntities.Add(sub);
     }
 }

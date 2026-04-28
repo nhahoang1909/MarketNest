@@ -20,6 +20,46 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-29 - AGENTS.md: subagent delegation + AI convention sourcing guidelines added
+- **Status**: Completed
+- **Description**: Added two new agent behavior sections to `AGENTS.md` (uncommitted working change):
+  - **"Using specialized subagents"**: agents must delegate complex multi-step tasks to the `Plan` subagent via `run_subagent` tool before writing code
+  - **"Source existing AI conventions"**: agents must glob-search for `copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`, cursor/windsurf rules, and `README.md` before modifying code
+- **Notes**: These sections are referenced in the `.github/copilot-instructions.md` attachment. No ADR needed — behavioral guidance, not an architectural decision.
+
+---
+
+### 2026-04-28 - chore(devops): skip Qodana code quality CI workflow
+- **Status**: Completed
+- **Description**: Temporarily disabled Qodana static analysis CI workflow (`.github/workflows/qodana_code_quality.yml` + `qodana.yaml`). Previously CI ran Qodana on every push; skipped to unblock development until `.NET 10` support is stable in Qodana.
+- **Notes**: Re-enable when Qodana releases full .NET 10 support. All 17 Roslyn `MN001–MN017` rules continue to enforce quality locally via `Directory.Build.targets`.
+
+---
+
+### 2026-04-28 - Admin Config pages — sub-sidebar + reference data DataTable pages
+- **Status**: Completed
+- **Description**: Implemented admin system config pages based on the design prototype (`admin-config.jsx`). Key deliverables:
+  - **`_ConfigSubSidebar.cshtml`** shared navigation component in `Pages/Shared/Navigation/` — grouped sidebar (Reference data: Countries, Genders, Telephone codes, Nationalities, Product categories; Business: Commission rates) with active-state highlighting matching the prototype's ConfigSubSidebar pattern
+  - **Config/Index.cshtml** redesigned as a config hub page: quick-link cards for all config categories, replaced old Vietnamese hard-coded settings form
+  - **5 new DataTable pages**: Country, Gender, PhoneCode, Nationality, ProductCategory — each with header (eyebrow, title, subtitle, active count badge), search bar (disabled, placeholder for Phase 3), data table matching prototype columns, `_StatusBadge` partial reuse, alternating row stripes, empty state fallback
+  - **Commission.cshtml** redesigned with sub-sidebar layout, slider + payout window form, Phase 1 read-only note
+  - **AppRoutes**: Added `ConfigCountry`, `ConfigGender`, `ConfigPhoneCode`, `ConfigProductCategory`, `ConfigNationality`
+  - **LogEventId**: Added `AdminConfigCountryStart` (10680), `AdminConfigGenderStart` (10682), `AdminConfigPhoneCodeStart` (10684), `AdminConfigProductCategoryStart` (10686), `AdminConfigNationalityStart` (10688)
+  - **`_LayoutAdmin.cshtml`**: Sidebar "Config" link now points to `/admin/config` (hub) instead of `/admin/config/commission`
+  - **Page models**: Inject `IReferenceDataReadService` (Redis-cached, active-only via EF query filter). All are `partial` with `[LoggerMessage]` source-generated delegates
+  - All text in English (replaced Vietnamese from old Config/Index)
+- **Build**: `dotnet build` → 0 warnings, 0 errors ✅
+- **Shared components reused**: `_StatusBadge`, `_EmptyState`, `_ConfigSubSidebar` (new), `_LayoutAdmin`
+- **Phase 2 TODO**: Client-side search/sort (Alpine.js), admin-scoped query that bypasses `IsActive` query filter to show inactive records, CRUD actions (edit/activate/deactivate buttons)
+
+---
+
+### 2026-04-28 - Project memory documents updated
+- **Status**: Completed
+- **Description**: Synced all four project memory files with current codebase state. `key_facts.md`: updated Solution Structure (added Promotions, Auditing, Base/* packages, Analyzers), replaced outdated Specification Documents table with current doc filenames, updated Redis Namespaces (added Tier 1/2 cache keys). `decisions.md`: added Table of Contents (19 ADRs), moved ADR-014 to correct chronological position (after ADR-013), added ADR-020 (canonical agent guidelines), removed duplicate ADR-014 block. `bugs.md`: removed orphan placeholder text left between entries.
+- **Notes**: ADR-017, ADR-018, ADR-019 reserved/not yet assigned. Next number to use: ADR-023.
+
+---
 ### 2026-04-28 - MarketNest.Analyzers complete — all 17 Roslyn rules wired to solution
 - **Status**: Completed
 - **Description**: Implemented `MarketNest.Analyzers` project: 17 diagnostic rules (MN001–MN017) across four categories (Naming, AsyncRules, Logging, Architecture), 5 code fix providers (MN001, MN003, MN006, MN007, MN017), and 73 tests. Wired to all `src/` projects via `src/Directory.Build.targets`. Fixed all violations surfaced during wiring: Promotions Voucher/VoucherUsage DateTime → DateTimeOffset (MN009); AppLogger.cs MN007 suppress; NpgsqlJobExecutionStore.cs MN004 suppress; MarketNest.Web.csproj MN008 suppress (Razor Pages namespace constraint). Added `docs/analyzers.md` as reference and linked from CLAUDE.md.
@@ -121,4 +161,26 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 - **Status**: Completed
 - **Description**: Assistant will offer to append project memory entries when it modifies code/docs; will run script upon explicit confirmation.
 - **Notes**: Logged by assistant via scripts/log_project_memory.ps1
+
+---
+
+### 2026-04-28 - Admin & Configuration Architecture (Phase 1) — Three-Tier Config System
+- **Status**: Completed
+- **Description**: Implemented the full Phase 1 admin-configuration layer. Key deliverables:
+  - **`Base.Domain`**: `ReferenceData` abstract base entity (`Entity<int>`, domain methods for CRUD)
+  - **`Base.Common`**: `ICacheService`, `CacheKeys`, `IReferenceDataReadService` + 5 DTOs, 8 Tier 2 contracts (`IOrderPolicyConfig/Writer`, `ICommissionConfig/Writer`, `IStorefrontPolicyConfig/Writer`, `IReviewPolicyConfig/Writer`)
+  - **`Admin.Domain`**: 5 reference data entities (Country, Gender, PhoneCountryCode, Nationality, ProductCategory)
+  - **`Admin.Infrastructure`**: EF configs (all tables in `public` schema), 5 seeders with embedded JSON data (countries ≥160, phone codes ≥95, genders 4, categories 19), `ReferenceDataReadService` (Redis 24h cache), `AddAdminModule` DI extension
+  - **`Orders.Infrastructure`**: `OrdersDbContext`, `OrderPolicyConfig` entity, `OrderPolicyConfigService` (implements both read+write contracts), `AddOrdersModule`
+  - **`Payments.Infrastructure`**: `PaymentsDbContext`, `CommissionPolicy` entity (append-only log), `CommissionConfigService` (implements both read+write contracts), `AddPaymentsModule`
+  - **`Catalog.Infrastructure`**: In-memory `StorefrontPolicyConfigService` stub + `AddCatalogModule`
+  - **`Reviews.Infrastructure`**: In-memory `ReviewPolicyConfigService` stub + `AddReviewsModule`
+  - **Stub DI extensions**: Identity, Cart, Disputes, Notifications modules (compile stubs)
+  - **`Web/Infrastructure`**: `RedisCacheService` (StackExchange.Redis), `PlatformOptions`, `ValidationOptions`, `SecurityOptions` (Tier 3)
+  - **`appsettings.json`**: Added Platform, Validation, Security sections
+  - **`Program.cs`**: Wired Redis/ICacheService, Tier 3 Options, OrdersDbContext, PaymentsDbContext, `AddOrdersModule`, `AddPaymentsModule`, updated seeder assemblies
+  - **ADRs**: ADR-021 (Three-Tier Config Model), ADR-022 (ReferenceData base in Base.Domain)
+- **Build**: `dotnet build` → succeeded ✅
+- **PR/Issue**: n/a (inline implementation)
+- **Phase 2 TODO**: DB-backed StorefrontPolicyConfig (Catalog) and ReviewPolicyConfig (Reviews); Admin UI pages for commission config + product categories; per-seller commission overrides
 
