@@ -12,3 +12,4 @@ MN012 | Naming | Warning | CommandClassNamingConvention
 MN013 | Naming | Warning | QueryClassNamingConvention
 MN014 | Naming | Warning | HandlerClassNamingConvention
 MN015 | Naming | Warning | EventRecordNamingConvention
+MN017 | AsyncRules | Warning | UnnecessaryTaskFromResult
