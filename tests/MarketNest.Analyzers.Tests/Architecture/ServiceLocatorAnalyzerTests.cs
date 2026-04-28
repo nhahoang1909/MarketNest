@@ -40,4 +40,44 @@ public class ServiceLocatorAnalyzerTests
             """;
         await Verify<ServiceLocatorAnalyzer>.AnalyzerAsync(source);
     }
+
+    [Fact]
+    public async Task Triggers_for_GetRequiredService_in_QueryHandler()
+    {
+        var source = """
+            using System;
+            using System.Threading.Tasks;
+            interface IQueryHandler<T, R> { Task<R> Handle(T t); }
+            interface IServiceProvider { object? GetService(Type t); }
+            static class ServiceProviderExtensions {
+                public static T GetRequiredService<T>(this IServiceProvider sp) => default!;
+            }
+            class GetOrderDetailQueryHandler(IServiceProvider _sp) : IQueryHandler<string, int> {
+                public Task<int> Handle(string t) {
+                    var svc = {|MN010:_sp.GetRequiredService<string>()|};
+                    return Task.FromResult(0);
+                }
+            }
+            """;
+        await Verify<ServiceLocatorAnalyzer>.AnalyzerAsync(source);
+    }
+
+    [Fact]
+    public async Task Triggers_for_GetRequiredService_in_PageModel()
+    {
+        var source = """
+            using System;
+            class PageModel { }
+            interface IServiceProvider { object? GetService(Type t); }
+            static class ServiceProviderExtensions {
+                public static T GetRequiredService<T>(this IServiceProvider sp) => default!;
+            }
+            class IndexModel(IServiceProvider _sp) : PageModel {
+                public void OnGet() {
+                    var svc = {|MN010:_sp.GetRequiredService<string>()|};
+                }
+            }
+            """;
+        await Verify<ServiceLocatorAnalyzer>.AnalyzerAsync(source);
+    }
 }

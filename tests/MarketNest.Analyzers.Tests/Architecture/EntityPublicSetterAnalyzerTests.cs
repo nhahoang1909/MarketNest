@@ -52,4 +52,17 @@ public class EntityPublicSetterAnalyzerTests
             """;
         await Verify<EntityPublicSetterAnalyzer>.AnalyzerAsync(source);
     }
+
+    [Fact]
+    public async Task No_trigger_for_entity_implementing_ISoftDeletable()
+    {
+        var source = """
+            interface ISoftDeletable { bool IsDeleted { get; set; } }
+            abstract class Entity<T> { }
+            class Order : Entity<int>, ISoftDeletable {
+                public bool IsDeleted { get; set; }
+            }
+            """;
+        await Verify<EntityPublicSetterAnalyzer>.AnalyzerAsync(source);
+    }
 }

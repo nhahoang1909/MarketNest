@@ -41,4 +41,16 @@ public class DateTimeUsageAnalyzerTests
             """;
         await Verify<DateTimeUsageAnalyzer>.AnalyzerAsync(source);
     }
+
+    [Fact]
+    public async Task Triggers_for_DateTime_field()
+    {
+        var source = """
+            using System;
+            class Foo {
+                private {|MN009:DateTime|} _timestamp;
+            }
+            """;
+        await Verify<DateTimeUsageAnalyzer>.AnalyzerAsync(source);
+    }
 }

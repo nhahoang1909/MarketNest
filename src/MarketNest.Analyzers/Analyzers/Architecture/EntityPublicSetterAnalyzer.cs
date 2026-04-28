@@ -45,8 +45,11 @@ public sealed class EntityPublicSetterAnalyzer : DiagnosticAnalyzer
             return;
 
         if (InheritsFromEntityOrAggregate(classSymbol))
+        {
+            if (ImplementsInfrastructureInterface(classSymbol)) return;
             context.ReportDiagnostic(Diagnostic.Create(
                 Rule, property.Identifier.GetLocation(), property.Identifier.Text));
+        }
     }
 
     private static bool InheritsFromEntityOrAggregate(INamedTypeSymbol symbol)
@@ -55,6 +58,16 @@ public sealed class EntityPublicSetterAnalyzer : DiagnosticAnalyzer
         {
             var name = t.OriginalDefinition.Name;
             if (name == "Entity" || name == "AggregateRoot") return true;
+        }
+        return false;
+    }
+
+    private static bool ImplementsInfrastructureInterface(INamedTypeSymbol symbol)
+    {
+        foreach (var iface in symbol.AllInterfaces)
+        {
+            var name = iface.Name;
+            if (name == "ISoftDeletable" || name == "IAuditable") return true;
         }
         return false;
     }

@@ -41,4 +41,16 @@ public class FlatNamespaceAnalyzerTests
             """;
         await Verify<FlatNamespaceAnalyzer>.AnalyzerAsync(source);
     }
+
+    [Fact]
+    public async Task Triggers_for_bracket_form_namespace_with_more_than_three_segments()
+    {
+        var source = """
+            namespace {|MN008:MarketNest.Orders.Application.Commands|}
+            {
+                class C { }
+            }
+            """;
+        await Verify<FlatNamespaceAnalyzer>.AnalyzerAsync(source);
+    }
 }
