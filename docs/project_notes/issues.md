@@ -20,6 +20,12 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-28 - MarketNest.Analyzers complete — all 17 Roslyn rules wired to solution
+- **Status**: Completed
+- **Description**: Implemented `MarketNest.Analyzers` project: 17 diagnostic rules (MN001–MN017) across four categories (Naming, AsyncRules, Logging, Architecture), 5 code fix providers (MN001, MN003, MN006, MN007, MN017), and 73 tests. Wired to all `src/` projects via `src/Directory.Build.targets`. Fixed all violations surfaced during wiring: Promotions Voucher/VoucherUsage DateTime → DateTimeOffset (MN009); AppLogger.cs MN007 suppress; NpgsqlJobExecutionStore.cs MN004 suppress; MarketNest.Web.csproj MN008 suppress (Razor Pages namespace constraint). Added `docs/analyzers.md` as reference and linked from CLAUDE.md.
+- **Branch**: `p1-main-nhahoang`
+- **Notes**: All 73 analyzer tests pass. Full solution `dotnet build` clean. `MarketNest.Web` MN008 suppressed at project level because Razor Pages PageModel classes use folder-matched namespaces (`@model` directive + `IndexModel` class-name collisions prevent flat `MarketNest.Web.Pages` namespace).
+
 ### 2026-04-27 - MarketNest.Promotions module scaffold completed
 - **Status**: Completed
 - **Description**: Scaffolded the full `MarketNest.Promotions` module (45 files) following existing module patterns. Domain: `Voucher` aggregate, `VoucherUsage` entity, 4 enums, 2 value objects (`VoucherCode`, `DiscountResult`), 7 domain events. Application: 3 commands + handlers, 4 query types + handlers, `IVoucherRepository`, `IVoucherService`, `CreateVoucherCommandValidator`, `VoucherExpiryJob` (hourly background job). Infrastructure: `PromotionsDbContext` + read context, EF configurations (snake_case columns, value conversions, unique indexes), `VoucherRepository`, `VoucherQuery`, 2 API controllers (CRUD). Integrated into solution: `MarketNest.slnx`, `MarketNest.Web.csproj`, `Program.cs` (MediatR + FluentValidation assembly scan, DbContexts, DI bindings, background job, DatabaseInitializer). Fixed 10 compile errors post-integration (API mismatches vs actual base types). Build: 0 errors, 0 warnings.
