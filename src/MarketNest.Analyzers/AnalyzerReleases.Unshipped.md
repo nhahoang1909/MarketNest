@@ -17,3 +17,4 @@ MN011 | AsyncRules | Warning | PublicAsyncApiMissingCancellationToken
 MN008 | Architecture | Error | NamespaceMustBeFlatLayerLevel
 MN009 | Architecture | Warning | DateTimeMustUseDateTimeOffset
 MN010 | Architecture | Error | ServiceLocatorAntiPattern
+MN016 | Architecture | Error | EntityAggregatePropertyMustNotHavePublicSetter
