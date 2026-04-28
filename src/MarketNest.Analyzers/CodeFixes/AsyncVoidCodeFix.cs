@@ -45,6 +45,21 @@ public sealed class AsyncVoidCodeFix : CodeFixProvider
         var taskType = SyntaxFactory.ParseTypeName("Task").WithTriviaFrom(method.ReturnType);
         var newMethod = method.WithReturnType(taskType);
         var newRoot = root.ReplaceNode(method, newMethod);
+
+        // Add using System.Threading.Tasks; if not already present
+        if (newRoot is CompilationUnitSyntax compilationUnit)
+        {
+            var hasUsing = compilationUnit.Usings.Any(u =>
+                u.Name != null && u.Name.ToString() == "System.Threading.Tasks");
+            if (!hasUsing)
+            {
+                var usingDirective = SyntaxFactory.UsingDirective(
+                    SyntaxFactory.ParseName("System.Threading.Tasks"))
+                    .WithTrailingTrivia(SyntaxFactory.ElasticLineFeed);
+                newRoot = compilationUnit.AddUsings(usingDirective);
+            }
+        }
+
         return document.WithSyntaxRoot(newRoot);
     }
 }

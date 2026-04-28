@@ -61,4 +61,16 @@ public class AsyncVoidAnalyzerTests
             """;
         await VerifyFix<AsyncVoidAnalyzer, AsyncVoidCodeFix>.CodeFixAsync(source, fixedSource);
     }
+
+    [Fact]
+    public async Task CodeFix_adds_using_when_missing()
+    {
+        var source = """
+            class C {
+                public async void {|MN003:HandleOrder|}() { }
+            }
+            """;
+        var fixedSource = "using System.Threading.Tasks;\r\n\r\nclass C {\n    public async Task HandleOrder() { }\n}";
+        await VerifyFix<AsyncVoidAnalyzer, AsyncVoidCodeFix>.CodeFixAsync(source, fixedSource);
+    }
 }
