@@ -3,6 +3,7 @@ using Npgsql;
 using MarketNest.Base.Infrastructure;
 using MarketNest.Base.Common;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace MarketNest.Web.Infrastructure;
 
@@ -57,8 +58,8 @@ public sealed partial class DatabaseInitializer(
             try
             {
 #pragma warning disable EF1003
-                await dbContext.Database.ExecuteSqlRawAsync(
-                    "CREATE SCHEMA IF NOT EXISTS \"" + schemaName + "\"", ct);
+                var createSchemaSql = BuildCreateSchemaSql(schemaName);
+                await dbContext.Database.ExecuteSqlRawAsync(createSchemaSql, ct);
 #pragma warning restore EF1003
 
                 var currentHash = ModelHasher.ComputeHash(dbContext.Model);
@@ -66,7 +67,21 @@ public sealed partial class DatabaseInitializer(
 
                 if (string.Equals(currentHash, storedHash, StringComparison.Ordinal))
                 {
-                    Log.InfoModelUnchanged(logger, contextName, currentHash[..12] + "…");
+                    // Verify tables actually exist — hash may be stale from a broken previous run
+                    if (!env.IsProduction() && !await ContextTablesExistAsync(dbContext, ct))
+                    {
+                        Log.WarnStaleHash(logger, contextName);
+                        await DropContextTablesAsync(dbContext, ct);
+                        var creator = dbContext.GetService<Microsoft.EntityFrameworkCore.Storage.IRelationalDatabaseCreator>();
+                        await creator.CreateTablesAsync(ct);
+                        await tracker.ClearAllSeedVersionsAsync(ct);
+                        await tracker.SaveModelHashAsync(contextName, currentHash, ct);
+                        Log.InfoMigrationsApplied(logger, contextName, 0);
+                    }
+                    else
+                    {
+                        Log.InfoModelUnchanged(logger, contextName, currentHash[..12] + "…");
+                    }
                     continue;
                 }
 
@@ -77,7 +92,23 @@ public sealed partial class DatabaseInitializer(
                 if (applied.Count == 0 && pending.Count == 0)
                 {
                     Log.InfoNoMigrationFiles(logger, contextName);
-                    await dbContext.Database.EnsureCreatedAsync(ct);
+
+                    var created = await dbContext.Database.EnsureCreatedAsync(ct);
+
+                    // EnsureCreated returns false if the database already exists (no-op).
+                    // When new entities are added but there are no migration files,
+                    // we must drop this context's tables and recreate in dev.
+                    if (!created && storedHash is not null && !env.IsProduction())
+                    {
+                        Log.InfoCreatingMissingTables(logger, contextName);
+                        await DropContextTablesAsync(dbContext, ct);
+                        // EnsureCreated is a no-op when the DB exists — use CreateTablesAsync
+                        // which creates tables from the model regardless of DB existence.
+                        var creator = dbContext.GetService<Microsoft.EntityFrameworkCore.Storage.IRelationalDatabaseCreator>();
+                        await creator.CreateTablesAsync(ct);
+                        // Clear seed versions so seeders re-populate the recreated tables
+                        await tracker.ClearAllSeedVersionsAsync(ct);
+                    }
                 }
                 else if (pending.Count == 0)
                 {
@@ -102,6 +133,61 @@ public sealed partial class DatabaseInitializer(
                 throw;
             }
         }
+    }
+
+    /// <summary>
+    ///     Drops all tables owned by the given <paramref name="dbContext"/> using EF model metadata.
+    ///     Dev-only — used when no migration files exist but the model hash changed.
+    /// </summary>
+    private static async Task DropContextTablesAsync(DbContext dbContext, CancellationToken ct)
+    {
+        var entityTypes = dbContext.Model.GetEntityTypes();
+        foreach (var entityType in entityTypes)
+        {
+            var tableName = entityType.GetTableName();
+            var schema = entityType.GetSchema() ?? "public";
+            if (tableName is null) continue;
+
+            var sql = BuildDropTableSql(schema, tableName);
+
+#pragma warning disable EF1003
+            await dbContext.Database.ExecuteSqlRawAsync(sql, ct);
+#pragma warning restore EF1003
+        }
+    }
+
+    /// <summary>
+    ///     Checks whether at least one table from the model exists in the database.
+    ///     Used to detect stale model hashes left by broken previous runs.
+    /// </summary>
+    private static async Task<bool> ContextTablesExistAsync(DbContext dbContext, CancellationToken ct)
+    {
+        var firstEntity = dbContext.Model.GetEntityTypes().FirstOrDefault();
+        if (firstEntity is null) return true;
+
+        var tableName = firstEntity.GetTableName();
+        var schema = firstEntity.GetSchema() ?? "public";
+        if (tableName is null) return true;
+
+        var sql = BuildTableExistsSql(schema, tableName);
+
+#pragma warning disable EF1003
+        // ExecuteSqlRaw cannot return scalar — use the underlying connection
+        var conn = dbContext.Database.GetDbConnection();
+        var wasOpen = conn.State == System.Data.ConnectionState.Open;
+        if (!wasOpen) await conn.OpenAsync(ct);
+        try
+        {
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = sql;
+            var result = await cmd.ExecuteScalarAsync(ct);
+            return result is true or (bool)true;
+        }
+        finally
+        {
+            if (!wasOpen) await conn.CloseAsync();
+        }
+#pragma warning restore EF1003
     }
 
     private async Task RunSeedersAsync(IServiceProvider scopedProvider, CancellationToken ct)
@@ -159,6 +245,71 @@ public sealed partial class DatabaseInitializer(
         }
     }
 
+    /// <summary>
+    ///     Safely escapes a PostgreSQL string literal by wrapping in single quotes
+    ///     and escaping any internal single quotes by doubling them.
+    ///     Used for WHERE clause comparisons (e.g., information_schema queries).
+    /// </summary>
+    private static string EscapePostgreSqlStringLiteral(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException("Value cannot be null or empty", nameof(value));
+        // In PostgreSQL, single quotes inside string literals are escaped by doubling
+        return "'" + value.Replace("'", "''") + "'";
+    }
+
+    /// <summary>
+    ///     Safely escapes PostgreSQL identifiers (schema/table names) by wrapping in double quotes
+    ///     and escaping any internal double quotes per PostgreSQL standard.
+    ///     This prevents SQL injection attacks when dynamic identifiers are required.
+    /// </summary>
+    private static string EscapePostgreSqlIdentifier(string identifier)
+    {
+        if (string.IsNullOrWhiteSpace(identifier))
+            throw new ArgumentException("Identifier cannot be null or empty", nameof(identifier));
+        // In PostgreSQL, identifiers in double quotes have internal quotes escaped by doubling
+        return "\"" + identifier.Replace("\"", "\"\"") + "\"";
+    }
+
+    /// <summary>
+    ///     Builds a CREATE SCHEMA SQL command with properly escaped identifier.
+    ///     Safe from SQL injection because identifier is escaped per PostgreSQL standard.
+    /// </summary>
+#pragma warning disable CA8305 // ExecuteSqlRaw - identifier is safely escaped
+    private static string BuildCreateSchemaSql(string schemaName)
+#pragma warning restore CA8305
+    {
+        var escaped = EscapePostgreSqlIdentifier(schemaName);
+        return $"CREATE SCHEMA IF NOT EXISTS {escaped}";
+    }
+
+    /// <summary>
+    ///     Builds a DROP TABLE SQL command with properly escaped identifiers.
+    ///     Safe from SQL injection because identifiers are escaped per PostgreSQL standard.
+    /// </summary>
+#pragma warning disable CA8305 // ExecuteSqlRaw - identifiers are safely escaped
+    private static string BuildDropTableSql(string schema, string tableName)
+#pragma warning restore CA8305
+    {
+        var escapedSchema = EscapePostgreSqlIdentifier(schema);
+        var escapedTableName = EscapePostgreSqlIdentifier(tableName);
+        return $"DROP TABLE IF EXISTS {escapedSchema}.{escapedTableName} CASCADE";
+    }
+
+    /// <summary>
+    ///     Builds a SELECT EXISTS query to check if a table exists.
+    ///     Safe from SQL injection because values are escaped as PostgreSQL string literals.
+    ///     Note: information_schema queries require single-quoted string literals, not double-quoted identifiers.
+    /// </summary>
+#pragma warning disable CA8305 // ExecuteSqlRaw - values are safely escaped as string literals
+    private static string BuildTableExistsSql(string schema, string tableName)
+#pragma warning restore CA8305
+    {
+        var escapedSchema = EscapePostgreSqlStringLiteral(schema);
+        var escapedTableName = EscapePostgreSqlStringLiteral(tableName);
+        return $"SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = {escapedSchema} AND table_name = {escapedTableName})";
+    }
+
     private static partial class Log
     {
         [LoggerMessage((int)LogEventId.DbInitStart, LogLevel.Information,
@@ -180,6 +331,15 @@ public sealed partial class DatabaseInitializer(
         [LoggerMessage((int)LogEventId.DbInitNoMigrationFiles, LogLevel.Information,
             "[{Context}] No migration files found — using EnsureCreated to build schema from model")]
         public static partial void InfoNoMigrationFiles(ILogger logger, string context);
+
+        [LoggerMessage((int)LogEventId.DbInitNoMigrationFiles + 1, LogLevel.Warning,
+            "[{Context}] Model hash changed but no migration files — dropping and recreating tables (dev only)")]
+        public static partial void InfoCreatingMissingTables(ILogger logger, string context);
+
+        [LoggerMessage((int)LogEventId.DbInitNoMigrationFiles + 2, LogLevel.Warning,
+            "[{Context}] Model hash matches but tables are missing — stale hash from broken previous run, forcing recreation")]
+        public static partial void WarnStaleHash(ILogger logger, string context);
+
 
         [LoggerMessage((int)LogEventId.DbInitHashChangedNoMigrations, LogLevel.Information,
             "[{Context}] No pending migrations, but model hash changed — updating tracker")]

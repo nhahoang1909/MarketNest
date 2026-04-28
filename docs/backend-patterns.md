@@ -160,59 +160,72 @@ public record GetOrderDetailQuery(Guid OrderId, Guid RequestingUserId) : IQuery<
 
 ## 3. Cross-Module Contracts
 
-Modules NEVER reference each other's concrete classes. They use contracts in `MarketNest.Core/Contracts/`.
+Modules NEVER reference each other's concrete classes. They use contracts in `MarketNest.Base.Common/Contracts/Contracts/`.
 
 ```csharp
-// Core/Contracts/IOrderCreationService.cs — Cart → Orders
-public interface IOrderCreationService
-{
-    Task<Result<Guid, Error>> CreateFromCartAsync(Guid buyerId, CartSnapshot cart, Address shippingAddress, CancellationToken ct);
-}
-
-// Core/Contracts/IInventoryService.cs — Cart/Orders → Catalog
-public interface IInventoryService
-{
-    Task<bool> HasStockAsync(Guid variantId, int quantity, CancellationToken ct);
-    Task<Result<Unit, Error>> ReserveAsync(Guid variantId, int quantity, Guid cartId, CancellationToken ct);
-    Task ReleaseAsync(Guid variantId, int quantity, CancellationToken ct);
-    Task CommitAsync(Guid variantId, int quantity, CancellationToken ct);
-}
-
-// Core/Contracts/IPaymentService.cs — Orders → Payments
-public interface IPaymentService
-{
-    Task<Result<Guid, Error>> CaptureAsync(Guid orderId, Money amount, string paymentMethod, CancellationToken ct);
-    Task<Result<Unit, Error>> RefundAsync(Guid paymentId, Money amount, string reason, CancellationToken ct);
-}
-
-// Core/Contracts/INotificationService.cs — All → Notifications
-public interface INotificationService
-{
-    Task SendEmailAsync(string to, string subject, string htmlBody, CancellationToken ct);
-    Task SendTemplatedEmailAsync(string to, string templateName, object model, CancellationToken ct);
-}
-
-// Core/Contracts/IStorefrontReadService.cs — Payments → Catalog
-public interface IStorefrontReadService
-{
-    Task<decimal> GetCommissionRateAsync(Guid storeId, CancellationToken ct);
-    Task<StorefrontInfo?> GetBySlugAsync(string slug, CancellationToken ct);
-}
-
-// Core/Contracts/IUserPreferencesReadService.cs — Any module → Identity
-public interface IUserPreferencesReadService
-{
-    Task<UserPreferencesSnapshot?> GetByUserIdAsync(Guid userId, CancellationToken ct);
-}
-
-// Core/Contracts/INotificationPreferenceReadService.cs — Notifications → Identity
-public interface INotificationPreferenceReadService
-{
-    Task<NotificationPreferenceSnapshot?> GetByUserIdAsync(Guid userId, CancellationToken ct);
-}
+// Base.Common/Contracts/IOrderCreationService.cs — Cart → Orders
+// Base.Common/Contracts/IInventoryService.cs — Cart/Orders → Catalog
+// Base.Common/Contracts/IPaymentService.cs — Orders → Payments
+// Base.Common/Contracts/INotificationService.cs — All → Notifications
+// Base.Common/Contracts/IStorefrontReadService.cs — Payments → Catalog
+// Base.Common/Contracts/IUserPreferencesReadService.cs — Any → Identity
+// Base.Common/Contracts/INotificationPreferenceReadService.cs — Notifications → Identity
+// Base.Common/Contracts/IReferenceDataReadService.cs — Any → Admin (Tier 1 reference data)
+// Base.Common/Contracts/Config/IOrderPolicyConfig.cs + IOrderPolicyConfigWriter.cs — Admin → Orders
+// Base.Common/Contracts/Config/ICommissionConfig.cs + ICommissionConfigWriter.cs — Admin → Payments
+// Base.Common/Contracts/Config/IStorefrontPolicyConfig.cs + IStorefrontPolicyConfigWriter.cs — Admin → Catalog
+// Base.Common/Contracts/Config/IReviewPolicyConfig.cs + IReviewPolicyConfigWriter.cs — Admin → Reviews
 ```
 
-**Communication pattern:** prefer domain events for async; use service interfaces for sync queries.
+### Three-Tier Configuration Contracts (ADR-021)
+
+```csharp
+// Tier 1 — Reference Data (Admin owns DB, all modules read via contract)
+public interface IReferenceDataReadService
+{
+    Task<IReadOnlyList<CountryDto>> GetCountriesAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<ProductCategoryDto>> GetProductCategoriesAsync(CancellationToken ct = default);
+    // ... GetGendersAsync, GetPhoneCountryCodesAsync, GetNationalitiesAsync
+    // ... GetCountryAsync(code), GetCategoryAsync(id), GetCategoryBySlugAsync(slug)
+}
+
+// Tier 2 — Business Config (each module owns its DB table + Redis cache)
+// Admin module injects both read and write contracts — never the concrete service.
+public interface ICommissionConfig
+{
+    decimal DefaultRate { get; }
+    Task<decimal> GetRateForSellerAsync(Guid sellerId, CancellationToken ct);
+}
+public interface ICommissionConfigWriter
+{
+    Task<Result<Unit, Error>> SetDefaultRateAsync(decimal rate, Guid adminId, CancellationToken ct);
+    Task<Result<Unit, Error>> SetSellerOverrideAsync(Guid sellerId, decimal rate, DateTimeOffset from, Guid adminId, CancellationToken ct);
+    Task<Result<Unit, Error>> RemoveSellerOverrideAsync(Guid sellerId, Guid adminId, CancellationToken ct);
+}
+// Same pattern for IOrderPolicyConfig/Writer, IStorefrontPolicyConfig/Writer, IReviewPolicyConfig/Writer
+
+// Tier 3 — System Configuration (no DB, bound from appsettings.json, IOptions<T>)
+// PlatformOptions, ValidationOptions, SecurityOptions
+// Located in MarketNest.Web/Infrastructure/Options/
+```
+
+### ICacheService
+
+```csharp
+// Base.Common/Contracts/ICacheService.cs — implemented by Web/Infrastructure/RedisCacheService.cs
+public interface ICacheService
+{
+    Task<T?> GetAsync<T>(string key, CancellationToken ct = default) where T : class;
+    Task SetAsync<T>(string key, T value, TimeSpan? ttl = null, CancellationToken ct = default) where T : class;
+    Task RemoveAsync(string key, CancellationToken ct = default);
+    Task RemoveByPrefixAsync(string prefix, CancellationToken ct = default);
+    Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? ttl = null, CancellationToken ct = default) where T : class;
+}
+// All cache keys and TTL constants defined in Base.Common/CacheKeys.cs
+// Read-through pattern: DB is always source of truth; Redis is performance layer only
+```
+
+**Communication pattern:** prefer domain events for async; use service interfaces for sync queries. Admin always uses contracts — never references module internals.
 
 ---
 
@@ -549,6 +562,43 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
 ---
 
 ## 14. EF Core Common Configurations
+
+### DDD Property Access Convention (ADR-023)
+
+EF Core **natively supports `{ get; private set; }`** — no `{ get; set; }` is ever needed on domain entities.
+
+**How it works** — EF Core uses the compiler-generated backing field (via reflection) to set property values during materialization. The `private set` accessor is never called by EF Core; it goes directly to the underlying field.
+
+**The only special case** is **collection navigation properties** exposed as `IReadOnlyList<T>` with an explicit private backing field:
+
+```csharp
+// ✅ Correct: explicit backing field + read-only property
+private readonly List<VoucherUsage> _usages = [];
+public IReadOnlyList<VoucherUsage> Usages => _usages.AsReadOnly();
+
+// ❌ Wrong: auto-property for collection navigations
+public IReadOnlyList<VoucherUsage> Usages { get; private set; } = new List<VoucherUsage>();
+```
+
+These need `PropertyAccessMode.Field` so EF Core populates the backing field directly.
+
+**Convention extension**: Call `ApplyDddPropertyAccessConventions()` in every `OnModelCreating`:
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.HasDefaultSchema(TableConstants.Schema.MyModule);
+    modelBuilder.ApplyConfigurationsFromAssembly(typeof(MyModuleDbContext).Assembly);
+    modelBuilder.ApplyDddPropertyAccessConventions(); // <-- always add this
+    base.OnModelCreating(modelBuilder);
+}
+```
+
+The extension (in `MarketNest.Base.Infrastructure`):
+1. Sets model-level `PropertyAccessMode.PreferField` (explicit intent for DDD).
+2. Auto-detects collection navigations with a matching `_camelCase` backing field and sets `PropertyAccessMode.Field`.
+
+**Backing field naming convention**: `_camelCase` for `PascalCase` property (e.g., `_usages` for `Usages`).
 
 ### Soft Delete Interceptor
 ```csharp

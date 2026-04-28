@@ -526,6 +526,20 @@ public interface ISoftDeletable
 | DTO / Command / Query | `{ get; init; }` (record) | Immutable after creation |
 | Infrastructure interface | `{ get; set; }` | EF interceptors need write access |
 
+> **EF Core compatibility (ADR-023):** `{ get; private set; }` is fully supported by EF Core — it uses the compiler-generated backing field to set values during materialization. **No `{ get; set; }` is needed on entities.**
+
+**Collection navigation pattern**: always use an explicit backing field, never an auto-property:
+```csharp
+// ✅ Correct: explicit backing field + read-only property
+private readonly List<OrderLine> _lines = [];
+public IReadOnlyList<OrderLine> Lines => _lines.AsReadOnly();
+
+// ❌ Wrong: auto-property for collection navigations
+public IReadOnlyList<OrderLine> Lines { get; private set; } = new List<OrderLine>();
+```
+
+The `ApplyDddPropertyAccessConventions()` extension auto-detects backing fields (`_camelCase` for `PascalCase` property) and configures `PropertyAccessMode.Field` on those navigations. See `docs/backend-patterns.md` §14.
+
 ### 3.2 Domain Events
 ```csharp
 // ✅ Raise events inside aggregate methods (not in handlers)

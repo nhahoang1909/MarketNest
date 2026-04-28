@@ -8,24 +8,35 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 
 **When this file exceeds ~20 entries**: Add a Table of Contents at the top.
 
-## Format
+## Table of Contents
 
-### ADR-XXX: Title (YYYY-MM-DD)
+| ADR | Title | Date |
+|-----|-------|------|
+| ADR-001 | Modular Monolith → Microservices → Kubernetes Phased Architecture | 2026-04-25 |
+| ADR-002 | Razor Pages + HTMX + Alpine.js (No SPA Framework) | 2026-04-25 |
+| ADR-003 | Result<T, Error> — No Exceptions for Business Failures | 2026-04-25 |
+| ADR-004 | EF Core with Schema-Per-Module Boundary Enforcement | 2026-04-25 |
+| ADR-005 | No Magic Strings / Magic Numbers | 2026-04-25 |
+| ADR-006 | System Tables in `public` Schema, Module Tables in Named Schemas | 2026-04-25 |
+| ADR-007 | DDD Property Accessor Convention | 2026-04-25 |
+| ADR-008 | Integration Event Infrastructure — Transport-Agnostic Event Bus | 2026-04-25 |
+| ADR-009 | Pre-commit Secret Detection with Gitleaks | 2026-04-25 |
+| ADR-010 | OpenAPI + Scalar for API Documentation | 2026-04-25 |
+| ADR-011 | Distributed User Settings — Each Module Owns Its Domain-Specific Preferences | 2026-04-25 |
+| ADR-012 | Automatic Auditing via Attributes | 2026-04-26 |
+| ADR-013 | Background Job Management Foundation | 2026-04-25 |
+| ADR-014 | [LoggerMessage] Source-Generated Delegates as Mandatory Logging Pattern | 2026-04-26 |
+| ADR-015 | Voucher/Promotions Domain Design — Two-Axis Discount Model | 2026-04-27 |
+| ADR-016 | Order Financial Calculation — Two-Perspective Model | 2026-04-27 |
+| ADR-020 | Consolidate Agent Guidelines into a Single Canonical File | 2026-04-26 |
+| ADR-021 | Three-Tier Configuration Model | 2026-04-28 |
+| ADR-022 | `ReferenceData` Base Entity in `Base.Domain` | 2026-04-28 |
+| ADR-023 | EF Core DDD Property Access Convention — `ApplyDddPropertyAccessConventions()` | 2026-04-28 |
 
-**Context:**
-- Why the decision was needed
-
-**Decision:**
-- What was chosen
-
-**Alternatives Considered:**
-- Option → Why rejected
-
-**Consequences:**
-- ✅ Benefits
-- ❌ Trade-offs
+> **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
 ---
+
 
 ## Decisions
 
@@ -388,6 +399,40 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 
 ---
 
+### ADR-014: [LoggerMessage] Source-Generated Delegates as Mandatory Logging Pattern (2026-04-26)
+
+**Status**: Implemented ✅ (2026-04-27)
+
+**Context:**
+- `IAppLogger<T>` previously used `params object?[]` overloads → CA1848 + CA2254 suppressed via `#pragma`
+- Runtime cost: template parsed every call, value types boxed, zero allocation skip when level disabled
+- No EventId on any log statement → could not filter precisely in Seq
+- 8 domain modules and 19 pages had zero logging coverage
+
+**Decision:**
+- All production logging must use `[LoggerMessage]` source-generated delegates (CA1848 compliant)
+- `IAppLogger<T>` extended to implement `ILogger` (explicit `ILogger.Log<TState>` via `inner.Log()` — not extension methods, so no CA1848)
+- `.Info()` / `.Warn()` / `.Error()` methods stripped from `IAppLogger<T>` — it is now a DI marker interface; `AppLogger<T>` retains only 3 explicit ILogger members; `#pragma` removed
+- Each module owns a block of 1000 EventIds — registry lives in `MarketNest.Base.Infrastructure/Logging/LogEventId.cs`
+- `private static partial class Log` nested inside each class; outer class must be `partial`
+- Exception param always last, never in message template
+
+**Alternatives Considered:**
+- Keep `#pragma` suppression → Rejected: hides real issues; CA1848 exists for good reason
+- Expose `ILogger InnerLogger { get; }` on IAppLogger → Rejected: call sites become `_logger.InnerLogger` — noisier, no benefit
+- Replace `IAppLogger<T>` with `ILogger<T>` everywhere → Rejected: large scope, breaks DI conventions already in use
+
+**Consequences (achieved):**
+- ✅ Zero allocation for disabled log levels — hot paths unaffected
+- ✅ Compile-time type safety: wrong param count/type → build error, not runtime bug
+- ✅ Stable EventIds per module → precise Seq filter (`EventId = 2652`)
+- ✅ `#pragma warning disable CA1848, CA2254` eliminated from all production code
+- ✅ 50+ files migrated; 19 pages added first-time observability
+- ❌ Requires `partial` on every class that logs
+- ❌ More boilerplate per file (mitigated by nested `Log` class keeping it local)
+
+---
+
 ### ADR-015: Voucher/Promotions Domain Design — Two-Axis Discount Model, Single Table (2026-04-27)
 
 **Context:**
@@ -453,36 +498,102 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 
 ---
 
-### ADR-014: [LoggerMessage] Source-Generated Delegates as Mandatory Logging Pattern (2026-04-26)
-
-**Status**: Implemented ✅ (2026-04-27)
+### ADR-020: Consolidate Agent Guidelines into a Single Canonical File (2026-04-26)
 
 **Context:**
-- `IAppLogger<T>` previously used `params object?[]` overloads → CA1848 + CA2254 suppressed via `#pragma`
-- Runtime cost: template parsed every call, value types boxed, zero allocation skip when level disabled
-- No EventId on any log statement → could not filter precisely in Seq
-- 8 domain modules and 19 pages had zero logging coverage
+- Multiple overlapping agent-facing rule documents existed: `AGENTS.md`, `CLAUDE.md`, `agents/rules/*.md`
+- Risk of divergence when different AI assistants (Copilot, Claude, Gemini) read different files
+- Duplication meant rule updates had to be applied in 3+ places
 
 **Decision:**
-- All production logging must use `[LoggerMessage]` source-generated delegates (CA1848 compliant)
-- `IAppLogger<T>` extended to implement `ILogger` (explicit `ILogger.Log<TState>` via `inner.Log()` — not extension methods, so no CA1848)
-- `.Info()` / `.Warn()` / `.Error()` methods stripped from `IAppLogger<T>` — it is now a DI marker interface; `AppLogger<T>` retains only 3 explicit ILogger members; `#pragma` removed
-- Each module owns a block of 1000 EventIds — registry lives in `MarketNest.Base.Infrastructure/Logging/LogEventId.cs`
-- `private static partial class Log` nested inside each class; outer class must be `partial`
-- Exception param always last, never in message template
+- Single canonical agent guidelines file at `agents/GUIDELINES.md`
+- `AGENTS.md` and `CLAUDE.md` reference `agents/GUIDELINES.md` rather than duplicating rules
+- Original `agents/rules/*.md` archived under `agents/rules/archive/`; replaced with short pointers
+- ADR stored at `docs/adr/ADR-020-canonical-agent-guidelines.md`
 
 **Alternatives Considered:**
-- Keep `#pragma` suppression → Rejected: hides real issues; CA1848 exists for good reason
-- Expose `ILogger InnerLogger { get; }` on IAppLogger → Rejected: call sites become `_logger.InnerLogger` — noisier, no benefit
-- Replace `IAppLogger<T>` with `ILogger<T>` everywhere → Rejected: large scope, breaks DI conventions already in use
+- Keep multiple files in sync manually → Rejected: proven to drift already
+- Pick one file (CLAUDE.md) as canonical → Rejected: Copilot/Gemini don't read CLAUDE.md
 
-**Consequences (achieved):**
-- ✅ Zero allocation for disabled log levels — hot paths unaffected
-- ✅ Compile-time type safety: wrong param count/type → build error, not runtime bug
-- ✅ Stable EventIds per module → precise Seq filter (`EventId = 2652`)
-- ✅ `#pragma warning disable CA1848, CA2254` eliminated from all production code
-- ✅ 50+ files migrated; 19 pages added first-time observability
-- ❌ Requires `partial` on every class that logs
-- ❌ More boilerplate per file (mitigated by nested `Log` class keeping it local)
+**Consequences:**
+- ✅ Single source of truth reduces maintenance and inconsistent agent behavior
+- ✅ Any AI tool can find the same rules from `agents/GUIDELINES.md`
+- ❌ Adds one extra file to read; mitigated by the pointer links in AGENTS.md/CLAUDE.md
+
+---
+
+### ADR-021: Three-Tier Configuration Model (2026-04-28)
+
+**Context:**
+- Need a unified way to manage lookup data (dropdowns), runtime business rules, and technical settings.
+- Admin module must not become a "God Module" with direct DB access to other modules.
+
+**Decision:**
+- **Tier 1 — Reference Data**: Country, Gender, PhoneCountryCode, Nationality, ProductCategory. Owned by Admin module (`admin` schema), seeded from embedded JSON. All tables explicitly mapped to `public` schema via EF config. Consumed via `IReferenceDataReadService` contract (in `Base.Common`). Redis TTL: 24h.
+- **Tier 2 — Business Configuration**: OrderPolicyConfig, CommissionPolicy, StorefrontPolicyConfig, ReviewPolicyConfig. *Owned by the module that uses the config* (Orders, Payments, Catalog, Reviews). Admin writes via `IXxxConfigWriter` contracts in `Base.Common/Contracts/Config/`. Redis TTL: 1h.
+- **Tier 3 — System Configuration**: PlatformOptions, ValidationOptions, SecurityOptions. Strongly-typed Options bound from `appsettings.json`. No DB, no UI — change requires redeployment.
+
+**Alternatives Considered:**
+- Single `master_data` table in Admin schema → rejected: blurs module boundaries, Admin becomes God Module (ADR-004 violation)
+- Business Config living in Admin schema → rejected: domain knowledge (e.g. `OrderWindowHours`) would live in the wrong module
+- Redis as source-of-truth for config → rejected: data loss on Redis restart, no fallback
+
+**Consequences:**
+- ✅ Clear ownership: each tier has a single owner (Admin / owning module / Infrastructure)
+- ✅ Admin never references other modules' internals — uses only contract interfaces
+- ✅ Reference data is globally queryable via `IReferenceDataReadService` without cross-module DB joins
+- ✅ Tier 2 config is DB-persistent with Redis caching (survives restarts)
+- ❌ More files per config type (entity + writer service + contract interface)
+- ❌ Tier 2 implementations for Catalog/Reviews are in-memory stubs in Phase 1 (Phase 2 will add DB-backed implementations)
+
+---
+
+### ADR-022: `ReferenceData` Base Entity in `Base.Domain` (2026-04-28)
+
+**Context:**
+- Reference data entities (Country, Gender, etc.) live in `Admin.Domain` and extend a shared base.
+- The base class needs to inherit from `Entity<int>` which is in `Base.Domain`.
+
+**Decision:**
+- `ReferenceData` abstract base class placed in `Base.Domain/ReferenceData/ReferenceData.cs`.
+- Concrete types (Country, Gender, etc.) placed in `Admin.Domain/Modules/ReferenceData/`.
+- EF Core configurations placed in `Admin.Infrastructure/Persistence/Configurations/`.
+- Abstract `ReferenceDataConfiguration<T>` base EF config placed in `Admin.Infrastructure`.
+- Uses `ValueGeneratedOnAdd()` instead of Npgsql-specific `UseIdentityColumn()` to keep Admin module free of Npgsql dependency.
+
+**Consequences:**
+- ✅ Concrete types stay in Admin (owner module); base stays in shared package
+- ✅ Admin module doesn't need Npgsql package reference
+- ❌ Base.Domain now contains a domain concept that is Admin-specific but needed across modules for DTO mapping — acceptable trade-off
+
+---
+
+### ADR-023: EF Core DDD Property Access Convention — `ApplyDddPropertyAccessConventions()` (2026-04-28)
+
+**Context:**
+- ADR-007 mandates `{ get; private set; }` on all entity/aggregate properties to protect invariants.
+- EF Core needs to materialize entities from database rows, raising concern: "Does EF Core require public setters?"
+- EF Core already supports `{ get; private set; }` natively — it uses the compiler-generated backing field (or reflection) to set property values. No `{ get; set; }` is needed.
+- However, **collection navigation properties** exposed as `IReadOnlyList<T>` with an explicit private backing field (e.g., `private readonly List<T> _items`) need `PropertyAccessMode.Field` so EF Core populates the backing field directly instead of trying to use the (non-existent) property setter.
+
+**Decision:**
+- Created `DddModelBuilderExtensions.ApplyDddPropertyAccessConventions()` in `MarketNest.Base.Infrastructure/Persistence/`.
+- The extension method:
+  1. Sets model-level `PropertyAccessMode.PreferField` (explicit, matches EF Core default, documents DDD intent).
+  2. Auto-detects collection navigations with an explicit `_camelCase` backing field and sets `PropertyAccessMode.Field` on those navigations.
+- All module `DbContext.OnModelCreating()` calls `modelBuilder.ApplyDddPropertyAccessConventions()` after `ApplyConfigurationsFromAssembly()`.
+- Collection navigation pattern standardized: always use `private readonly List<T> _items = [];` with `public IReadOnlyList<T> Items => _items.AsReadOnly();` (never auto-property `IReadOnlyList<T> { get; private set; }`).
+
+**Alternatives Considered:**
+- Manual `UsePropertyAccessMode(PropertyAccessMode.Field)` per navigation → Rejected: error-prone, easy to forget in new entities.
+- `{ get; set; }` on entities → Rejected: violates ADR-007, breaks DDD invariant protection.
+- No convention, rely on EF Core defaults → Rejected: implicit behavior is fragile for collection navigations with explicit backing fields.
+
+**Consequences:**
+- ✅ `{ get; private set; }` on scalar properties works with zero extra configuration — EF Core handles it natively.
+- ✅ Collection navigations with explicit backing fields are auto-detected and configured correctly.
+- ✅ Single place to maintain the convention — new modules just call `ApplyDddPropertyAccessConventions()`.
+- ✅ No changes needed to entity designs — ADR-007 accessors are fully compatible with EF Core.
+- ❌ Naming convention dependency: backing field must follow `_camelCase` for `PascalCase` property name.
 
 ---

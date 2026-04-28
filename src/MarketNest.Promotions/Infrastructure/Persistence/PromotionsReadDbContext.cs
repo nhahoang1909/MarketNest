@@ -12,6 +12,7 @@ public class PromotionsReadDbContext(DbContextOptions<PromotionsReadDbContext> o
     {
         modelBuilder.HasDefaultSchema(TableConstants.Schema.Promotions);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PromotionsDbContext).Assembly);
+        modelBuilder.ApplyDddPropertyAccessConventions();
         base.OnModelCreating(modelBuilder);
     }
 }

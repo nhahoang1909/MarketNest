@@ -182,6 +182,16 @@ Controller base classes:
 
 Read `agents/GUIDELINES.md` — the canonical, single source of truth for agent-facing guidance (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution). It links to authoritative deep docs (`docs/code-rules.md`, `docs/architecture.md`, etc.). The original per-topic rule files are archived under `agents/rules/archive/`.
 
+Using specialized subagents
+
+- This repository exposes a small set of specialized subagents. When a task matches a subagent's responsibility, ALWAYS delegate to it rather than reimplementing the behavior. Use the host's subagent call mechanism (for example, the `run_subagent` tool) to invoke the agent by name.
+- Available subagents (current): `Plan` — use this agent for researching and outlining multi-step plans (designs, migration plans, phased work). Example usage: delegate complex, multi-step tasks like migration or extraction plans to `Plan` before making code changes.
+
+Source existing AI conventions
+
+- Before changing code or creating new files, search for and read the project's AI guidance files. Do a glob search for the following filenames and consult any found files: `**/.github/copilot-instructions.md`, `**/AGENT.md`, `**/AGENTS.md`, `**/CLAUDE.md`, `**/.cursorrules/**`, `**/.windsurfrules/**`, `**/.clinerules/**`, `**/.cursor/rules/**`, `**/.windsurf/rules/**`, `**/.clinerules/**`, `**/README.md`.
+- In this repository the most relevant files are `CLAUDE.md` (root), `.github/copilot-instructions.md` (root), and `agents/GUIDELINES.md` and `agents/rules/` (see `agents/rules/README.md`). Read them before implementing features so your work matches local conventions.
+
 ### Phase-branch PR rule
 
 All pull requests must target a phased feature branch (`p*-main`, e.g. `p1-main`) — **never open a PR directly against `main`**. Create a short-lived feature branch from the current phase branch, then open the PR to that phase branch. Maintainers merge `p*-main` → `main` after phase verification.

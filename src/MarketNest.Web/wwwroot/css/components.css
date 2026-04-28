@@ -478,18 +478,7 @@
         @apply rounded-lg bg-cream-200 animate-pulse;
     }
 
-    /* Shimmer variant — gradient sweep for richer UX */
-    .skeleton-shimmer {
-        border-radius: theme('borderRadius.lg');
-        background: linear-gradient(
-            90deg,
-            theme('colors.cream.200') 25%,
-            theme('colors.cream.50')  50%,
-            theme('colors.cream.200') 75%
-        );
-        background-size: 200% 100%;
-        animation: skeleton-sweep 1.6s ease-in-out infinite;
-    }
+    /* Shimmer variant — see @utility skeleton-shimmer below @layer */
 
     /* Button loading state */
     .btn-loading {
@@ -525,7 +514,10 @@
 
     /* Store card skeleton: fixed height matches real _StoreCard */
     .skeleton-store-card {
-        @apply card p-4 flex items-center gap-4;
+        @apply bg-surface border border-ink-100/60 overflow-hidden p-4 flex items-center gap-4;
+        border-radius: 12px;
+        box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.14),
+        0 1px 1px rgba(0, 0, 0, 0.24);
     }
 
     .skeleton-store-card .sk-logo {
@@ -575,7 +567,10 @@
 
     /* Stat card skeleton (dashboard) */
     .skeleton-stat-card {
-        @apply card p-5 space-y-3;
+        @apply bg-surface border border-ink-100/60 overflow-hidden p-5 space-y-3;
+        border-radius: 12px;
+        box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.14),
+        0 1px 1px rgba(0, 0, 0, 0.24);
     }
 
     .skeleton-stat-card .sk-label {
@@ -649,3 +644,17 @@
     0%   { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+
+/* Shimmer utility — registered as @utility so @apply skeleton-shimmer works inside @layer components */
+@utility skeleton-shimmer {
+    border-radius: var(--radius-lg, 0.5rem);
+    background: linear-gradient(
+        90deg,
+        var(--color-cream-200) 25%,
+        var(--color-cream-50)  50%,
+        var(--color-cream-200) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-sweep 1.6s ease-in-out infinite;
+}
+

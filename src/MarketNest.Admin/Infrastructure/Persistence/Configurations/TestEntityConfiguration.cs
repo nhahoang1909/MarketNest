@@ -17,6 +17,6 @@ public class TestEntityConfiguration : IEntityTypeConfiguration<TestEntity>
             vo.Property(v => v.Amount).HasColumnName("Value_Amount");
         });
 
-        builder.Navigation(x => x.SubEntities).UsePropertyAccessMode(PropertyAccessMode.Field);
+        // Collection navigation backing field (_subEntities) handled by ApplyDddPropertyAccessConventions()
     }
 }
