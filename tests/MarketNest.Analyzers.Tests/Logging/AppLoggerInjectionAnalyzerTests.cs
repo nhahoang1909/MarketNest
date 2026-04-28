@@ -37,6 +37,20 @@ public class AppLoggerInjectionAnalyzerTests
     }
 
     [Fact]
+    public async Task Triggers_for_ILogger_field_declaration()
+    {
+        var source = ILoggerStub + """
+            namespace App {
+                using Microsoft.Extensions.Logging;
+                partial class Handler {
+                    private readonly {|MN007:ILogger<Handler>|} _logger;
+                }
+            }
+            """;
+        await Verify<AppLoggerInjectionAnalyzer>.AnalyzerAsync(source);
+    }
+
+    [Fact]
     public async Task CodeFix_replaces_ILogger_with_IAppLogger()
     {
         // Both stubs must be top-level namespaces so the file-level using directive can resolve them.

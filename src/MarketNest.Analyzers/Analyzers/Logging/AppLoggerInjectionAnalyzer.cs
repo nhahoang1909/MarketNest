@@ -23,10 +23,11 @@ public sealed class AppLoggerInjectionAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterSyntaxNodeAction(Analyze, SyntaxKind.Parameter);
+        context.RegisterSyntaxNodeAction(AnalyzeParameter, SyntaxKind.Parameter);
+        context.RegisterSyntaxNodeAction(AnalyzeField, SyntaxKind.FieldDeclaration);
     }
 
-    private static void Analyze(SyntaxNodeAnalysisContext context)
+    private static void AnalyzeParameter(SyntaxNodeAnalysisContext context)
     {
         var param = (ParameterSyntax)context.Node;
         if (param.Type is null) return;
@@ -36,5 +37,15 @@ public sealed class AppLoggerInjectionAnalyzer : DiagnosticAnalyzer
 
         if (typeName.IndexOf("Microsoft.Extensions.Logging.ILogger<", StringComparison.Ordinal) >= 0)
             context.ReportDiagnostic(Diagnostic.Create(Rule, param.Type.GetLocation(), typeName));
+    }
+
+    private static void AnalyzeField(SyntaxNodeAnalysisContext context)
+    {
+        var field = (FieldDeclarationSyntax)context.Node;
+        var typeInfo = context.SemanticModel.GetTypeInfo(field.Declaration.Type);
+        var typeName = typeInfo.Type?.OriginalDefinition?.ToDisplayString() ?? string.Empty;
+
+        if (typeName.IndexOf("Microsoft.Extensions.Logging.ILogger<", StringComparison.Ordinal) >= 0)
+            context.ReportDiagnostic(Diagnostic.Create(Rule, field.Declaration.Type.GetLocation(), typeName));
     }
 }
