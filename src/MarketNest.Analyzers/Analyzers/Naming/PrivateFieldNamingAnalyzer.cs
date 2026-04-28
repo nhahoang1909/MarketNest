@@ -47,5 +47,5 @@ public sealed class PrivateFieldNamingAnalyzer : DiagnosticAnalyzer
     }
 
     private static bool IsValidName(string name) =>
-        name.Length >= 2 && name[0] == '_' && char.IsLower(name[1]);
+        name == "_" || (name.Length >= 2 && name[0] == '_' && char.IsLower(name[1]));
 }

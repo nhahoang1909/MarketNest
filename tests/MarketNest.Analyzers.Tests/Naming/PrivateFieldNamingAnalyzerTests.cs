@@ -107,4 +107,54 @@ public class PrivateFieldNamingAnalyzerTests
             """;
         await Verify<PrivateFieldNamingAnalyzer>.AnalyzerAsync(source);
     }
+
+    [Fact]
+    public async Task No_trigger_for_single_underscore_discard_field()
+    {
+        var source = """
+            class C {
+                private int _;
+            }
+            """;
+        await Verify<PrivateFieldNamingAnalyzer>.AnalyzerAsync(source);
+    }
+
+    [Fact]
+    public async Task CodeFix_removes_m_prefix_and_adds_underscore()
+    {
+        var source = """
+            class C {
+                private int {|MN001:m_count|};
+            }
+            """;
+        var fixedSource = """
+            class C {
+                private int _count;
+            }
+            """;
+        await VerifyFix<PrivateFieldNamingAnalyzer, PrivateFieldNamingCodeFix>
+            .CodeFixAsync(source, fixedSource);
+    }
+
+    [Fact]
+    public async Task Triggers_when_private_static_non_readonly_field_has_bad_name()
+    {
+        var source = """
+            class C {
+                private static int {|MN001:Counter|};
+            }
+            """;
+        await Verify<PrivateFieldNamingAnalyzer>.AnalyzerAsync(source);
+    }
+
+    [Fact]
+    public async Task No_trigger_for_valid_private_static_non_readonly()
+    {
+        var source = """
+            class C {
+                private static int _counter;
+            }
+            """;
+        await Verify<PrivateFieldNamingAnalyzer>.AnalyzerAsync(source);
+    }
 }
