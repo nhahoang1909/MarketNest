@@ -23,7 +23,7 @@ public partial class VoucherExpiryJob(
 
     public async Task ExecuteAsync(JobExecutionContext context, CancellationToken cancellationToken = default)
     {
-        DateTime utcNow = DateTime.UtcNow;
+        DateTimeOffset utcNow = DateTimeOffset.UtcNow;
 
         IReadOnlyList<Domain.Voucher> toExpire =
             await repository.GetActiveExpiredAsync(utcNow, cancellationToken);

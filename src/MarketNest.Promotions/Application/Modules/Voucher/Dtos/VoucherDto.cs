@@ -12,10 +12,10 @@ public record VoucherDto(
     decimal DiscountValue,
     decimal? MaxDiscountCap,
     decimal? MinOrderValue,
-    DateTime EffectiveDate,
-    DateTime ExpiryDate,
+    DateTimeOffset EffectiveDate,
+    DateTimeOffset ExpiryDate,
     int? UsageLimit,
     int? UsageLimitPerUser,
     int UsageCount,
     VoucherStatus Status,
-    DateTime CreatedAt);
+    DateTimeOffset CreatedAt);

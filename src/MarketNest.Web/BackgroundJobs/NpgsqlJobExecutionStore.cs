@@ -15,8 +15,9 @@ public class NpgsqlJobExecutionStore : IJobExecutionStore
         _connectionString = config.GetConnectionString(AppConstants.DefaultConnectionStringName)
                             ?? throw new InvalidOperationException("Default connection string is not configured.");
 
-        // Ensure table exists (best-effort, idempotent)
+#pragma warning disable MN004 // Constructor cannot be async — synchronous bootstrap of idempotent DDL is acceptable here
         EnsureTableAsync().GetAwaiter().GetResult();
+#pragma warning restore MN004
     }
 
     private async Task EnsureTableAsync()

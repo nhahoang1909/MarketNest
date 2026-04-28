@@ -25,7 +25,7 @@ public class CreateVoucherCommandValidator : AbstractValidator<CreateVoucherComm
             .WithMessage("EffectiveDate must be before ExpiryDate.");
 
         RuleFor(x => x.ExpiryDate)
-            .GreaterThan(DateTime.UtcNow)
+            .GreaterThan(DateTimeOffset.UtcNow)
             .WithMessage("ExpiryDate must be in the future.");
 
         RuleFor(x => x)

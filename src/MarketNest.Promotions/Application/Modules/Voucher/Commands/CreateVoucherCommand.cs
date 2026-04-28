@@ -12,7 +12,7 @@ public record CreateVoucherCommand(
     decimal DiscountValue,
     decimal? MaxDiscountCap,
     decimal? MinOrderValue,
-    DateTime EffectiveDate,
-    DateTime ExpiryDate,
+    DateTimeOffset EffectiveDate,
+    DateTimeOffset ExpiryDate,
     int? UsageLimit,
     int? UsageLimitPerUser) : ICommand<Guid>;

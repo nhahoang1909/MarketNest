@@ -11,7 +11,7 @@ public class VoucherRepository(PromotionsDbContext db)
             .Include(v => v.Usages)
             .FirstOrDefaultAsync(v => v.Code == new VoucherCode(code), ct);
 
-    public async Task<IReadOnlyList<Voucher>> GetActiveExpiredAsync(DateTime utcNow, CancellationToken ct = default)
+    public async Task<IReadOnlyList<Voucher>> GetActiveExpiredAsync(DateTimeOffset utcNow, CancellationToken ct = default)
         => await Db.Vouchers
             .Where(v => v.Status == VoucherStatus.Active && v.ExpiryDate < utcNow)
             .ToListAsync(ct);

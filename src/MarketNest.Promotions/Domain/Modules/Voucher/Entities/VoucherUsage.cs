@@ -8,7 +8,7 @@ public class VoucherUsage : Entity<Guid>
     public Guid OrderId { get; private set; }
     public Guid UserId { get; private set; }
     public Money DiscountApplied { get; private set; } = null!;
-    public DateTime UsedAt { get; private set; }
+    public DateTimeOffset UsedAt { get; private set; }
 
     internal static VoucherUsage Create(Guid voucherId, Guid orderId, Guid userId, Money discountApplied) =>
         new()
@@ -18,6 +18,6 @@ public class VoucherUsage : Entity<Guid>
             OrderId = orderId,
             UserId = userId,
             DiscountApplied = discountApplied,
-            UsedAt = DateTime.UtcNow
+            UsedAt = DateTimeOffset.UtcNow
         };
 }

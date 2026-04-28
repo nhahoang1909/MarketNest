@@ -15,16 +15,16 @@ public class Voucher : AggregateRoot<Guid>
     public Money? MaxDiscountCap { get; private set; }
 
     public Money? MinOrderValue { get; private set; }
-    public DateTime EffectiveDate { get; private set; }
-    public DateTime ExpiryDate { get; private set; }
+    public DateTimeOffset EffectiveDate { get; private set; }
+    public DateTimeOffset ExpiryDate { get; private set; }
 
     public int? UsageLimit { get; private set; }
     public int? UsageLimitPerUser { get; private set; }
     public int UsageCount { get; private set; }
 
     public VoucherStatus Status { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime UpdatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset UpdatedAt { get; private set; }
 
     private readonly List<VoucherUsage> _usages = [];
     public IReadOnlyList<VoucherUsage> Usages => _usages.AsReadOnly();
@@ -39,8 +39,8 @@ public class Voucher : AggregateRoot<Guid>
         decimal discountValue,
         Money? maxDiscountCap,
         Money? minOrderValue,
-        DateTime effectiveDate,
-        DateTime expiryDate,
+        DateTimeOffset effectiveDate,
+        DateTimeOffset expiryDate,
         int? usageLimit,
         int? usageLimitPerUser)
     {
@@ -62,8 +62,8 @@ public class Voucher : AggregateRoot<Guid>
             UsageLimitPerUser = usageLimitPerUser,
             UsageCount = 0,
             Status = VoucherStatus.Draft,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         voucher.AddDomainEvent(new VoucherCreatedEvent(voucher.Id, code.Value));
@@ -77,7 +77,7 @@ public class Voucher : AggregateRoot<Guid>
                 "Voucher can only be activated from Draft or Paused status."));
 
         Status = VoucherStatus.Active;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
         AddDomainEvent(new VoucherActivatedEvent(Id));
         return Result<bool, Error>.Success(true);
     }
@@ -89,7 +89,7 @@ public class Voucher : AggregateRoot<Guid>
                 "Only Active vouchers can be paused."));
 
         Status = VoucherStatus.Paused;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
         AddDomainEvent(new VoucherPausedEvent(Id));
         return Result<bool, Error>.Success(true);
     }
@@ -97,14 +97,14 @@ public class Voucher : AggregateRoot<Guid>
     public void MarkExpired()
     {
         Status = VoucherStatus.Expired;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
         AddDomainEvent(new VoucherExpiredEvent(Id));
     }
 
     public void MarkDepleted()
     {
         Status = VoucherStatus.Depleted;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
         AddDomainEvent(new VoucherDepletedEvent(Id));
     }
 
@@ -119,7 +119,7 @@ public class Voucher : AggregateRoot<Guid>
         var usage = VoucherUsage.Create(Id, orderId, userId, discountApplied);
         _usages.Add(usage);
         UsageCount++;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
 
         if (UsageLimit.HasValue && UsageCount >= UsageLimit.Value)
             MarkDepleted();
@@ -131,7 +131,7 @@ public class Voucher : AggregateRoot<Guid>
     public void ReverseUsage(Guid orderId)
     {
         UsageCount = Math.Max(0, UsageCount - 1);
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
         AddDomainEvent(new VoucherUsageReversedEvent(Id, orderId));
     }
 
