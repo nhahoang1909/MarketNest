@@ -144,6 +144,8 @@
     --font-display: "Playfair Display", "Georgia", "Times New Roman", serif;
     --font-admin: "DM Sans", "Inter", system-ui, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    /* Hero display size (used by the home page hero) */
+    --font-hero-size: clamp(56px, 7vw, 112px);
 }
 
 /* ── Dark Mode — override tokens when data-theme="dark" ──── */
@@ -274,6 +276,11 @@
         font-weight: 700;
         letter-spacing: -0.02em;
         line-height: 1.1;
+    }
+
+    /* Large hero display that uses the token --font-hero-size */
+    .mn-hero {
+        font-size: var(--font-hero-size);
     }
 
     .mn-h1 {

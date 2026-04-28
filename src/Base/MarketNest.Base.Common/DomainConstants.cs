@@ -68,6 +68,14 @@ public static class DomainConstants
         public const string YearAgo = "{0}y ago";
     }
 
+    // ── Currencies ──────────────────────────────────────────────────────
+    public static class Currencies
+    {
+        public const string Default = "VND";
+        public const string VND = "VND";
+        public const string USD = "USD";
+    }
+
     // ── Error Codes ──────────────────────────────────────────────────
     public static class ErrorCodes
     {

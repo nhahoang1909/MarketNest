@@ -20,6 +20,22 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-28 - MarketNest.Analyzers complete — all 17 Roslyn rules wired to solution
+- **Status**: Completed
+- **Description**: Implemented `MarketNest.Analyzers` project: 17 diagnostic rules (MN001–MN017) across four categories (Naming, AsyncRules, Logging, Architecture), 5 code fix providers (MN001, MN003, MN006, MN007, MN017), and 73 tests. Wired to all `src/` projects via `src/Directory.Build.targets`. Fixed all violations surfaced during wiring: Promotions Voucher/VoucherUsage DateTime → DateTimeOffset (MN009); AppLogger.cs MN007 suppress; NpgsqlJobExecutionStore.cs MN004 suppress; MarketNest.Web.csproj MN008 suppress (Razor Pages namespace constraint). Added `docs/analyzers.md` as reference and linked from CLAUDE.md.
+- **Branch**: `p1-main-nhahoang`
+- **Notes**: All 73 analyzer tests pass. Full solution `dotnet build` clean. `MarketNest.Web` MN008 suppressed at project level because Razor Pages PageModel classes use folder-matched namespaces (`@model` directive + `IndexModel` class-name collisions prevent flat `MarketNest.Web.Pages` namespace).
+
+### 2026-04-27 - MarketNest.Promotions module scaffold completed
+- **Status**: Completed
+- **Description**: Scaffolded the full `MarketNest.Promotions` module (45 files) following existing module patterns. Domain: `Voucher` aggregate, `VoucherUsage` entity, 4 enums, 2 value objects (`VoucherCode`, `DiscountResult`), 7 domain events. Application: 3 commands + handlers, 4 query types + handlers, `IVoucherRepository`, `IVoucherService`, `CreateVoucherCommandValidator`, `VoucherExpiryJob` (hourly background job). Infrastructure: `PromotionsDbContext` + read context, EF configurations (snake_case columns, value conversions, unique indexes), `VoucherRepository`, `VoucherQuery`, 2 API controllers (CRUD). Integrated into solution: `MarketNest.slnx`, `MarketNest.Web.csproj`, `Program.cs` (MediatR + FluentValidation assembly scan, DbContexts, DI bindings, background job, DatabaseInitializer). Fixed 10 compile errors post-integration (API mismatches vs actual base types). Build: 0 errors, 0 warnings.
+- **Notes**: `IVoucherService` (ValidateAsync for checkout apply flow) declared but not implemented — placeholder for when Orders/Cart modules connect. Added `DomainConstants.Currencies` constant (VND default) to `MarketNest.Base.Common`. `VoucherExpiryJob` registered as scoped (not singleton) because it depends on scoped `IVoucherRepository`.
+
+### 2026-04-27 - Voucher & Order Financial Calculation logic integrated into project docs
+- **Status**: Completed
+- **Description**: Reviewed two new business logic specs (`docs/newlogics/voucher-domain-plan.md`, `docs/newlogics/order-financial-calculation.md`) and merged all logic into authoritative project docs. Updated `domain-and-business-rules.md` (v0.3): added §3.8 Promotions/Voucher aggregate, updated §3.4 Order aggregate with full financial snapshot fields, restructured §3.5 Payment → split Payout into own aggregate (§3.5.1), added §10 Order Financial Calculation Reference with canonical formula, updated invariants (V1–V13, F1–F10), domain events, notification triggers, and value objects. Updated `architecture.md`: added `MarketNest.Promotions` module, `promotions` schema, Redis voucher cache key, Promotions in dependency graph, project count 14→15. Added ADR-015 (Voucher two-axis model) and ADR-016 (Financial calculation two-perspective model) to `decisions.md`.
+- **Notes**: Source specs remain in `docs/newlogics/` as reference. See ADR-015 and ADR-016 for design rationale. Phase 1 implementation checklists are in `domain-and-business-rules.md §10.5` and `newlogics/voucher-domain-plan.md` Phase 1 Checklist.
+
 ### 2026-04-27 - Loading foundation (skeleton system + checkout overlay + image CLS)
 - **Status**: Completed
 - **Description**: Phase 1 loading foundation. CSS: `.skeleton-shimmer` (gradient sweep), `.btn-loading`, 4 skeleton shape classes. 4 reusable skeleton partials (`_SkeletonProductCard/StoreCard/OrderRow/StatCard`). Image CLS fix: explicit `width`/`height` on all lazy images. Checkout: Alpine `submitting` state + full-page processing overlay. HTMX: `_SearchInput` inline spinner, `_FilterBar`/`_Pagination` optional `IndicatorId` param.

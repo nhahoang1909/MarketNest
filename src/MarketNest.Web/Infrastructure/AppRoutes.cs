@@ -53,7 +53,8 @@ public static class AppRoutes
         Api.SetLanguage,
         Api.OpenApiDoc,
         Api.ScalarDocs,
-        Api.AdminV1Prefix
+        Api.AdminV1Prefix,
+        Api.PromotionsV1Prefix
     };
 
     /// <summary>
@@ -89,6 +90,7 @@ public static class AppRoutes
         public const string OpenApiDoc = "/openapi";
         public const string ScalarDocs = "/scalar";
         public const string AdminV1Prefix = "/api/v1/admin";
+        public const string PromotionsV1Prefix = "/api/v1/promotions";
     }
 
     // ── Account ──────────────────────────────────────────────────────

@@ -163,7 +163,8 @@ Controller base classes:
 - Localization: English (`en`) and Vietnamese (`vi`) via resource files in `src/MarketNest.Web/Resources/` and cookie-based culture provider
 - Route whitelist: `RouteWhitelistMiddleware` blocks unregistered paths. Add new routes to `AppRoutes` and its `WhitelistedPrefixes` set
 - Frontend components live in `src/MarketNest.Web/Pages/Shared/` organized by category: `Data/`, `Display/`, `Domain/`, `Forms/`, `Navigation/`, `Overlays/`. Naming: `_ComponentName.cshtml`. Layouts (`_Layout.cshtml`, `_LayoutAdmin.cshtml`, `_LayoutSeller.cshtml`) also live in `Pages/Shared/`
-- Logging: use `IAppLogger<T>` (not `ILogger<T>` directly) — see `MarketNest.Core/Logging/`
+- Loading patterns: use `.skeleton-shimmer` + shape classes (`skeleton-card`, `skeleton-text`, `skeleton-avatar`, `skeleton-badge`) from `wwwroot/css/components.css`. Reusable skeleton partials (`_SkeletonProductCard`, `_SkeletonStoreCard`, `_SkeletonOrderRow`, `_SkeletonStatCard`) live in `Pages/Shared/Display/`. Checkout overlay uses Alpine `submitting` state for a full-page processing overlay. HTMX indicators are built into `_SearchInput`, `_FilterBar`, and `_Pagination` via optional `IndicatorId` parameter. See `docs/frontend-guide.md` §10 for the full decision tree
+- Logging: inject `IAppLogger<T>` (not `ILogger<T>`) and use `[LoggerMessage]` source-generated delegates in a nested `private static partial class Log`. All classes that log must be `partial`. `IAppLogger<T>` is defined in `src/Base/MarketNest.Base.Infrastructure/Logging/`; EventIds come from the `LogEventId` enum in the same package. See `docs/code-rules.md` §9 for the complete pattern and per-module EventId block allocation
 - Database initialization: `DatabaseInitializer` auto-migrates and seeds on startup using model hash tracking and PostgreSQL advisory locks. Seeders implement `IDataSeeder` with `Order` and `Version` properties
 - Each module's `DbContext` must implement `IModuleDbContext` (defines `SchemaName`, `ContextName`). Register via `AddModuleDbContext<TContext>()` in `DatabaseServiceExtensions` so `DatabaseInitializer` can discover all modules
 - Event bus: modules publish integration events via `IEventBus` (in `MarketNest.Core/Common/Events/`). Phase 1 uses `InProcessEventBus` (MediatR); Phase 3 swaps to `MassTransitEventBus` (RabbitMQ) — transport is a DI swap, module code never references the concrete implementation
@@ -179,11 +180,11 @@ Controller base classes:
 
 ## Agent Behavior Guidelines (rules)
 
-Agent behavior and coding guidelines are maintained under `agents/rules/`.
+Read `agents/GUIDELINES.md` — the canonical, single source of truth for agent-facing guidance (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution). It links to authoritative deep docs (`docs/code-rules.md`, `docs/architecture.md`, etc.). The original per-topic rule files are archived under `agents/rules/archive/`.
 
-Please read `agents/rules/README.md` and the rule files in `agents/rules/` (architecture.md, codestyle.md, git.md, security.md, testing.md) for authoritative, agent-facing guidance (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution) and links to deeper docs (`docs/code-rules.md`, `docs/architecture.md`, etc.).
+### Phase-branch PR rule
 
-Note: a single consolidated `agents/GUIDELINES.md` was planned; if present it will be authoritative. For now rely on the `agents/rules/` files and `agents/rules/README.md` which describes the consolidation status.
+All pull requests must target a phased feature branch (`p*-main`, e.g. `p1-main`) — **never open a PR directly against `main`**. Create a short-lived feature branch from the current phase branch, then open the PR to that phase branch. Maintainers merge `p*-main` → `main` after phase verification.
 
 ## Phase 1 Exit Criteria (Month 3)
 

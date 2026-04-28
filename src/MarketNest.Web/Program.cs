@@ -2,6 +2,8 @@ using System.Reflection;
 using FluentValidation;
 using MarketNest.Admin.Application;
 using MarketNest.Admin.Infrastructure;
+using MarketNest.Promotions.Application;
+using MarketNest.Promotions.Infrastructure;
 using MarketNest.Auditing.Infrastructure;
 using MarketNest.Web.BackgroundJobs;
 using MarketNest.Web.Hosting;
@@ -77,7 +79,8 @@ try
             typeof(MarketNest.Reviews.AssemblyReference).Assembly,
             typeof(MarketNest.Disputes.AssemblyReference).Assembly,
             typeof(MarketNest.Notifications.AssemblyReference).Assembly,
-            typeof(MarketNest.Admin.AssemblyReference).Assembly);
+            typeof(MarketNest.Admin.AssemblyReference).Assembly,
+            typeof(MarketNest.Promotions.AssemblyReference).Assembly);
 
         // Auditing pipeline behavior — records [Audited] commands automatically
         cfg.AddOpenBehavior(typeof(AuditBehavior<,>));
@@ -92,7 +95,8 @@ try
         typeof(MarketNest.Orders.AssemblyReference).Assembly,
         typeof(MarketNest.Payments.AssemblyReference).Assembly,
         typeof(MarketNest.Reviews.AssemblyReference).Assembly,
-        typeof(MarketNest.Disputes.AssemblyReference).Assembly
+        typeof(MarketNest.Disputes.AssemblyReference).Assembly,
+        typeof(MarketNest.Promotions.AssemblyReference).Assembly
     };
 
     foreach (Assembly assembly in validatorAssemblies) builder.Services.AddValidatorsFromAssembly(assembly);
@@ -123,6 +127,16 @@ try
     builder.Services.AddScoped<IGetTestsPagedQuery,
         TestQuery>();
 
+    // ── Promotions Module ─────────────────────────────────────────────
+    builder.Services.AddModuleDbContext<PromotionsDbContext>(opts =>
+        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
+    builder.Services.AddDbContext<PromotionsReadDbContext>(opts =>
+        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName))
+            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+    builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
+    builder.Services.AddScoped<IVoucherQuery, VoucherQuery>();
+    builder.Services.AddScoped<IGetVouchersPagedQuery, VoucherQuery>();
+
     // IUserTimeZoneProvider — resolves user's time zone and date format from HTTP context
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<IUserTimeZoneProvider, HttpContextUserTimeZoneProvider>();
@@ -143,6 +157,7 @@ try
     builder.Services.AddScoped<IJobExecutionStore, NpgsqlJobExecutionStore>();
     // Example/demo job registration — modules should register their own jobs instead
     builder.Services.AddSingleton<IBackgroundJob, TestTimerJob>();
+    builder.Services.AddScoped<IBackgroundJob, VoucherExpiryJob>();
     builder.Services.AddHostedService<JobRunnerHostedService>();
 
     // ── Database: auto-migrate + seed ─────────────────────────────────
@@ -155,7 +170,8 @@ try
 
     // Register DatabaseInitializer + auto-discover seeders from module assemblies
     builder.Services.AddDatabaseInitializer(
-        typeof(MarketNest.Admin.AssemblyReference).Assembly
+        typeof(MarketNest.Admin.AssemblyReference).Assembly,
+        typeof(MarketNest.Promotions.AssemblyReference).Assembly
     );
 
     // ── Build ─────────────────────────────────────────────────────────

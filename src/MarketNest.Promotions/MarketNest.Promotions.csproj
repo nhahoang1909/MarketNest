@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MarketNest.Promotions</RootNamespace>
+        <Description>Promotions module: Platform and Shop vouchers, discount validation, checkout apply flow.</Description>
+        <NoWarn>NU1510</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Base\MarketNest.Base.Api\MarketNest.Base.Api.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Common\MarketNest.Base.Common.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Domain\MarketNest.Base.Domain.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Infrastructure\MarketNest.Base.Infrastructure.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Utility\MarketNest.Base.Utility.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Azure.Identity"/>
+        <PackageReference Include="MediatR"/>
+        <PackageReference Include="FluentValidation"/>
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions"/>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational"/>
+        <PackageReference Include="OpenTelemetry.Api"/>
+        <PackageReference Include="System.Security.Cryptography.Xml"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Application\Common\"/>
+        <Folder Include="Application\Modules\Voucher\DomainEventHandlers\"/>
+        <Folder Include="Application\Modules\Voucher\IntegrationEventHandlers\"/>
+        <Folder Include="Domain\Common\Enums\"/>
+        <Folder Include="Domain\Common\Events\"/>
+        <Folder Include="Infrastructure\Api\Common\"/>
+        <Folder Include="Infrastructure\Api\Modules\"/>
+        <Folder Include="Infrastructure\Queries\Modules\"/>
+        <Folder Include="Infrastructure\Repositories\Modules\"/>
+    </ItemGroup>
+
+</Project>

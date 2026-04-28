@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <!-- NU1701: Roslyn testing packages have netfx transitive deps; they work fine on net10.0 -->
+    <!-- CA1707: test method names conventionally use underscores (Given_When_Then) -->
+    <NoWarn>$(NoWarn);NU1701;CA1707</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.XUnit" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MarketNest.Analyzers\MarketNest.Analyzers.csproj" />
+  </ItemGroup>
+</Project>
