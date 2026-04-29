@@ -34,6 +34,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-023 | EF Core DDD Property Access Convention — `ApplyDddPropertyAccessConventions()` | 2026-04-28 |
 | ADR-024 | Sale Price as Inline Fields on ProductVariant — Option A | 2026-04-29 |
 | ADR-025 | Canonical BaseQuery / BaseRepository in Base.Infrastructure with Module-Local Thin Wrappers | 2026-04-29 |
+| ADR-026 | SLA Requirements Formalized as First-Class Project Concern | 2026-04-29 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -657,3 +658,25 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 
 ---
 
+### ADR-026: SLA Requirements Formalized as First-Class Project Concern (2026-04-29)
+
+**Context:**
+- MarketNest marketplace processes real financial transactions (orders, payouts, commissions). Without explicit SLA thresholds, slow requests and financial drift can go undetected.
+- Business-critical invariants (no oversell, commission accuracy, payment reconciliation) were documented in `domain-and-business-rules.md` but had no corresponding runtime enforcement infrastructure.
+
+**Decision:**
+- Formalize a four-dimension SLA framework: Availability, Performance, Business Correctness, Data Integrity.
+- Capture all thresholds as first-class constants (`SlaConstants` in `Base.Common`) — no magic numbers.
+- Implement Phase 1 foundation: `PerformanceBehavior` (MediatR), `FinancialReconciliationJob` stub (Payments), and `SlaConstants`.
+- Full doc lives at `docs/sla-requirements.md`.
+
+**Consequences:**
+- ✅ All SLA thresholds are typed and searchable — enforced by MN005 no-magic-number analyzer.
+- ✅ `PerformanceBehavior` logs every slow/critical request via Seq from day one.
+- ✅ `FinancialReconciliationJob` skeleton is registered and scheduled; full logic unlocks once Order + Payment aggregates are complete.
+- ✅ Cross-reference table aligns SLA checks with existing domain invariants (I1, P2, §10.2).
+- ❌ P95 statistical tracking deferred to Phase 2 (requires OTEL histogram → Prometheus).
+- ❌ `/admin/sla` dashboard deferred to Phase 2.
+- **Phase 2 path**: Emit OTEL histogram metrics from `PerformanceBehavior`; wire Grafana dashboards; migrate `SlaConstants` thresholds to `AdminConfig` DB backing (ADR-021).
+
+---

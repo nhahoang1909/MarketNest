@@ -20,6 +20,18 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-29 - SLA foundation: doc + constants + PerformanceBehavior + FinancialReconciliationJob
+- **Status**: Completed
+- **Description**: Reviewed external SLA requirements (`marketnest-docs/business-logic/sla-requirement.md`) against existing domain invariants and implemented Phase 1 foundation:
+  - **`docs/sla-requirements.md`** — New canonical SLA document (4 dimensions: Availability, Performance, Business Correctness, Data Integrity). Cross-references domain invariants (I1 oversell, §10.2 formula, P2 voucher constraint), alerts matrix, phased implementation plan.
+  - **`Base.Common/SlaConstants.cs`** — Typed constants for all SLA thresholds: `Availability`, `Performance`, `Business`, `Integrity`, `Throughput` nested classes. No magic numbers.
+  - **`Auditing/Infrastructure/PerformanceBehavior.cs`** — MediatR pipeline behavior. Logs `Warning` at 1000 ms (`SlowRequestMs`), `Warning` (SLA breach risk) at 3000 ms (`CriticalRequestMs`). Registered as outermost behavior in `AddAuditingModule()`.
+  - **`Payments/Application/Timer/FinancialReconciliation/FinancialReconciliationJob.cs`** — Nightly stub at 02:00 UTC. Checks BuyerTotal vs ChargedAmount, orphaned payments, negative payouts. Full logic deferred until Order + Payment aggregates complete; all log delegates are declared and ready.
+  - **`Payments.csproj`** + **`GlobalUsings.cs`** — Added `Base.Utility` reference (needed for `IBackgroundJob`, `JobDescriptor`).
+  - **`LogEventId.cs`** — Added `PerfBehaviorSlowRequest` (11030), `PerfBehaviorCriticalRequest` (11031), `PaymentsReconciliationJob*` (6100–6104).
+- **ADR**: ADR-026 (see decisions.md)
+- **Build**: `dotnet build MarketNest.slnx` → 0 errors ✅
+
 ### 2026-04-29 - chore(base): promote BaseQuery / BaseRepository to Base.Infrastructure + extract module DI
 - **Status**: In Progress (staged, not yet committed)
 - **Description**: Canonical `BaseQuery<TEntity,TKey,TContext>` and `BaseRepository<TEntity,TKey,TContext>` abstract classes promoted from Admin-only to `Base.Infrastructure` (namespace `MarketNest.Base.Infrastructure`). `IBaseRepository<TEntity,TKey>` interface also moved to `Base.Infrastructure`. Each module now has a 2-line thin wrapper (`BaseQuery<TEntity,TKey>(ModuleReadDbContext)` and `BaseRepository<TEntity,TKey>(ModuleDbContext)`) inheriting from the canonical base. This standardises the query/repository pattern across all modules and eliminates duplicate implementations. Also extracted proper `AddAuditingModule()` and `AddPromotionsModule()` DI extension methods into `DependencyInjection.cs` files for those modules. Various modules (Orders, Payments, Catalog) updated their `DependencyInjection.cs` and `.csproj` refs accordingly.
