@@ -65,6 +65,9 @@ public enum LogEventId
     UoWPreCommitDispatching = 1071,
     UoWPostCommitFailed = 1072,
     UoWCommitting = 1073,
+    UoWTxBegin = 1074,
+    UoWTxCommitted = 1075,
+    UoWTxRolledBack = 1076,
 
     // RazorPageTransactionFilter — 1080-1089
     RazorPageTxBegin = 1080,
@@ -144,6 +147,7 @@ public enum LogEventId
     CatalogSaleExpiryJobStart = 3100,
     CatalogSaleExpiryJobExpired = 3101,
     CatalogSaleExpiryJobCompleted = 3102,
+    CatalogSaleExpiryJobError = 3103,
 
     // Seller/Products Pages — 3600-3649
     SellerProductsIndexStart = 3600,
@@ -394,6 +398,7 @@ public enum LogEventId
     PromotionsExpiryJobExpired = 14301,
     PromotionsExpiryJobDepleted = 14302,
     PromotionsExpiryJobError = 14303,
+    PromotionsExpiryJobCompleted = 14304,
 
     // Reserved — 14400-14999
 

@@ -11,6 +11,7 @@ namespace MarketNest.Catalog.Application;
 /// </summary>
 public partial class ExpireSalesJob(
     IVariantRepository repository,
+    IUnitOfWork uow,
     IAppLogger<ExpireSalesJob> logger) : IBackgroundJob
 {
     public JobDescriptor Descriptor { get; } = new(
@@ -32,16 +33,38 @@ public partial class ExpireSalesJob(
         IReadOnlyList<ProductVariant> expired =
             await repository.GetExpiredSalesAsync(utcNow, cancellationToken);
 
-        foreach (ProductVariant variant in expired)
+        if (expired.Count == 0)
         {
-            variant.RemoveSalePrice();
-            Log.InfoExpired(logger, variant.Id);
+            Log.InfoCompleted(logger, context.ExecutionId, 0);
+            return;
         }
 
-        if (expired.Count > 0)
-            await repository.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await uow.BeginTransactionAsync(ct: cancellationToken);
 
-        Log.InfoCompleted(logger, context.ExecutionId, expired.Count);
+            foreach (ProductVariant variant in expired)
+            {
+                variant.RemoveSalePrice();
+                Log.InfoExpired(logger, variant.Id);
+            }
+
+            await uow.CommitAsync(cancellationToken);
+            await uow.CommitTransactionAsync(cancellationToken);
+            await uow.DispatchPostCommitEventsAsync(cancellationToken);
+
+            Log.InfoCompleted(logger, context.ExecutionId, expired.Count);
+        }
+        catch (Exception ex)
+        {
+            await uow.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            Log.ErrorFailed(logger, context.ExecutionId, ex);
+            throw;
+        }
+        finally
+        {
+            await uow.DisposeAsync();
+        }
     }
 
     private static partial class Log
@@ -57,6 +80,12 @@ public partial class ExpireSalesJob(
         [LoggerMessage((int)LogEventId.CatalogSaleExpiryJobCompleted, LogLevel.Information,
             "ExpireSalesJob Completed - ExecutionId={ExecutionId}, ExpiredCount={ExpiredCount}")]
         public static partial void InfoCompleted(ILogger logger, Guid executionId, int expiredCount);
+
+        [LoggerMessage((int)LogEventId.CatalogSaleExpiryJobError, LogLevel.Error,
+            "ExpireSalesJob Failed - ExecutionId={ExecutionId}")]
+        public static partial void ErrorFailed(ILogger logger, Guid executionId, Exception ex);
     }
 }
+
+
 

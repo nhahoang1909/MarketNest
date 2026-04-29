@@ -4,7 +4,6 @@ using MarketNest.Base.Common;
 using MarketNest.Base.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 
 namespace MarketNest.Web.Infrastructure;
 
@@ -16,11 +15,13 @@ namespace MarketNest.Web.Infrastructure;
 ///     <para>
 ///         Transaction lifecycle:
 ///         <list type="number">
-///             <item>BeginTransaction on every module DbContext.</item>
-///             <item>Execute the page handler (which calls <see cref="IUnitOfWork.CommitAsync"/>).</item>
-///             <item>Commit all transactions if the handler completes without error.</item>
-///             <item>Dispatch post-commit events via <see cref="IUnitOfWork.DispatchPostCommitEventsAsync"/>.</item>
-///             <item>Rollback all transactions on unhandled exception.</item>
+///             <item>Call <see cref="IUnitOfWork.BeginTransactionAsync"/> on all module DbContexts.</item>
+///             <item>Execute the page handler (mutates entities via repositories — no explicit commit needed in handlers).</item>
+///             <item>Call <see cref="IUnitOfWork.CommitAsync"/> — dispatches pre-commit events, then SaveChanges on all contexts.</item>
+///             <item>Call <see cref="IUnitOfWork.CommitTransactionAsync"/> to finalize all DB transactions.</item>
+///             <item>Call <see cref="IUnitOfWork.DispatchPostCommitEventsAsync"/> to dispatch post-commit events.</item>
+///             <item>Rollback via <see cref="IUnitOfWork.RollbackAsync"/> on unhandled exception.</item>
+///             <item>Call <see cref="IUnitOfWork.DisposeAsync"/> to clean up resources.</item>
 ///         </list>
 ///     </para>
 ///
@@ -31,7 +32,6 @@ namespace MarketNest.Web.Infrastructure;
 ///     </para>
 /// </summary>
 public sealed partial class RazorPageTransactionFilter(
-    IEnumerable<IModuleDbContext> moduleContexts,
     IUnitOfWork uow,
     IAppLogger<RazorPageTransactionFilter> logger)
     : IAsyncPageFilter
@@ -74,52 +74,36 @@ public sealed partial class RazorPageTransactionFilter(
             context.HttpContext.RequestAborted);
         cts.CancelAfter(timeout);
 
-        var dbContextList = moduleContexts.Select(m => m.AsDbContext()).ToList();
-        var transactions = new List<IDbContextTransaction>(dbContextList.Count);
-
         try
         {
-            foreach (var db in dbContextList)
-                transactions.Add(await db.Database.BeginTransactionAsync(isolation, cts.Token));
-
-            Log.InfoTxBegin(logger, handlerName, isolation, dbContextList.Count);
+            await uow.BeginTransactionAsync(isolation, cts.Token);
+            Log.InfoTxBegin(logger, handlerName, isolation);
 
             PageHandlerExecutedContext executed = await next();
 
             if (executed.Exception is not null && !executed.ExceptionHandled)
             {
-                await RollbackAllAsync(transactions);
+                await uow.RollbackAsync(cts.Token);
                 Log.WarnTxRolledBackOnResult(logger, handlerName);
                 return;
             }
 
-            foreach (var tx in transactions)
-                await tx.CommitAsync(cts.Token);
+            await uow.CommitAsync(cts.Token);
+            await uow.CommitTransactionAsync(cts.Token);
 
-            Log.InfoTxCommitted(logger, handlerName, dbContextList.Count);
+            Log.InfoTxCommitted(logger, handlerName);
 
             await uow.DispatchPostCommitEventsAsync(context.HttpContext.RequestAborted);
         }
         catch (Exception ex)
         {
-            await RollbackAllAsync(transactions);
+            await uow.RollbackAsync(cts.Token).ConfigureAwait(false);
             Log.ErrorTxRolledBackOnException(logger, handlerName, ex);
             throw;
         }
         finally
         {
-            foreach (var tx in transactions)
-                await tx.DisposeAsync();
-        }
-    }
-
-    private static async Task RollbackAllAsync(
-        IEnumerable<IDbContextTransaction> transactions)
-    {
-        foreach (var tx in transactions)
-        {
-            try { await tx.RollbackAsync(CancellationToken.None); }
-            catch { /* ignore rollback errors */ }
+            await uow.DisposeAsync();
         }
     }
 
@@ -134,14 +118,14 @@ public sealed partial class RazorPageTransactionFilter(
     private static partial class Log
     {
         [LoggerMessage((int)LogEventId.RazorPageTxBegin, LogLevel.Debug,
-            "Razor Page TX BEGIN — Handler={Handler} Isolation={Isolation} Contexts={ContextCount}")]
+            "Razor Page TX BEGIN — Handler={Handler} Isolation={Isolation}")]
         public static partial void InfoTxBegin(
-            ILogger logger, string handler, IsolationLevel isolation, int contextCount);
+            ILogger logger, string handler, IsolationLevel isolation);
 
         [LoggerMessage((int)LogEventId.RazorPageTxCommitted, LogLevel.Debug,
-            "Razor Page TX COMMITTED — Handler={Handler} Contexts={ContextCount}")]
+            "Razor Page TX COMMITTED — Handler={Handler}")]
         public static partial void InfoTxCommitted(
-            ILogger logger, string handler, int contextCount);
+            ILogger logger, string handler);
 
         [LoggerMessage((int)LogEventId.RazorPageTxRolledBackOnResult, LogLevel.Warning,
             "Razor Page TX ROLLED BACK (result exception not handled) — Handler={Handler}")]

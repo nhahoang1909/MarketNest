@@ -26,7 +26,6 @@ public partial class RemoveSalePriceHandler(
         }
 
         repository.Update(variant);
-        await repository.SaveChangesAsync(cancellationToken);
 
         Log.InfoSuccess(logger, request.VariantId);
         return result;
@@ -47,4 +46,3 @@ public partial class RemoveSalePriceHandler(
         public static partial void WarnFailed(ILogger logger, Guid variantId, string errorCode);
     }
 }
-
