@@ -42,12 +42,23 @@ public sealed class RedisCacheService : ICacheService
 
     public async Task RemoveByPrefixAsync(string prefix, CancellationToken ct = default)
     {
-        // KEYS is not suitable for production at scale.
-        // Phase 3: replace with SCAN cursor iteration.
         var server = _db.Multiplexer.GetServer(_db.Multiplexer.GetEndPoints().First());
-        var keys = server.Keys(pattern: $"{prefix}*").ToArray();
-        if (keys.Length > 0)
-            await _db.KeyDeleteAsync(keys);
+
+        // Use SCAN (cursor-based) instead of KEYS — safe for production workloads.
+        var keys = new List<RedisKey>();
+        await foreach (var key in server.KeysAsync(pattern: $"{prefix}*"))
+        {
+            keys.Add(key);
+            // Batch delete every 100 keys to avoid holding too many in memory
+            if (keys.Count >= 100)
+            {
+                await _db.KeyDeleteAsync(keys.ToArray());
+                keys.Clear();
+            }
+        }
+
+        if (keys.Count > 0)
+            await _db.KeyDeleteAsync(keys.ToArray());
     }
 
     public async Task<T> GetOrSetAsync<T>(

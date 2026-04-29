@@ -1,7 +1,5 @@
 using System.Diagnostics;
 using Npgsql;
-using MarketNest.Base.Infrastructure;
-using MarketNest.Base.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
