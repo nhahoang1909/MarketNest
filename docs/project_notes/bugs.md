@@ -20,6 +20,12 @@ Keep a reference: _"See `bugs-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-29 - PostgreSQL error: "value too long for type character varying(64)"
+- **Issue**: App crashed on startup with `Npgsql.PostgresException (22001): value too long for type character varying(64)` when trying to save the EF Core model hash during migrations
+- **Root Cause**: `ModelHasher.ComputeHash()` uses SHA512 which produces 128 hex characters, but the `model_hash` column in `__auto_migration_history` table was defined as `VARCHAR(64)` — only half the required size
+- **Solution**: Two fixes in `DatabaseTracker.EnsureTrackingTablesExistAsync()`: (1) Changed `CREATE TABLE` to define `model_hash VARCHAR(128)` (2) Added `ALTER TABLE` migration statement to resize existing columns from VARCHAR(64) to VARCHAR(128). Also fixed misleading comments in `ModelHasher` to correctly document SHA512 usage.
+- **Prevention**: When using cryptographic hashes, document the specific hash algorithm and character count (SHA512 = 128 chars, SHA256 = 64 chars). Ensure DB column sizes match. Add a unit test that calls `ModelHasher.ComputeHash()` and verifies the hash length.
+
 ### 2026-04-25 - htmxHelpers.js redirect to wrong login URL
 - **Issue**: On 401 responses, users were redirected to `/account/login` (non-existent) instead of `/auth/login`
 - **Root Cause**: Hardcoded wrong URL string in `htmxHelpers.js` error handler

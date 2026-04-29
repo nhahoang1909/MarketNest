@@ -1059,7 +1059,54 @@ Each module owns a block of 1000 EventIds. Sub-allocation within each block:
 
 ---
 
-## 10. Git Commit Conventions
+## 10. Security & Cryptography Best Practices
+
+### 10.1 Cryptographic Hash Functions — Use SHA-512 or Higher
+
+All cryptographic hashing operations **must** use SHA-512 (256-bit) or higher (e.g., SHA3-512). Weak algorithms like MD5 or SHA-256 are cryptographically broken and must never be used for security-critical operations (password hashing, token generation, model fingerprinting, integrity verification).
+
+**Rule**: The Roslyn analyzer **MN018** will reject any usage of `MD5` or `SHA256` at build time:
+- `MD5.Create()` → **Compile error**
+- `MD5.HashData()` → **Compile error**
+- `SHA256.Create()` → **Compile error**
+- `SHA256.HashData()` → **Compile error**
+
+**Example (CORRECT):**
+```csharp
+using System.Security.Cryptography;
+using System.Text;
+
+public static string ComputeHash(string input)
+{
+    // ✅ SHA512 — cryptographically strong
+    byte[] data = Encoding.UTF8.GetBytes(input);
+    byte[] hash = SHA512.HashData(data);
+    return Convert.ToHexStringLower(hash);  // Returns 128 hex characters
+}
+```
+
+**Example (WRONG — will not compile):**
+```csharp
+// ❌ MD5 — cryptographically broken (MN018 error)
+byte[] hash = MD5.HashData(Encoding.UTF8.GetBytes(input));
+
+// ❌ SHA256 — insufficient for security use (MN018 error)
+byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+```
+
+**Use case examples:**
+| Use Case | Algorithm | Code |
+|----------|-----------|------|
+| Model/schema fingerprinting | SHA512 | `SHA512.HashData(modelBytes)` |
+| Token generation | SHA512 | `SHA512.HashData(tokenBytes)` |
+| Integrity verification | SHA512 | `SHA512.HashData(fileBytes)` |
+| Database seeding tracking | SHA512 | `SHA512.HashData(checksumBytes)` |
+
+> Note: Password hashing is handled by ASP.NET Core Identity's `PasswordHasher<T>`, which uses PBKDF2 internally — never implement custom password hashing.
+
+---
+
+## 11. Git Commit Conventions
 
 Follow **Conventional Commits**:
 ```
@@ -1113,6 +1160,7 @@ Before merging:
 - [ ] No hard-coded hex/rgb/hsl in component CSS or inline styles — use `var(--*)` tokens (see §7.1)
 - [ ] Repeated visual values (radius, shadow, transition) extracted to CSS variables (see §7.3)
 - [ ] `AppConstants.Colors` stays in sync with `input.css` `@theme` tokens (see §7.5)
+- [ ] No cryptographically weak hash algorithms — use SHA512+, never MD5 or SHA256 for security operations (see §10.1)
 
 ---
 
