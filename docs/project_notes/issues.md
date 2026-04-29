@@ -20,6 +20,22 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-30 - feat(base): PgQueryBuilder — safe raw PostgreSQL query generation utility (ADR-032)
+- **Status**: Completed
+- **Description**: Added `PgQueryBuilder` static utility class to `Base.Infrastructure/Persistence/` for safely generating raw PostgreSQL queries when EF Core is insufficient (complex multi-schema joins, DDL, PostgreSQL-specific features). Key features:
+  - Parameterized query building via `FormattableString` interpolation ($1, $2, … positional params)
+  - Identifier quoting with double-quote escaping (prevents injection via table/column names)
+  - Builders: `Query`, `Select`, `Insert`, `InsertMany`, `Update`, `Delete`, `Upsert`, `InClause`, `NotInClause`, `Combine`, `EscapeLike`
+  - `[GeneratedRegex]` source-generated regexes (zero allocation)
+  - `PgQuery` sealed record (immutable result type)
+  - `ToDebugString` for dev logging (not for execution)
+- **Files changed**: `src/Base/MarketNest.Base.Infrastructure/Persistence/PgQueryBuilder.cs` (new)
+- **Docs updated**: `docs/backend-infrastructure.md` §1.4, `docs/project_notes/decisions.md` (ADR-032), `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`
+- **ADR**: ADR-032
+- **Build**: `dotnet build` → 0 warnings, 0 errors ✅
+
+---
+
 ### 2026-04-30 - config: Two-connection-string pattern — DefaultConnection + ReadConnection fallback (ADR-031)
 - **Status**: Completed
 - **Description**: Introduced `ReadConnection` as an optional second connection string. Empty value in Phase 1 — all ReadDbContexts fall back to `DefaultConnection`. Phase 2: set to a PostgreSQL read replica for zero-code-change read scaling. Rejected per-module connection strings (AuditConnection, NotificationConnection) as premature — module extraction at Phase 3 requires far more than a connection string change.

@@ -40,6 +40,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-029 | Four-Layer Caching Strategy & Cross-Module Service Contracts | 2026-04-29 |
 | ADR-030 | Application Constants vs Configuration — Immutable Rules in AppConstants, Environment-Specific Settings in appsettings.json | 2026-04-29 |
 | ADR-031 | Two-Connection-String Pattern — DefaultConnection (write) + ReadConnection (read-replica fallback) | 2026-04-30 |
+| ADR-032 | PgQueryBuilder — Safe Raw PostgreSQL Query Generation Utility | 2026-04-30 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -885,3 +886,37 @@ The Unit of Work pattern is split into two distinct use cases, each with its own
 - MN005 analyzer (magic numbers) will flag unexplained numeric literals — guide them to `AppConstants.*`.
 
 ---
+
+### ADR-032: PgQueryBuilder — Safe Raw PostgreSQL Query Generation Utility (2026-04-30)
+
+**Context:**
+- EF Core covers 95%+ of data access needs. However, some edge cases require raw SQL: complex multi-schema joins, DDL commands (`CREATE SEQUENCE`, `CREATE INDEX`, `CREATE SCHEMA`), PostgreSQL-specific features (`advisory locks`, `LISTEN/NOTIFY`), or bulk operations bypassing the Change Tracker.
+- Writing raw SQL strings directly risks SQL injection, especially when identifier names (table, column, schema) are dynamic.
+- Need a safe, parameterized query builder that's always available but clearly positioned as a last-resort escape hatch.
+
+**Decision:**
+- `PgQueryBuilder` static utility class in `Base.Infrastructure/Persistence/PgQueryBuilder.cs` (namespace `MarketNest.Base.Infrastructure`).
+- All value interpolation via positional parameters (`$1`, `$2`, …) — prevents SQL injection.
+- Identifier quoting (`"schema"."table"`) with double-quote escaping.
+- `RawSqlFragment` for trusted, developer-controlled SQL (column names, keywords) — **never user input**.
+- Builders: `Query` (interpolated), `Select`, `Insert`, `InsertMany`, `Update`, `Delete`, `Upsert`, `InClause`, `NotInClause`, `Combine` (re-indexes parameters), `EscapeLike`.
+- `ToDebugString` for dev logging only — output must never be executed.
+- Uses `[GeneratedRegex]` source-generated regexes (compile-time, zero allocation).
+- `PgQuery` result type is a `sealed record` (immutable, per project convention).
+
+**Alternatives Considered:**
+- Dapper → Rejected: adds another ORM library; EF Core + raw Npgsql is sufficient for edge cases.
+- String concatenation with manual escaping → Rejected: error-prone, SQL injection risk.
+- `FormattableString` with EF Core `FromSqlInterpolated` → Considered: works for queries returning entities, but doesn't help with DDL, cross-schema joins returning DTOs, or non-EF Npgsql commands.
+
+**Consequences:**
+- ✅ SQL injection prevention for all raw query use cases — parameterized by default.
+- ✅ Identifier quoting prevents injection via dynamic table/column names.
+- ✅ Available to all modules via `Base.Infrastructure` reference (already a common dep).
+- ✅ Zero runtime overhead from source-generated regex.
+- ✅ Clear escape hatch positioning — EF Core remains the primary data access tool.
+- ❌ Developers must remember: `Raw()` and `IdentifierRaw()` bypass parameterization — only for trusted input.
+- ❌ No query validation — generated SQL is not checked against the database schema at compile time.
+
+---
+
