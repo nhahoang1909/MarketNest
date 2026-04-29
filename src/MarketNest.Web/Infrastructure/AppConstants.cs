@@ -136,6 +136,10 @@ public static class AppConstants
         public const string SugAccountTitle = "Your orders";
         public const string SugHelpLabel = "Help";
         public const string SugHelpTitle = "Seller support";
+
+        // Routes — Note: actual route definitions live in AppRoutes
+        // These are just reference constants for the NotFound page template
+        // The href attributes in the Razor markup still use AppRoutes directly
     }
 
     // ── Error Page ───────────────────────────────────────────────────
