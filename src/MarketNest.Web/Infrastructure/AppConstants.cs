@@ -230,8 +230,117 @@ public static class AppConstants
         public const string SellerAvatarFrom = "#00754A";
         public const string SellerAvatarTo = "#006241";
 
-        // Pending/Order status — gold accent
-        public const string PendingBg = "#faf6ee";
-        public const string PendingText = "#96702e";
-    }
-}
+     // ── Pending/Order status — gold accent
+         public const string PendingBg = "#faf6ee";
+         public const string PendingText = "#96702e";
+     }
+
+     // ── Cache Duration (seconds) ──────────────────────────────────────
+     public static class CommonHeaders
+     {
+         // Cache control headers (RFC 7234)
+         public const string CacheForever = "public, max-age=31536000, immutable";       // 1 year: fingerprinted assets
+         public const string Cache1Day = "public, max-age=86400";                       // 1 day: media/fonts
+         public const string NoCache = "no-cache";                                      // Revalidate on each request
+     }
+
+     // ── Static File Extensions ────────────────────────────────────────
+     /// <summary>
+     ///     File extension constants used for cache policy decisions and type detection.
+     ///     All values are lowercase with leading dot (e.g., ".png").
+     /// </summary>
+     public static class FileExtensions
+     {
+         // Image formats
+         public const string Png = ".png";
+         public const string Jpg = ".jpg";
+         public const string Jpeg = ".jpeg";
+         public const string WebP = ".webp";
+         public const string Svg = ".svg";
+         public const string Ico = ".ico";
+
+         // Font formats
+         public const string Woff = ".woff";
+         public const string Woff2 = ".woff2";
+
+         // Media and font extensions that should be cached for 1 day
+         public static readonly string[] CachableMediaExtensions =
+         [
+             Png, Jpg, Jpeg, WebP, Svg, Ico, Woff2, Woff
+         ];
+     }
+
+     // ── Output Cache Query Parameters ──────────────────────────────────
+     /// <summary>
+     ///     Query parameter and route value names used in OutputCache vary-by rules.
+     ///     Centralized to prevent typos and support cache key invalidation.
+     /// </summary>
+     public static class CacheVaryParams
+     {
+         // Output cache query parameters (SetVaryByQuery)
+         public const string Query = "q";
+         public const string Category = "category";
+         public const string Sort = "sort";
+         public const string Page = "page";
+
+         // Output cache route values (SetVaryByRouteValue)
+         public const string Slug = "slug";
+         public const string ProductId = "productId";
+
+         // Static file fingerprinting query parameter
+         public const string VersionQuery = "v";
+
+         // Form parameters
+         public const string Culture = "culture";
+         public const string ReturnUrl = "returnUrl";
+     }
+
+     // ── OutputCache Tag Constants ──────────────────────────────────────
+     /// <summary>
+     ///     Cache tag names for OutputCache policy eviction.
+     ///     Tags are used to group cache entries for bulk invalidation.
+     /// </summary>
+     public static class CacheTags
+     {
+         public const string PublicPages = "public";
+         public const string StorefrontPages = "storefront";
+         public const string ProductPages = "product";
+     }
+
+     // ── Cache Duration (as TimeSpan) ───────────────────────────────────
+     /// <summary>
+     ///     TimeSpan constants for OutputCache policy expiration.
+     ///     Do not use directly in Program.cs — use numeric timeouts instead.
+     ///     Provided for reference and testing utilities.
+     /// </summary>
+     public static class CacheDurations
+     {
+         public static readonly TimeSpan AnonymousPublic = TimeSpan.FromSeconds(60);    // Anonymous home, search
+         public static readonly TimeSpan Storefront = TimeSpan.FromMinutes(5);          // Seller storefront pages
+         public static readonly TimeSpan ProductDetail = TimeSpan.FromMinutes(2);       // Product prices may change
+         public static readonly TimeSpan OneYear = TimeSpan.FromSeconds(31536000);      // Fingerprinted assets
+         public static readonly TimeSpan OneDay = TimeSpan.FromSeconds(86400);          // Media/fonts
+     }
+
+     // ── Validation Constraints ────────────────────────────────────────
+     /// <summary>
+     ///     Platform-wide validation rules: password length, username length, file upload limits.
+     ///     These are business constants that never change per environment.
+     ///     Environment-specific settings (rate limiting, lockout duration) remain in appsettings.json.
+     /// </summary>
+     public static class Validation
+     {
+         // Password constraints
+         public const int PasswordMinLength = 8;
+         public const int PasswordMaxLength = 128;
+
+         // Username constraints
+         public const int UsernameMinLength = 3;
+         public const int UsernameMaxLength = 50;
+
+         // File upload limits
+         public const int MaxImageSizeBytes = 5_242_880;              // 5 MB
+         public const int MaxProductImagesPerUpload = 5;
+         public const int MaxDocumentSizeBytes = 10_485_760;          // 10 MB
+     }
+ }

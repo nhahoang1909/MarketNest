@@ -83,6 +83,37 @@ try
     builder.Services.AddControllers();
     builder.Services.AddHealthChecks();
 
+    // ── Output Cache — anonymous HTML caching ────────────────────────────
+    builder.Services.AddOutputCache(options =>
+    {
+        // Public anonymous pages (home, search) — 60 seconds
+        options.AddPolicy(CachePolicies.AnonymousPublic, b =>
+            b.Expire(AppConstants.CacheDurations.AnonymousPublic)
+                .Tag(AppConstants.CacheTags.PublicPages)
+                .SetVaryByQuery(
+                    AppConstants.CacheVaryParams.Query,
+                    AppConstants.CacheVaryParams.Category,
+                    AppConstants.CacheVaryParams.Sort,
+                    AppConstants.CacheVaryParams.Page)
+                .With(ctx => !ctx.HttpContext.User.Identity!.IsAuthenticated));
+
+        // Storefront pages — 5 minutes
+        options.AddPolicy(CachePolicies.Storefront, b =>
+            b.Expire(AppConstants.CacheDurations.Storefront)
+                .Tag(AppConstants.CacheTags.StorefrontPages)
+                .SetVaryByRouteValue(AppConstants.CacheVaryParams.Slug)
+                .With(ctx => !ctx.HttpContext.User.Identity!.IsAuthenticated));
+
+        // Product detail — 2 minutes (prices may change)
+        options.AddPolicy(CachePolicies.ProductDetail, b =>
+            b.Expire(AppConstants.CacheDurations.ProductDetail)
+                .Tag(AppConstants.CacheTags.ProductPages)
+                .SetVaryByRouteValue(
+                    AppConstants.CacheVaryParams.Slug,
+                    AppConstants.CacheVaryParams.ProductId)
+                .With(ctx => !ctx.HttpContext.User.Identity!.IsAuthenticated));
+    });
+
     // Global filters: RazorPageTransactionFilter applies to all OnPost* Razor Pages;
     // TransactionActionFilter activates on write controllers with [Transaction] (e.g. WriteApiV1ControllerBase).
     // Both filters check HTTP verb and attributes internally — no double-execution.
@@ -225,7 +256,31 @@ try
         });
 
     app.UseHttpsRedirection();
-    app.UseStaticFiles();
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        OnPrepareResponse = ctx =>
+        {
+            var headers = ctx.Context.Response.Headers;
+
+            // Fingerprinted assets (query string ?v=... from asp-append-version) → cache forever
+            if (ctx.Context.Request.Query.ContainsKey(AppConstants.CacheVaryParams.VersionQuery))
+            {
+                headers.CacheControl = AppConstants.CommonHeaders.CacheForever;
+                return;
+            }
+
+            // Media / font assets → cache 1 day
+            var ext = Path.GetExtension(ctx.File.Name).ToLowerInvariant();
+            if (AppConstants.FileExtensions.CachableMediaExtensions.Contains(ext))
+            {
+                headers.CacheControl = AppConstants.CommonHeaders.Cache1Day;
+                return;
+            }
+
+            // Everything else → revalidate
+            headers.CacheControl = AppConstants.CommonHeaders.NoCache;
+        }
+    });
 
     // ── Localization ─────────────────────────────────────────────────
     string[] supportedCultures = AppConstants.Cultures.Supported;
@@ -249,6 +304,12 @@ try
     app.UseRouting();
     app.UseAuthentication();
     app.UseAuthorization();
+
+    // Output cache — after auth so anonymous-only policies work correctly
+    app.UseOutputCache();
+
+    // HTMX partial responses must never be browser-cached
+    app.UseMiddleware<HtmxNoCacheMiddleware>();
 
     // RuntimeContextMiddleware — MUST be after UseAuthentication/UseAuthorization so that
     // HttpContext.User is already populated with JWT claims when we build ICurrentUser.
