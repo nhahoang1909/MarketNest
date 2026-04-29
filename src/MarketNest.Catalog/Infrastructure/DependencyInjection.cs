@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using MarketNest.Base.Utility;
+using MarketNest.Catalog.Application;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace MarketNest.Catalog.Infrastructure;
 
@@ -36,6 +39,12 @@ public static class CatalogServiceExtensions
             sp.GetRequiredService<StorefrontPolicyConfigService>());
         services.AddSingleton<IStorefrontPolicyConfigWriter>(sp =>
             sp.GetRequiredService<StorefrontPolicyConfigService>());
+
+        // Repository
+        services.AddScoped<IVariantRepository, VariantRepository>();
+
+        // Background job — scoped so it can receive IVariantRepository
+        services.AddScoped<IBackgroundJob, ExpireSalesJob>();
 
         return services;
     }

@@ -111,7 +111,18 @@ public enum LogEventId
 
     // Infrastructure layer — 3000-3199 (reserved for Catalog DbContext, repositories)
 
-    // Application layer — 3200-3599 (reserved for Catalog handlers: CreateProduct, GetProducts, etc.)
+    // Application layer — 3200-3599
+    CatalogSetSalePriceStart = 3200,
+    CatalogSetSalePriceSuccess = 3201,
+    CatalogSetSalePriceFailed = 3202,
+    CatalogRemoveSalePriceStart = 3210,
+    CatalogRemoveSalePriceSuccess = 3211,
+    CatalogRemoveSalePriceFailed = 3212,
+
+    // Timer Jobs — 3100-3199
+    CatalogSaleExpiryJobStart = 3100,
+    CatalogSaleExpiryJobExpired = 3101,
+    CatalogSaleExpiryJobCompleted = 3102,
 
     // Seller/Products Pages — 3600-3649
     SellerProductsIndexStart = 3600,
