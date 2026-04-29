@@ -43,7 +43,7 @@ public sealed partial class DatabaseTracker(
                             CREATE TABLE IF NOT EXISTS {Schema}.{MigrationTable} (
                                 id              SERIAL PRIMARY KEY,
                                 context_name    VARCHAR(256) NOT NULL,
-                                model_hash      VARCHAR(64)  NOT NULL,
+                                model_hash      VARCHAR(128) NOT NULL,
                                 applied_at_utc  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
                             );
 
@@ -53,6 +53,10 @@ public sealed partial class DatabaseTracker(
                                 version         VARCHAR(64)  NOT NULL,
                                 applied_at_utc  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
                             );
+
+                            -- Migrate old VARCHAR(64) model_hash to VARCHAR(128) if needed
+                            ALTER TABLE IF EXISTS {Schema}.{MigrationTable}
+                                ALTER COLUMN model_hash TYPE VARCHAR(128);
 
                             -- Unique indexes for fast lookups
                             CREATE UNIQUE INDEX IF NOT EXISTS ix_migration_context
