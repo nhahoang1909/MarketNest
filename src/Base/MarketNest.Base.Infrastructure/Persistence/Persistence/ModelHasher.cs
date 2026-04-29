@@ -18,7 +18,7 @@ public static class ModelHasher
     public static string ComputeHash(IModel model)
     {
         string modelSnapshot = model.ToDebugString(MetadataDebugStringOptions.LongDefault);
-        byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(modelSnapshot));
+        byte[] bytes = SHA512.HashData(Encoding.UTF8.GetBytes(modelSnapshot));
         return Convert.ToHexStringLower(bytes);
     }
 }
