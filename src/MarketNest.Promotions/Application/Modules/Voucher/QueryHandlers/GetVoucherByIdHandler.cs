@@ -4,7 +4,7 @@ public class GetVoucherByIdHandler(IVoucherQuery query) : IQueryHandler<GetVouch
 {
     public async Task<VoucherDto?> Handle(GetVoucherByIdQuery request, CancellationToken cancellationToken)
     {
-        var voucher = await query.GetByKeyAsync(request.VoucherId, cancellationToken);
+        var voucher = await query.FindByKeyAsync(request.VoucherId, cancellationToken);
         return voucher is null ? null : MapToDto(voucher);
     }
 

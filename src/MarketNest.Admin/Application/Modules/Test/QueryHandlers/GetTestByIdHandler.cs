@@ -12,7 +12,7 @@ public partial class GetTestByIdHandler(
     {
         Log.InfoStart(logger, request.Id);
 
-        TestEntity? entity = await query.GetByKeyAsync(request.Id, cancellationToken);
+        TestEntity? entity = await query.FindByKeyAsync(request.Id, cancellationToken);
         if (entity is null)
         {
             Log.WarnNotFound(logger, request.Id);

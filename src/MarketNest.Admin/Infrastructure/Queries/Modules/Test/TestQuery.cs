@@ -35,6 +35,6 @@ public class TestQuery(AdminReadDbContext db)
         };
     }
 
-    public override Task<TestEntity?> GetByKeyAsync(Guid id, CancellationToken ct = default)
+    public override Task<TestEntity?> FindByKeyAsync(Guid id, CancellationToken ct = default)
         => Db.Tests.Include(x => x.SubEntities).FirstOrDefaultAsync(x => x.Id == id, ct);
 }
