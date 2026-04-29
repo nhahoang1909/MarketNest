@@ -20,6 +20,45 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-29 - refactor: Application Constants vs Configuration policy (ADR-030)
+- **Status**: Completed
+- **Description**: Refactored configuration management to distinguish between immutable business rules and environment-specific settings:
+  - **AppConstants.Validation** section (new): moved business rule constants from `appsettings.json` Validation section. Password length (8-128), username length (3-50), file upload limits (5MB images, 10MB documents, max 5 per upload).
+  - **appsettings.json** (cleaned): removed Validation section; kept Security section for environment-tunable values (rate limits, lockout duration, token expiry).
+  - **Deprecated `ValidationOptions`** class: no longer needed since all validation rules are now in `AppConstants`. Direct access to `AppConstants.Validation.*` replaces `IOptions<ValidationOptions>` binding.
+  - **Documentation**: Updated `docs/code-rules.md` §2.6 with clear distinction (with example code), updated CLAUDE.md / AGENTS.md / copilot-instructions.md to include ADR-030 guidance.
+  - **ADR**: ADR-030 added to `decisions.md` (see above for full ADR entry).
+- **Build**: `dotnet build` → 0 errors ✅
+- **Rationale**: Reduces appsettings.json bloat. Improves code readability (`AppConstants.Validation.PasswordMinLength` is clearer than `Configuration["Validation:PasswordMinLength"]`). Forces developers to distinguish between business rules and tuning parameters.
+
+---
+
+### 2026-04-29 - Project docs & guidance updated — ADR-030 + spec tables
+- **Status**: Completed
+- **Description**: Updated all project guidance and documentation files to reflect ADR-030 (AppConstants vs appsettings):
+  - **`docs/project_notes/decisions.md`**: Added ADR-030 to TOC, full ADR entry with context, decision, rationale, consequences.
+  - **CLAUDE.md / AGENTS.md / .github/copilot-instructions.md**: Updated "Current status" section to mention ADR-030; updated "Key Conventions" / code rules sections to include the AppConstants vs appsettings distinction with pattern examples.
+  - **`docs/code-rules.md`** §2.6: Added subsection explaining the distinction (business rules in AppConstants, environment tuning in appsettings), with code examples, enforcement notes.
+- **Docs**: Reference docs (`backend-patterns.md`, `caching-strategy.md`, `frontend-guide.md`) already had correct patterns — no changes needed.
+- **Build**: Documentation-only; no code changes.
+
+---
+
+## Entries
+
+### 2026-04-29 - feat(infra): Four-layer caching strategy implementation (ADR-029)
+- **Status**: Completed
+- **Description**: Implemented the Phase 1 caching foundation:
+  - **Layer 1 (Static assets)**: Added `asp-append-version="true"` to all local JS script tags across 3 layouts (`_Layout`, `_LayoutSeller`, `_LayoutAdmin`). Custom `StaticFileOptions` with `Cache-Control: immutable` for fingerprinted files, `max-age=86400` for media, `no-cache` for others.
+  - **Layer 1b (HTMX)**: New `HtmxNoCacheMiddleware` — forces `no-store` on all `HX-Request` responses.
+  - **Layer 2 (OutputCache)**: Three named policies (`AnonymousPublic` 60s, `Storefront` 5m, `ProductDetail` 2m) for anonymous-only Razor Pages. New `CachePolicies` constants class.
+  - **Layer 3 (Redis)**: Expanded `CacheKeys` with `Catalog`, `Cart`, `Payments`, `Identity`, `Admin` nested classes and new TTL presets (`VeryShort` 30s, `QuickExpiry` 1m, `VeryLong` 6h).
+  - **Redis safety**: Upgraded `RemoveByPrefixAsync` from `KEYS` to `SCAN`-based cursor iteration with batched deletion.
+  - **Cross-module decision**: Service contracts via interfaces (in-process DI) — not gRPC or BFF. Deferred to Phase 3.
+  - **Docs**: New `docs/caching-strategy.md`, updated `backend-infrastructure.md` CacheKeys section, updated spec docs tables in `AGENTS.md`/`CLAUDE.md`/`copilot-instructions.md`.
+- **ADR**: ADR-029 (see decisions.md)
+- **Build**: `dotnet build MarketNest.slnx` → 0 warnings, 0 errors ✅
+
 ### 2026-04-29 - feat(core): IRuntimeContext — unified ambient request/job context
 - **Status**: Completed
 - **Description**: Implemented `IRuntimeContext` + `ICurrentUser` as the single injection point for user identity, correlation ID, request metadata, and timing:
@@ -34,11 +73,7 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
   - **`RuntimeContextMiddleware`** (new) — enriches Serilog LogContext (CorrelationId, UserId, UserRole), tags OTel Activity, echoes `X-Correlation-ID` header. Registered after `UseAuthorization()`.
   - **`TestRuntimeContext`** + `FakeCurrentUser` (new, `UnitTests/Helpers/`) — `AsAnonymous()`, `AsBuyer()`, `AsSeller()`, `AsAdmin()` builders.
   - **`LogEventId`** — added `RuntimeContextRequestStart` (1094), `RuntimeContextRequestEnd` (1095).
-  - **`Program.cs`** — DI registration (`HttpRuntimeContext` Scoped, `IRuntimeContext` → same, `ICurrentUser` → CurrentUser from context) + `UseMiddleware<RuntimeContextMiddleware>()`.
-  - **`MarketNest.UnitTests.csproj`** — added explicit `Base.Common` reference for `TestRuntimeContext`.
-  - **`backend-patterns.md`** — new §23 documenting the full pattern.
-- **ADR**: ADR-028 (see decisions.md)
-- **Build**: `dotnet build MarketNest.slnx` → 0 warnings, 0 errors ✅
+  - **`Program.cs`** — DI registration (`HttpRuntimeContext` Scoped, `IRuntimeContext` → 0 warnings, 0 errors ✅
 
 ### 2026-04-29 - feat(core): Unit of Work + [Transaction] attribute + domain event lifecycle split
 - **Status**: Completed

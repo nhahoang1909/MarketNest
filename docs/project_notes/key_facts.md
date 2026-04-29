@@ -95,11 +95,26 @@ marketnest:blacklist:{tokenId}            TTL: 7d    — revoked tokens
 marketnest:ratelimit:{userId}:{endpoint}  TTL: 1min  — rate limiting
 marketnest:cart:{userId}                  TTL: 30m   — cart reservation
 marketnest:refdata:{entity}               TTL: 24h   — Tier 1 reference data (IReferenceDataReadService)
-marketnest:config:orders                  TTL: 1h    — Tier 2 OrderPolicyConfig
-marketnest:config:payments                TTL: 1h    — Tier 2 CommissionPolicy
-marketnest:config:catalog                 TTL: 1h    — Tier 2 StorefrontPolicyConfig
-marketnest:config:reviews                 TTL: 1h    — Tier 2 ReviewPolicyConfig
+marketnest:config:{policy}                TTL: 1h    — Tier 2 business config (OrderPolicy, Commission, etc.)
+marketnest:catalog:product:{id}           TTL: 1m    — product detail cache
+marketnest:catalog:variant:{id}           TTL: 1m    — product variant cache
+marketnest:catalog:storefront:{slug}      TTL: 5m    — storefront by slug
+marketnest:cart:count:{userId}            TTL: 30s   — cart badge count
+marketnest:payments:commission:{storeId}  TTL: 30m   — per-store commission rate
+marketnest:identity:prefs:{userId}        TTL: 5m    — user preferences snapshot
+marketnest:admin:config:{key}             TTL: 30m   — platform config
 ```
+
+---
+
+## Caching Layers (ADR-029)
+
+| Layer | Tool | Scope | TTL |
+|-------|------|-------|-----|
+| Browser cache | `asp-append-version` + `StaticFileOptions` | Static CSS/JS/images | 1 year (immutable) |
+| HTMX no-cache | `HtmxNoCacheMiddleware` | HTMX partial responses | no-store |
+| HTTP OutputCache | `AddOutputCache` + `CachePolicies` | Anonymous Razor Pages | 1–5 min |
+| Application Redis | `ICacheService` (`RedisCacheService`) | Business data per module | 30s–24h |
 
 ---
 
@@ -110,6 +125,7 @@ marketnest:config:reviews                 TTL: 1h    — Tier 2 ReviewPolicyConf
 | `architecture.md` | Phased architecture, ADRs, module boundaries, solution structure, project layout |
 | `backend-patterns.md` | Tech stack, CQRS contracts, `Result<T,Error>`, base classes, services, seeding, background jobs |
 | `backend-infrastructure.md` | Query utilities, caching, transactions, UoW, `[Access]` permissions, file uploads, testing |
+| `caching-strategy.md` | Four-layer caching (static assets, OutputCache, Redis, cross-module), cache keys, invalidation, anti-patterns |
 | `domain-and-business-rules.md` | DDD aggregates, bounded contexts, entity designs, business rules for all modules |
 | `frontend-guide.md` | Frontend stack, page inventory, HTMX/Alpine patterns, component library, BE-FE contracts |
 | `code-rules.md` | Naming conventions, C# idioms, DDD principles, banned patterns |

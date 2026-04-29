@@ -292,6 +292,60 @@ public record CommissionOptions
 
 **Rule**: Every string literal used more than once and every "unexplained" number **must** be extracted to a `const`, `static readonly`, enum, or configuration option. Exceptions: `0`, `1`, `-1`, `string.Empty`, and obvious boolean comparisons.
 
+**Where to extract constants — AppConstants vs appsettings.json (ADR-030):**
+
+The distinction is: **Business rules live in code as `AppConstants`; environment-specific tuning lives in `appsettings.json`.**
+
+- **AppConstants** (C# static class in `src/MarketNest.Web/Infrastructure/AppConstants.cs`): immutable business rules that are identical across dev, staging, and production.
+  - Password/username length constraints: `AppConstants.Validation.PasswordMinLength`
+  - File upload size limits: `AppConstants.Validation.MaxImageSizeBytes`
+  - Enumerated values: role names, status badges, font stacks, color codes
+  - Cache durations, default timeouts
+  - Any value that will never change per environment
+  - Used directly in code: `if (password.Length < AppConstants.Validation.PasswordMinLength) { ... }`
+
+- **appsettings.json** (configuration file): environment-specific settings that may differ between dev, staging, production.
+  - Database connection strings
+  - API secrets (JWT secret, SMTP password)
+  - External service URLs (Seq server, Redis, RabbitMQ)
+  - Performance tuning metrics (rate limits, token expiry, lockout duration)
+  - Any value that is likely to vary between environments
+  - Used via `IOptions<SecurityOptions>` binding in DI, or `IConfiguration` direct access
+
+**Example:**
+```csharp
+// AppConstants — same everywhere
+public static class AppConstants
+{
+    public static class Validation
+    {
+        public const int PasswordMinLength = 8;  // ← Business rule, never changes
+        public const int MaxImageSizeBytes = 5_242_880;  // ← System limit, never changes
+    }
+}
+
+// appsettings.json — changes per environment
+{
+  "Security": {
+    "AccessTokenExpiryMinutes": 15,     // ← Dev: 15 min, Prod: could be 60 min
+    "RateLimitRequestsPerMinute": 60    // ← Dev: 60, Prod: 10
+  }
+}
+
+// Usage in code
+if (password.Length < AppConstants.Validation.PasswordMinLength)
+    return BadRequest("Password too short");
+
+// IOptions binding in DI
+services.Configure<SecurityOptions>(builder.Configuration.GetSection("Security"));
+
+// Usage in handler
+public class SomeHandler(IOptions<SecurityOptions> securityOptions)
+{
+    var maxAttempts = securityOptions.Value.MaxFailedLoginAttempts; // ← per environment
+}
+```
+
 ### 2.7 Flat Layer-Level Namespaces
 
 Namespaces within a module stop at the **layer level** (Application, Domain, Infrastructure). Sub-folders beneath a layer do **not** add to the namespace.

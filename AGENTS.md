@@ -7,7 +7,7 @@ This file is the multi-agent equivalent of `CLAUDE.md` — it applies to Gemini,
 
 MarketNest is a multi-vendor marketplace (Etsy/Shopee-style) — .NET 10, Razor Pages + HTMX + Alpine.js, PostgreSQL (schema-per-module). Phased architecture: **Modular Monolith → Microservices → Kubernetes**.
 
-**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025), Unit of Work + `[Transaction]` attribute with pre/post-commit domain event lifecycle (ADR-027), and `IRuntimeContext` unified ambient context (ADR-028) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
+**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025), Unit of Work + `[Transaction]` attribute with pre/post-commit domain event lifecycle (ADR-027), `IRuntimeContext` unified ambient context (ADR-028), and Application Constants vs Configuration policy (ADR-030) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
 
 ## Build & Run
 
@@ -116,6 +116,7 @@ lib/                        # Vendored libraries (alpinejs/, htmx/, chart.js/)
 - Use `Result<T, Error>` — never throw for business failures. All CQRS handlers return `Result<T, Error>` via `ICommand<T>` / `IQuery<T>` interfaces in `MarketNest.Core/Common/Cqrs/`
 - DDD property accessors (ADR-007): Entity/Aggregate → `{ get; private set; }`, Value Object (class) → `{ get; }`, Value Object (record) → `{ get; init; }`, DTO/Command/Query → `record` with `{ get; init; }`, Infrastructure interfaces → `{ get; set; }` allowed
 - No magic strings / magic numbers — extract to `const`, `static readonly`, enum, or config options. See `AppConstants` and `AppRoutes` in `src/MarketNest.Web/Infrastructure/` as the canonical examples
+  - **AppConstants vs appsettings.json (ADR-030)**: **AppConstants** holds business rules immutable across environments (password length, file limits, colors, fonts). **appsettings.json** holds environment-tunable settings (DB connection, secrets, rate limits, token expiry). Pattern: `AppConstants.Validation.PasswordMinLength` for rules; `Security.RateLimitRequestsPerMinute` in JSON for tuning.
 - English only — all naming, comments, error messages, log messages, and commit messages must be in English. No Vietnamese or other languages in source code. Only localization resource files (`.resx`) are exempt. See `docs/code-rules.md` §2.1
 - Flat layer-level namespaces: `MarketNest.<Module>.Application`, `MarketNest.<Module>.Domain`, `MarketNest.<Module>.Infrastructure` — sub-folders (Commands/, Queries/, Entities/) do NOT appear in the namespace. See `docs/code-rules.md` §2.7
 
@@ -228,6 +229,7 @@ All located in `docs/` — read before implementing any feature:
 | `docs/domain-and-business-rules.md` | DDD aggregates, bounded contexts, entity designs, business rules for all modules |
 | `docs/backend-patterns.md` | Tech stack, CQRS contracts, `Result<T,Error>`, base classes, services, seeding |
 | `docs/backend-infrastructure.md` | Query utilities, caching, transactions, UoW, `[Access]` permissions, file uploads, testing |
+| `docs/caching-strategy.md` | Four-layer caching (static assets, OutputCache, Redis, cross-module), cache keys, invalidation, anti-patterns |
 | `docs/frontend-guide.md` | Frontend stack, page inventory, HTMX/Alpine patterns, component library, BE-FE contracts |
 | `docs/code-rules.md` | Naming conventions, C# idioms, DDD principles, banned patterns |
 | `docs/devops-requirements.md` | Docker Compose topology, GitHub Actions, K8s manifests |

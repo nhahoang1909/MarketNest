@@ -37,6 +37,8 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-026 | SLA Requirements Formalized as First-Class Project Concern | 2026-04-29 |
 | ADR-027 | Unit of Work + [Transaction] Attribute — Domain Event Lifecycle & Transaction Management | 2026-04-29 |
 | ADR-028 | IRuntimeContext — Unified Ambient Request Context | 2026-04-29 |
+| ADR-029 | Four-Layer Caching Strategy & Cross-Module Service Contracts | 2026-04-29 |
+| ADR-030 | Application Constants vs Configuration — Immutable Rules in AppConstants, Environment-Specific Settings in appsettings.json | 2026-04-29 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -744,3 +746,84 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 
 ---
 
+### ADR-029: Four-Layer Caching Strategy & Cross-Module Service Contracts (2026-04-29)
+
+**Context:**
+- MarketNest needed a comprehensive caching approach: static assets, server-rendered HTML, application-level Redis, and cross-module data access.
+- Static files (`asp-append-version`) were only applied to CSS, not JS. No `Cache-Control` headers were set.
+- HTMX partial responses had no `no-store` protection — browsers could cache stale partials.
+- `OutputCache` was not configured for anonymous Razor Pages.
+- `CacheKeys` existed but only covered Tier 1 (reference data) and Tier 2 (business config) — no module-specific keys for Catalog, Cart, Payments, Identity.
+- Cross-module communication question: gRPC vs BFF vs service contracts for data that's too large to cache.
+
+**Decision:**
+1. **Layer 1 (Static assets)**: `asp-append-version="true"` on all local CSS + JS tags. `StaticFileOptions` with `Cache-Control: immutable` for fingerprinted files, `max-age=86400` for media, `no-cache` for everything else.
+2. **Layer 1b (HTMX)**: `HtmxNoCacheMiddleware` forces `no-store` on all `HX-Request` responses.
+3. **Layer 2 (OutputCache)**: Three named policies (`AnonymousPublic` 60s, `Storefront` 5m, `ProductDetail` 2m) — anonymous users only. Constants in `CachePolicies`.
+4. **Layer 3 (Redis)**: Expanded `CacheKeys` with `Catalog`, `Cart`, `Payments`, `Identity`, `Admin` nested classes and new TTL presets (`VeryShort` 30s, `QuickExpiry` 1m, `VeryLong` 6h).
+5. **Layer 4 (Cross-module)**: **Service contracts via interfaces** (in-process DI injection, not gRPC or BFF). Same pattern as existing `IReferenceDataReadService`, `IStorefrontReadService`. gRPC/BFF deferred to Phase 3 when modules become separate services.
+6. **Redis safety**: Upgraded `RemoveByPrefixAsync` from `KEYS` to `SCAN`-based cursor iteration with batched deletion.
+
+**Alternatives rejected:**
+- gRPC between modules: over-engineering for monolith (serialization overhead, proto files, transport complexity for zero benefit)
+- BFF layer: adds indirection with no value when all modules are in-process
+- `ISharedCacheService` wrapper: unnecessary abstraction over `ICacheService` — key namespace convention prevents collisions
+
+**Trade-offs:**
+- ✅ Four layers cover the full request lifecycle from browser to DB
+- ✅ In-process service contracts are zero-cost and migrate to gRPC in Phase 3 via DI swap
+- ✅ SCAN-based prefix deletion is production-safe
+- ⚠️ OutputCache uses in-memory store (Phase 2: swap to Redis-backed store)
+- ⚠️ No cache stampede prevention yet (Phase 2)
+
+**References:** `docs/caching-strategy.md`
+
+---
+
+### ADR-030: Application Constants vs Configuration — Immutable Rules in AppConstants, Environment-Specific Settings in appsettings.json (2026-04-29)
+
+**Context:**
+- Original `appsettings.json` mixed business rules (password min-length, file upload limits) with environment-specific settings (security timeouts, rate limits).
+- `ValidationOptions` class existed but was never used in code — developers could not easily reference validation constraints.
+- ADR-005 (No Magic Strings/Numbers) required extraction of all literals, but there was no clear policy on WHERE to extract them.
+
+**Decision:**
+- **AppConstants**: Immutable business rules that never change between dev/staging/production.
+  - Password/username length constraints
+  - File upload size limits
+  - Enumerated values (status names, role names)
+  - Font stacks, color hex codes, CDN URLs
+  - Cache durations, timeout defaults
+  - Validation rule constants
+  - Example: `AppConstants.Validation.PasswordMinLength = 8`
+- **appsettings.json**: Environment-specific settings that vary per deployment.
+  - Database connection strings
+  - API secrets (JWT key, SMTP password)
+  - External service URLs (Seq, Redis, RabbitMQ)
+  - Performance tunings that differ between environments (rate limits, lockout duration, token expiry)
+  - Example: `Security.RateLimitRequestsPerMinute` could be 60 in dev, 10 in prod
+- **Tier 3 Configuration (ADR-021)**: `PlatformOptions`, `SecurityOptions`, `ValidationOptions` are strongly-typed Options bound from appsettings.json. `ValidationOptions` deprecated in favor of `AppConstants.Validation`.
+- `ValidationOptions` class removed; usages replaced with `AppConstants.Validation.*` direct access.
+
+**Rationale:**
+- Business rules are immutable (an 8-character password requirement doesn't change per environment).
+- Code is cleaner with `AppConstants.Validation.PasswordMinLength` than configuring the same value 3 times in appsettings.json.
+- Reduces config file bloat (appsettings becomes focused on secrets and external URLs).
+- Forces developers to think: "Is this a rule or a setting?"
+
+**Alternatives Considered:**
+- All constants in appsettings.json → Rejected: bloats config, forces same value in dev/staging/prod JSON unnecessarily.
+- All constants in AppConstants → Rejected: some settings DO need to vary per environment (rate limits, token expiry).
+
+**Consequences:**
+- ✅ Single source of truth per category: business rules in AppConstants, environment tuning in appsettings.json.
+- ✅ Code is more readable: `AppConstants.Validation.PasswordMinLength` is clearer than `Configuration["Validation:PasswordMinLength"]`.
+- ✅ Reduces config file duplication.
+- ✅ `IOptions<ValidationOptions>` DI binding removed — simpler composition root.
+- ❌ Developers must remember the distinction (mitigated by CLAUDE.md / AGENTS.md policy).
+
+**Enforcement:**
+- PR checklist includes: "Are all business constants in `AppConstants.*`? Are all environment-specific values in `appsettings.json`?"
+- MN005 analyzer (magic numbers) will flag unexplained numeric literals — guide them to `AppConstants.*`.
+
+---
