@@ -41,6 +41,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-030 | Application Constants vs Configuration — Immutable Rules in AppConstants, Environment-Specific Settings in appsettings.json | 2026-04-29 |
 | ADR-031 | Two-Connection-String Pattern — DefaultConnection (write) + ReadConnection (read-replica fallback) | 2026-04-30 |
 | ADR-032 | PgQueryBuilder — Safe Raw PostgreSQL Query Generation Utility | 2026-04-30 |
+| ADR-033 | Expand LogEventId from 1,000 to 10,000 per module | 2026-04-30 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -455,7 +456,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 - All production logging must use `[LoggerMessage]` source-generated delegates (CA1848 compliant)
 - `IAppLogger<T>` extended to implement `ILogger` (explicit `ILogger.Log<TState>` via `inner.Log()` — not extension methods, so no CA1848)
 - `.Info()` / `.Warn()` / `.Error()` methods stripped from `IAppLogger<T>` — it is now a DI marker interface; `AppLogger<T>` retains only 3 explicit ILogger members; `#pragma` removed
-- Each module owns a block of 1000 EventIds — registry lives in `MarketNest.Base.Infrastructure/Logging/LogEventId.cs`
+- Each module owns a block of 10,000 EventIds — registry lives in `MarketNest.Base.Infrastructure/Logging/LogEventId.cs`
 - `private static partial class Log` nested inside each class; outer class must be `partial`
 - Exception param always last, never in message template
 
@@ -920,3 +921,40 @@ The Unit of Work pattern is split into two distinct use cases, each with its own
 
 ---
 
+### ADR-033 — Expand LogEventId from 1,000 to 10,000 per module
+
+**Date**: 2026-04-30  
+**Status**: Accepted  
+**Supersedes**: Part of ADR-014 (EventId allocation only — rest of ADR-014 unchanged)
+
+**Context:**
+- Original allocation of 1,000 IDs per module (ADR-014) was too small — only 400 slots for Application layer.
+- As modules grow with more handlers, pages, and background jobs, risk of collision or exhaustion was high.
+- Separate Start/Success/Failed EventIds per operation (not grouped) is the correct pattern for Seq filtering and alerting — this requires ~3–4 IDs per use case.
+
+**Decision:**
+- Expand each module's EventId block from 1,000 to 10,000.
+- New sub-allocation: X0000–X1999 (Infrastructure), X2000–X5999 (Application), X6000–X7999 (Web Pages), X8000–X9999 (Reserved).
+- Keep separate EventIds for Start/Success/Failed — do NOT group into single ID. Use `CorrelationId` from `IRuntimeContext` for request tracing instead.
+
+**Module ranges:**
+- Infrastructure/Middleware: 10000–19999
+- Identity: 20000–29999
+- Catalog: 30000–39999
+- Cart: 40000–49999
+- Orders: 50000–59999
+- Payments: 60000–69999
+- Reviews: 70000–79999
+- Disputes: 80000–89999
+- Notifications: 90000–99999
+- Admin: 100000–109999
+- Auditing: 110000–119999
+- Background Jobs: 120000–129999
+- Web/Global Pages: 130000–139999
+- Promotions: 140000–149999
+
+**Trade-offs:**
+- ✅ 10x headroom per module — no risk of exhaustion for Phase 1–4
+- ✅ Separate EventIds enable precise filtering and alerting in Seq
+- ✅ Easy mental model: module number × 10000
+- ❌ Larger numeric values (6 digits for later modules) — acceptable for enum usage

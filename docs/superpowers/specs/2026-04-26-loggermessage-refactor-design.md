@@ -96,9 +96,9 @@ After the prerequisite step, four independent agent groups work in parallel:
   Extend IAppLogger<T> + AppLogger<T>
 
 [Step 1 - Parallel agents]
-  Agent 1: Infra + Middleware   (6 files, EventId 1000–1999)
+  Agent 1: Infra + Middleware   (6 files, EventId 10000–19999)
   Agent 2: Web Pages existing   (21 files, EventId per module)
-  Agent 3: Auditing + Jobs      (5 files, EventId 11000–12999)
+  Agent 3: Auditing + Jobs      (5 files, EventId 110000–129999)
   Agent 4: New logging — Pages  (19 files, EventId per module)
 
 [Step 2 - Cleanup]
@@ -112,34 +112,35 @@ After the prerequisite step, four independent agent groups work in parallel:
 
 ## 5. EventId Allocation
 
-Each module owns a block of 1000 EventIds. Sub-allocation within each block:
+Each module owns a block of 10,000 EventIds. Sub-allocation within each block:
 
 | Range offset | Layer |
 |---|---|
-| X000–X199 | Infrastructure / Persistence |
-| X200–X599 | Application layer (Command/Query handlers) |
-| X600–X799 | Web Pages (PageModel handlers) |
-| X800–X999 | Reserved |
+| X0000–X1999 | Infrastructure / Persistence |
+| X2000–X5999 | Application layer (Command/Query handlers) |
+| X6000–X7999 | Web Pages (PageModel handlers) |
+| X8000–X9999 | Reserved |
 
 | Module | EventId Range |
 |--------|--------------|
-| Infrastructure / Middleware | 1000–1999 |
-| Identity | 2000–2999 |
-| Catalog | 3000–3999 |
-| Cart | 4000–4999 |
-| Orders | 5000–5999 |
-| Payments | 6000–6999 |
-| Reviews | 7000–7999 |
-| Disputes | 8000–8999 |
-| Notifications | 9000–9999 |
-| Admin | 10000–10999 |
-| Auditing | 11000–11999 |
-| Background Jobs | 12000–12999 |
-| Web / Global Pages | 13000–13999 |
-| *(Reserved — future modules)* | 14000+ |
+| Infrastructure / Middleware | 10000–19999 |
+| Identity | 20000–29999 |
+| Catalog | 30000–39999 |
+| Cart | 40000–49999 |
+| Orders | 50000–59999 |
+| Payments | 60000–69999 |
+| Reviews | 70000–79999 |
+| Disputes | 80000–89999 |
+| Notifications | 90000–99999 |
+| Admin | 100000–109999 |
+| Auditing | 110000–119999 |
+| Background Jobs | 120000–129999 |
+| Web / Global Pages | 130000–139999 |
+| Promotions | 140000–149999 |
+| *(Reserved — future modules)* | 150000+ |
 
-Web Pages for a specific module use that module's range (e.g., Checkout page → Orders range 5600–5799).
-Global pages (Error, Index, NotFound) use the Web/Global range 13000–13999.
+Web Pages for a specific module use that module's range (e.g., Checkout page → Orders range 56000–57999).
+Global pages (Error, Index, NotFound) use the Web/Global range 130000–139999.
 
 ---
 
@@ -226,7 +227,7 @@ ErrorUnexpected — catch-all Exception
 
 ## 9. File Inventory
 
-### Agent 1 — Infrastructure + Middleware (EventId 1000–1199)
+### Agent 1 — Infrastructure + Middleware (EventId 10000–19999)
 
 | File | Current calls |
 |------|--------------|
@@ -241,61 +242,61 @@ ErrorUnexpected — catch-all Exception
 
 | File | Module | EventId sub-range |
 |------|--------|------------------|
-| `Pages/Auth/Login.cshtml.cs` | Identity | 2600–2699 |
-| `Pages/Auth/Register.cshtml.cs` | Identity | 2600–2699 |
-| `Pages/Auth/ForgotPassword.cshtml.cs` | Identity | 2600–2699 |
-| `Pages/Account/Orders/Review.cshtml.cs` | Identity | 2700–2799 |
-| `Pages/Account/Settings/Index.cshtml.cs` | Identity | 2700–2799 |
-| `Pages/Account/Orders/Detail.cshtml.cs` | Identity | 2700–2799 |
-| `Pages/Account/Orders/Index.cshtml.cs` | Identity | 2700–2799 |
-| `Pages/Account/Disputes/Detail.cshtml.cs` | Identity | 2700–2799 |
-| `Pages/Account/Disputes/Index.cshtml.cs` | Identity | 2700–2799 |
-| `Pages/Admin/Config/Commission.cshtml.cs` | Admin | 10600–10699 |
-| `Pages/Admin/Dashboard/Index.cshtml.cs` | Admin | 10600–10699 |
-| `Pages/Admin/Config/Index.cshtml.cs` | Admin | 10600–10699 |
-| `Pages/Admin/Disputes/Index.cshtml.cs` | Admin | 10600–10699 |
-| `Pages/Admin/Notifications/Index.cshtml.cs` | Admin | 10600–10699 |
-| `Pages/Admin/Products/Index.cshtml.cs` | Admin | 10600–10699 |
-| `Pages/Admin/Storefronts/Index.cshtml.cs` | Admin | 10600–10699 |
-| `Pages/Admin/Users/Index.cshtml.cs` | Admin | 10600–10699 |
-| `Pages/Cart/Index.cshtml.cs` | Cart | 4600–4699 |
-| `Pages/Checkout/Index.cshtml.cs` | Orders | 5600–5699 |
-| `Pages/Error.cshtml.cs` | Global | 13000–13099 |
-| `Pages/Index.cshtml.cs` | Global | 13000–13099 |
+| `Pages/Auth/Login.cshtml.cs` | Identity | 26000–26199 |
+| `Pages/Auth/Register.cshtml.cs` | Identity | 26000–26199 |
+| `Pages/Auth/ForgotPassword.cshtml.cs` | Identity | 26000–26199 |
+| `Pages/Account/Orders/Review.cshtml.cs` | Identity | 26200–26599 |
+| `Pages/Account/Settings/Index.cshtml.cs` | Identity | 26200–26599 |
+| `Pages/Account/Orders/Detail.cshtml.cs` | Identity | 26200–26599 |
+| `Pages/Account/Orders/Index.cshtml.cs` | Identity | 26200–26599 |
+| `Pages/Account/Disputes/Detail.cshtml.cs` | Identity | 26200–26599 |
+| `Pages/Account/Disputes/Index.cshtml.cs` | Identity | 26200–26599 |
+| `Pages/Admin/Config/Commission.cshtml.cs` | Admin | 106000–106999 |
+| `Pages/Admin/Dashboard/Index.cshtml.cs` | Admin | 106000–106999 |
+| `Pages/Admin/Config/Index.cshtml.cs` | Admin | 106000–106999 |
+| `Pages/Admin/Disputes/Index.cshtml.cs` | Admin | 106000–106999 |
+| `Pages/Admin/Notifications/Index.cshtml.cs` | Admin | 106000–106999 |
+| `Pages/Admin/Products/Index.cshtml.cs` | Admin | 106000–106999 |
+| `Pages/Admin/Storefronts/Index.cshtml.cs` | Admin | 106000–106999 |
+| `Pages/Admin/Users/Index.cshtml.cs` | Admin | 106000–106999 |
+| `Pages/Cart/Index.cshtml.cs` | Cart | 46000–46499 |
+| `Pages/Checkout/Index.cshtml.cs` | Orders | 56000–56499 |
+| `Pages/Error.cshtml.cs` | Global | 130000–130099 |
+| `Pages/Index.cshtml.cs` | Global | 130000–130099 |
 
 ### Agent 3 — Auditing + Background Jobs
 
 | File | EventId range |
 |------|--------------|
-| `Auditing/Infrastructure/AuditService.cs` | 11000–11099 |
-| `Auditing/Infrastructure/AuditBehavior.cs` | 11000–11099 |
-| `Auditing/Infrastructure/AuditableInterceptor.cs` | 11000–11099 |
-| `Web/Hosting/JobRunnerHostedService.cs` | 12000–12099 |
-| `Admin/Application/Timer/TestTimerJob.cs` | 12100–12199 |
+| `Auditing/Infrastructure/AuditService.cs` | 110000–110099 |
+| `Auditing/Infrastructure/AuditBehavior.cs` | 110100–110199 |
+| `Auditing/Infrastructure/AuditableInterceptor.cs` | 110200–110299 |
+| `Web/Hosting/JobRunnerHostedService.cs` | 120000–120099 |
+| `Admin/Application/Timer/TestTimerJob.cs` | 121000–121099 |
 
 ### Agent 4 — New logging: Pages with zero coverage
 
 | File | Module | EventId sub-range |
 |------|--------|------------------|
-| `Pages/Seller/Products/Create.cshtml.cs` | Catalog | 3600–3699 |
-| `Pages/Seller/Products/Edit.cshtml.cs` | Catalog | 3600–3699 |
-| `Pages/Seller/Products/Index.cshtml.cs` | Catalog | 3600–3699 |
-| `Pages/Seller/Products/Variants.cshtml.cs` | Catalog | 3600–3699 |
-| `Pages/Shop/Index.cshtml.cs` | Catalog | 3700–3799 |
-| `Pages/Shop/Products/Detail.cshtml.cs` | Catalog | 3700–3799 |
-| `Pages/Search/Index.cshtml.cs` | Catalog | 3700–3799 |
-| `Pages/Seller/Orders/Index.cshtml.cs` | Orders | 5700–5799 |
-| `Pages/Seller/Orders/Detail.cshtml.cs` | Orders | 5700–5799 |
-| `Pages/Orders/Confirmation.cshtml.cs` | Orders | 5700–5799 |
-| `Pages/Seller/Dashboard/Index.cshtml.cs` | Admin | 10700–10799 |
-| `Pages/Seller/Storefront/Index.cshtml.cs` | Admin | 10700–10799 |
-| `Pages/Seller/Reviews/Index.cshtml.cs` | Admin | 10700–10799 |
-| `Pages/Seller/Disputes/Index.cshtml.cs` | Admin | 10700–10799 |
-| `Pages/Seller/Payouts/Index.cshtml.cs` | Admin | 10700–10799 |
-| `Pages/Admin/Handlers/CreateTestHandler.cs` | Admin | 10200–10299 |
-| `Pages/Admin/Handlers/UpdateTestHandler.cs` | Admin | 10200–10299 |
-| `Pages/Admin/Handlers/GetTestByIdHandler.cs` | Admin | 10200–10299 |
-| `Pages/Admin/Handlers/GetTestsPagedHandler.cs` | Admin | 10200–10299 |
+| `Pages/Seller/Products/Create.cshtml.cs` | Catalog | 36000–36499 |
+| `Pages/Seller/Products/Edit.cshtml.cs` | Catalog | 36000–36499 |
+| `Pages/Seller/Products/Index.cshtml.cs` | Catalog | 36000–36499 |
+| `Pages/Seller/Products/Variants.cshtml.cs` | Catalog | 36000–36499 |
+| `Pages/Shop/Index.cshtml.cs` | Catalog | 37000–37499 |
+| `Pages/Shop/Products/Detail.cshtml.cs` | Catalog | 37000–37499 |
+| `Pages/Search/Index.cshtml.cs` | Catalog | 37000–37499 |
+| `Pages/Seller/Orders/Index.cshtml.cs` | Orders | 57000–57499 |
+| `Pages/Seller/Orders/Detail.cshtml.cs` | Orders | 57000–57499 |
+| `Pages/Orders/Confirmation.cshtml.cs` | Orders | 57000–57499 |
+| `Pages/Seller/Dashboard/Index.cshtml.cs` | Admin | 107000–107499 |
+| `Pages/Seller/Storefront/Index.cshtml.cs` | Admin | 107000–107499 |
+| `Pages/Seller/Reviews/Index.cshtml.cs` | Admin | 107000–107499 |
+| `Pages/Seller/Disputes/Index.cshtml.cs` | Admin | 107000–107499 |
+| `Pages/Seller/Payouts/Index.cshtml.cs` | Admin | 107000–107499 |
+| `Pages/Admin/Handlers/CreateTestHandler.cs` | Admin | 102000–102499 |
+| `Pages/Admin/Handlers/UpdateTestHandler.cs` | Admin | 102000–102499 |
+| `Pages/Admin/Handlers/GetTestByIdHandler.cs` | Admin | 102000–102499 |
+| `Pages/Admin/Handlers/GetTestsPagedHandler.cs` | Admin | 102000–102499 |
 | `Pages/NotFound.cshtml.cs` | Global | 13100–13199 |
 
 ---

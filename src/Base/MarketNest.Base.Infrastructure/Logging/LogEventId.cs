@@ -1,418 +1,417 @@
-
 namespace MarketNest.Base.Infrastructure;
 
 /// <summary>
 ///     Centralized EventId registry for all [LoggerMessage] delegates.
 ///
-///     Each module owns a block of 1000 IDs. Sub-allocation within each block:
-///       X000–X199  Infrastructure / Persistence layer
-///       X200–X599  Application layer (Command/Query handlers)
-///       X600–X799  Web Pages (PageModel handlers)
-///       X800–X999  Reserved for future use
+///     Each module owns a block of 10,000 IDs. Sub-allocation within each block:
+///       X0000–X1999  Infrastructure / Persistence layer
+///       X2000–X5999  Application layer (Command/Query handlers)
+///       X6000–X7999  Web Pages (PageModel handlers)
+///       X8000–X9999  Reserved for future use
 ///
 ///     Usage in [LoggerMessage]:
 ///       [LoggerMessage((int)LogEventId.DbInitStart, LogLevel.Information, "...")]
 /// </summary>
 public enum LogEventId
 {
-    #region Infrastructure / Middleware — 1000-1999
+    #region Infrastructure / Middleware — 10000-19999
 
-    // DatabaseInitializer — 1000-1015
-    DbInitStart = 1000,
-    DbInitCompleted = 1001,
-    DbInitNoContexts = 1002,
-    DbInitModelUnchanged = 1003,
-    DbInitNoMigrationFiles = 1004,
-    DbInitHashChangedNoMigrations = 1005,
-    DbInitApplyingMigrations = 1006,
-    DbInitMigrationsApplied = 1007,
-    DbInitMigrationCritical = 1008,
-    DbInitNoSeeders = 1009,
-    DbInitSeedEvaluating = 1010,
-    DbInitSeedSkippedProd = 1011,
-    DbInitSeedSkippedVersion = 1012,
-    DbInitSeedRunning = 1013,
-    DbInitSeedCompleted = 1014,
-    DbInitSeedFailed = 1015,
+    // DatabaseInitializer — 10000-10050
+    DbInitStart = 10000,
+    DbInitCompleted = 10001,
+    DbInitNoContexts = 10002,
+    DbInitModelUnchanged = 10003,
+    DbInitNoMigrationFiles = 10004,
+    DbInitHashChangedNoMigrations = 10005,
+    DbInitApplyingMigrations = 10006,
+    DbInitMigrationsApplied = 10007,
+    DbInitMigrationCritical = 10008,
+    DbInitNoSeeders = 10009,
+    DbInitSeedEvaluating = 10010,
+    DbInitSeedSkippedProd = 10011,
+    DbInitSeedSkippedVersion = 10012,
+    DbInitSeedRunning = 10013,
+    DbInitSeedCompleted = 10014,
+    DbInitSeedFailed = 10015,
 
-    // DatabaseTracker — 1016-1020
-    DbTrackerTablesEnsured = 1016,
-    DbTrackerLockAcquired = 1017,
-    DbTrackerLockReleased = 1018,
-    DbTrackerHashSaved = 1019,
-    DbTrackerSeedVersionSaved = 1020,
+    // DatabaseTracker — 10060-10070
+    DbTrackerTablesEnsured = 10060,
+    DbTrackerLockAcquired = 10061,
+    DbTrackerLockReleased = 10062,
+    DbTrackerHashSaved = 10063,
+    DbTrackerSeedVersionSaved = 10064,
 
-    // InProcessEventBus — 1040-1042
-    EventBusPublishStart = 1040,
-    EventBusPublishSuccess = 1041,
-    EventBusPublishError = 1042,
+    // InProcessEventBus — 10100-10110
+    EventBusPublishStart = 10100,
+    EventBusPublishSuccess = 10101,
+    EventBusPublishError = 10102,
 
-    // MassTransitEventBus — 1050-1052 (Phase 3)
-    MassTransitPublishStart = 1050,
-    MassTransitPublishSuccess = 1051,
-    MassTransitPublishError = 1052,
+    // MassTransitEventBus — 10120-10130 (Phase 3)
+    MassTransitPublishStart = 10120,
+    MassTransitPublishSuccess = 10121,
+    MassTransitPublishError = 10122,
 
-    // ApiContractGenerator — 1060-1063
-    ApiContractFetchStart = 1060,
-    ApiContractUpdated = 1061,
-    ApiContractFetchFailed = 1062,
-    ApiContractGenerationFailed = 1063,
+    // ApiContractGenerator — 10200-10210
+    ApiContractFetchStart = 10200,
+    ApiContractUpdated = 10201,
+    ApiContractFetchFailed = 10202,
+    ApiContractGenerationFailed = 10203,
 
-    // RouteWhitelistMiddleware — 1070
-    RouteBlocked = 1070,
+    // RouteWhitelistMiddleware — 10300
+    RouteBlocked = 10300,
 
-    // UnitOfWork — 1071-1079
-    UoWPreCommitDispatching = 1071,
-    UoWPostCommitFailed = 1072,
-    UoWCommitting = 1073,
-    UoWTxBegin = 1074,
-    UoWTxCommitted = 1075,
-    UoWTxRolledBack = 1076,
+    // UnitOfWork — 10400-10420
+    UoWPreCommitDispatching = 10400,
+    UoWPostCommitFailed = 10401,
+    UoWCommitting = 10402,
+    UoWTxBegin = 10403,
+    UoWTxCommitted = 10404,
+    UoWTxRolledBack = 10405,
 
-    // RazorPageTransactionFilter — 1080-1089
-    RazorPageTxBegin = 1080,
-    RazorPageTxCommitted = 1081,
-    RazorPageTxRolledBackOnResult = 1082,
-    RazorPageTxRolledBackOnException = 1083,
+    // RazorPageTransactionFilter — 10500-10520
+    RazorPageTxBegin = 10500,
+    RazorPageTxCommitted = 10501,
+    RazorPageTxRolledBackOnResult = 10502,
+    RazorPageTxRolledBackOnException = 10503,
 
-    // TransactionActionFilter — 1090-1099
-    ActionTxBegin = 1090,
-    ActionTxCommitted = 1091,
-    ActionTxRolledBackOnResult = 1092,
-    ActionTxRolledBackOnException = 1093,
+    // TransactionActionFilter — 10600-10620
+    ActionTxBegin = 10600,
+    ActionTxCommitted = 10601,
+    ActionTxRolledBackOnResult = 10602,
+    ActionTxRolledBackOnException = 10603,
 
-    // RuntimeContextMiddleware — 1094-1095
-    RuntimeContextRequestStart = 1094,
-    RuntimeContextRequestEnd = 1095,
+    // RuntimeContextMiddleware — 10700-10710
+    RuntimeContextRequestStart = 10700,
+    RuntimeContextRequestEnd = 10701,
 
-    // Reserved — 1096-1999
-
-    #endregion
-
-    #region Identity — 2000-2999
-
-    // Infrastructure layer — 2000-2199 (reserved for Identity DbContext, repositories)
-
-    // Application layer — 2200-2599 (reserved for Identity handlers: Login, Register, etc.)
-
-    // Auth Pages — 2600-2649
-    AuthLoginStart = 2600,
-    AuthLoginSuccess = 2601,
-    AuthLoginFailed = 2602,
-    AuthLoginError = 2603,
-    AuthRegisterStart = 2610,
-    AuthRegisterSuccess = 2611,
-    AuthRegisterFailed = 2612,
-    AuthRegisterError = 2613,
-    AuthForgotPasswordStart = 2620,
-    AuthForgotPasswordSuccess = 2621,
-    AuthForgotPasswordError = 2622,
-
-    // Account Pages — 2650-2699
-    AccountOrdersIndexStart = 2650,
-    AccountOrdersIndexSuccess = 2651,
-    AccountOrdersDetailStart = 2652,
-    AccountOrdersDetailSuccess = 2653,
-    AccountOrdersDetailNotFound = 2654,
-    AccountOrdersReviewStart = 2660,
-    AccountOrdersReviewSuccess = 2661,
-    AccountOrdersReviewFailed = 2662,
-    AccountOrdersReviewError = 2663,
-    AccountSettingsStart = 2670,
-    AccountSettingsSuccess = 2671,
-    AccountSettingsError = 2672,
-    AccountDisputesIndexStart = 2680,
-    AccountDisputesIndexSuccess = 2681,
-    AccountDisputesDetailStart = 2682,
-    AccountDisputesDetailSuccess = 2683,
-    AccountDisputesDetailNotFound = 2684,
-
-    // Reserved — 2700-2999
+    // Reserved — 10800-19999
 
     #endregion
 
-    #region Catalog — 3000-3999
+    #region Identity — 20000-29999
 
-    // Infrastructure layer — 3000-3199 (reserved for Catalog DbContext, repositories)
+    // Infrastructure layer — 20000-21999 (reserved for Identity DbContext, repositories)
 
-    // Application layer — 3200-3599
-    CatalogSetSalePriceStart = 3200,
-    CatalogSetSalePriceSuccess = 3201,
-    CatalogSetSalePriceFailed = 3202,
-    CatalogRemoveSalePriceStart = 3210,
-    CatalogRemoveSalePriceSuccess = 3211,
-    CatalogRemoveSalePriceFailed = 3212,
+    // Application layer — 22000-25999 (reserved for Identity handlers: Login, Register, etc.)
 
-    // Timer Jobs — 3100-3199
-    CatalogSaleExpiryJobStart = 3100,
-    CatalogSaleExpiryJobExpired = 3101,
-    CatalogSaleExpiryJobCompleted = 3102,
-    CatalogSaleExpiryJobError = 3103,
+    // Auth Pages — 26000-26199
+    AuthLoginStart = 26000,
+    AuthLoginSuccess = 26001,
+    AuthLoginFailed = 26002,
+    AuthLoginError = 26003,
+    AuthRegisterStart = 26010,
+    AuthRegisterSuccess = 26011,
+    AuthRegisterFailed = 26012,
+    AuthRegisterError = 26013,
+    AuthForgotPasswordStart = 26020,
+    AuthForgotPasswordSuccess = 26021,
+    AuthForgotPasswordError = 26022,
 
-    // Seller/Products Pages — 3600-3649
-    SellerProductsIndexStart = 3600,
-    SellerProductsIndexSuccess = 3601,
-    SellerProductsIndexError = 3602,
-    SellerProductsCreateStart = 3610,
-    SellerProductsCreateSuccess = 3611,
-    SellerProductsCreateFailed = 3612,
-    SellerProductsCreateError = 3613,
-    SellerProductsEditStart = 3620,
-    SellerProductsEditSuccess = 3621,
-    SellerProductsEditNotFound = 3622,
-    SellerProductsEditFailed = 3623,
-    SellerProductsEditError = 3624,
-    SellerProductsVariantsStart = 3630,
-    SellerProductsVariantsSuccess = 3631,
-    SellerProductsVariantsNotFound = 3632,
-    SellerProductsVariantsError = 3633,
+    // Account Pages — 26200-26599
+    AccountOrdersIndexStart = 26200,
+    AccountOrdersIndexSuccess = 26201,
+    AccountOrdersDetailStart = 26210,
+    AccountOrdersDetailSuccess = 26211,
+    AccountOrdersDetailNotFound = 26212,
+    AccountOrdersReviewStart = 26220,
+    AccountOrdersReviewSuccess = 26221,
+    AccountOrdersReviewFailed = 26222,
+    AccountOrdersReviewError = 26223,
+    AccountSettingsStart = 26300,
+    AccountSettingsSuccess = 26301,
+    AccountSettingsError = 26302,
+    AccountDisputesIndexStart = 26400,
+    AccountDisputesIndexSuccess = 26401,
+    AccountDisputesDetailStart = 26410,
+    AccountDisputesDetailSuccess = 26411,
+    AccountDisputesDetailNotFound = 26412,
 
-    // Shop / Search Pages — 3700-3749
-    ShopIndexStart = 3700,
-    ShopIndexSuccess = 3701,
-    ShopIndexError = 3702,
-    ShopProductDetailStart = 3710,
-    ShopProductDetailSuccess = 3711,
-    ShopProductDetailNotFound = 3712,
-    ShopProductDetailError = 3713,
-    SearchIndexStart = 3720,
-    SearchIndexSuccess = 3721,
-    SearchIndexError = 3722,
-
-    // Reserved — 3750-3999
+    // Reserved — 27000-29999
 
     #endregion
 
-    #region Cart — 4000-4999
+    #region Catalog — 30000-39999
 
-    // Infrastructure layer — 4000-4199 (reserved for Cart DbContext, repositories)
+    // Infrastructure layer — 30000-31999 (reserved for Catalog DbContext, repositories)
 
-    // Application layer — 4200-4599 (reserved for Cart handlers: AddToCart, RemoveFromCart, etc.)
+    // Timer Jobs — 31000-31099
+    CatalogSaleExpiryJobStart = 31000,
+    CatalogSaleExpiryJobExpired = 31001,
+    CatalogSaleExpiryJobCompleted = 31002,
+    CatalogSaleExpiryJobError = 31003,
 
-    // Cart Pages — 4600-4649
-    CartIndexStart = 4600,
-    CartIndexSuccess = 4601,
-    CartIndexError = 4602,
+    // Application layer — 32000-35999
+    CatalogSetSalePriceStart = 32000,
+    CatalogSetSalePriceSuccess = 32001,
+    CatalogSetSalePriceFailed = 32002,
+    CatalogRemoveSalePriceStart = 32010,
+    CatalogRemoveSalePriceSuccess = 32011,
+    CatalogRemoveSalePriceFailed = 32012,
 
-    // Reserved — 4650-4999
+    // Seller/Products Pages — 36000-36499
+    SellerProductsIndexStart = 36000,
+    SellerProductsIndexSuccess = 36001,
+    SellerProductsIndexError = 36002,
+    SellerProductsCreateStart = 36010,
+    SellerProductsCreateSuccess = 36011,
+    SellerProductsCreateFailed = 36012,
+    SellerProductsCreateError = 36013,
+    SellerProductsEditStart = 36020,
+    SellerProductsEditSuccess = 36021,
+    SellerProductsEditNotFound = 36022,
+    SellerProductsEditFailed = 36023,
+    SellerProductsEditError = 36024,
+    SellerProductsVariantsStart = 36030,
+    SellerProductsVariantsSuccess = 36031,
+    SellerProductsVariantsNotFound = 36032,
+    SellerProductsVariantsError = 36033,
 
-    #endregion
+    // Shop / Search Pages — 37000-37499
+    ShopIndexStart = 37000,
+    ShopIndexSuccess = 37001,
+    ShopIndexError = 37002,
+    ShopProductDetailStart = 37010,
+    ShopProductDetailSuccess = 37011,
+    ShopProductDetailNotFound = 37012,
+    ShopProductDetailError = 37013,
+    SearchIndexStart = 37020,
+    SearchIndexSuccess = 37021,
+    SearchIndexError = 37022,
 
-    #region Orders — 5000-5999
-
-    // Infrastructure layer — 5000-5199 (reserved for Orders DbContext, repositories)
-
-    // Application layer — 5200-5599 (reserved for Orders handlers: PlaceOrder, CancelOrder, etc.)
-
-    // Checkout Pages — 5600-5649
-    CheckoutIndexStart = 5600,
-    CheckoutIndexSuccess = 5601,
-    CheckoutIndexFailed = 5602,
-    CheckoutIndexError = 5603,
-
-    // Seller/Orders + Confirmation Pages — 5700-5749
-    SellerOrdersIndexStart = 5700,
-    SellerOrdersIndexSuccess = 5701,
-    SellerOrdersIndexError = 5702,
-    SellerOrdersDetailStart = 5710,
-    SellerOrdersDetailSuccess = 5711,
-    SellerOrdersDetailNotFound = 5712,
-    SellerOrdersDetailError = 5713,
-    OrdersConfirmationStart = 5720,
-    OrdersConfirmationSuccess = 5721,
-    OrdersConfirmationNotFound = 5722,
-
-    // Reserved — 5750-5999
-
-    #endregion
-
-    #region Payments — 6000-6999
-
-    // Infrastructure layer — 6000-6199 (reserved)
-    // Application layer — 6200-6599 (reserved)
-
-    // Timer Jobs — 6100-6109
-    PaymentsReconciliationJobStart = 6100,
-    PaymentsReconciliationJobMismatch = 6101,
-    PaymentsReconciliationJobOrphan = 6102,
-    PaymentsReconciliationJobNegativePayout = 6103,
-    PaymentsReconciliationJobCompleted = 6104,
-
-    // Web Pages — 6600-6799 (reserved)
-    // Reserved — 6800-6999
+    // Reserved — 38000-39999
 
     #endregion
 
-    #region Reviews — 7000-7999
+    #region Cart — 40000-49999
 
-    // Infrastructure layer — 7000-7199 (reserved)
-    // Application layer — 7200-7599 (reserved)
-    // Web Pages — 7600-7799 (reserved)
-    // Reserved — 7800-7999
+    // Infrastructure layer — 40000-41999 (reserved for Cart DbContext, repositories)
 
-    #endregion
+    // Application layer — 42000-45999 (reserved for Cart handlers: AddToCart, RemoveFromCart, etc.)
 
-    #region Disputes — 8000-8999
+    // Cart Pages — 46000-46499
+    CartIndexStart = 46000,
+    CartIndexSuccess = 46001,
+    CartIndexError = 46002,
 
-    // Infrastructure layer — 8000-8199 (reserved)
-    // Application layer — 8200-8599 (reserved)
-    // Web Pages — 8600-8799 (reserved)
-    // Reserved — 8800-8999
+    // Reserved — 47000-49999
 
     #endregion
 
-    #region Notifications — 9000-9999
+    #region Orders — 50000-59999
 
-    // Infrastructure layer — 9000-9199 (reserved)
-    // Application layer — 9200-9599 (reserved)
-    // Web Pages — 9600-9799 (reserved)
-    // Reserved — 9800-9999
+    // Infrastructure layer — 50000-51999 (reserved for Orders DbContext, repositories)
 
-    #endregion
+    // Application layer — 52000-55999 (reserved for Orders handlers: PlaceOrder, CancelOrder, etc.)
 
-    #region Admin — 10000-10999
+    // Checkout Pages — 56000-56499
+    CheckoutIndexStart = 56000,
+    CheckoutIndexSuccess = 56001,
+    CheckoutIndexFailed = 56002,
+    CheckoutIndexError = 56003,
 
-    // Infrastructure layer — 10000-10199 (reserved for Admin DbContext, repositories)
+    // Seller/Orders + Confirmation Pages — 57000-57499
+    SellerOrdersIndexStart = 57000,
+    SellerOrdersIndexSuccess = 57001,
+    SellerOrdersIndexError = 57002,
+    SellerOrdersDetailStart = 57010,
+    SellerOrdersDetailSuccess = 57011,
+    SellerOrdersDetailNotFound = 57012,
+    SellerOrdersDetailError = 57013,
+    OrdersConfirmationStart = 57020,
+    OrdersConfirmationSuccess = 57021,
+    OrdersConfirmationNotFound = 57022,
 
-    // Application Handlers — 10200-10249
-    AdminCreateTestStart = 10200,
-    AdminCreateTestSuccess = 10201,
-    AdminCreateTestError = 10202,
-    AdminUpdateTestStart = 10210,
-    AdminUpdateTestSuccess = 10211,
-    AdminUpdateTestError = 10212,
-    AdminGetTestByIdStart = 10220,
-    AdminGetTestByIdSuccess = 10221,
-    AdminGetTestByIdNotFound = 10222,
-    AdminGetTestsPagedStart = 10230,
-    AdminGetTestsPagedSuccess = 10231,
-
-    // Reserved Application — 10250-10599
-
-    // Admin Pages — 10600-10649
-    AdminDashboardStart = 10600,
-    AdminDashboardSuccess = 10601,
-    AdminConfigIndexStart = 10610,
-    AdminConfigIndexSuccess = 10611,
-    AdminConfigCommissionStart = 10620,
-    AdminConfigCommissionSuccess = 10621,
-    AdminConfigCommissionFailed = 10622,
-    AdminConfigCommissionError = 10623,
-    AdminConfigCountryStart = 10680,
-    AdminConfigGenderStart = 10682,
-    AdminConfigPhoneCodeStart = 10684,
-    AdminConfigProductCategoryStart = 10686,
-    AdminConfigNationalityStart = 10688,
-    AdminUsersIndexStart = 10630,
-    AdminUsersIndexSuccess = 10631,
-    AdminProductsIndexStart = 10640,
-    AdminProductsIndexSuccess = 10641,
-    AdminStorefrontsIndexStart = 10650,
-    AdminStorefrontsIndexSuccess = 10651,
-    AdminDisputesIndexStart = 10660,
-    AdminDisputesIndexSuccess = 10661,
-    AdminNotificationsIndexStart = 10670,
-    AdminNotificationsIndexSuccess = 10671,
-
-    // Seller Pages — 10700-10749
-    SellerDashboardStart = 10700,
-    SellerDashboardSuccess = 10701,
-    SellerDashboardError = 10702,
-    SellerStorefrontStart = 10710,
-    SellerStorefrontSuccess = 10711,
-    SellerStorefrontError = 10712,
-    SellerReviewsIndexStart = 10720,
-    SellerReviewsIndexSuccess = 10721,
-    SellerReviewsIndexError = 10722,
-    SellerDisputesIndexStart = 10730,
-    SellerDisputesIndexSuccess = 10731,
-    SellerDisputesIndexError = 10732,
-    SellerPayoutsIndexStart = 10740,
-    SellerPayoutsIndexSuccess = 10741,
-    SellerPayoutsIndexError = 10742,
-
-    // Reserved — 10750-10999
+    // Reserved — 58000-59999
 
     #endregion
 
-    #region Auditing — 11000-11999
+    #region Payments — 60000-69999
 
-    // AuditService — 11000-11009
-    AuditSaveStart = 11000,
-    AuditSaveSuccess = 11001,
-    AuditSaveError = 11002,
+    // Infrastructure layer — 60000-61999 (reserved)
+    // Application layer — 62000-65999 (reserved)
 
-    // AuditBehavior — 11010-11019
-    AuditBehaviorCapturing = 11010,
-    AuditBehaviorSuccess = 11011,
-    AuditBehaviorError = 11012,
+    // Timer Jobs — 61000-61099
+    PaymentsReconciliationJobStart = 61000,
+    PaymentsReconciliationJobMismatch = 61001,
+    PaymentsReconciliationJobOrphan = 61002,
+    PaymentsReconciliationJobNegativePayout = 61003,
+    PaymentsReconciliationJobCompleted = 61004,
 
-    // AuditableInterceptor — 11020-11029
-    AuditInterceptorEntityChanged = 11020,
-    AuditInterceptorError = 11021,
-
-    // PerformanceBehavior — 11030-11039
-    PerfBehaviorSlowRequest = 11030,
-    PerfBehaviorCriticalRequest = 11031,
-
-    // Reserved — 11040-11999
+    // Web Pages — 66000-67999 (reserved)
+    // Reserved — 68000-69999
 
     #endregion
 
-    #region Background Jobs — 12000-12999
+    #region Reviews — 70000-79999
 
-    // JobRunnerHostedService — 12000-12019
-    JobRunnerStarting = 12000,
-    JobRunnerJobExecuting = 12001,
-    JobRunnerJobCompleted = 12002,
-    JobRunnerJobFailed = 12003,
-    JobRunnerStopping = 12004,
-    JobRunnerStopped = 12005,
-
-    // TestTimerJob — 12100-12109
-    TestTimerJobStart = 12100,
-    TestTimerJobCompleted = 12101,
-    TestTimerJobError = 12102,
-
-    // Reserved — 12110-12999
+    // Infrastructure layer — 70000-71999 (reserved)
+    // Application layer — 72000-75999 (reserved)
+    // Web Pages — 76000-77999 (reserved)
+    // Reserved — 78000-79999
 
     #endregion
 
-    #region Promotions — 14000-14999
+    #region Disputes — 80000-89999
 
-    // Infrastructure layer — 14000-14199 (reserved for Promotions DbContext, repositories)
-
-    // Application Handlers — 14200-14299
-    PromotionsCreateVoucherStart = 14200,
-    PromotionsCreateVoucherSuccess = 14201,
-    PromotionsCreateVoucherError = 14202,
-    PromotionsActivateVoucherStart = 14210,
-    PromotionsActivateVoucherSuccess = 14211,
-    PromotionsActivateVoucherError = 14212,
-    PromotionsPauseVoucherStart = 14220,
-    PromotionsPauseVoucherSuccess = 14221,
-    PromotionsPauseVoucherError = 14222,
-
-    // Timer Jobs — 14300-14399
-    PromotionsExpiryJobStart = 14300,
-    PromotionsExpiryJobExpired = 14301,
-    PromotionsExpiryJobDepleted = 14302,
-    PromotionsExpiryJobError = 14303,
-    PromotionsExpiryJobCompleted = 14304,
-
-    // Reserved — 14400-14999
+    // Infrastructure layer — 80000-81999 (reserved)
+    // Application layer — 82000-85999 (reserved)
+    // Web Pages — 86000-87999 (reserved)
+    // Reserved — 88000-89999
 
     #endregion
 
-    #region Web / Global Pages — 13000-13999
+    #region Notifications — 90000-99999
 
-    // Global Pages (Error, Index, NotFound) — 13000-13019
-    GlobalErrorDisplayed = 13000,
-    GlobalIndexStart = 13010,
-    GlobalIndexSuccess = 13011,
-    GlobalNotFoundDisplayed = 13020,
+    // Infrastructure layer — 90000-91999 (reserved)
+    // Application layer — 92000-95999 (reserved)
+    // Web Pages — 96000-97999 (reserved)
+    // Reserved — 98000-99999
 
-    // Reserved — 13021-13999
+    #endregion
+
+    #region Admin — 100000-109999
+
+    // Infrastructure layer — 100000-101999 (reserved for Admin DbContext, repositories)
+
+    // Application Handlers — 102000-102499
+    AdminCreateTestStart = 102000,
+    AdminCreateTestSuccess = 102001,
+    AdminCreateTestError = 102002,
+    AdminUpdateTestStart = 102010,
+    AdminUpdateTestSuccess = 102011,
+    AdminUpdateTestError = 102012,
+    AdminGetTestByIdStart = 102020,
+    AdminGetTestByIdSuccess = 102021,
+    AdminGetTestByIdNotFound = 102022,
+    AdminGetTestsPagedStart = 102030,
+    AdminGetTestsPagedSuccess = 102031,
+
+    // Reserved Application — 102500-105999
+
+    // Admin Pages — 106000-106999
+    AdminDashboardStart = 106000,
+    AdminDashboardSuccess = 106001,
+    AdminConfigIndexStart = 106010,
+    AdminConfigIndexSuccess = 106011,
+    AdminConfigCommissionStart = 106020,
+    AdminConfigCommissionSuccess = 106021,
+    AdminConfigCommissionFailed = 106022,
+    AdminConfigCommissionError = 106023,
+    AdminConfigCountryStart = 106080,
+    AdminConfigGenderStart = 106082,
+    AdminConfigPhoneCodeStart = 106084,
+    AdminConfigProductCategoryStart = 106086,
+    AdminConfigNationalityStart = 106088,
+    AdminUsersIndexStart = 106100,
+    AdminUsersIndexSuccess = 106101,
+    AdminProductsIndexStart = 106110,
+    AdminProductsIndexSuccess = 106111,
+    AdminStorefrontsIndexStart = 106120,
+    AdminStorefrontsIndexSuccess = 106121,
+    AdminDisputesIndexStart = 106130,
+    AdminDisputesIndexSuccess = 106131,
+    AdminNotificationsIndexStart = 106140,
+    AdminNotificationsIndexSuccess = 106141,
+
+    // Seller Pages — 107000-107499
+    SellerDashboardStart = 107000,
+    SellerDashboardSuccess = 107001,
+    SellerDashboardError = 107002,
+    SellerStorefrontStart = 107010,
+    SellerStorefrontSuccess = 107011,
+    SellerStorefrontError = 107012,
+    SellerReviewsIndexStart = 107020,
+    SellerReviewsIndexSuccess = 107021,
+    SellerReviewsIndexError = 107022,
+    SellerDisputesIndexStart = 107030,
+    SellerDisputesIndexSuccess = 107031,
+    SellerDisputesIndexError = 107032,
+    SellerPayoutsIndexStart = 107040,
+    SellerPayoutsIndexSuccess = 107041,
+    SellerPayoutsIndexError = 107042,
+
+    // Reserved — 108000-109999
+
+    #endregion
+
+    #region Auditing — 110000-119999
+
+    // AuditService — 110000-110099
+    AuditSaveStart = 110000,
+    AuditSaveSuccess = 110001,
+    AuditSaveError = 110002,
+
+    // AuditBehavior — 110100-110199
+    AuditBehaviorCapturing = 110100,
+    AuditBehaviorSuccess = 110101,
+    AuditBehaviorError = 110102,
+
+    // AuditableInterceptor — 110200-110299
+    AuditInterceptorEntityChanged = 110200,
+    AuditInterceptorError = 110201,
+
+    // PerformanceBehavior — 110300-110399
+    PerfBehaviorSlowRequest = 110300,
+    PerfBehaviorCriticalRequest = 110301,
+
+    // Reserved — 111000-119999
+
+    #endregion
+
+    #region Background Jobs — 120000-129999
+
+    // JobRunnerHostedService — 120000-120099
+    JobRunnerStarting = 120000,
+    JobRunnerJobExecuting = 120001,
+    JobRunnerJobCompleted = 120002,
+    JobRunnerJobFailed = 120003,
+    JobRunnerStopping = 120004,
+    JobRunnerStopped = 120005,
+
+    // TestTimerJob — 121000-121099
+    TestTimerJobStart = 121000,
+    TestTimerJobCompleted = 121001,
+    TestTimerJobError = 121002,
+
+    // Reserved — 122000-129999
+
+    #endregion
+
+    #region Web / Global Pages — 130000-139999
+
+    // Global Pages (Error, Index, NotFound) — 130000-130099
+    GlobalErrorDisplayed = 130000,
+    GlobalIndexStart = 130010,
+    GlobalIndexSuccess = 130011,
+    GlobalNotFoundDisplayed = 130020,
+
+    // Reserved — 131000-139999
+
+    #endregion
+
+    #region Promotions — 140000-149999
+
+    // Infrastructure layer — 140000-141999 (reserved for Promotions DbContext, repositories)
+
+    // Application Handlers — 142000-142999
+    PromotionsCreateVoucherStart = 142000,
+    PromotionsCreateVoucherSuccess = 142001,
+    PromotionsCreateVoucherError = 142002,
+    PromotionsActivateVoucherStart = 142010,
+    PromotionsActivateVoucherSuccess = 142011,
+    PromotionsActivateVoucherError = 142012,
+    PromotionsPauseVoucherStart = 142020,
+    PromotionsPauseVoucherSuccess = 142021,
+    PromotionsPauseVoucherError = 142022,
+
+    // Timer Jobs — 143000-143099
+    PromotionsExpiryJobStart = 143000,
+    PromotionsExpiryJobExpired = 143001,
+    PromotionsExpiryJobDepleted = 143002,
+    PromotionsExpiryJobError = 143003,
+    PromotionsExpiryJobCompleted = 143004,
+
+    // Reserved — 144000-149999
 
     #endregion
 }
