@@ -8,7 +8,7 @@ Shared agent rule files are stored at `agents/rules/` (architecture.md, codestyl
 
 MarketNest is a multi-vendor marketplace (Etsy/Shopee-style) built as a solo learning project. The architecture is intentionally phased: **Modular Monolith → Microservices → Kubernetes** over ~9 months.
 
-**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025), Unit of Work + `[Transaction]` attribute with pre/post-commit domain event lifecycle (ADR-027), `IRuntimeContext` unified ambient context (ADR-028), and Application Constants vs Configuration policy (ADR-030) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
+**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025), Unit of Work + `[Transaction]` attribute with pre/post-commit domain event lifecycle (ADR-027), `IRuntimeContext` unified ambient context (ADR-028), Application Constants vs Configuration policy (ADR-030), and two-connection-string pattern with `ReadConnection` fallback (ADR-031) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
 
 ## Build & Run Commands
 
@@ -121,6 +121,11 @@ All rules are specified in `docs/code-rules.md`. Key items:
 - **Transaction filters (ADR-027)**: `RazorPageTransactionFilter` (globally registered) auto-wraps `OnPost*`/`OnPut*`/`OnDelete*`/`OnPatch*` Razor Page handlers in a DB transaction — no attribute needed on pages. `OnGet*` always bypassed. `TransactionActionFilter` (globally registered) wraps controller actions only when `[Transaction]` is present on class or action — `WriteApiV1ControllerBase` carries `[Transaction]` at class level. Opt-out: `[NoTransaction]`. Override isolation: `[Transaction(IsolationLevel.Serializable, timeoutSeconds:60)]`. Filters in `MarketNest.Web.Infrastructure/Filters/`.
 - **Controller base classes (ADR-027)**: `ReadApiV1ControllerBase` for GET-only controllers; `WriteApiV1ControllerBase` for POST/PUT/DELETE/PATCH controllers (applies `[Transaction]` automatically). Both in `Base.Api`.
 - **Module DI pattern**: each module exposes `AddXxxModule(IServiceCollection, IConfiguration)` in `Infrastructure/DependencyInjection.cs`. Canonical examples: Admin, Auditing, Promotions, Orders, Payments.
+- **Connection string strategy (ADR-031)**: Two connection strings only — `DefaultConnection` (write-side DbContexts for all modules) and `ReadConnection` (read-side DbContexts; empty in Phase 1 → fallback to `DefaultConnection`; Phase 2: set to PostgreSQL read replica for zero-code-change scaling). **Never add per-module connection strings** (e.g. `AuditConnection`): module extraction at Phase 3 requires far more than a connection string rename, and ADR-004 schema isolation is the real microservice enabler. Fallback pattern used in every module `DependencyInjection.cs`:
+  ```csharp
+  string readConnection = configuration.GetConnectionString("ReadConnection")
+      is { Length: > 0 } rc ? rc : writeConnection;
+  ```
 
 ## Agent Behavior Guidelines (rules)
 
