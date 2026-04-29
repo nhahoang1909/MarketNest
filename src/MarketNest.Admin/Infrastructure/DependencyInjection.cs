@@ -10,23 +10,28 @@ namespace MarketNest.Admin.Infrastructure;
 /// </summary>
 public static class AdminServiceExtensions
 {
-    private const string ConnectionStringName = "DefaultConnection";
+    private const string WriteConnectionName = "DefaultConnection";
+    private const string ReadConnectionName = "ReadConnection";
 
     public static IServiceCollection AddAdminModule(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        string connectionString = configuration.GetConnectionString(ConnectionStringName)
+        string writeConnection = configuration.GetConnectionString(WriteConnectionName)
             ?? throw new InvalidOperationException(
-                $"Connection string '{ConnectionStringName}' is not configured.");
+                $"Connection string '{WriteConnectionName}' is not configured.");
+
+        // ReadConnection falls back to DefaultConnection when empty — Phase 2: point to read replica
+        string readConnection = configuration.GetConnectionString(ReadConnectionName)
+                                    is { Length: > 0 } rc ? rc : writeConnection;
 
         // Write context — tracked by DatabaseInitializer for migrations
-        services.AddDbContext<AdminDbContext>(opts => opts.UseNpgsql(connectionString));
+        services.AddDbContext<AdminDbContext>(opts => opts.UseNpgsql(writeConnection));
         services.AddScoped<IModuleDbContext>(sp => sp.GetRequiredService<AdminDbContext>());
 
-        // Read context — NoTracking, no migrations
+        // Read context — NoTracking, no migrations; uses read replica when ReadConnection is set
         services.AddDbContext<AdminReadDbContext>(opts =>
-            opts.UseNpgsql(connectionString)
+            opts.UseNpgsql(readConnection)
                 .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
         // Reference Data read service (Tier 1) — scoped because AdminReadDbContext is scoped
