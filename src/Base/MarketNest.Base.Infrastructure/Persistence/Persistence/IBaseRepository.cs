@@ -40,6 +40,11 @@ public interface IBaseRepository<TEntity, TKey>
 
     // ── Write ─────────────────────────────────────────────────────────────────
     void Add(TEntity entity);
+    Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default);
+
     void Update(TEntity entity);
+    Task UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default);
+
     void Remove(TEntity entity);
+    Task RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default);
 }
