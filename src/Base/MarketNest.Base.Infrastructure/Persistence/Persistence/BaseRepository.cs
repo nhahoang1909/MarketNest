@@ -84,8 +84,28 @@ public abstract class BaseRepository<TEntity, TKey, TContext>(TContext db)
     // ── Write ─────────────────────────────────────────────────────────────────
 
     public virtual void Add(TEntity entity) => db.Set<TEntity>().Add(entity);
+
+    public virtual Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default)
+    {
+        db.Set<TEntity>().AddRange(entities);
+        return Task.CompletedTask;
+    }
+
     public virtual void Update(TEntity entity) => db.Set<TEntity>().Update(entity);
+
+    public virtual Task UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default)
+    {
+        db.Set<TEntity>().UpdateRange(entities);
+        return Task.CompletedTask;
+    }
+
     public virtual void Remove(TEntity entity) => db.Set<TEntity>().Remove(entity);
+
+    public virtual Task RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default)
+    {
+        db.Set<TEntity>().RemoveRange(entities);
+        return Task.CompletedTask;
+    }
 
     // ── Protected helpers ─────────────────────────────────────────────────────
 
@@ -100,4 +120,3 @@ public abstract class BaseRepository<TEntity, TKey, TContext>(TContext db)
         return query;
     }
 }
-
