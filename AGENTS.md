@@ -7,7 +7,7 @@ This file is the multi-agent equivalent of `CLAUDE.md` — it applies to Gemini,
 
 MarketNest is a multi-vendor marketplace (Etsy/Shopee-style) — .NET 10, Razor Pages + HTMX + Alpine.js, PostgreSQL (schema-per-module). Phased architecture: **Modular Monolith → Microservices → Kubernetes**.
 
-**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Module domain logic (Identity, Catalog, etc.) is in progress.
+**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), and Roslyn analyzers (MN001–MN017) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
 
 ## Build & Run
 
@@ -177,6 +177,8 @@ Controller base classes:
 - Multiple layouts: `_Layout.cshtml` (buyer/public), `_LayoutAdmin.cshtml`, `_LayoutSeller.cshtml` in `src/MarketNest.Web/Pages/Shared/`
 - Design tokens: server-side inline color constants live in `AppConstants.Colors` — keep in sync with Tailwind CSS tokens in `wwwroot/css/input.css`
 - Auditing: mark entities `[Auditable]` for automatic EF Core change tracking; mark commands `[Audited("EVENT_TYPE")]` for automatic MediatR audit logging — `[Audited]` also accepts `EntityType` (entity name override) and `AuditFailures` (default `true`). `IAuditService` in `Core/Contracts/` — never fails the main request. See ADR-012
+- **Sale price on variants (ADR-024)**: `ProductVariant` carries three inline sale fields (`SalePrice`, `SaleStart`, `SaleEnd`). Always use `variant.EffectivePrice()` at checkout / cart reads — never read `Price` directly. `ExpireSalesJob` (Catalog, 5-min schedule) clears expired sales and raises `VariantSalePriceRemovedEvent`. Full rules: `docs/domain-and-business-rules.md` §5.4.
+- **Background jobs**: All timer/batch jobs must implement `IBackgroundJob` and expose a `JobDescriptor` with a globally-unique `JobKey` (e.g., `catalog.variant.expire-sales`). See `docs/backend-patterns.md` §16 for the full list of registered jobs.
 
 ## Agent Behavior Guidelines (rules)
 

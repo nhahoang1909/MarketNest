@@ -45,9 +45,9 @@
     - [Job Management Strategy](#job-management-strategy)
     - [Required Job Metadata](#required-job-metadata)
     - [Job Execution Data Model](#job-execution-data-model)
-      - [1. Data Schema (Cấu trúc dữ liệu)](#1-data-schema-cấu-trúc-dữ-liệu)
-      - [2. Planned Jobs (Danh sách Job dự kiến)](#2-planned-jobs-danh-sách-job-dự-kiến)
-      - [3. Admin Job Operations Roadmap (Lộ trình phát triển)](#3-admin-job-operations-roadmap-lộ-trình-phát-triển)
+      - [1. Data Schema](#1-data-schema)
+      - [2. Registered \& Planned Jobs](#2-registered--planned-jobs)
+      - [3. Admin Job Operations Roadmap](#3-admin-job-operations-roadmap)
   - [17. Error Handling Strategy](#17-error-handling-strategy)
     - [Global Exception Handler (unexpected only)](#global-exception-handler-unexpected-only)
     - [Security Middleware Pipeline](#security-middleware-pipeline)
@@ -792,9 +792,9 @@ public interface IJobExecutionStore
 ```
 ### Job Execution Data Model
 
-**Recommended Table:** `admin.job_executions` (hoặc `jobs.job_executions` nếu mở rộng quy mô trong tương lai).
+**Recommended Table:** `admin.job_executions` (or `jobs.job_executions` if extracted as a dedicated module in Phase 3+).
 
-#### 1. Data Schema (Cấu trúc dữ liệu)
+#### 1. Data Schema
 
 | Column | Description |
 | :--- | :--- |
@@ -816,23 +816,25 @@ public interface IJobExecutionStore
 
 ---
 
-#### 2. Planned Jobs (Danh sách Job dự kiến)
+#### 2. Registered & Planned Jobs
 
-| Job Name | Schedule | Description |
-| :--- | :--- | :--- |
-| **CleanupExpiredReservations** | Every 5 min | Release DB reservations where Redis key expired |
-| **AutoConfirmShippedOrders** | Daily 01:00 | SHIPPED > 30 days → DELIVERED |
-| **AutoCompleteOrders** | Daily 01:05 | DELIVERED + 3 days no dispute → COMPLETED |
-| **AutoCancelUnconfirmedOrders** | Every 30 min | CONFIRMED + 48h no seller action → CANCELLED |
-| **ProcessPayoutBatch** | Daily 02:00 | Calculate payouts for COMPLETED orders |
-| **SendNotificationDigests** | Daily 08:00 | Review digest emails to Sellers |
-| **ProcessHourlyNotificationDigest**| Every hour | Batch notifications for OneHourDigest users |
-| **ProcessDailyNotificationDigest** | Daily 09:00 | Batch notifications (per user Timezone) |
-| **CleanupOrphanWishlistSnapshots**| Weekly | Remove wishlist items for deleted products |
+| Job Name | Module | Schedule | Description |
+| :--- | :--- | :--- | :--- |
+| **ExpireSalesJob** | Catalog | Every 5 min | Clear `SalePrice/SaleStart/SaleEnd` on variants whose sale window ended. Raises `VariantSalePriceRemovedEvent`. JobKey: `catalog.variant.expire-sales` |
+| **VoucherExpiryJob** | Promotions | Every hour | Set `Status = Expired/Depleted` on vouchers past `ExpiryDate` or fully consumed. |
+| **CleanupExpiredReservations** | Cart | Every 5 min | Release DB reservations where Redis key expired |
+| **AutoConfirmShippedOrders** | Orders | Daily 01:00 | SHIPPED > 30 days → DELIVERED |
+| **AutoCompleteOrders** | Orders | Daily 01:05 | DELIVERED + 3 days no dispute → COMPLETED |
+| **AutoCancelUnconfirmedOrders** | Orders | Every 30 min | CONFIRMED + 48h no seller action → CANCELLED |
+| **ProcessPayoutBatch** | Payments | Daily 02:00 | Calculate payouts for COMPLETED orders |
+| **SendNotificationDigests** | Notifications | Daily 08:00 | Review digest emails to Sellers |
+| **ProcessHourlyNotificationDigest**| Notifications | Every hour | Batch notifications for OneHourDigest users |
+| **ProcessDailyNotificationDigest** | Notifications | Daily 09:00 | Batch notifications (per user timezone) |
+| **CleanupOrphanWishlistSnapshots**| Cart | Weekly | Remove wishlist items for deleted products |
 
 ---
 
-#### 3. Admin Job Operations Roadmap (Lộ trình phát triển)
+#### 3. Admin Job Operations Roadmap
 
 | Capability | Phase | Notes |
 | :--- | :--- | :--- |

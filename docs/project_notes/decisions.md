@@ -32,6 +32,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-021 | Three-Tier Configuration Model | 2026-04-28 |
 | ADR-022 | `ReferenceData` Base Entity in `Base.Domain` | 2026-04-28 |
 | ADR-023 | EF Core DDD Property Access Convention — `ApplyDddPropertyAccessConventions()` | 2026-04-28 |
+| ADR-024 | Sale Price as Inline Fields on ProductVariant — Option A | 2026-04-29 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -433,7 +434,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 
 ---
 
-### ADR-015: Voucher/Promotions Domain Design — Two-Axis Discount Model, Single Table (2026-04-27)
+### ADR-015: Voucher/Promotions Domain Design — Two-Axis Discount Model (2026-04-27)
 
 **Context:**
 - MarketNest needs promotions for both platform-wide campaigns (Admin) and per-shop discounts (Seller)
@@ -597,3 +598,28 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 - ❌ Naming convention dependency: backing field must follow `_camelCase` for `PascalCase` property name.
 
 ---
+
+### ADR-024: Sale Price as Inline Fields on ProductVariant — Option A (2026-04-29)
+
+**Context:**
+- Need to support time-limited sale prices on individual product variants.
+- Two candidate designs: (A) three inline fields (`sale_price`, `sale_start`, `sale_end`) directly on the variant row, or (B) a separate `VariantPricePromotion` entity with a FK.
+
+**Decision:** Option A — inline fields on `ProductVariant`.
+
+**Rationale:**
+- Phase 1: one variant = one active sale at a time — no scheduling queue needed.
+- `EffectivePrice` queries require no extra JOIN: `WHERE sale_end > NOW()` is a single-table predicate.
+- Consistent with Shopify/WooCommerce/Lazada design; familiar to domain experts.
+- Checkout snapshot is trivial: call `variant.EffectivePrice()` — no eager-load of a child collection.
+
+**Consequences:**
+- ✅ Simple reads, simple writes, simple EF configuration.
+- ✅ DB CHECK constraints enforce atomicity of all three fields (invariant S5).
+- ✅ Background job (`ExpireSalesJob`, 5-min schedule) cleans up expired sales and raises domain event.
+- ❌ No overlapping/scheduled multi-promotion queue (Phase 2 concern — migrate to Option B then if needed).
+- ❌ No per-sale price history audit trail (mitigated by `[Auditable]` on entity and domain events).
+- **Phase 2 migration path**: Add `VariantPricePromotion` entity, migrate active sale fields → first row, keep `EffectivePrice()` API stable.
+
+---
+
