@@ -3,7 +3,7 @@ namespace MarketNest.Base.Domain;
 /// <summary>
 ///     Base entity with strongly-typed ID and domain event support.
 /// </summary>
-public abstract class Entity<TKey> : IEquatable<Entity<TKey>>
+public abstract class Entity<TKey> : IHasDomainEvents, IEquatable<Entity<TKey>>
 {
     private readonly List<IDomainEvent> _domainEvents = new();
     public TKey Id { get; protected set; } = default!;
