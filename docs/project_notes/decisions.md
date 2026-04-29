@@ -720,29 +720,53 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 
 ### ADR-027: Unit of Work + [Transaction] Attribute — Domain Event Lifecycle & Transaction Management (2026-04-29)
 
-**Context:**
+**Status**: Updated 2026-04-29. Significant pattern change: **filters now own transaction lifecycle; handlers only mutate entities.**
+
+**Context (original):**
 - Command handlers were calling `dbContext.SaveChangesAsync()` directly, bypassing domain event dispatch and transaction control.
 - Domain events had no ordering guarantee: all events were post-commit which prevented atomic side effects (e.g., reserving inventory in the same TX as placing an order).
 - Write operations in Razor Pages and API controllers had no automatic transaction boundary.
 
-**Decision:**
-- **`IPreCommitDomainEvent`** (marker, `Base.Domain`): domain events implementing this run INSIDE the open transaction before `SaveChanges`. Used for atomic side effects (e.g., inventory reservation). All other domain events are post-commit.
+**Decision (revised 2026-04-29):**
+
+The Unit of Work pattern is split into two distinct use cases, each with its own transaction management strategy:
+
+#### HTTP Handlers (via filters — automatic)
+- **`RazorPageTransactionFilter`** and **`TransactionActionFilter`** (global) own the full transaction lifecycle.
+- **New `IUnitOfWork` methods added:**
+  - `BeginTransactionAsync(IsolationLevel, CancellationToken)` — filter opens DB transactions on all module contexts
+  - `CommitAsync(CancellationToken)` — dispatcher calls this ONCE after handler returns; method: dispatch pre-commit events → `SaveChangesAsync` on all contexts
+  - `CommitTransactionAsync(CancellationToken)` — filter calls this to commit DB transactions (point of no return)
+  - `RollbackAsync(CancellationToken)` — filter calls on exception; clears post-commit event queue + rolls back DB transactions
+  - `IAsyncDisposable DisposeAsync()` — filter calls on finally to clean up transaction objects
+- **Command handlers DO NOT inject `IUnitOfWork`** — only repositories. They mutate entities and return. Filter handles commit automatically.
+- **Benefits**: Handlers can't forget to commit. No silent data loss if handler raises an exception after mutations.
+
+#### Background Jobs (explicit management)
+- Background jobs run **outside the HTTP filter** — they must explicitly manage transactions via the new `IUnitOfWork` methods.
+- Pattern: `try { BeginTransaction → CommitAsync → CommitTransactionAsync → DispatchPostCommitEventsAsync } catch RollbackAsync finally DisposeAsync`
+- This ensures **atomicity**: if an exception occurs after `CommitAsync`, the entire transaction is rolled back (including all entity changes).
+
+#### Domain Event Processing
+
+- **`IPreCommitDomainEvent`** (marker, `Base.Domain`): domain events implementing this run INSIDE the open transaction before `SaveChanges`. Used for atomic side effects (e.g., inventory reservation).
+- All other domain events are post-commit (`IDomainEvent` default).
 - **`IHasDomainEvents`** (non-generic interface, `Base.Domain`): added to `Entity<TKey>` so `UnitOfWork` can scan `ChangeTracker` without knowing the key type.
-- **`IUnitOfWork`** (contract, `Base.Infrastructure`): single persist entry-point. `CommitAsync()` dispatches pre-commit events → clears aggregate events → `SaveChangesAsync`. Does NOT commit the DB transaction. `DispatchPostCommitEventsAsync()` dispatches remaining events after the filter commits the TX.
-- **`UnitOfWork`** (implementation, `MarketNest.Web.Infrastructure`): scans all `IModuleDbContext` instances via DI, calls `SaveChangesAsync` on all of them.
-- **`[Transaction]` / `[NoTransaction]`** attributes (in `Base.Common`): control transaction wrapping. `[Transaction]` supports custom `IsolationLevel` and `TimeoutSeconds`.
-- **`RazorPageTransactionFilter`** (global, `MarketNest.Web.Infrastructure`): auto-wraps every `OnPost*` / `OnPut*` / `OnDelete*` / `OnPatch*` Razor Page handler. `OnGet*` always bypassed. Opt-out via `[NoTransaction]`.
-- **`TransactionActionFilter`** (global, `MarketNest.Web.Infrastructure`): wraps controller write actions only when `[Transaction]` is present on the class or action. Bypasses GET actions.
-- **`ReadApiV1ControllerBase`** / **`WriteApiV1ControllerBase`** (in `Base.Api`): split the controller base. Write controllers carry `[Transaction]` at class level, enforcing transactions on all POST/PUT/DELETE/PATCH actions automatically.
+
+#### Transaction Attributes
+
+- **`[Transaction]` / `[NoTransaction]`** (in `Base.Common`): control transaction wrapping on handlers.
+- **`ReadApiV1ControllerBase`** / **`WriteApiV1ControllerBase`** (in `Base.Api`): write controllers carry `[Transaction]` at class level, enforcing transactions automatically.
 - Both filters open transactions on ALL module DbContexts before the handler runs, then commit/rollback all after the handler returns.
 
 **Consequences:**
-- ✅ Handlers must call `uow.CommitAsync()` exactly once — never `db.SaveChangesAsync()` directly.
-- ✅ Pre-commit events run in the same DB transaction as the aggregate changes (atomic).
-- ✅ Post-commit failures (email, outbox) are logged but never roll back the committed TX.
-- ✅ Phase 3 migration path: swap `DispatchPostCommitEventsAsync` implementation to write to Outbox table — no handler code changes needed.
-- ⚠️ Opening transactions on all module DbContexts per write request has overhead (mitigated by PostgreSQL connection pooling).
-- ⚠️ True distributed atomicity across modules requires saga/outbox (Phase 3). Phase 1 relies on module boundary rule: each command touches one module's DbContext.
+- ✅ **Handlers simplified**: no UoW injection, no commit calls — pure domain mutation code.
+- ✅ **Automatic transactionality**: forget to call commit → impossible; filter handles it.
+- ✅ **Full transaction control**: background jobs manage transaction lifecycle explicitly vs HTTP handlers (automatic via filter).
+- ✅ **Pre-commit events guarantee atomicity**: inventory reservation happens in the same transaction as order placement.
+- ✅ **Phase 3 path**: swap `DispatchPostCommitEventsAsync` to write to Outbox table — no handler code changes.
+- ⚠️ **Opening transactions on all module DbContexts** has overhead per write request (mitigated by PostgreSQL connection pooling + short transactions).
+- ⚠️ **True distributed atomicity** across modules requires saga/outbox (Phase 3). Phase 1 relies on module boundary rule: each command touches one module's DbContext.
 
 ---
 

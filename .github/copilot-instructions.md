@@ -7,7 +7,7 @@ This file is the multi-agent equivalent of `CLAUDE.md` — it applies to Gemini,
 
 MarketNest is a multi-vendor marketplace (Etsy/Shopee-style) — .NET 10, Razor Pages + HTMX + Alpine.js, PostgreSQL (schema-per-module). Phased architecture: **Modular Monolith → Microservices → Kubernetes**.
 
-**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025), Unit of Work + `[Transaction]` attribute with pre/post-commit domain event lifecycle (ADR-027), and `IRuntimeContext` unified ambient context (ADR-028) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
+**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025), Unit of Work + `[Transaction]` attribute with pre/post-commit domain event lifecycle (ADR-027), `IRuntimeContext` unified ambient context (ADR-028), and Application Constants vs Configuration policy (ADR-030) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
 
 ## Build & Run
 
@@ -108,8 +108,9 @@ lib/                        # Vendored libraries (alpinejs/, htmx/, chart.js/)
 - See `docs/code-rules.md` for full coding standards
 - Use `Result<T, Error>` — never throw for business failures. All CQRS handlers return `Result<T, Error>` via `ICommand<T>` / `IQuery<T>` interfaces in `MarketNest.Core/Common/Cqrs/`
 - DDD property accessors (ADR-007): Entity/Aggregate → `{ get; private set; }`, Value Object (class) → `{ get; }`, Value Object (record) → `{ get; init; }`, DTO/Command/Query → `record` with `{ get; init; }`, Infrastructure interfaces → `{ get; set; }` allowed
-- No magic strings / magic numbers — extract to `const`, `static readonly`, enum, or config options. See `AppConstants` and `AppRoutes` in `src/MarketNest.Web/Infrastructure/` as the canonical examples
-- English only — all naming, comments, error messages, log messages, and commit messages must be in English. No Vietnamese or other languages in source code. Only localization resource files (`.resx`) are exempt. See `docs/code-rules.md` §2.1
+- **No magic strings / magic numbers**: extract to `const`, `static readonly`, enum, or config options. See `AppConstants` and `AppRoutes` in `src/MarketNest.Web/Infrastructure/` as the canonical examples
+  - **AppConstants vs appsettings.json (ADR-030)**: **AppConstants** holds business rules immutable across environments (password length, file limits, colors, fonts). **appsettings.json** holds environment-tunable settings (DB connection, secrets, rate limits, token expiry). Pattern: `AppConstants.Validation.PasswordMinLength` for rules; `Security.RateLimitRequestsPerMinute` in JSON for tuning.
+- **English only** — all naming, comments, error messages, log messages, and commit messages must be in English. No Vietnamese or other languages in source code. Only localization resource files (`.resx`) are exempt. See `docs/code-rules.md` §2.1
 - Flat layer-level namespaces: `MarketNest.<Module>.Application`, `MarketNest.<Module>.Domain`, `MarketNest.<Module>.Infrastructure` — sub-folders (Commands/, Queries/, Entities/) do NOT appear in the namespace. See `docs/code-rules.md` §2.7
 
 ### Agent enforcement: namespace policy
@@ -138,6 +139,7 @@ Read context rules:
 - `{Module}ReadDbContext` is ONLY injected by `BaseQuery` subclasses
 - `{Module}DbContext` (write) is ONLY injected by `BaseRepository` subclasses
 - Neither context is injected by any Application layer class
+- `IBaseRepository<TEntity,TKey>` write API: single-entity `Add`/`Update`/`Remove` (sync); batch `AddRangeAsync`/`UpdateRangeAsync`/`RemoveRangeAsync` (async, `IEnumerable<TEntity>`). All writes committed via `IUnitOfWork.CommitAsync()` — never `SaveChangesAsync()` directly.
 
 Controller base classes:
 - All read controllers extend `ReadApiV1ControllerBase` (no transaction)
@@ -163,7 +165,7 @@ Controller base classes:
 - Multiple layouts: `_Layout.cshtml` (buyer/public), `_LayoutAdmin.cshtml`, `_LayoutSeller.cshtml` in `src/MarketNest.Web/Pages/Shared/`
 - Design tokens: server-side inline color constants live in `AppConstants.Colors` — keep in sync with Tailwind CSS tokens in `wwwroot/css/input.css`
 - Auditing: mark entities `[Auditable]` for automatic EF Core change tracking; mark commands `[Audited("EVENT_TYPE")]` for automatic MediatR audit logging — `[Audited]` also accepts `EntityType` (entity name override) and `AuditFailures` (default `true`). `IAuditService` in `Core/Contracts/` — never fails the main request. See ADR-012
-- **Unit of Work (ADR-027)**: Command handlers MUST call `uow.CommitAsync(ct)` — never `dbContext.SaveChangesAsync()` directly. `IUnitOfWork` is in `Base.Infrastructure`. Domain events split into **pre-commit** (`IPreCommitDomainEvent` — runs INSIDE the open DB transaction before `SaveChanges`) and **post-commit** (plain `IDomainEvent` — dispatched AFTER TX commit; failures logged, never rethrow). See `docs/backend-patterns.md` §22 and ADR-027.
+- **Unit of Work (ADR-027)**: Command handlers MUST NOT call `uow.CommitAsync(ct)` or `dbContext.SaveChangesAsync()` directly — the transaction filter (`RazorPageTransactionFilter` / `TransactionActionFilter`) owns the full transaction lifecycle and calls `CommitAsync` automatically after the handler returns. `IUnitOfWork` is in `Base.Infrastructure`. **Exception**: background jobs run outside the HTTP pipeline and must manage transactions explicitly. Domain events split into **pre-commit** (`IPreCommitDomainEvent` — runs INSIDE the open DB transaction before `SaveChanges`) and **post-commit** (plain `IDomainEvent` — dispatched AFTER TX commit; failures logged, never rethrow). See `docs/backend-patterns.md` §22 and ADR-027.
 - **RuntimeContext (ADR-028)**: Inject `IRuntimeContext` (contract in `Base.Common`) instead of `ICurrentUserService` + ad-hoc `HttpContext.TraceIdentifier`. Provides `CorrelationId`, `RequestId`, `CurrentUser` (Id, Name, Email, Role), `StartedAt`, `ElapsedMs`, HTTP metadata. Use `ctx.CurrentUser.RequireId()` in write handlers (throws `UnauthorizedException` if anonymous). Use `ctx.CurrentUser.IdOrNull` in audit interceptors/logging (never throws). Background jobs: `BackgroundJobRuntimeContext.ForSystemJob(jobKey)`. Tests: `TestRuntimeContext.AsSeller()`. See `docs/backend-patterns.md` §23 and ADR-028.
 - **Transaction filters (ADR-027)**: `RazorPageTransactionFilter` globally wraps `OnPost*`/`OnPut*`/`OnDelete*`/`OnPatch*` automatically. `TransactionActionFilter` wraps write controller actions when `[Transaction]` is present. `WriteApiV1ControllerBase` carries `[Transaction]` at class level. Opt-out: `[NoTransaction]`. In `MarketNest.Web.Infrastructure/Filters/`.
 

@@ -18,10 +18,10 @@
   - [3. Cross-Module Contracts](#3-cross-module-contracts)
   - [4. DTO Conventions](#4-dto-conventions)
   - [5. Validation Contract](#5-validation-contract)
-  - [6. Base Repository \& Aggregate Repository](#6-base-repository--aggregate-repository)
+  - [6. Base Repository & Aggregate Repository](#6-base-repository--aggregate-repository)
     - [IBaseRepository\<T, TKey\>](#ibaserepositoryt-tkey)
     - [BaseRepository Implementation](#baserepository-implementation)
-    - [AggregateRepository (domain event dispatch)](#aggregaterepository-domain-event-dispatch)
+    - [Domain event dispatch](#domain-event-dispatch)
   - [7. Base Query Handler — Paged Lists](#7-base-query-handler--paged-lists)
     - [BasePagedQueryHandler](#basepagedqueryhandler)
   - [8. Base Command Handlers](#8-base-command-handlers)
@@ -285,66 +285,64 @@ public static class ValidatorExtensions
 
 ### IBaseRepository<T, TKey>
 
+Canonical interface in `src/Base/MarketNest.Base.Infrastructure/Persistence/IBaseRepository.cs`
+(namespace `MarketNest.Base.Infrastructure`).
+
 ```csharp
 public interface IBaseRepository<TEntity, TKey> where TEntity : Entity<TKey>
 {
-    Task<TEntity?> GetByKeyAsync(TKey id, CancellationToken ct = default);
-    Task<TEntity>  GetByKeyOrThrowAsync(TKey id, CancellationToken ct = default);
+    // ── Read (load-then-mutate) ───────────────────────────────────────────────
+    Task<TEntity>  GetByKeyAsync(TKey id, CancellationToken ct = default);   // throws KeyNotFoundException
+    Task<TEntity?> FindByKeyAsync(TKey id, CancellationToken ct = default);  // returns null
     Task<bool>     ExistsAsync(TKey id, CancellationToken ct = default);
-    void Add(TEntity entity);
-    void Update(TEntity entity);
-    void Remove(TEntity entity);
-    Task<int> SaveChangesAsync(CancellationToken ct = default);
+
+    // ── Query helpers ─────────────────────────────────────────────────────────
+    Task<long>             CountAsync(Expression<Func<TEntity, bool>>? where = null, CancellationToken ct = default);
+    Task<bool>             AnyAsync(Expression<Func<TEntity, bool>>? where = null, CancellationToken ct = default);
+    Task<TEntity?>         FirstOrDefaultAsync(Expression<Func<TEntity, bool>> where, CancellationToken ct = default);
+    Task<List<TEntity>>    ListAsync(Expression<Func<TEntity, bool>>? where = null,
+                               Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+                               CancellationToken ct = default);
+    Task<PagedResult<TEntity>> GetPagedListAsync(int page, int pageSize,
+                               Expression<Func<TEntity, bool>>? where = null,
+                               Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+                               CancellationToken ct = default);
+    IQueryable<TEntity>    GetQueryable(Expression<Func<TEntity, bool>>? where = null);
+
+    // ── Write ─────────────────────────────────────────────────────────────────
+    void   Add(TEntity entity);
+    Task   AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default);
+
+    void   Update(TEntity entity);
+    Task   UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default);
+
+    void   Remove(TEntity entity);
+    Task   RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default);
 }
 ```
+
+> **Rule**: `Add`/`Update`/`Remove` are synchronous because EF Core only tracks the change in memory — actual persistence happens via `IUnitOfWork.CommitAsync()`.  
+> `AddRangeAsync` / `UpdateRangeAsync` / `RemoveRangeAsync` accept `IEnumerable<TEntity>` for batch operations.  
+> **Never call `SaveChangesAsync` directly** from handlers — the transaction filter calls `CommitAsync` automatically (except background jobs).
 
 ### BaseRepository Implementation
 
-```csharp
-public abstract class BaseRepository<TEntity, TKey>(MarketNestDbContext db)
-    : IBaseRepository<TEntity, TKey> where TEntity : Entity<TKey>
-{
-    protected readonly MarketNestDbContext Db = db;
-    protected readonly DbSet<TEntity> Set = db.Set<TEntity>();
-
-    public virtual async Task<TEntity?> GetByKeyAsync(TKey id, CancellationToken ct)
-        => await Set.FirstOrDefaultAsync(e => e.Id!.Equals(id), ct);
-
-    public virtual async Task<TEntity> GetByKeyOrThrowAsync(TKey id, CancellationToken ct)
-        => await GetByKeyAsync(id, ct)
-           ?? throw new NotFoundException(typeof(TEntity).Name, id!.ToString()!);
-
-    // ... Add, Update, Remove, SaveChanges
-
-    protected IQueryable<TEntity> Query()           => Set.AsNoTracking();
-    protected IQueryable<TEntity> QueryTracked()    => Set;
-    protected IQueryable<TEntity> QueryWithDeleted()=> Set.IgnoreQueryFilters();
-}
-```
-
-### AggregateRepository (domain event dispatch)
+`BaseRepository<TEntity, TKey, TContext>` in `src/Base/MarketNest.Base.Infrastructure/Persistence/BaseRepository.cs`.
+Each module provides a **2-line thin wrapper** pinning its own `DbContext`:
 
 ```csharp
-public abstract class AggregateRepository<TAggregate, TKey>(
-    MarketNestDbContext db, IPublisher publisher)
-    : BaseRepository<TAggregate, TKey>(db)
-    where TAggregate : AggregateRoot<TKey>
-{
-    public new async Task<int> SaveChangesAsync(CancellationToken ct)
-    {
-        var aggregates = Db.ChangeTracker.Entries<AggregateRoot<TKey>>()
-            .Where(e => e.Entity.DomainEvents.Any()).Select(e => e.Entity).ToList();
-        var result = await Db.SaveChangesAsync(ct);
-        foreach (var aggregate in aggregates)
-        {
-            foreach (var domainEvent in aggregate.DomainEvents)
-                await publisher.Publish(domainEvent, ct);
-            aggregate.ClearDomainEvents();
-        }
-        return result;
-    }
-}
+// src/MarketNest.Catalog/Infrastructure/Persistence/BaseRepository.cs
+public abstract class BaseRepository<TEntity, TKey>(CatalogDbContext db)
+    : BaseRepository<TEntity, TKey, CatalogDbContext>(db);
 ```
+
+### Domain event dispatch
+
+Domain events are **no longer dispatched from the repository**. The `UnitOfWork` handles this automatically:
+- **Pre-commit events** (`IPreCommitDomainEvent`) — dispatched inside the transaction before `SaveChangesAsync`
+- **Post-commit events** (plain `IDomainEvent`) — dispatched after the transaction commits
+
+See **§22 Unit of Work** for the full event lifecycle. Aggregates should raise events via `AddDomainEvent()` (on `AggregateRoot<TKey>`); the `UnitOfWork` scans the `ChangeTracker` to collect and dispatch them.
 
 ---
 
@@ -1011,7 +1009,7 @@ WEB: Pages/routes, HTMX partials, form models
 
 ## 22. Unit of Work & Transaction Management
 
-> ADR-027. Files: `Base.Domain/Events/IPreCommitDomainEvent.cs`, `Base.Domain/Events/IHasDomainEvents.cs`, `Base.Infrastructure/Persistence/IUnitOfWork.cs`, `Web/Infrastructure/Persistence/UnitOfWork.cs`, `Web/Infrastructure/Filters/`.
+> ADR-027. Files: `Base.Domain/Events/IPreCommitDomainEvent.cs`, `Base.Domain/Events/IHasDomainEvents.cs`, `Base.Infrastructure/Persistence/IUnitOfWork.cs`, `Web/Infrastructure/Persistence/UnitOfWork.cs`, `Web/Infrastructure/Filters/`,  `Base.Common/Attributes/TransactionAttributes.cs`.
 
 ### Domain Event Lifecycle Split
 
@@ -1027,33 +1025,64 @@ Post-commit failures are **logged but never roll back** the committed transactio
 ### IUnitOfWork Contract
 
 ```csharp
-// Base.Infrastructure  —  inject this in CommandHandlers
-public interface IUnitOfWork
+// Base.Infrastructure  —  injected by transaction filters only
+public interface IUnitOfWork : IAsyncDisposable
 {
+    // Transaction management (HTTP + background jobs)
+    Task BeginTransactionAsync(IsolationLevel isolation = ReadCommitted, CancellationToken ct = default);
+    Task CommitTransactionAsync(CancellationToken ct = default);
+    Task RollbackAsync(CancellationToken ct = default);
+    
+    // Event & persistence management
     IReadOnlyList<IDomainEvent> CollectPreCommitEvents();
-    Task<int> CommitAsync(CancellationToken ct = default);
+    Task<int> CommitAsync(CancellationToken ct = default);  // SaveChanges + pre-commit events
     Task DispatchPostCommitEventsAsync(CancellationToken ct = default);
 }
 ```
 
 **Rules for Command Handlers:**
-- ✅ Call `uow.CommitAsync()` exactly once at the end of the handler.
+- ✅ Mutate entities via repositories — no explicit transaction calls needed.
+- ✅ The filter automatically calls `BeginTransactionAsync()`, `CommitAsync()`, `CommitTransactionAsync()`, `DispatchPostCommitEventsAsync()`, `DisposeAsync()`.
 - ❌ Never call `dbContext.SaveChangesAsync()` directly.
-- ❌ Never call `db.Database.CommitTransactionAsync()` — that is the filter's job.
+- ❌ Never call `db.Database.BeginTransactionAsync()`.
+- **Exception — background jobs**: Background jobs run outside the HTTP filter and must explicitly manage the full transaction lifecycle.
 
-### Transaction Lifecycle (per write request)
+### Transaction Lifecycle (HTTP write request via filter)
 
 ```
-Filter: BeginTransaction on all module DbContexts
-  └─ Handler runs
-       └─ aggregate.DoSomething()  →  RaiseDomainEvent(...)
-       └─ uow.CommitAsync()
-            ├─ CollectPreCommitEvents()
-            ├─ publisher.Publish(preCommitEvents)   ← INSIDE TX
-            ├─ ClearDomainEvents()
-            └─ SaveChangesAsync on all DbContexts   ← still INSIDE TX
-  └─ filter: tx.CommitAsync()                       ← COMMIT
-  └─ filter: uow.DispatchPostCommitEventsAsync()    ← AFTER commit
+Filter: BeginTransactionAsync on all module DbContexts
+  ├─ Handler runs
+  │  └─ aggregate.DoSomething()  →  RaiseDomainEvent(...)
+  │     (no uow.CommitAsync call in handler)
+  │
+  ├─ Filter: CommitAsync()
+  │  ├─ CollectPreCommitEvents()
+  │  ├─ publisher.Publish(preCommitEvents)   ← INSIDE TX
+  │  ├─ ClearDomainEvents()
+  │  └─ SaveChangesAsync on all DbContexts   ← still INSIDE TX
+  │
+  ├─ Filter: CommitTransactionAsync()        ← COMMIT the DB transaction
+  │
+  ├─ Filter: DispatchPostCommitEventsAsync() ← AFTER commit (failures logged only)
+  │
+  └─ Filter: DisposeAsync()                  ← Cleanup transaction objects
+```
+
+### Background Job Transaction Lifecycle (explicit management)
+
+```csharp
+try {
+    await uow.BeginTransactionAsync(ct: cancellationToken);
+    // mutate entities via repositories
+    await uow.CommitAsync(cancellationToken);              // SaveChanges + pre-commit events
+    await uow.CommitTransactionAsync(cancellationToken);   // COMMIT
+    await uow.DispatchPostCommitEventsAsync(cancellationToken);
+} catch (Exception ex) {
+    await uow.RollbackAsync(cancellationToken);  // rollback + clear events
+    throw;
+} finally {
+    await uow.DisposeAsync();
+}
 ```
 
 ### Filters
@@ -1087,17 +1116,20 @@ public class MyWriteController(IMediator mediator) : WriteApiV1ControllerBase(me
 ### Command Handler Example
 
 ```csharp
-public class PlaceOrderCommandHandler(IOrderRepository orders, IUnitOfWork uow)
+public class PlaceOrderCommandHandler(IOrderRepository orders)
     : ICommandHandler<PlaceOrderCommand, Result<OrderDto, Error>>
 {
     public async Task<Result<OrderDto, Error>> Handle(PlaceOrderCommand cmd, CancellationToken ct)
     {
         var order = Order.Create(cmd);    // raises OrderPlacedEvent + InventoryReservedEvent
         orders.Add(order);
-        await uow.CommitAsync(ct);        // InventoryReservedEvent dispatched in TX; OrderPlacedEvent after commit
         return Result.Ok(OrderDto.From(order));
+        // Filter will call CommitAsync/CommitTransactionAsync/DispatchPostCommitEventsAsync automatically
     }
 }
+```
+
+**No explicit `uow.CommitAsync()` needed** — the transaction filter handles it after the handler returns.
 ```
 
 ---
