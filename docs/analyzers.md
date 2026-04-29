@@ -1,11 +1,11 @@
 # MarketNest Roslyn Analyzers Reference
 
 > Design spec: `docs/superpowers/specs/2026-04-27-roslyn-analyzers-design.md`
-> Status: **Complete** (2026-04-28) — all 17 rules + 5 code fixes implemented, wired to all src/ projects
+> Status: **Updated** (2026-04-29) — all 18 rules + 6 code fixes implemented, wired to all src/ projects
 
 ## Overview
 
-`src/MarketNest.Analyzers/` is a `netstandard2.0` Roslyn analyzer project that enforces the coding rules in `docs/code-rules.md` at **build time**. Violations appear as IDE squiggly lines and fail the CI build. Five rules ship with Quick Action code fixes.
+`src/MarketNest.Analyzers/` is a `netstandard2.0` Roslyn analyzer project that enforces the coding rules in `docs/code-rules.md` at **build time**. Violations appear as IDE squiggly lines and fail the CI build. Six rules ship with Quick Action code fixes.
 
 The analyzer is wired to every project under `src/` via `src/Directory.Build.targets`:
 
@@ -42,6 +42,7 @@ The analyzer is wired to every project under `src/` via `src/Directory.Build.tar
 | MN015 | Domain event record name must end with `Event` | Naming | Warning | ❌ |
 | MN016 | Entity/Aggregate property must not have public setter | Architecture | Error | ❌ |
 | MN017 | Unnecessary `Task.FromResult(x)` (use `ValueTask` or return directly) | Async | Warning | ✅ |
+| MN018 | Insecure hash algorithm (MD5, SHA256 — use SHA512+) | Security | Error | ✅ |
 
 > `TreatWarningsAsErrors=true` is set in `Directory.Build.props`, so all warnings also fail the build.
 
@@ -55,13 +56,13 @@ src/MarketNest.Analyzers/
     Naming/            PrivateFieldNamingAnalyzer, BannedClassSuffixAnalyzer, CommandQueryNamingAnalyzer
     AsyncRules/        AsyncVoidAnalyzer, BlockingAsyncAnalyzer, TaskFromResultAnalyzer, CancellationTokenAnalyzer
     Logging/           DirectLoggerCallAnalyzer, LoggingClassPartialAnalyzer, AppLoggerInjectionAnalyzer
-    Architecture/      FlatNamespaceAnalyzer, DateTimeUsageAnalyzer, ServiceLocatorAnalyzer, EntityPublicSetterAnalyzer
+    Architecture/      FlatNamespaceAnalyzer, DateTimeUsageAnalyzer, ServiceLocatorAnalyzer, EntityPublicSetterAnalyzer, InsecureHashAnalyzer
   CodeFixes/           PrivateFieldNamingCodeFix, AsyncVoidCodeFix, LoggingClassPartialCodeFix,
-                       AppLoggerInjectionCodeFix, TaskFromResultCodeFix
-  DiagnosticIds.cs     All 17 ID constants
+                       AppLoggerInjectionCodeFix, TaskFromResultCodeFix, InsecureHashCodeFix
+  DiagnosticIds.cs     All 18 ID constants
 
 tests/MarketNest.Analyzers.Tests/
-  Naming/ AsyncRules/ Logging/ Architecture/   — one test class per analyzer (73 tests total)
+  Naming/ AsyncRules/ Logging/ Architecture/   — one test class per analyzer (74+ tests total)
 ```
 
 ---
@@ -143,6 +144,18 @@ public string Name { get; set; }  // in an Entity<T> subclass
 public string Name { get; private set; }
 // Mutate via domain method:
 public void Rename(string newName) { Name = newName; }
+```
+
+### MN018 — Insecure hash algorithm
+```csharp
+// Bad
+using System.Security.Cryptography;
+var md5Hash = MD5.HashData(data);
+var sha256Hash = SHA256.HashData(data);
+
+// Good (Quick Action available)
+using System.Security.Cryptography;
+var sha512Hash = SHA512.HashData(data);
 ```
 
 ---
