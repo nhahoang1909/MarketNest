@@ -64,6 +64,17 @@ try
 
     // ── Services ──────────────────────────────────────────────────────────
     builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+    // Unit of Work — Scoped: collects domain events and saves all module DbContexts in one pass.
+    // Must be registered before AddRazorPages/AddControllers so filters can inject it.
+    builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+    // Razor Page transaction filter — auto-wraps all OnPost* handlers; registered globally.
+    builder.Services.AddScoped<RazorPageTransactionFilter>();
+
+    // API controller transaction filter — activated by [Transaction] attribute on write controllers.
+    builder.Services.AddScoped<TransactionActionFilter>();
+
     builder.Services.AddRazorPages()
         .AddViewLocalization()
         .AddDataAnnotationsLocalization();
@@ -71,6 +82,15 @@ try
     // Register controllers for module APIs
     builder.Services.AddControllers();
     builder.Services.AddHealthChecks();
+
+    // Global filters: RazorPageTransactionFilter applies to all OnPost* Razor Pages;
+    // TransactionActionFilter activates on write controllers with [Transaction] (e.g. WriteApiV1ControllerBase).
+    // Both filters check HTTP verb and attributes internally — no double-execution.
+    builder.Services.Configure<MvcOptions>(options =>
+    {
+        options.Filters.AddService<RazorPageTransactionFilter>();
+        options.Filters.AddService<TransactionActionFilter>();
+    });
 
     // OpenAPI documentation (replaces Swagger)
     builder.Services.AddOpenApi(AppConstants.OpenApi.DocumentName, options =>
@@ -137,6 +157,13 @@ try
     // IUserTimeZoneProvider — resolves user's time zone and date format from HTTP context
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<IUserTimeZoneProvider, HttpContextUserTimeZoneProvider>();
+
+    // IRuntimeContext — populated once per request by RuntimeContextMiddleware (after auth).
+    // HttpRuntimeContext is the mutable scoped backing object; IRuntimeContext and ICurrentUser
+    // resolve from the same Scoped instance — no extra allocations.
+    builder.Services.AddScoped<HttpRuntimeContext>();
+    builder.Services.AddScoped<IRuntimeContext>(sp => sp.GetRequiredService<HttpRuntimeContext>());
+    builder.Services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<IRuntimeContext>().CurrentUser);
 
     // ── Module DI ─────────────────────────────────────────────────────────
     builder.Services.AddAuditingModule(builder.Configuration);
@@ -222,6 +249,11 @@ try
     app.UseRouting();
     app.UseAuthentication();
     app.UseAuthorization();
+
+    // RuntimeContextMiddleware — MUST be after UseAuthentication/UseAuthorization so that
+    // HttpContext.User is already populated with JWT claims when we build ICurrentUser.
+    app.UseMiddleware<RuntimeContextMiddleware>();
+
     app.UseAntiforgery();
 
     app.MapRazorPages();

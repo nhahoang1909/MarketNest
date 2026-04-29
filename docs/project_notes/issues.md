@@ -20,6 +20,43 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-29 - feat(core): IRuntimeContext — unified ambient request/job context
+- **Status**: Completed
+- **Description**: Implemented `IRuntimeContext` + `ICurrentUser` as the single injection point for user identity, correlation ID, request metadata, and timing:
+  - **`UnauthorizedException`** (new, `Base.Common`) — thrown by `ICurrentUser.RequireId()` when user is anonymous.
+  - **`ICurrentUser`** (new, `Base.Common`) — `Id?`, `Name?`, `Email?`, `Role?`, `IsAuthenticated`, `RequireId()`, `IdOrNull`.
+  - **`IRuntimeContext`** (new, `Base.Common`) — `CorrelationId`, `RequestId`, `CurrentUser`, `Execution`, `StartedAt`, `ElapsedMs`, HTTP metadata.
+  - **`RuntimeExecutionContext`** enum (new, `Base.Common`) — `HttpRequest | BackgroundJob | Test`.
+  - **`CurrentUser`** (new, `Web.Infrastructure/Runtime/`) — ClaimsPrincipal-backed; has `IsAdmin/IsSeller/IsBuyer` helpers.
+  - **`AnonymousUser`** / **`SystemJobUser`** — internal singletons for anonymous and admin-triggered job users.
+  - **`HttpRuntimeContext`** (new, Scoped) — mutable backing object for HTTP requests, populated by middleware.
+  - **`BackgroundJobRuntimeContext`** (new) — immutable; `ForSystemJob(jobKey)` and `ForAdminJob(jobKey, adminId)` static factories.
+  - **`RuntimeContextMiddleware`** (new) — enriches Serilog LogContext (CorrelationId, UserId, UserRole), tags OTel Activity, echoes `X-Correlation-ID` header. Registered after `UseAuthorization()`.
+  - **`TestRuntimeContext`** + `FakeCurrentUser` (new, `UnitTests/Helpers/`) — `AsAnonymous()`, `AsBuyer()`, `AsSeller()`, `AsAdmin()` builders.
+  - **`LogEventId`** — added `RuntimeContextRequestStart` (1094), `RuntimeContextRequestEnd` (1095).
+  - **`Program.cs`** — DI registration (`HttpRuntimeContext` Scoped, `IRuntimeContext` → same, `ICurrentUser` → CurrentUser from context) + `UseMiddleware<RuntimeContextMiddleware>()`.
+  - **`MarketNest.UnitTests.csproj`** — added explicit `Base.Common` reference for `TestRuntimeContext`.
+  - **`backend-patterns.md`** — new §23 documenting the full pattern.
+- **ADR**: ADR-028 (see decisions.md)
+- **Build**: `dotnet build MarketNest.slnx` → 0 warnings, 0 errors ✅
+
+### 2026-04-29 - feat(core): Unit of Work + [Transaction] attribute + domain event lifecycle split
+- **Status**: Completed
+- **Description**: Implemented the full UoW + transaction-attribute infrastructure (ADR-027):
+  - **`IHasDomainEvents`** (new, `Base.Domain`) — non-generic interface on `Entity<TKey>`; allows `UnitOfWork` ChangeTracker scan without generic key constraint.
+  - **`IPreCommitDomainEvent`** (new, `Base.Domain`) — marker for pre-commit (executing) domain events that run INSIDE the DB transaction before SaveChanges. All other domain events remain post-commit (executed after TX commit).
+  - **`IUnitOfWork`** (new, `Base.Infrastructure`) — single persist entry-point. `CommitAsync` = pre-commit events + `SaveChangesAsync`. `DispatchPostCommitEventsAsync` = post-TX event dispatch with safe failure handling.
+  - **`[Transaction]` / `[NoTransaction]`** attributes (new, `Base.Common`) — control transaction wrapping on Razor Pages and API controllers. Supports `IsolationLevel` + `TimeoutSeconds`.
+  - **`UnitOfWork`** (new, `MarketNest.Web.Infrastructure/Persistence/`) — scans all `IModuleDbContext` instances, dispatches events, calls `SaveChangesAsync` on each.
+  - **`RazorPageTransactionFilter`** (new, `MarketNest.Web.Infrastructure/Filters/`) — globally registered, auto-wraps all OnPost* handlers. OnGet* always bypassed.
+  - **`TransactionActionFilter`** (new, `MarketNest.Web.Infrastructure/Filters/`) — globally registered, activates only when `[Transaction]` attribute present on controller/action.
+  - **`ReadApiV1ControllerBase` / `WriteApiV1ControllerBase`** (new, `Base.Api`) — write controllers carry `[Transaction]` class-level attribute automatically.
+  - **`LogEventId`** — added 10 new event IDs (1071–1093) for UoW, RazorPageTx, ActionTx.
+  - Updated `TestReadController` / `TestWriteController` to use the new split base classes.
+  - **Program.cs** — registered `IUnitOfWork`, `RazorPageTransactionFilter`, `TransactionActionFilter` as Scoped; added global filters via `Configure<MvcOptions>`.
+- **ADR**: ADR-027 (see decisions.md)
+- **Build**: `dotnet build` → 0 errors, 0 warnings ✅
+
 ### 2026-04-29 - SLA foundation: doc + constants + PerformanceBehavior + FinancialReconciliationJob
 - **Status**: Completed
 - **Description**: Reviewed external SLA requirements (`marketnest-docs/business-logic/sla-requirement.md`) against existing domain invariants and implemented Phase 1 foundation:
