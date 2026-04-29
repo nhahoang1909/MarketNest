@@ -3,6 +3,7 @@
     <PropertyGroup>
         <RootNamespace>MarketNest.Catalog</RootNamespace>
         <Description>Catalog module: storefronts, products, product variants, inventory management.</Description>
+        <NoWarn>NU1510</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,7 +16,12 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
         <PackageReference Include="OpenTelemetry.Api"/>
         <PackageReference Include="System.Security.Cryptography.Xml"/>
     </ItemGroup>
@@ -24,15 +30,10 @@
         <ProjectReference Include="..\Base\MarketNest.Base.Common\MarketNest.Base.Common.csproj"/>
         <ProjectReference Include="..\Base\MarketNest.Base.Domain\MarketNest.Base.Domain.csproj"/>
         <ProjectReference Include="..\Base\MarketNest.Base.Infrastructure\MarketNest.Base.Infrastructure.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Utility\MarketNest.Base.Utility.csproj"/>
     </ItemGroup>
     <ItemGroup>
-        <Folder Include="Application\Commands\"/>
-        <Folder Include="Application\Queries\"/>
-        <Folder Include="Application\Validators\"/>
-        <Folder Include="Domain\Entities"/>
-        <Folder Include="Domain\Enums"/>
-        <Folder Include="Domain\Events"/>
-        <Folder Include="Infrastructure\Persistence"/>
-        <Folder Include="Infrastructure\Repositories"/>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
     </ItemGroup>
+
 </Project>

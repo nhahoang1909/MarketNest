@@ -3,6 +3,7 @@ using FluentValidation;
 using MarketNest.Admin.Application;
 using MarketNest.Admin.Infrastructure;
 using MarketNest.Cart.Infrastructure;
+using MarketNest.Catalog.Application;
 using MarketNest.Catalog.Infrastructure;
 using MarketNest.Disputes.Infrastructure;
 using MarketNest.Identity.Infrastructure;
@@ -144,9 +145,7 @@ try
     builder.Services.AddDbContext<AdminReadDbContext>(opts =>
         opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName))
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
-    builder.Services.AddScoped<ITestRepository, TestRepository>();
-    builder.Services.AddScoped<ITestQuery, TestQuery>();
-    builder.Services.AddScoped<IGetTestsPagedQuery, TestQuery>();
+    // Repository + Query auto-registration is handled by AddModuleInfrastructureServices below.
 
     // ── Orders Module DbContext ───────────────────────────────────────────
     builder.Services.AddModuleDbContext<OrdersDbContext>(opts =>
@@ -162,9 +161,11 @@ try
     builder.Services.AddDbContext<PromotionsReadDbContext>(opts =>
         opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName))
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
-    builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
-    builder.Services.AddScoped<IVoucherQuery, VoucherQuery>();
-    builder.Services.AddScoped<IGetVouchersPagedQuery, VoucherQuery>();
+    // Repository + Query auto-registration for Promotions is handled by AddModuleInfrastructureServices below.
+
+    // ── Catalog Module DbContext ──────────────────────────────────────────
+    builder.Services.AddModuleDbContext<CatalogDbContext>(opts =>
+        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
 
     // IUserTimeZoneProvider — resolves user's time zone and date format from HTTP context
     builder.Services.AddHttpContextAccessor();
@@ -181,12 +182,23 @@ try
     builder.Services.AddNotificationsModule(builder.Configuration);
     builder.Services.AddAdminModule(builder.Configuration);
 
+    // ── Auto-register all IBaseRepository<,> + IBaseQuery<,> implementors ───
+    // Scans Infrastructure assemblies of every module and registers concrete
+    // Query/Repository classes with ALL interfaces they implement as Scoped.
+    // Add a module's AssemblyReference here once it has Repository/Query classes.
+    builder.Services.AddModuleInfrastructureServices(
+        typeof(MarketNest.Admin.AssemblyReference).Assembly,
+        typeof(MarketNest.Catalog.AssemblyReference).Assembly,
+        typeof(MarketNest.Promotions.AssemblyReference).Assembly
+    );
+
     // Background jobs: registry + execution store + hosted runner (Phase 1)
     builder.Services.AddSingleton<IJobRegistry, ServiceCollectionJobRegistry>();
     builder.Services.AddScoped<IJobExecutionStore, NpgsqlJobExecutionStore>();
     // Example/demo job registration — modules should register their own jobs instead
     builder.Services.AddSingleton<IBackgroundJob, TestTimerJob>();
     builder.Services.AddScoped<IBackgroundJob, VoucherExpiryJob>();
+    builder.Services.AddScoped<IBackgroundJob, ExpireSalesJob>();
     builder.Services.AddHostedService<JobRunnerHostedService>();
 
     // ── Database: auto-migrate + seed ─────────────────────────────────
@@ -200,6 +212,7 @@ try
     // Register DatabaseInitializer + auto-discover seeders from module assemblies
     builder.Services.AddDatabaseInitializer(
         typeof(MarketNest.Admin.AssemblyReference).Assembly,
+        typeof(MarketNest.Catalog.AssemblyReference).Assembly,
         typeof(MarketNest.Orders.AssemblyReference).Assembly,
         typeof(MarketNest.Payments.AssemblyReference).Assembly,
         typeof(MarketNest.Promotions.AssemblyReference).Assembly

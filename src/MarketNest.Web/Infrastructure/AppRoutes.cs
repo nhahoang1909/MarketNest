@@ -54,7 +54,8 @@ public static class AppRoutes
         Api.OpenApiDoc,
         Api.ScalarDocs,
         Api.AdminV1Prefix,
-        Api.PromotionsV1Prefix
+        Api.PromotionsV1Prefix,
+        Api.CatalogV1Prefix
     };
 
     /// <summary>
@@ -91,6 +92,7 @@ public static class AppRoutes
         public const string ScalarDocs = "/scalar";
         public const string AdminV1Prefix = "/api/v1/admin";
         public const string PromotionsV1Prefix = "/api/v1/promotions";
+        public const string CatalogV1Prefix = "/api/v1/seller/products";
     }
 
     // ── Account ──────────────────────────────────────────────────────
