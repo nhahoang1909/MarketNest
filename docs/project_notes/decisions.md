@@ -35,6 +35,8 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-024 | Sale Price as Inline Fields on ProductVariant — Option A | 2026-04-29 |
 | ADR-025 | Canonical BaseQuery / BaseRepository in Base.Infrastructure with Module-Local Thin Wrappers | 2026-04-29 |
 | ADR-026 | SLA Requirements Formalized as First-Class Project Concern | 2026-04-29 |
+| ADR-027 | Unit of Work + [Transaction] Attribute — Domain Event Lifecycle & Transaction Management | 2026-04-29 |
+| ADR-028 | IRuntimeContext — Unified Ambient Request Context | 2026-04-29 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -680,3 +682,65 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 - **Phase 2 path**: Emit OTEL histogram metrics from `PerformanceBehavior`; wire Grafana dashboards; migrate `SlaConstants` thresholds to `AdminConfig` DB backing (ADR-021).
 
 ---
+
+### ADR-028: IRuntimeContext — Unified Ambient Request Context (2026-04-29)
+
+**Context:**
+- Every handler, middleware, and page was injecting `ICurrentUserService` separately to get `UserId`.
+- `CorrelationId` was read from `HttpContext.TraceIdentifier` at each call site.
+- Background jobs had no consistent way to carry user/correlation info.
+- Tests required mocking multiple services instead of one.
+
+**Decision:**
+- `IRuntimeContext` is the single injection point for: `CorrelationId`, `RequestId`, `CurrentUser` (Id, Name, Email, Role), `StartedAt`, `ElapsedMs`, `ClientIp`, `UserAgent`, `HttpMethod`, `RequestPath`.
+- `ICurrentUser` contract in `Base.Common`: `Id?`, `Name?`, `Email?`, `Role?`, `IsAuthenticated`, `RequireId()` (throws `UnauthorizedException`), `IdOrNull`.
+- `RuntimeExecutionContext` enum: `HttpRequest | BackgroundJob | Test`.
+- `UnauthorizedException` added to `Base.Common` — thrown by `RequireId()` when anonymous.
+- `HttpRuntimeContext` (Scoped, mutable) populated once by `RuntimeContextMiddleware` after `UseAuthentication()`.
+- `BackgroundJobRuntimeContext` (static factory): `ForSystemJob(jobKey)` and `ForAdminJob(jobKey, adminId)`.
+- `TestRuntimeContext` (UnitTests): `AsAnonymous()`, `AsBuyer()`, `AsSeller()`, `AsAdmin()` builder helpers.
+- `RuntimeContextMiddleware`: enriches Serilog `LogContext` (CorrelationId, UserId, UserRole) + OTel Activity tags + echoes `X-Correlation-ID` response header.
+- LogEventIds `1094` (RequestStart) and `1095` (RequestEnd) added.
+
+**Alternatives Considered:**
+- Keep `ICurrentUserService` → Rejected: scattered injection, no correlation/timing, no background job support.
+- Use `IHttpContextAccessor` directly in handlers → Rejected: couples application layer to HTTP; broken in jobs/tests.
+
+**Consequences:**
+- ✅ Single inject replaces `ICurrentUserService` + `HttpContext.TraceIdentifier` everywhere.
+- ✅ Every log line gets CorrelationId / UserId automatically via Serilog enrichment.
+- ✅ Background jobs get a consistent context via static factories.
+- ✅ Tests need one line: `TestRuntimeContext.AsSeller()`.
+- ✅ OTel Activity tagged for distributed tracing readiness (Phase 2).
+- ❌ Migration: existing code using `ICurrentUserService` should be updated to `IRuntimeContext.CurrentUser` (done incrementally).
+
+---
+
+### ADR-027: Unit of Work + [Transaction] Attribute — Domain Event Lifecycle & Transaction Management (2026-04-29)
+
+**Context:**
+- Command handlers were calling `dbContext.SaveChangesAsync()` directly, bypassing domain event dispatch and transaction control.
+- Domain events had no ordering guarantee: all events were post-commit which prevented atomic side effects (e.g., reserving inventory in the same TX as placing an order).
+- Write operations in Razor Pages and API controllers had no automatic transaction boundary.
+
+**Decision:**
+- **`IPreCommitDomainEvent`** (marker, `Base.Domain`): domain events implementing this run INSIDE the open transaction before `SaveChanges`. Used for atomic side effects (e.g., inventory reservation). All other domain events are post-commit.
+- **`IHasDomainEvents`** (non-generic interface, `Base.Domain`): added to `Entity<TKey>` so `UnitOfWork` can scan `ChangeTracker` without knowing the key type.
+- **`IUnitOfWork`** (contract, `Base.Infrastructure`): single persist entry-point. `CommitAsync()` dispatches pre-commit events → clears aggregate events → `SaveChangesAsync`. Does NOT commit the DB transaction. `DispatchPostCommitEventsAsync()` dispatches remaining events after the filter commits the TX.
+- **`UnitOfWork`** (implementation, `MarketNest.Web.Infrastructure`): scans all `IModuleDbContext` instances via DI, calls `SaveChangesAsync` on all of them.
+- **`[Transaction]` / `[NoTransaction]`** attributes (in `Base.Common`): control transaction wrapping. `[Transaction]` supports custom `IsolationLevel` and `TimeoutSeconds`.
+- **`RazorPageTransactionFilter`** (global, `MarketNest.Web.Infrastructure`): auto-wraps every `OnPost*` / `OnPut*` / `OnDelete*` / `OnPatch*` Razor Page handler. `OnGet*` always bypassed. Opt-out via `[NoTransaction]`.
+- **`TransactionActionFilter`** (global, `MarketNest.Web.Infrastructure`): wraps controller write actions only when `[Transaction]` is present on the class or action. Bypasses GET actions.
+- **`ReadApiV1ControllerBase`** / **`WriteApiV1ControllerBase`** (in `Base.Api`): split the controller base. Write controllers carry `[Transaction]` at class level, enforcing transactions on all POST/PUT/DELETE/PATCH actions automatically.
+- Both filters open transactions on ALL module DbContexts before the handler runs, then commit/rollback all after the handler returns.
+
+**Consequences:**
+- ✅ Handlers must call `uow.CommitAsync()` exactly once — never `db.SaveChangesAsync()` directly.
+- ✅ Pre-commit events run in the same DB transaction as the aggregate changes (atomic).
+- ✅ Post-commit failures (email, outbox) are logged but never roll back the committed TX.
+- ✅ Phase 3 migration path: swap `DispatchPostCommitEventsAsync` implementation to write to Outbox table — no handler code changes needed.
+- ⚠️ Opening transactions on all module DbContexts per write request has overhead (mitigated by PostgreSQL connection pooling).
+- ⚠️ True distributed atomicity across modules requires saga/outbox (Phase 3). Phase 1 relies on module boundary rule: each command touches one module's DbContext.
+
+---
+

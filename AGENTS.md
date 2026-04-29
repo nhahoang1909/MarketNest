@@ -7,7 +7,7 @@ This file is the multi-agent equivalent of `CLAUDE.md` — it applies to Gemini,
 
 MarketNest is a multi-vendor marketplace (Etsy/Shopee-style) — .NET 10, Razor Pages + HTMX + Alpine.js, PostgreSQL (schema-per-module). Phased architecture: **Modular Monolith → Microservices → Kubernetes**.
 
-**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), and canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
+**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025), Unit of Work + `[Transaction]` attribute with pre/post-commit domain event lifecycle (ADR-027), and `IRuntimeContext` unified ambient context (ADR-028) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
 
 ## Build & Run
 
@@ -155,8 +155,8 @@ Examples in this repository (use these as references):
 - Module DI pattern: each module exposes `AddXxxModule(IServiceCollection, IConfiguration)` in `Infrastructure/DependencyInjection.cs` — see Auditing, Promotions, Admin as canonical examples.
 
 Controller base classes:
-- All read controllers extend `ReadApiV1ControllerBase`
-- All write controllers extend `WriteApiV1ControllerBase`
+- All read controllers extend `ReadApiV1ControllerBase` (no transaction)
+- All write controllers extend `WriteApiV1ControllerBase` (`[Transaction]` applied automatically at class level)
 - Route prefix: `api/v1/{module}/{resource}` — NOT `api/{module}/{resource}`
 
 - CQRS naming: `PlaceOrderCommand`, `GetOrderByIdQuery`, `OrderPlacedEvent`
@@ -181,6 +181,9 @@ Controller base classes:
 - Auditing: mark entities `[Auditable]` for automatic EF Core change tracking; mark commands `[Audited("EVENT_TYPE")]` for automatic MediatR audit logging — `[Audited]` also accepts `EntityType` (entity name override) and `AuditFailures` (default `true`). `IAuditService` in `Core/Contracts/` — never fails the main request. See ADR-012
 - **Sale price on variants (ADR-024)**: `ProductVariant` carries three inline sale fields (`SalePrice`, `SaleStart`, `SaleEnd`). Always use `variant.EffectivePrice()` at checkout / cart reads — never read `Price` directly. `ExpireSalesJob` (Catalog, 5-min schedule) clears expired sales and raises `VariantSalePriceRemovedEvent`. Full rules: `docs/domain-and-business-rules.md` §5.4.
 - **Background jobs**: All timer/batch jobs must implement `IBackgroundJob` and expose a `JobDescriptor` with a globally-unique `JobKey` (e.g., `catalog.variant.expire-sales`). See `docs/backend-patterns.md` §16 for the full list of registered jobs.
+- **Unit of Work (ADR-027)**: Command handlers MUST call `uow.CommitAsync(ct)` — never `dbContext.SaveChangesAsync()` directly. `IUnitOfWork` is in `Base.Infrastructure`. Domain events split into pre-commit (`IPreCommitDomainEvent` — runs INSIDE TX before SaveChanges) and post-commit (default `IDomainEvent` — dispatched AFTER TX commit, failures logged only). See `docs/backend-patterns.md` §22.
+- **RuntimeContext (ADR-028)**: Inject `IRuntimeContext` (in `Base.Common`) instead of `ICurrentUserService` + ad-hoc `HttpContext.TraceIdentifier`. Provides `CorrelationId`, `RequestId`, `CurrentUser` (Id, Name, Email, Role), `StartedAt`, `ElapsedMs`, HTTP metadata. Use `ctx.CurrentUser.RequireId()` in write handlers (throws `UnauthorizedException` if anonymous). Use `ctx.CurrentUser.IdOrNull` in audit interceptors/logging (never throws). Background jobs: `BackgroundJobRuntimeContext.ForSystemJob(jobKey)`. Tests: `TestRuntimeContext.AsSeller()`. See `docs/backend-patterns.md` §23.
+- **Transaction filters (ADR-027)**: `RazorPageTransactionFilter` auto-wraps `OnPost*`/`OnPut*`/`OnDelete*`/`OnPatch*` globally — no attribute needed on pages. `TransactionActionFilter` wraps write controller actions when `[Transaction]` is present (inherited from `WriteApiV1ControllerBase`). Opt-out via `[NoTransaction]`. Override isolation: `[Transaction(IsolationLevel.Serializable, timeoutSeconds: 60)]`. Filters in `src/MarketNest.Web/Infrastructure/Filters/`.
 
 ## Agent Behavior Guidelines (rules)
 

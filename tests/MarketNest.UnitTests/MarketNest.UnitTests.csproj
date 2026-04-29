@@ -14,6 +14,7 @@
         <ProjectReference Include="..\..\src\MarketNest.Payments\MarketNest.Payments.csproj"/>
         <ProjectReference Include="..\..\src\MarketNest.Reviews\MarketNest.Reviews.csproj"/>
         <ProjectReference Include="..\..\src\MarketNest.Disputes\MarketNest.Disputes.csproj"/>
+        <ProjectReference Include="..\..\src\Base\MarketNest.Base.Common\MarketNest.Base.Common.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

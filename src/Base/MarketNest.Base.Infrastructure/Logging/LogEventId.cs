@@ -61,7 +61,28 @@ public enum LogEventId
     // RouteWhitelistMiddleware — 1070
     RouteBlocked = 1070,
 
-    // Reserved — 1071-1999
+    // UnitOfWork — 1071-1079
+    UoWPreCommitDispatching = 1071,
+    UoWPostCommitFailed = 1072,
+    UoWCommitting = 1073,
+
+    // RazorPageTransactionFilter — 1080-1089
+    RazorPageTxBegin = 1080,
+    RazorPageTxCommitted = 1081,
+    RazorPageTxRolledBackOnResult = 1082,
+    RazorPageTxRolledBackOnException = 1083,
+
+    // TransactionActionFilter — 1090-1099
+    ActionTxBegin = 1090,
+    ActionTxCommitted = 1091,
+    ActionTxRolledBackOnResult = 1092,
+    ActionTxRolledBackOnException = 1093,
+
+    // RuntimeContextMiddleware — 1094-1095
+    RuntimeContextRequestStart = 1094,
+    RuntimeContextRequestEnd = 1095,
+
+    // Reserved — 1096-1999
 
     #endregion
 

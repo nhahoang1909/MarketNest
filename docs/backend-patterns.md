@@ -57,6 +57,8 @@
     - [IDataSeeder Contract](#idataseeder-contract)
   - [20. Page Handler Contract](#20-page-handler-contract)
   - [21. Testing Requirements](#21-testing-requirements)
+   - [22. Unit of Work & Transaction Management](#22-unit-of-work--transaction-management)
+  - [23. Runtime Context (IRuntimeContext)](#23-runtime-context-iruntimecontext)
   - [Appendix: Module Contract Checklist](#appendix-module-contract-checklist)
 
 ---
@@ -470,17 +472,33 @@ public interface IStorageService
 
 ## 10. Domain Event Pattern
 
-### Phase 1 (In-process via MediatR)
+> **Pre-commit vs post-commit split — see §22 for the full UoW pattern.**
+
+Domain events are raised inside aggregate methods and dispatched by `UnitOfWork.CommitAsync()`:
+- Events implementing **`IPreCommitDomainEvent`** run IN the open DB transaction before `SaveChanges`.
+- All other `IDomainEvent` events run AFTER the transaction commits (post-commit).
+
+### Phase 1 (In-process via MediatR via UnitOfWork)
 
 ```csharp
-// Aggregate raises event
+// Aggregate raises events
 public class Order : AggregateRoot
 {
-    public void Place() {
-        AddDomainEvent(new OrderPlacedEvent(Id, BuyerId, SellerId, Total));
+    public void Place()
+    {
+        AddDomainEvent(new InventoryReservedEvent(Id));  // IPreCommitDomainEvent → atomic
+        AddDomainEvent(new OrderPlacedEvent(Id, Total)); // IDomainEvent → post-commit (email etc.)
     }
 }
-// SaveChangesInterceptor or AggregateRepository dispatches after commit
+
+// Command handler — always use IUnitOfWork.CommitAsync(), never db.SaveChangesAsync()
+public async Task<Result<OrderDto, Error>> Handle(PlaceOrderCommand cmd, CancellationToken ct)
+{
+    var order = Order.Place(...);
+    orders.Add(order);
+    await uow.CommitAsync(ct);   // pre-commit events dispatched here; post-commit after TX
+    return Result.Ok(OrderDto.From(order));
+}
 ```
 
 ### Phase 3+ (Outbox Pattern)
@@ -988,4 +1006,198 @@ APPLICATION: Commands, Queries, Validators, DTOs, cross-module deps
 INFRASTRUCTURE: Repository interface, EF config, Redis keys, background jobs
 WEB: Pages/routes, HTMX partials, form models
 ```
+
+---
+
+## 22. Unit of Work & Transaction Management
+
+> ADR-027. Files: `Base.Domain/Events/IPreCommitDomainEvent.cs`, `Base.Domain/Events/IHasDomainEvents.cs`, `Base.Infrastructure/Persistence/IUnitOfWork.cs`, `Web/Infrastructure/Persistence/UnitOfWork.cs`, `Web/Infrastructure/Filters/`.
+
+### Domain Event Lifecycle Split
+
+Domain events raised by aggregates are partitioned into two categories at commit time:
+
+| Category | Interface | When dispatched | Example |
+|---|---|---|---|
+| **Pre-commit** (executing) | `IPreCommitDomainEvent` | INSIDE the open DB transaction, before `SaveChanges` | `InventoryReservedEvent` |
+| **Post-commit** (executed) | `IDomainEvent` (default) | AFTER the DB transaction commits successfully | `OrderPlacedEvent` (sends email) |
+
+Post-commit failures are **logged but never roll back** the committed transaction. Phase 3 replaces post-commit dispatch with an Outbox pattern for guaranteed delivery.
+
+### IUnitOfWork Contract
+
+```csharp
+// Base.Infrastructure  —  inject this in CommandHandlers
+public interface IUnitOfWork
+{
+    IReadOnlyList<IDomainEvent> CollectPreCommitEvents();
+    Task<int> CommitAsync(CancellationToken ct = default);
+    Task DispatchPostCommitEventsAsync(CancellationToken ct = default);
+}
+```
+
+**Rules for Command Handlers:**
+- ✅ Call `uow.CommitAsync()` exactly once at the end of the handler.
+- ❌ Never call `dbContext.SaveChangesAsync()` directly.
+- ❌ Never call `db.Database.CommitTransactionAsync()` — that is the filter's job.
+
+### Transaction Lifecycle (per write request)
+
+```
+Filter: BeginTransaction on all module DbContexts
+  └─ Handler runs
+       └─ aggregate.DoSomething()  →  RaiseDomainEvent(...)
+       └─ uow.CommitAsync()
+            ├─ CollectPreCommitEvents()
+            ├─ publisher.Publish(preCommitEvents)   ← INSIDE TX
+            ├─ ClearDomainEvents()
+            └─ SaveChangesAsync on all DbContexts   ← still INSIDE TX
+  └─ filter: tx.CommitAsync()                       ← COMMIT
+  └─ filter: uow.DispatchPostCommitEventsAsync()    ← AFTER commit
+```
+
+### Filters
+
+**`RazorPageTransactionFilter`** — registered globally via `Configure<MvcOptions>`. Wraps `OnPost*`, `OnPut*`, `OnDelete*`, `OnPatch*` automatically. `OnGet*` is never wrapped.
+
+**`TransactionActionFilter`** — registered globally via `Configure<MvcOptions>`. Activates only when `[Transaction]` attribute is present on the controller class or action. `WriteApiV1ControllerBase` applies `[Transaction]` at class level.
+
+### Attributes
+
+```csharp
+// Customize isolation level or timeout on a specific OnPost* or action
+[Transaction(IsolationLevel.Serializable, timeoutSeconds: 60)]
+public async Task<IActionResult> OnPostConfirmAsync(CancellationToken ct) { ... }
+
+// Opt-out from auto-transaction
+[NoTransaction]
+public async Task<IActionResult> OnPostWebhookAsync(CancellationToken ct) { ... }
+```
+
+### Controller Base Classes
+
+```csharp
+// Read controllers — no transaction
+public class MyReadController(IMediator mediator) : ReadApiV1ControllerBase(mediator) { }
+
+// Write controllers — [Transaction] applied automatically
+public class MyWriteController(IMediator mediator) : WriteApiV1ControllerBase(mediator) { }
+```
+
+### Command Handler Example
+
+```csharp
+public class PlaceOrderCommandHandler(IOrderRepository orders, IUnitOfWork uow)
+    : ICommandHandler<PlaceOrderCommand, Result<OrderDto, Error>>
+{
+    public async Task<Result<OrderDto, Error>> Handle(PlaceOrderCommand cmd, CancellationToken ct)
+    {
+        var order = Order.Create(cmd);    // raises OrderPlacedEvent + InventoryReservedEvent
+        orders.Add(order);
+        await uow.CommitAsync(ct);        // InventoryReservedEvent dispatched in TX; OrderPlacedEvent after commit
+        return Result.Ok(OrderDto.From(order));
+    }
+}
+```
+
+---
+
+## 23. Runtime Context (IRuntimeContext)
+
+> **ADR-028** | Implemented 2026-04-29 | `Base.Common` (contracts) + `MarketNest.Web` (implementations)
+
+`IRuntimeContext` is the **single injection point** that replaces scattered `ICurrentUserService` + manual `HttpContext.TraceIdentifier` calls across handlers, pages, and middlewares.
+
+### Contracts (`MarketNest.Base.Common`)
+
+| Type | Description |
+|------|-------------|
+| `ICurrentUser` | Authenticated user. Anonymous = `IsAuthenticated: false`, all nullable members `null`. |
+| `IRuntimeContext` | Ambient request/job context: `CorrelationId`, `RequestId`, `CurrentUser`, `StartedAt`, HTTP metadata. |
+| `RuntimeExecutionContext` | Enum: `HttpRequest`, `BackgroundJob`, `Test`. |
+| `UnauthorizedException` | Thrown by `ICurrentUser.RequireId()` when user is anonymous. |
+
+### Implementations (`MarketNest.Web.Infrastructure`)
+
+| Class | Scope | Use case |
+|-------|-------|----------|
+| `HttpRuntimeContext` | Scoped | Mutable backing object populated by `RuntimeContextMiddleware`. Never inject directly — use `IRuntimeContext`. |
+| `BackgroundJobRuntimeContext` | — | Immutable. Use `ForSystemJob(jobKey)` or `ForAdminJob(jobKey, adminId)` static factories in background jobs. |
+| `CurrentUser` | Internal | ClaimsPrincipal-backed implementation. Has `IsAdmin`, `IsSeller`, `IsBuyer` computed properties. |
+
+### Test helpers (`MarketNest.UnitTests`)
+
+```csharp
+TestRuntimeContext.AsAnonymous()
+TestRuntimeContext.AsBuyer(buyerId)
+TestRuntimeContext.AsSeller(sellerId)
+TestRuntimeContext.AsAdmin(adminId)
+```
+
+### DI registration (Program.cs)
+
+```csharp
+builder.Services.AddScoped<HttpRuntimeContext>();
+builder.Services.AddScoped<IRuntimeContext>(sp => sp.GetRequiredService<HttpRuntimeContext>());
+builder.Services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<IRuntimeContext>().CurrentUser);
+```
+
+### Middleware pipeline
+
+`RuntimeContextMiddleware` is registered **after** `UseAuthorization()` so JWT claims are already on `HttpContext.User`:
+
+```csharp
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseMiddleware<RuntimeContextMiddleware>();  // populates IRuntimeContext + Serilog enrichment
+```
+
+The middleware:
+1. Resolves or generates `X-Correlation-ID` and echoes it back on the response.
+2. Builds `CurrentUser` from `ClaimsPrincipal`.
+3. Sets Serilog `LogContext` properties (`CorrelationId`, `UserId`, `UserRole`) for the entire request.
+4. Tags the OpenTelemetry `Activity` (`correlation.id`, `user.id`, `user.role`).
+5. Logs request start/end (`LogEventId.RuntimeContextRequestStart/End`, 1094–1095).
+
+### Usage patterns
+
+**Command handler (authenticated write):**
+
+```csharp
+public class PlaceOrderCommandHandler(
+    IOrderRepository orders,
+    IRuntimeContext ctx,
+    IUnitOfWork uow) : ICommandHandler<PlaceOrderCommand, Result<OrderDto, Error>>
+{
+    public async Task<Result<OrderDto, Error>> Handle(PlaceOrderCommand cmd, CancellationToken ct)
+    {
+        var buyerId = ctx.CurrentUser.RequireId();  // throws UnauthorizedException if anonymous
+        // ...
+    }
+}
+```
+
+**Audit interceptor (must not throw):**
+
+```csharp
+public class AuditInterceptor(IRuntimeContext ctx) : SaveChangesInterceptor
+{
+    // Use IdOrNull (never RequireId) — background jobs have no user
+    entry.Entity.CreatedBy = ctx.CurrentUser.IdOrNull;
+}
+```
+
+**Background job:**
+
+```csharp
+public class ExpireSalesJob : IBackgroundJob
+{
+    public async Task ExecuteAsync(JobExecutionContext jobCtx, CancellationToken ct)
+    {
+        var runtimeCtx = BackgroundJobRuntimeContext.ForSystemJob(jobCtx.JobKey);
+        // pass runtimeCtx to services that need it
+    }
+}
+```
+
 
