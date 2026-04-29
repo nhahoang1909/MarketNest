@@ -116,12 +116,26 @@ public static class AppConstants
         public const string Heading = "This page is off the map.";
 
         public const string Description =
-            "We searched every continent and couldn't find what you're looking for. The link may have moved, or the coordinates were never quite right.";
+            "We searched every continent and couldn't find what you were looking for. "
+            + "The link may have moved, or the coordinates were never quite right. "
+            + "Let's get you back to somewhere familiar.";
 
         public const string BackToHome = "Back to home";
-        public const string BrowseShop = "Browse the shop";
+        public const string BrowseShop = "Report a broken link";
         public const string FooterStatus = "Status: lost in transit";
-        public const string CoordinateFormat = "LAT 00.0° · LON 000.0°";
+        public const string CoordinateFormat = "LAT  00.0° · LON 000.0°";
+        public const string SignalLost = "Signal lost";
+        public const string TraceId = "Trace #4F-0G3";
+        public const string DragHint = "Drag to spin";
+        public const string BreadcrumbError = "404 · Page not found";
+
+        // Suggested destination cards
+        public const string SugBrowseLabel = "Browse";
+        public const string SugBrowseTitle = "Markets & collections";
+        public const string SugAccountLabel = "Account";
+        public const string SugAccountTitle = "Your orders";
+        public const string SugHelpLabel = "Help";
+        public const string SugHelpTitle = "Seller support";
     }
 
     // ── Error Page ───────────────────────────────────────────────────
