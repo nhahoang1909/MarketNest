@@ -1,0 +1,166 @@
+﻿@*
+    Loading Overlay — full-screen animated overlay with rotating sketch illustrations.
+    Usage: include once in the layout, then control via Alpine.js store:
+      - Show:  Alpine.store('loading').show()
+      - Hide:  Alpine.store('loading').hide()
+      - Show with message: Alpine.store('loading').show('Placing order…', 'Verifying payment and reserving items.')
+*@
+
+<div x-data
+     x-show="$store.loading.visible"
+     x-transition:enter="transition ease-out duration-[450ms]"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-[450ms]"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="mn-loading-overlay"
+     role="status"
+     aria-live="polite"
+     aria-label="Loading content"
+     style="display: none;">
+
+    <div class="mn-loading-card">
+        {{-- Sketch stage --}}
+        <div class="mn-sketch-stage" x-ref="sketchStage">
+            {{-- 1. SHOPPING BAG --}}
+            <div class="mn-sketch" :data-active="$store.loading.activeKey === 'bag'">
+                <svg viewBox="0 0 200 200" aria-hidden="true">
+                    <path class="sk-stroke" d="M76 70 C76 50, 92 38, 100 38 C108 38, 124 50, 124 70" />
+                    <path class="sk-stroke" d="M58 70 H142 L150 158 Q150 162, 146 162 H54 Q50 162, 50 158 Z" />
+                    <path class="sk-stroke sk-stroke--thin" d="M58 78 H142" />
+                    <path class="sk-accent" d="M100 100 Q116 96, 124 110 Q116 122, 100 118 Q92 110, 100 100 Z" />
+                    <path class="sk-stroke sk-stroke--thin" d="M100 100 Q108 110, 124 110" />
+                    <circle class="sk-stroke" cx="78" cy="60" r="3" />
+                </svg>
+            </div>
+
+            {{-- 2. DELIVERY TRUCK --}}
+            <div class="mn-sketch" :data-active="$store.loading.activeKey === 'truck'">
+                <svg viewBox="0 0 200 200" aria-hidden="true">
+                    <rect class="sk-stroke" x="30" y="76" width="92" height="58" rx="4" />
+                    <path class="sk-stroke" d="M122 92 H156 L170 110 V134 H122 Z" />
+                    <path class="sk-stroke sk-stroke--thin" d="M128 96 H152 L162 110 H128 Z" />
+                    <line class="sk-stroke sk-stroke--thin" x1="20" y1="134" x2="178" y2="134" />
+                    <circle class="sk-stroke" cx="58" cy="142" r="10" />
+                    <circle class="sk-stroke" cx="146" cy="142" r="10" />
+                    <circle class="sk-ink-fill" cx="58" cy="142" r="3" />
+                    <circle class="sk-ink-fill" cx="146" cy="142" r="3" />
+                    <rect class="sk-accent" x="62" y="92" width="28" height="34" rx="2" />
+                    <path class="sk-stroke sk-stroke--thin" d="M14 98 H30 M10 110 H26 M14 122 H30" />
+                </svg>
+            </div>
+
+            {{-- 3. PACKAGE BOX --}}
+            <div class="mn-sketch" :data-active="$store.loading.activeKey === 'box'">
+                <svg viewBox="0 0 200 200" aria-hidden="true">
+                    <path class="sk-stroke" d="M100 36 L160 64 L100 92 L40 64 Z" />
+                    <path class="sk-stroke" d="M40 64 V134 L100 162 V92 Z" />
+                    <path class="sk-stroke" d="M160 64 V134 L100 162 V92 Z" />
+                    <path class="sk-stroke sk-stroke--thin" d="M70 50 L130 78 M100 36 L100 92" />
+                    <rect class="sk-accent" x="50" y="100" width="40" height="22" rx="2" transform="skewY(20)" />
+                    <path class="sk-stroke" d="M58 116 L66 124 L84 110" transform="skewY(20)" />
+                </svg>
+            </div>
+
+            {{-- 4. STOREFRONT --}}
+            <div class="mn-sketch" :data-active="$store.loading.activeKey === 'store'">
+                <svg viewBox="0 0 200 200" aria-hidden="true">
+                    <path class="sk-stroke" d="M34 70 H166 L156 50 H44 Z" />
+                    <path class="sk-stroke sk-stroke--thin" d="M58 50 V70 M82 50 V70 M106 50 V70 M130 50 V70" />
+                    <path class="sk-stroke" d="M40 70 V160 H160 V70" />
+                    <line class="sk-stroke" x1="24" y1="160" x2="176" y2="160" />
+                    <path class="sk-stroke" d="M86 160 V104 Q86 96, 94 96 H106 Q114 96, 114 104 V160" />
+                    <circle class="sk-ink-fill" cx="106" cy="130" r="2" />
+                    <rect class="sk-accent" x="50" y="88" width="26" height="22" rx="2" />
+                    <rect class="sk-stroke" x="124" y="88" width="26" height="22" rx="2" />
+                    <path class="sk-stroke sk-stroke--thin" d="M124 99 H150 M137 88 V110" />
+                    <circle class="sk-stroke" cx="100" cy="40" r="4" />
+                </svg>
+            </div>
+
+            {{-- 5. SHOPPER --}}
+            <div class="mn-sketch" :data-active="$store.loading.activeKey === 'shopper'">
+                <svg viewBox="0 0 200 200" aria-hidden="true">
+                    <circle class="sk-stroke" cx="100" cy="56" r="18" />
+                    <path class="sk-stroke" d="M84 50 Q86 38, 100 38 Q114 38, 116 50" />
+                    <path class="sk-stroke sk-stroke--thin" d="M94 72 V82 M106 72 V82" />
+                    <path class="sk-stroke" d="M58 130 Q60 96, 100 90 Q140 96, 142 130 Z" />
+                    <path class="sk-stroke" d="M76 110 Q70 130, 86 138" />
+                    <rect class="sk-accent" x="78" y="132" width="22" height="32" rx="3" />
+                    <line class="sk-stroke sk-stroke--thin" x1="83" y1="138" x2="95" y2="138" />
+                    <line class="sk-stroke sk-stroke--thin" x1="83" y1="144" x2="95" y2="144" />
+                    <path class="sk-stroke" d="M138 130 L132 168 H160 L154 130" />
+                    <path class="sk-stroke sk-stroke--thin" d="M140 130 Q146 118, 152 130" />
+                </svg>
+            </div>
+
+            {{-- 6. PAPER PLANE --}}
+            <div class="mn-sketch" :data-active="$store.loading.activeKey === 'plane'">
+                <svg viewBox="0 0 200 200" aria-hidden="true">
+                    <path class="sk-stroke" d="M28 102 L172 46 L132 158 L108 118 Z" />
+                    <path class="sk-stroke sk-stroke--thin" d="M28 102 L108 118 L172 46" />
+                    <path class="sk-accent" d="M108 118 L132 158 L116 134 Z" />
+                    <path class="sk-stroke sk-stroke--thin" d="M28 150 Q60 140, 70 152 Q80 164, 50 170" stroke-dasharray="3 5" />
+                    <circle class="sk-ink-fill" cx="14" cy="120" r="2" />
+                    <circle class="sk-ink-fill" cx="22" cy="134" r="2" />
+                    <circle class="sk-ink-fill" cx="14" cy="148" r="2" />
+                </svg>
+            </div>
+
+            {{-- 7. POTTED PLANT --}}
+            <div class="mn-sketch" :data-active="$store.loading.activeKey === 'plant'">
+                <svg viewBox="0 0 200 200" aria-hidden="true">
+                    <path class="sk-stroke" d="M100 110 Q70 76, 60 40 Q92 50, 102 100" />
+                    <path class="sk-stroke" d="M100 110 Q130 76, 140 40 Q108 50, 100 100" />
+                    <path class="sk-stroke" d="M100 130 V90" />
+                    <path class="sk-accent" d="M100 110 Q86 92, 76 76 Q98 80, 102 108 Z" />
+                    <path class="sk-stroke" d="M68 130 H132 L124 168 Q124 172, 120 172 H80 Q76 172, 76 168 Z" />
+                    <line class="sk-stroke sk-stroke--thin" x1="68" y1="138" x2="132" y2="138" />
+                    <circle class="sk-ink-fill" cx="92" cy="134" r="1.6" />
+                    <circle class="sk-ink-fill" cx="108" cy="134" r="1.6" />
+                </svg>
+            </div>
+
+            {{-- 8. RECEIPT --}}
+            <div class="mn-sketch" :data-active="$store.loading.activeKey === 'receipt'">
+                <svg viewBox="0 0 200 200" aria-hidden="true">
+                    <path class="sk-stroke" d="M58 30 H142 V160 L132 152 L122 160 L112 152 L102 160 L92 152 L82 160 L72 152 L58 160 Z" />
+                    <rect class="sk-accent" x="68" y="44" width="64" height="14" rx="2" />
+                    <line class="sk-stroke sk-stroke--thin" x1="68" y1="74" x2="132" y2="74" />
+                    <line class="sk-stroke sk-stroke--thin" x1="68" y1="86" x2="118" y2="86" />
+                    <line class="sk-stroke sk-stroke--thin" x1="68" y1="98" x2="132" y2="98" />
+                    <line class="sk-stroke sk-stroke--thin" x1="68" y1="110" x2="108" y2="110" />
+                    <line class="sk-stroke" x1="68" y1="126" x2="132" y2="126" />
+                    <line class="sk-stroke" x1="92" y1="138" x2="132" y2="138" />
+                    <circle class="sk-stroke" cx="80" cy="138" r="6" />
+                    <path class="sk-stroke" d="M76 138 L79 141 L84 135" />
+                </svg>
+            </div>
+        </div>
+
+        {{-- Caption --}}
+        <h2 class="mn-loading-title"
+            x-text="$store.loading.title"
+            x-transition:enter="transition ease-out duration-250"
+            x-transition:enter-start="opacity-0 translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0">
+        </h2>
+        <p class="mn-loading-sub"
+           x-text="$store.loading.subtitle"
+           x-transition:enter="transition ease-out duration-250 delay-75"
+           x-transition:enter-start="opacity-0 translate-y-1"
+           x-transition:enter-end="opacity-100 translate-y-0">
+        </p>
+
+        {{-- Progress dots --}}
+        <div class="mn-loading-dots" aria-hidden="true">
+            <template x-for="(key, i) in $store.loading.keys" :key="key">
+                <span :data-active="$store.loading.activeIndex === i"></span>
+            </template>
+        </div>
+
+        <div class="mn-loading-brand">MarketNest</div>
+    </div>
+</div>
+
