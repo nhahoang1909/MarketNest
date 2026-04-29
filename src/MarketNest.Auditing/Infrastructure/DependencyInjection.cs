@@ -1,5 +1,6 @@
 ﻿using MarketNest.Base.Common;
 using MarketNest.Base.Infrastructure;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -23,6 +24,11 @@ public static class AuditingServiceExtensions
 
         services.AddScoped<AuditableInterceptor>();
         services.AddScoped<IAuditService, AuditService>();
+
+        // MediatR pipeline behaviors — order matters: Performance runs first (outermost),
+        // then AuditBehavior runs after the handler returns.
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(PerformanceBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
 
         return services;
     }

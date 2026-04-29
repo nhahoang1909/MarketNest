@@ -205,6 +205,14 @@ public enum LogEventId
 
     // Infrastructure layer — 6000-6199 (reserved)
     // Application layer — 6200-6599 (reserved)
+
+    // Timer Jobs — 6100-6109
+    PaymentsReconciliationJobStart = 6100,
+    PaymentsReconciliationJobMismatch = 6101,
+    PaymentsReconciliationJobOrphan = 6102,
+    PaymentsReconciliationJobNegativePayout = 6103,
+    PaymentsReconciliationJobCompleted = 6104,
+
     // Web Pages — 6600-6799 (reserved)
     // Reserved — 6800-6999
 
@@ -318,7 +326,11 @@ public enum LogEventId
     AuditInterceptorEntityChanged = 11020,
     AuditInterceptorError = 11021,
 
-    // Reserved — 11030-11999
+    // PerformanceBehavior — 11030-11039
+    PerfBehaviorSlowRequest = 11030,
+    PerfBehaviorCriticalRequest = 11031,
+
+    // Reserved — 11040-11999
 
     #endregion
 

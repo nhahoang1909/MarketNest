@@ -25,6 +25,7 @@
         <ProjectReference Include="..\Base\MarketNest.Base.Common\MarketNest.Base.Common.csproj"/>
         <ProjectReference Include="..\Base\MarketNest.Base.Domain\MarketNest.Base.Domain.csproj"/>
         <ProjectReference Include="..\Base\MarketNest.Base.Infrastructure\MarketNest.Base.Infrastructure.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Utility\MarketNest.Base.Utility.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using MarketNest.Payments.Application;
+using Microsoft.Extensions.Configuration;
 
 namespace MarketNest.Payments.Infrastructure;
 
@@ -21,6 +22,9 @@ public static class PaymentsServiceExtensions
         services.AddScoped<CommissionConfigService>();
         services.AddScoped<ICommissionConfig>(sp => sp.GetRequiredService<CommissionConfigService>());
         services.AddScoped<ICommissionConfigWriter>(sp => sp.GetRequiredService<CommissionConfigService>());
+
+        // Background job — singleton (no scoped dependencies)
+        services.AddSingleton<IBackgroundJob, FinancialReconciliationJob>();
 
         return services;
     }

@@ -12,4 +12,5 @@ global using Microsoft.EntityFrameworkCore.Metadata.Builders;
 global using MarketNest.Base.Common;
 global using MarketNest.Base.Domain;
 global using MarketNest.Base.Infrastructure;
+global using MarketNest.Base.Utility;
 
