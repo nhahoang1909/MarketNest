@@ -7,7 +7,7 @@ This file is the multi-agent equivalent of `CLAUDE.md` — it applies to Gemini,
 
 MarketNest is a multi-vendor marketplace (Etsy/Shopee-style) — .NET 10, Razor Pages + HTMX + Alpine.js, PostgreSQL (schema-per-module). Phased architecture: **Modular Monolith → Microservices → Kubernetes**.
 
-**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), and Roslyn analyzers (MN001–MN017) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
+**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), and canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
 
 ## Build & Run
 
@@ -84,7 +84,7 @@ TableConstants.cs       # TableConstants.Schema.* (all module schema names) + Ta
 DateTimeOffsetExtensions.cs  # User-local time conversion + relative time formatting ("5m ago")
 ```
 
-Note: some common query contracts (for example `IBaseQuery<TEntity,TKey>`) live in the `Base` packages rather than `MarketNest.Core`. See `src/Base/MarketNest.Base.Common/Queries/IBaseQuery.cs` (namespace `MarketNest.Base.Common`) for the canonical interface used by module `BaseQuery` implementations.
+Note: some common query contracts (for example `IBaseQuery<TEntity,TKey>`) live in the `Base` packages rather than `MarketNest.Core`. See `src/Base/MarketNest.Base.Common/Queries/IBaseQuery.cs` (namespace `MarketNest.Base.Common`) for the canonical interface. The canonical abstract implementations `BaseQuery<TEntity,TKey,TContext>` and `BaseRepository<TEntity,TKey,TContext>` live in `src/Base/MarketNest.Base.Infrastructure/` (namespace `MarketNest.Base.Infrastructure`). Each module provides a 2-line thin wrapper that pins its own `DbContext` type.
 
 Additional top-level directories:
 ```
@@ -147,10 +147,12 @@ Read context rules:
 - Neither context is injected by any Application layer class
 
 Examples in this repository (use these as references):
+- `src/Base/MarketNest.Base.Infrastructure/Persistence/BaseQuery.cs` — **canonical** `BaseQuery<TEntity,TKey,TContext>` (in `Base.Infrastructure`); do NOT copy-paste this into modules
+- `src/Base/MarketNest.Base.Infrastructure/Persistence/BaseRepository.cs` — **canonical** `BaseRepository<TEntity,TKey,TContext>` (in `Base.Infrastructure`)
+- `src/MarketNest.Admin/Infrastructure/Persistence/BaseQuery.cs` — example 2-line module-local wrapper pinning `AdminReadDbContext`
 - `src/MarketNest.Admin/Infrastructure/Persistence/AdminReadDbContext.cs` — the read-only DbContext used by `BaseQuery` implementations
-- `src/MarketNest.Admin/Infrastructure/Persistence/BaseQuery.cs` — example abstract read base that implements the `IBaseQuery` contract
 - `src/MarketNest.Admin/Infrastructure/Queries/Modules/Test/TestQuery.cs` and `src/MarketNest.Admin/Infrastructure/Repositories/Test/TestRepository.cs` — concrete implementations wired in the Web host
-- Service registrations in `src/MarketNest.Web/Program.cs` show how to register the read context and bind `ITestQuery`/`ITestRepository` to their implementations (search for `AddDbContext<AdminReadDbContext>` and `AddScoped<ITestRepository, TestRepository>`).
+- Module DI pattern: each module exposes `AddXxxModule(IServiceCollection, IConfiguration)` in `Infrastructure/DependencyInjection.cs` — see Auditing, Promotions, Admin as canonical examples.
 
 Controller base classes:
 - All read controllers extend `ReadApiV1ControllerBase`

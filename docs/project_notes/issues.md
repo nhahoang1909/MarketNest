@@ -20,6 +20,14 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-29 - chore(base): promote BaseQuery / BaseRepository to Base.Infrastructure + extract module DI
+- **Status**: In Progress (staged, not yet committed)
+- **Description**: Canonical `BaseQuery<TEntity,TKey,TContext>` and `BaseRepository<TEntity,TKey,TContext>` abstract classes promoted from Admin-only to `Base.Infrastructure` (namespace `MarketNest.Base.Infrastructure`). `IBaseRepository<TEntity,TKey>` interface also moved to `Base.Infrastructure`. Each module now has a 2-line thin wrapper (`BaseQuery<TEntity,TKey>(ModuleReadDbContext)` and `BaseRepository<TEntity,TKey>(ModuleDbContext)`) inheriting from the canonical base. This standardises the query/repository pattern across all modules and eliminates duplicate implementations. Also extracted proper `AddAuditingModule()` and `AddPromotionsModule()` DI extension methods into `DependencyInjection.cs` files for those modules. Various modules (Orders, Payments, Catalog) updated their `DependencyInjection.cs` and `.csproj` refs accordingly.
+- **ADR**: ADR-025 (see decisions.md)
+- **Notes**: `IBaseQuery<TEntity,TKey>` (in `Base.Common`) was already defined; `BaseQuery<,,>` is now its canonical `Base.Infrastructure` implementation. Thin module wrappers follow the same 2-line pattern as Admin module.
+
+---
+
 ### 2026-04-29 - Project docs update: Sale Price business logic + backend patterns sync
 - **Status**: Completed
 - **Description**: Synced all project documents to reflect the Catalog Sale Price feature (ADR-024) and fix remaining gaps:

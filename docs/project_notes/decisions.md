@@ -33,11 +33,45 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-022 | `ReferenceData` Base Entity in `Base.Domain` | 2026-04-28 |
 | ADR-023 | EF Core DDD Property Access Convention — `ApplyDddPropertyAccessConventions()` | 2026-04-28 |
 | ADR-024 | Sale Price as Inline Fields on ProductVariant — Option A | 2026-04-29 |
+| ADR-025 | Canonical BaseQuery / BaseRepository in Base.Infrastructure with Module-Local Thin Wrappers | 2026-04-29 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
 ---
 
+### ADR-025: Canonical BaseQuery / BaseRepository in Base.Infrastructure with Module-Local Thin Wrappers (2026-04-29)
+
+**Context:**
+- `BaseQuery<TEntity,TKey,TContext>` and `BaseRepository<TEntity,TKey,TContext>` were previously only in the Admin module, forcing other modules to duplicate the same boilerplate.
+- `IBaseQuery<TEntity,TKey>` was already canonical in `Base.Common`, but had no shared concrete implementation.
+- Need a single authoritative implementation that all modules inherit without duplicating EF Core logic.
+
+**Decision:**
+- `BaseQuery<TEntity, TKey, TContext>` (implements `IBaseQuery<TEntity,TKey>`) lives in `Base.Infrastructure` (namespace `MarketNest.Base.Infrastructure`). Provides Count, Any, GetByKey, FindByKey, FirstOrDefault, List, GetPagedList, GetQueryable.
+- `BaseRepository<TEntity, TKey, TContext>` (implements `IBaseRepository<TEntity,TKey>`) lives in `Base.Infrastructure`. Provides GetByKey, FindByKey, Exists, Add, Update, Remove, SaveChanges.
+- `IBaseRepository<TEntity, TKey>` lives in `Base.Infrastructure`.
+- Each module declares a 2-line local alias that pins the module's own `DbContext` type:
+  ```csharp
+  // read side
+  public abstract class BaseQuery<TEntity, TKey>(ModuleReadDbContext db)
+      : BaseQuery<TEntity, TKey, ModuleReadDbContext>(db);
+  // write side
+  public abstract class BaseRepository<TEntity, TKey>(ModuleDbContext db)
+      : BaseRepository<TEntity, TKey, ModuleDbContext>(db);
+  ```
+- `DependencyInjection.cs` extracted to all remaining modules (`Auditing`, `Promotions`) following existing `Admin` / `Orders` pattern (`AddXxxModule()`).
+
+**Alternatives Considered:**
+- Keep per-module copies → Rejected: duplication; divergence risk when base logic changes.
+- Source generators / T4 templates → Rejected: unnecessary complexity; inheritance is simpler and type-safe.
+
+**Consequences:**
+- ✅ Single implementation to maintain; all modules pick up bug fixes automatically.
+- ✅ New modules only need a 2-line thin wrapper — no boilerplate to copy.
+- ✅ Consistent query/repository API surface across all modules.
+- ❌ Module `.csproj` files must reference `Base.Infrastructure` (already a common dep).
+
+---
 
 ## Decisions
 
