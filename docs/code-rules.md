@@ -1032,30 +1032,31 @@ Method names follow `{LogLevel}{Subject}{Event}`:
 
 ### 9.5 EventId allocation per module
 
-Each module owns a block of 1000 EventIds. Sub-allocation within each block:
+Each module owns a block of 10,000 EventIds. Sub-allocation within each block:
 
 | Offset | Layer |
 |--------|-------|
-| X000–X199 | Infrastructure / Persistence |
-| X200–X599 | Application layer (Command/Query handlers) |
-| X600–X799 | Web Pages (PageModel handlers) |
-| X800–X999 | Reserved |
+| X0000–X1999 | Infrastructure / Persistence |
+| X2000–X5999 | Application layer (Command/Query handlers) |
+| X6000–X7999 | Web Pages (PageModel handlers) |
+| X8000–X9999 | Reserved |
 
 | Module | EventId Range |
 |--------|--------------|
-| Infrastructure / Middleware | 1000–1999 |
-| Identity | 2000–2999 |
-| Catalog | 3000–3999 |
-| Cart | 4000–4999 |
-| Orders | 5000–5999 |
-| Payments | 6000–6999 |
-| Reviews | 7000–7999 |
-| Disputes | 8000–8999 |
-| Notifications | 9000–9999 |
-| Admin | 10000–10999 |
-| Auditing | 11000–11999 |
-| Background Jobs | 12000–12999 |
-| Web / Global Pages | 13000–13999 |
+| Infrastructure / Middleware | 10000–19999 |
+| Identity | 20000–29999 |
+| Catalog | 30000–39999 |
+| Cart | 40000–49999 |
+| Orders | 50000–59999 |
+| Payments | 60000–69999 |
+| Reviews | 70000–79999 |
+| Disputes | 80000–89999 |
+| Notifications | 90000–99999 |
+| Admin | 100000–109999 |
+| Auditing | 110000–119999 |
+| Background Jobs | 120000–129999 |
+| Web / Global Pages | 130000–139999 |
+| Promotions | 140000–149999 |
 
 ---
 

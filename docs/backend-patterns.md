@@ -1189,7 +1189,7 @@ The middleware:
 2. Builds `CurrentUser` from `ClaimsPrincipal`.
 3. Sets Serilog `LogContext` properties (`CorrelationId`, `UserId`, `UserRole`) for the entire request.
 4. Tags the OpenTelemetry `Activity` (`correlation.id`, `user.id`, `user.role`).
-5. Logs request start/end (`LogEventId.RuntimeContextRequestStart/End`, 1094–1095).
+5. Logs request start/end (`LogEventId.RuntimeContextRequestStart/End`, 10700–10701).
 
 ### Usage patterns
 
