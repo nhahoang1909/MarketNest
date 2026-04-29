@@ -1,19 +1,23 @@
-﻿using MediatR;
+﻿using System.Data;
+using MediatR;
 using MarketNest.Base.Domain;
-using MarketNest.Base.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace MarketNest.Web.Infrastructure;
 
 /// <summary>
-///     Scoped Unit of Work for the request lifecycle.
-///     Scans all registered module DbContexts for domain events, dispatches
-///     pre-commit events inside the open transaction, calls SaveChangesAsync on
-///     every module context, and queues post-commit events for later dispatch.
+///     Scoped Unit of Work for the request lifecycle (HTTP) or explicit job lifecycle (background jobs).
+///     Manages domain event dispatching, SaveChanges, and database transactions.
 ///
 ///     <para>
-///         <b>Transaction ownership</b>: This class does NOT commit the database
-///         transaction — the transaction filter is responsible for calling
-///         <c>tx.CommitAsync()</c> after <see cref="CommitAsync" /> returns.
+///         For HTTP requests: the transaction filter calls BeginTransactionAsync,
+///         then the handler executes, then the filter calls CommitAsync, CommitTransactionAsync,
+///         DispatchPostCommitEventsAsync, and DisposeAsync.
+///     </para>
+///
+///     <para>
+///         For background jobs: the job explicitly calls these methods in try/catch/finally.
 ///     </para>
 /// </summary>
 internal sealed partial class UnitOfWork(
@@ -23,6 +27,22 @@ internal sealed partial class UnitOfWork(
     : IUnitOfWork
 {
     private readonly List<IDomainEvent> _postCommitEvents = [];
+    private readonly Dictionary<DbContext, IDbContextTransaction> _transactions = [];
+
+    /// <inheritdoc />
+    public async Task BeginTransactionAsync(
+        IsolationLevel isolation = IsolationLevel.ReadCommitted,
+        CancellationToken ct = default)
+    {
+        var dbContexts = moduleContexts.Select(m => m.AsDbContext()).ToList();
+        foreach (var db in dbContexts)
+        {
+            var transaction = await db.Database.BeginTransactionAsync(isolation, ct);
+            _transactions[db] = transaction;
+        }
+
+        Log.InfoTxBegin(logger, dbContexts.Count, isolation);
+    }
 
     /// <inheritdoc />
     public IReadOnlyList<IDomainEvent> CollectPreCommitEvents()
@@ -66,13 +86,41 @@ internal sealed partial class UnitOfWork(
         }
 
         // 4. SaveChanges on all module contexts — persists within the open DB transaction
-        //    (does NOT commit the transaction — the filter does that)
         Log.InfoCommitting(logger);
         var totalRows = 0;
         foreach (IModuleDbContext moduleCtx in moduleContexts)
             totalRows += await moduleCtx.AsDbContext().SaveChangesAsync(ct);
 
         return totalRows;
+    }
+
+    /// <inheritdoc />
+    public async Task CommitTransactionAsync(CancellationToken ct = default)
+    {
+        foreach (var (_, transaction) in _transactions)
+        {
+            if (transaction != null)
+                await transaction.CommitAsync(ct);
+        }
+
+        Log.InfoTxCommitted(logger, _transactions.Count);
+    }
+
+    /// <inheritdoc />
+    public async Task RollbackAsync(CancellationToken ct = default)
+    {
+        _postCommitEvents.Clear();
+
+        foreach (var (_, transaction) in _transactions)
+        {
+            if (transaction != null)
+            {
+                try { await transaction.RollbackAsync(ct); }
+                catch { /* ignore rollback errors */ }
+            }
+        }
+
+        Log.InfoTxRolledBack(logger, _transactions.Count);
     }
 
     /// <inheritdoc />
@@ -95,8 +143,26 @@ internal sealed partial class UnitOfWork(
         _postCommitEvents.Clear();
     }
 
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        foreach (var (_, transaction) in _transactions)
+        {
+            if (transaction != null)
+                await transaction.DisposeAsync();
+        }
+
+        _transactions.Clear();
+        _postCommitEvents.Clear();
+    }
+
     private static partial class Log
     {
+        [LoggerMessage((int)LogEventId.UoWTxBegin, LogLevel.Debug,
+            "UoW TX BEGIN — Contexts={ContextCount} Isolation={Isolation}")]
+        public static partial void InfoTxBegin(
+            ILogger logger, int contextCount, IsolationLevel isolation);
+
         [LoggerMessage((int)LogEventId.UoWPreCommitDispatching, LogLevel.Debug,
             "Dispatching {Count} pre-commit domain event(s) inside open transaction")]
         public static partial void InfoPreCommitDispatching(ILogger logger, int count);
@@ -104,6 +170,14 @@ internal sealed partial class UnitOfWork(
         [LoggerMessage((int)LogEventId.UoWCommitting, LogLevel.Debug,
             "Calling SaveChangesAsync on all module DbContexts")]
         public static partial void InfoCommitting(ILogger logger);
+
+        [LoggerMessage((int)LogEventId.UoWTxCommitted, LogLevel.Debug,
+            "UoW TX COMMITTED — Contexts={ContextCount}")]
+        public static partial void InfoTxCommitted(ILogger logger, int contextCount);
+
+        [LoggerMessage((int)LogEventId.UoWTxRolledBack, LogLevel.Warning,
+            "UoW TX ROLLED BACK — Contexts={ContextCount}")]
+        public static partial void InfoTxRolledBack(ILogger logger, int contextCount);
 
         [LoggerMessage((int)LogEventId.UoWPostCommitFailed, LogLevel.Warning,
             "Post-commit event dispatch failed for {EventType} — TX already committed, event may be lost")]

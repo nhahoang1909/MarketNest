@@ -1,8 +1,10 @@
 using MarketNest.Admin.Domain;
 using MarketNest.Base.Common;
-using MarketNest.Base.Infrastructure;
+using MediatR;
 
+#pragma warning disable IDE0130
 namespace MarketNest.Admin.Application;
+#pragma warning restore IDE0130
 
 public partial class CreateTestHandler(
     ITestRepository repository,
@@ -20,8 +22,6 @@ public partial class CreateTestHandler(
         if (request.SubTitles is not null)
             foreach (string title in request.SubTitles)
                 repository.AddSubEntity(new TestSubEntity(Guid.NewGuid(), id, title));
-
-        await repository.SaveChangesAsync(cancellationToken);
 
         Log.InfoSuccess(logger, id);
         return Result<Guid, Error>.Success(id);

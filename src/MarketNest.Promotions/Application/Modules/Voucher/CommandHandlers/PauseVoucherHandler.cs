@@ -14,8 +14,6 @@ public partial class PauseVoucherHandler(
         Result<bool, Error> result = voucher.Pause();
         if (!result.IsSuccess) return result;
 
-        await repository.SaveChangesAsync(cancellationToken);
-
         Log.InfoSuccess(logger, request.VoucherId);
         return result;
     }
