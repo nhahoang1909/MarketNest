@@ -20,6 +20,42 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-29 - feat(base): Add batch write methods to IBaseRepository + BaseRepository
+- **Status**: Completed
+- **Description**: Extended `IBaseRepository<TEntity,TKey>` and `BaseRepository<TEntity,TKey,TContext>` with three batch write methods for multi-record operations:
+  - `AddRangeAsync(IEnumerable<TEntity>, CancellationToken)` — tracks multiple new entities in one call
+  - `UpdateRangeAsync(IEnumerable<TEntity>, CancellationToken)` — marks multiple entities as modified
+  - `RemoveRangeAsync(IEnumerable<TEntity>, CancellationToken)` — marks multiple entities for deletion
+  - All existing single-entity `Add`/`Update`/`Remove` methods retained (sync, EF Change Tracker only)
+  - All writes still flushed via `IUnitOfWork.CommitAsync()` — no `SaveChangesAsync()` calls added
+- **Files changed**: `src/Base/MarketNest.Base.Infrastructure/Persistence/Persistence/IBaseRepository.cs`, `src/Base/MarketNest.Base.Infrastructure/Persistence/Persistence/BaseRepository.cs`
+- **Docs updated**: `docs/backend-patterns.md` §6, `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`
+- **Build**: `dotnet build MarketNest.slnx` → 0 warnings, 0 errors ✅
+
+---
+
+### 2026-04-29 - refactor: Unit of Work pattern — filters own transaction lifecycle (ADR-027 update)
+- **Status**: Completed
+- **Description**: Major refactoring of the Unit of Work pattern. Previously, command handlers called `uow.CommitAsync()` explicitly (error-prone, could silently lose data if forgotten). Now:
+  - **HTTP handlers** (Razor Pages + API controllers): filters (`RazorPageTransactionFilter` / `TransactionActionFilter`) own the full transaction lifecycle. Handlers only mutate entities via repositories — no UoW injection needed. Filter automatically calls `BeginTransactionAsync` → next() → `CommitAsync` → `CommitTransactionAsync` → `DispatchPostCommitEventsAsync` → `DisposeAsync`.
+  - **Background jobs**: explicitly manage transactions using the new UoW methods. Full try/catch/finally lifecycle ensures atomicity.
+  - **IUnitOfWork expanded** (now `IAsyncDisposable`): added `BeginTransactionAsync`, `CommitTransactionAsync`, `RollbackAsync`, `DisposeAsync` methods. Moved transaction object storage from filters into UoW.
+  - **UnitOfWork implementation** updated: stores `Dictionary<DbContext, IDbContextTransaction>` internally. No more loop logic in filters.
+  - **Filters simplified**: removed transaction management loops, now delegate to `uow.BeginTransactionAsync/CommitTransactionAsync/RollbackAsync`.
+  - **All 7 command handlers** (Admin, Promotions, Catalog): removed explicit `uow.CommitAsync()` calls + IUnitOfWork injection. Handlers simplified to pure domain mutation.
+  - **Background jobs** (ExpireSalesJob, VoucherExpiryJob): updated to use new explicit transaction management pattern.
+  - **Documentation**: Updated `docs/backend-patterns.md` §22 + CLAUDE.md/AGENTS.md/copilot-instructions.md UoW conventions. Updated ADR-027 in decisions.md with full revised decision + consequences.
+  - **LogEventId**: Added `UoWTxBegin`, `UoWTxCommitted`, `UoWTxRolledBack` (1074–1076), job error IDs.
+- **Build**: `dotnet build` → 0 errors ✅
+- **Benefits**: 
+  - ✅ Handlers can't forget to commit (filter handles it automatically)
+  - ✅ No silent data loss — uncommitted changes are impossible in HTTP handlers
+  - ✅ Clear separation: HTTP (auto) vs background jobs (explicit control)
+  - ✅ Atomicity guaranteed: all entity changes + pre-commit events in same TX or rollback together
+- **ADR**: ADR-027 updated (see decisions.md for full entry)
+
+---
+
 ### 2026-04-29 - refactor: Application Constants vs Configuration policy (ADR-030)
 - **Status**: Completed
 - **Description**: Refactored configuration management to distinguish between immutable business rules and environment-specific settings:
