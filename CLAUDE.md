@@ -8,7 +8,7 @@ Shared agent rule files are stored at `agents/rules/` (architecture.md, codestyl
 
 MarketNest is a multi-vendor marketplace (Etsy/Shopee-style) built as a solo learning project. The architecture is intentionally phased: **Modular Monolith → Microservices → Kubernetes** over ~9 months.
 
-**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer, and Roslyn analyzers are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
+**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), and canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
 
 ## Build & Run Commands
 
@@ -45,8 +45,13 @@ Solution file: `MarketNest.slnx` (XML-based `.slnx` format, not `.sln`).
 
 ```
 src/
-  MarketNest.Core/          # Shared kernel: Entity<T>, AggregateRoot, ValueObject, Result<T,Error>,
-                            #   CQRS interfaces, IDataSeeder, IModuleDbContext, Error codes
+  Base/                     # Shared cross-project primitives and helper packages
+    MarketNest.Base.Api/        # ReadApiV1ControllerBase, WriteApiV1ControllerBase
+    MarketNest.Base.Common/     # IBaseQuery<T,K>, ICacheService, CacheKeys, IReferenceDataReadService, Tier-2 config contracts
+    MarketNest.Base.Domain/     # Entity<T>, AggregateRoot, ValueObject, ReferenceData base
+    MarketNest.Base.Infrastructure/ # IAppLogger<T>, LogEventId, BaseQuery<T,K,Ctx>, BaseRepository<T,K,Ctx>, IBaseRepository<T,K>, DddModelBuilderExtensions
+    MarketNest.Base.Utility/    # Slug generation, date extensions
+  MarketNest.Core/          # Shared kernel: Result<T,Error>, CQRS interfaces, IModuleDbContext, IDataSeeder, error codes
   MarketNest.Identity/      # Auth module (users, roles, JWT)
   MarketNest.Catalog/       # Storefronts, products, inventory
   MarketNest.Cart/          # Cart, CartItem
@@ -110,14 +115,14 @@ All rules are specified in `docs/code-rules.md`. Key items:
 - **Auditing**: Mark entities `[Auditable]` for automatic EF Core change tracking; mark commands `[Audited("EVENT_TYPE")]` for automatic MediatR audit logging. `IAuditService` in `Core/Contracts/` — never fails the main request. See ADR-012.
 - **Sale price on variants (ADR-024)**: `ProductVariant` carries three inline sale fields (`SalePrice`, `SaleStart`, `SaleEnd`). Always use `variant.EffectivePrice()` at checkout / cart reads — never read `Price` directly. `ExpireSalesJob` (Catalog, 5-min schedule) clears expired sales and raises `VariantSalePriceRemovedEvent`. See §5.4 in `docs/domain-and-business-rules.md`.
 - **Background jobs**: All timer/batch jobs must implement `IBackgroundJob` and expose a `JobDescriptor`. Job keys must be globally unique (e.g., `catalog.variant.expire-sales`). See `docs/backend-patterns.md` §16.
+- **Base query/repository (ADR-025)**: canonical `BaseQuery<TEntity,TKey,TContext>` and `BaseRepository<TEntity,TKey,TContext>` live in `Base.Infrastructure`. Each module declares a 2-line thin wrapper that pins its own `DbContext`. Never copy the base logic into a module — inherit it. Rule: CommandHandlers inject `I{Entity}Repository`; QueryHandlers inject `I{Entity}Query : IBaseQuery<T,K>` or a dedicated `IGet{UseCase}Query` for complex reads. Neither `{Module}DbContext` nor `{Module}ReadDbContext` is injected by any Application layer class.
+- **Module DI pattern**: each module exposes `AddXxxModule(IServiceCollection, IConfiguration)` in `Infrastructure/DependencyInjection.cs`. Canonical examples: Admin, Auditing, Promotions, Orders, Payments.
 
 ## Agent Behavior Guidelines (rules)
 
-Agent behavior and coding guidelines are maintained under `agents/rules/`.
+Read `agents/GUIDELINES.md` — the canonical, single source of truth for agent-facing guidance (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution). It links to authoritative deep docs (`docs/code-rules.md`, `docs/architecture.md`, etc.). The original per-topic rule files are archived under `agents/rules/archive/`.
 
-Please read `agents/rules/README.md` and the rule files in `agents/rules/` (architecture.md, codestyle.md, git.md, security.md, testing.md) for authoritative, agent-facing guidance (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution) and links to deeper docs (`docs/code-rules.md`, `docs/architecture.md`, etc.).
-
-Note: a single consolidated `agents/GUIDELINES.md` was planned; if present it will be authoritative. For now rely on the `agents/rules/` files and `agents/rules/README.md` which describes the consolidation status.
+**Using specialized subagents**: When a task matches a subagent's responsibility, ALWAYS delegate using the `run_subagent` tool. Available subagents: `Plan` — use for researching and outlining multi-step plans (designs, migration plans, phased work).
 
 ## Specification Documents
 
@@ -127,12 +132,13 @@ All located in `docs/` — read before implementing any feature:
 |------|----------|
 | `docs/architecture.md` | Phased architecture, ADRs, module boundaries, solution structure, project layout |
 | `docs/domain-and-business-rules.md` | DDD aggregates, bounded contexts, entity designs, business rules for all modules |
-| `docs/backend-patterns.md` | Tech stack, CQRS contracts, `Result<T,Error>`, base classes, services, seeding |
+| `docs/backend-patterns.md` | Tech stack, CQRS contracts, `Result<T,Error>`, base classes, services, seeding, background jobs |
 | `docs/backend-infrastructure.md` | Query utilities, caching, transactions, UoW, `[Access]` permissions, file uploads, testing |
 | `docs/frontend-guide.md` | Frontend stack, page inventory, HTMX/Alpine patterns, component library, BE-FE contracts |
 | `docs/code-rules.md` | Naming conventions, C# idioms, DDD principles, banned patterns |
 | `docs/devops-requirements.md` | Docker Compose topology, GitHub Actions, K8s manifests |
 | `docs/analyzers.md` | Roslyn analyzer reference: all 17 MN rules, suppression patterns, adding new rules |
+| `docs/test-driven-design.md` | TDD guidelines, unit/integration/architecture test patterns |
 
 ## Phase 1 Exit Criteria (Month 3)
 
