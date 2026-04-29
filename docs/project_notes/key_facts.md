@@ -68,10 +68,25 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 ## Database
 
 - **Engine**: PostgreSQL 16
-- **Dev credentials**: user `mn` / database `mn` (password in `.env` — see `.env.example`)
-- **Schema per module**: `identity.*`, `catalog.*`, `cart.*`, `orders.*`, `payments.*`, `reviews.*`, `disputes.*`, `notifications.*`, `admin.*`
+- **Dev credentials**: user `mn` / database `marketnest` (password in `.env` — see `.env.example`)
+- **Schema per module**: `identity.*`, `catalog.*`, `cart.*`, `orders.*`, `payments.*`, `reviews.*`, `disputes.*`, `notifications.*`, `admin.*`, `auditing.*`, `promotions.*`
 - **System tables**: `public.__auto_migration_history`, `public.__seed_history` (tracking tables for `DatabaseInitializer`)
 - **Migrations**: EF Core per-module, auto-applied on startup via `DatabaseInitializer`
+
+### Connection String Strategy (ADR-031)
+
+| Key | Purpose | Phase |
+|-----|---------|-------|
+| `DefaultConnection` | Write-side DbContexts for all modules + fallback for reads | All phases |
+| `ReadConnection` | Read-side DbContexts (empty = fallback to `DefaultConnection`) | Phase 2: set to read replica |
+
+**Rule**: Never add per-module connection strings (e.g., `AuditConnection`). Module extraction at Phase 3 involves far more than a connection string change — schema isolation (ADR-004) is the real preparation.
+
+**Fallback pattern** (applied in every module `DependencyInjection.cs`):
+```csharp
+string readConnection = configuration.GetConnectionString("ReadConnection")
+    is { Length: > 0 } rc ? rc : writeConnection;
+```
 
 ---
 

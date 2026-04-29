@@ -20,6 +20,19 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-30 - config: Two-connection-string pattern — DefaultConnection + ReadConnection fallback (ADR-031)
+- **Status**: Completed
+- **Description**: Introduced `ReadConnection` as an optional second connection string. Empty value in Phase 1 — all ReadDbContexts fall back to `DefaultConnection`. Phase 2: set to a PostgreSQL read replica for zero-code-change read scaling. Rejected per-module connection strings (AuditConnection, NotificationConnection) as premature — module extraction at Phase 3 requires far more than a connection string change.
+- **Files changed**:
+  - `src/MarketNest.Web/appsettings.json` — added `ReadConnection: ""`
+  - `src/MarketNest.Admin/Infrastructure/DependencyInjection.cs` — fallback pattern applied
+  - `docker-compose.yml` — added `ConnectionStrings__ReadConnection` env var (default empty)
+  - `.env.example` — documented `CONNECTION_STRINGS__READCONNECTION=` with Phase 2 note; fixed var name (`DEFAULT` → `DEFAULTCONNECTION`)
+- **ADR**: ADR-031 added to `docs/project_notes/decisions.md`
+- **Notes**: All other modules should adopt the same fallback pattern in their `DependencyInjection.cs` when implementing their ReadDbContext.
+
+---
+
 ### 2026-04-29 - feat(base): Add batch write methods to IBaseRepository + BaseRepository
 - **Status**: Completed
 - **Description**: Extended `IBaseRepository<TEntity,TKey>` and `BaseRepository<TEntity,TKey,TContext>` with three batch write methods for multi-record operations:

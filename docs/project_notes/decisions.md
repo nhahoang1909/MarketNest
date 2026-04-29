@@ -39,6 +39,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-028 | IRuntimeContext — Unified Ambient Request Context | 2026-04-29 |
 | ADR-029 | Four-Layer Caching Strategy & Cross-Module Service Contracts | 2026-04-29 |
 | ADR-030 | Application Constants vs Configuration — Immutable Rules in AppConstants, Environment-Specific Settings in appsettings.json | 2026-04-29 |
+| ADR-031 | Two-Connection-String Pattern — DefaultConnection (write) + ReadConnection (read-replica fallback) | 2026-04-30 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -801,6 +802,39 @@ The Unit of Work pattern is split into two distinct use cases, each with its own
 - ⚠️ No cache stampede prevention yet (Phase 2)
 
 **References:** `docs/caching-strategy.md`
+
+---
+
+### ADR-031: Two-Connection-String Pattern — DefaultConnection (write) + ReadConnection (read-replica fallback) (2026-04-30)
+
+**Context:**
+- All module DbContexts (write side and read side) used a single `DefaultConnection`.
+- Question raised: should separate connection strings be created per module (`AuditConnection`, `NotificationConnection`) to ease future microservice extraction?
+- Phase 2 read-replica scaling is a real concern; microservice extraction is a Phase 3 concern.
+
+**Decision:**
+- **Two connection strings only** — no per-module connection strings:
+  - `DefaultConnection` — used by all write-side DbContexts (and read-side when `ReadConnection` is absent).
+  - `ReadConnection` — **optional**; empty/absent in Phase 1 (falls back to `DefaultConnection`). Phase 2: set to a PostgreSQL read replica to route all `ReadDbContext` queries without any code change.
+- Per-module extras (`AuditConnection`, `NotificationConnection`) are explicitly **rejected** — see "Alternatives Considered".
+- Each module's `DependencyInjection.cs` resolves read connection as:
+  ```csharp
+  string readConnection = configuration.GetConnectionString("ReadConnection")
+      is { Length: > 0 } rc ? rc : writeConnection;
+  ```
+
+**Alternatives Considered:**
+- Per-module connection strings (`AuditConnection`, `NotificationConnection`, …) → Rejected:
+  - When extracting a module to microservice (Phase 3), changing one connection string name is 1% of the total work. Schema isolation (ADR-004) is the real enabler.
+  - Adds 6+ extra config entries (appsettings, .env, docker-compose) with zero Phase 1 operational benefit.
+  - Violates "Simplicity First" — premature complexity for a benefit that materialises only at phase boundary refactoring.
+- Single `DefaultConnection` for everything (status quo) → Rejected: misses Phase 2 read-replica opportunity. `ReadConnection` fallback has concrete value (zero code changes when a replica is added).
+
+**Consequences:**
+- ✅ Zero config noise in Phase 1 — `ReadConnection` is empty, falls back automatically.
+- ✅ Phase 2 read-replica routing: set `ReadConnection` once → all module ReadDbContexts switched, zero code changes.
+- ✅ Config stays clean — appsettings has exactly 2 connection string entries forever.
+- ❌ Module connection string isolation requires explicit work at Phase 3 extraction boundary (but that's intentional and unavoidable).
 
 ---
 
