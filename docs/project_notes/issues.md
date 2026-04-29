@@ -20,6 +20,31 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-29 - Project docs update: Sale Price business logic + backend patterns sync
+- **Status**: Completed
+- **Description**: Synced all project documents to reflect the Catalog Sale Price feature (ADR-024) and fix remaining gaps:
+  - **`domain-and-business-rules.md`** (v0.4): Updated §3.2 `ProductVariant` aggregate to match actual Phase 1 implementation (inline `SalePrice/SaleStart/SaleEnd` fields, `StockQuantity` simplified inventory, computed helpers `EffectivePrice()`/`IsSaleActive()`/`DisplayOriginalPrice()`, deferred `Attributes`/`InventoryItem` noted for Phase 2). Added §5.4 Catalog Sale Price business rules (invariants S1–S5, background job, API endpoints, checkout integration contract). Updated §6 domain events (added `VariantSalePriceSetEvent`, `VariantSalePriceRemovedEvent`). Updated §7 invariants (added S1–S5 Sale Price section, updated #1 to `StockQuantity ≥ 0`). Expanded Auto-Actions into a platform-wide "Module Background Jobs" table listing all 8 registered jobs.
+  - **`backend-patterns.md`**: Updated §16 Planned Jobs table — added `ExpireSalesJob` (Catalog) and `VoucherExpiryJob` (Promotions), added Module column. Fixed Vietnamese section headings (`Cấu trúc dữ liệu`, `Danh sách Job dự kiến`, `Lộ trình phát triển`) → English.
+  - **`CLAUDE.md`** + **`AGENTS.md`**: Updated "Current status" to list implemented modules (ADR-024, Promotions, Auditing, Admin config, Analyzers). Added rules for sale price (`EffectivePrice()` mandate) and background jobs (`IBackgroundJob` contract).
+- **Notes**: No code changes — documentation-only update.
+
+---
+
+### 2026-04-29 - Catalog: Sale Price domain implemented (ProductVariant)
+- **Status**: Completed
+- **Description**: Implemented the full Sale Price feature for `ProductVariant` based on `sale-price-domain-plan.md`. Key deliverables:
+  - **Domain**: `ProductVariant` entity with `SalePrice`, `SaleStart`, `SaleEnd` fields + `EffectivePrice()`, `IsSaleActive()`, `DisplayOriginalPrice()` computed helpers + `SetSalePrice()` / `RemoveSalePrice()` domain methods. `VariantSalePriceSetEvent` and `VariantSalePriceRemovedEvent` domain events. `CatalogConstants.Sale` (max duration 90d, job schedule).
+  - **Application**: `SetSalePriceCommand` + handler, `RemoveSalePriceCommand` + handler, `SetSalePriceCommandValidator` (FluentValidation), `IVariantRepository` (with `GetExpiredSalesAsync`, `GetByProductAsync`), `ExpireSalesJob` (5-min timer background job).
+  - **Infrastructure**: `CatalogDbContext` + `BaseRepository<T,TKey>`, `ProductVariantConfiguration` (EF snake_case, Money conversions, partial index `idx_variants_active_sale`), `VariantRepository`, `VariantSaleSellerController` (`PATCH/DELETE api/v1/seller/products/{id}/variants/{id}/sale`), `VariantSaleAdminController` (`DELETE api/v1/admin/catalog/variants/{id}/sale`).
+  - **Migration**: `AddVariantSalePrice` — creates `catalog.variants` table with all fields + `chk_sale_price_positive` and `chk_sale_dates_consistent` CHECK constraints (invariant S5) + partial index.
+  - **Shared**: `LogEventId` Catalog application events (3100–3212). `AppRoutes.Api.CatalogV1Prefix` + whitelist entry. `MarketNest.Catalog.csproj` updated (Npgsql EF, Base.Utility, AspNetCore FrameworkReference). `Program.cs` wired `CatalogDbContext`, `IVariantRepository`, `ExpireSalesJob`.
+- **Build**: `dotnet build MarketNest.slnx` → 0 warnings, 0 errors ✅
+- **Notes**: Cart/Checkout integration (`EffectivePrice` in checkout path, price drift separation) deferred until Cart/Orders modules implement their domain. Authorization (seller owns variant check) is a Phase 1 TODO — currently command accepts `RequestingUserId` but does not enforce ownership.
+
+---
+
+
+
 ### 2026-04-29 - AGENTS.md: subagent delegation + AI convention sourcing guidelines added
 - **Status**: Completed
 - **Description**: Added two new agent behavior sections to `AGENTS.md` (uncommitted working change):
