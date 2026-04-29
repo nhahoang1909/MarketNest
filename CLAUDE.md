@@ -8,7 +8,7 @@ Shared agent rule files are stored at `agents/rules/` (architecture.md, codestyl
 
 MarketNest is a multi-vendor marketplace (Etsy/Shopee-style) built as a solo learning project. The architecture is intentionally phased: **Modular Monolith → Microservices → Kubernetes** over ~9 months.
 
-**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025), and Unit of Work + `[Transaction]` attribute with pre/post-commit domain event lifecycle (ADR-027) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
+**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025), Unit of Work + `[Transaction]` attribute with pre/post-commit domain event lifecycle (ADR-027), `IRuntimeContext` unified ambient context (ADR-028), and Application Constants vs Configuration policy (ADR-030) are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
 
 ## Build & Run Commands
 
@@ -103,6 +103,7 @@ All rules are specified in `docs/code-rules.md`. Key items:
   - Do NOT include `Account`, `Commands`, `Persistence` in the namespace.
 - **Immutability**: Records for DTOs and value objects (`{ get; init; }`). Primary constructors for dependency injection. Class-based value objects use `{ get; }` only.
 - **No magic strings / magic numbers**: Every repeated string literal and unexplained number must be a `const`, `static readonly`, enum, or bound configuration option. See `docs/code-rules.md` §2.6.
+  - **AppConstants vs appsettings.json (ADR-030)**: **AppConstants** holds immutable business rules (password length, file upload limits, colors, font stacks) that never change between environments. **appsettings.json** holds environment-specific settings (connection strings, secrets, rate limits, token expiry) that vary per deployment. Example: `AppConstants.Validation.PasswordMinLength` is in code; `Security.RateLimitRequestsPerMinute` is configurable in JSON.
 - **English only**: All naming, comments, error messages, log messages, and commit messages must be in English. No Vietnamese or other languages in source code. Localization resource files (`.resx`) are the only exception. See `docs/code-rules.md` §2.1.
 - **Architecture tests** (NetArchTest) enforce that presentation layer cannot reference domain directly.
 - **Central Package Management**: all NuGet versions are pinned in the repo-root `Directory.Packages.props`. Module `.csproj` files reference packages without versions.
@@ -137,6 +138,7 @@ All located in `docs/` — read before implementing any feature:
 | `docs/domain-and-business-rules.md` | DDD aggregates, bounded contexts, entity designs, business rules for all modules |
 | `docs/backend-patterns.md` | Tech stack, CQRS contracts, `Result<T,Error>`, base classes, services, seeding, background jobs |
 | `docs/backend-infrastructure.md` | Query utilities, caching, transactions, UoW, `[Access]` permissions, file uploads, testing |
+| `docs/caching-strategy.md` | Four-layer caching (static assets, OutputCache, Redis, cross-module), cache keys, invalidation, anti-patterns |
 | `docs/frontend-guide.md` | Frontend stack, page inventory, HTMX/Alpine patterns, component library, BE-FE contracts |
 | `docs/code-rules.md` | Naming conventions, C# idioms, DDD principles, banned patterns |
 | `docs/devops-requirements.md` | Docker Compose topology, GitHub Actions, K8s manifests |
