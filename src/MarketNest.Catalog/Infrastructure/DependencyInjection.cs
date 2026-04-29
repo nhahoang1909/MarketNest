@@ -30,10 +30,19 @@ internal sealed class StorefrontPolicyConfigService : IStorefrontPolicyConfig, I
 /// <summary>DI registration for the Catalog module.</summary>
 public static class CatalogServiceExtensions
 {
+    private const string ConnectionStringName = "DefaultConnection";
+
     public static IServiceCollection AddCatalogModule(
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        string connectionString = configuration.GetConnectionString(ConnectionStringName)
+            ?? throw new InvalidOperationException(
+                $"Connection string '{ConnectionStringName}' is not configured.");
+
+        services.AddDbContext<CatalogDbContext>(opts => opts.UseNpgsql(connectionString));
+        services.AddScoped<IModuleDbContext>(sp => sp.GetRequiredService<CatalogDbContext>());
+
         services.AddSingleton<StorefrontPolicyConfigService>();
         services.AddSingleton<IStorefrontPolicyConfig>(sp =>
             sp.GetRequiredService<StorefrontPolicyConfigService>());

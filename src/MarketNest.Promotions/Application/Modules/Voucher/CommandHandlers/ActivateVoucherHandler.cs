@@ -10,7 +10,7 @@ public partial class ActivateVoucherHandler(
     {
         Log.InfoStart(logger, request.VoucherId);
 
-        var voucher = await repository.GetByKeyOrThrowAsync(request.VoucherId, cancellationToken);
+        var voucher = await repository.GetByKeyAsync(request.VoucherId, cancellationToken);
         Result<bool, Error> result = voucher.Activate();
         if (!result.IsSuccess) return result;
 

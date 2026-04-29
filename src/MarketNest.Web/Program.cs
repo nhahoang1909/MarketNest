@@ -1,28 +1,29 @@
+#region
+
 using System.Reflection;
 using FluentValidation;
-using MarketNest.Admin.Application;
 using MarketNest.Admin.Infrastructure;
+using MarketNest.Auditing.Infrastructure;
+using MarketNest.Base.Domain;
 using MarketNest.Cart.Infrastructure;
-using MarketNest.Catalog.Application;
 using MarketNest.Catalog.Infrastructure;
 using MarketNest.Disputes.Infrastructure;
 using MarketNest.Identity.Infrastructure;
 using MarketNest.Notifications.Infrastructure;
 using MarketNest.Orders.Infrastructure;
 using MarketNest.Payments.Infrastructure;
-using MarketNest.Promotions.Application;
 using MarketNest.Promotions.Infrastructure;
 using MarketNest.Reviews.Infrastructure;
-using MarketNest.Auditing.Infrastructure;
 using MarketNest.Web.BackgroundJobs;
 using MarketNest.Web.Hosting;
 using MarketNest.Web.Infrastructure;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using Serilog;
 using StackExchange.Redis;
+
+#endregion
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
@@ -94,7 +95,7 @@ try
     builder.Services.AddMediatR(cfg =>
     {
         cfg.RegisterServicesFromAssemblies(
-            typeof(MarketNest.Base.Domain.Entity<>).Assembly,
+            typeof(Entity<>).Assembly,
             typeof(MarketNest.Auditing.AssemblyReference).Assembly,
             typeof(MarketNest.Identity.AssemblyReference).Assembly,
             typeof(MarketNest.Catalog.AssemblyReference).Assembly,
@@ -132,46 +133,13 @@ try
     // IEventBus — Phase 1: in-process via MediatR; Phase 3: swap to MassTransitEventBus
     builder.Services.AddSingleton<IEventBus, InProcessEventBus>();
 
-    // ── Auditing Module ──────────────────────────────────────────────
-    builder.Services.AddScoped<AuditableInterceptor>();
-    builder.Services.AddModuleDbContext<AuditingDbContext>(opts =>
-        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
-    builder.Services.AddScoped<IAuditService, AuditService>();
-
-    // ── Admin Module ─────────────────────────────────────────────────────
-    builder.Services.AddModuleDbContext<AdminDbContext>(opts =>
-        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
-    // Read context — NoTracking, no migrations
-    builder.Services.AddDbContext<AdminReadDbContext>(opts =>
-        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName))
-            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
-    // Repository + Query auto-registration is handled by AddModuleInfrastructureServices below.
-
-    // ── Orders Module DbContext ───────────────────────────────────────────
-    builder.Services.AddModuleDbContext<OrdersDbContext>(opts =>
-        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
-
-    // ── Payments Module DbContext ─────────────────────────────────────────
-    builder.Services.AddModuleDbContext<PaymentsDbContext>(opts =>
-        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
-
-    // ── Promotions Module ─────────────────────────────────────────────
-    builder.Services.AddModuleDbContext<PromotionsDbContext>(opts =>
-        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
-    builder.Services.AddDbContext<PromotionsReadDbContext>(opts =>
-        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName))
-            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
-    // Repository + Query auto-registration for Promotions is handled by AddModuleInfrastructureServices below.
-
-    // ── Catalog Module DbContext ──────────────────────────────────────────
-    builder.Services.AddModuleDbContext<CatalogDbContext>(opts =>
-        opts.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)));
 
     // IUserTimeZoneProvider — resolves user's time zone and date format from HTTP context
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<IUserTimeZoneProvider, HttpContextUserTimeZoneProvider>();
 
-    // TODO: Register module DI (each module exposes AddXxxModule extension)
+    // ── Module DI ─────────────────────────────────────────────────────────
+    builder.Services.AddAuditingModule(builder.Configuration);
     builder.Services.AddIdentityModule(builder.Configuration);
     builder.Services.AddCatalogModule(builder.Configuration);
     builder.Services.AddCartModule(builder.Configuration);
@@ -181,6 +149,7 @@ try
     builder.Services.AddDisputesModule(builder.Configuration);
     builder.Services.AddNotificationsModule(builder.Configuration);
     builder.Services.AddAdminModule(builder.Configuration);
+    builder.Services.AddPromotionsModule(builder.Configuration);
 
     // ── Auto-register all IBaseRepository<,> + IBaseQuery<,> implementors ───
     // Scans Infrastructure assemblies of every module and registers concrete
@@ -195,19 +164,9 @@ try
     // Background jobs: registry + execution store + hosted runner (Phase 1)
     builder.Services.AddSingleton<IJobRegistry, ServiceCollectionJobRegistry>();
     builder.Services.AddScoped<IJobExecutionStore, NpgsqlJobExecutionStore>();
-    // Example/demo job registration — modules should register their own jobs instead
-    builder.Services.AddSingleton<IBackgroundJob, TestTimerJob>();
-    builder.Services.AddScoped<IBackgroundJob, VoucherExpiryJob>();
-    builder.Services.AddScoped<IBackgroundJob, ExpireSalesJob>();
     builder.Services.AddHostedService<JobRunnerHostedService>();
 
     // ── Database: auto-migrate + seed ─────────────────────────────────
-    // TODO: Register module DbContexts as they are created:
-    // builder.Services.AddModuleDbContext<IdentityDbContext>(opts =>
-    //     opts.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-    // builder.Services.AddModuleDbContext<CatalogDbContext>(opts =>
-    //     opts.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-    // ... (repeat for each module that has a DbContext)
 
     // Register DatabaseInitializer + auto-discover seeders from module assemblies
     builder.Services.AddDatabaseInitializer(

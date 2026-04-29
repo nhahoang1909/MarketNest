@@ -14,7 +14,7 @@ public partial class UpdateTestHandler(
     {
         Log.InfoStart(logger, request.Id);
 
-        TestEntity? entity = await repository.GetByKeyAsync(request.Id, cancellationToken);
+        TestEntity? entity = await repository.FindByKeyAsync(request.Id, cancellationToken);
         if (entity is null)
         {
             Log.WarnNotFound(logger, request.Id);

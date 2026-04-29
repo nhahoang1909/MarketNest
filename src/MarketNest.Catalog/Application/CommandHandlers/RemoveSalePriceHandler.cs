@@ -11,7 +11,7 @@ public partial class RemoveSalePriceHandler(
     {
         Log.InfoStart(logger, request.VariantId);
 
-        ProductVariant? variant = await repository.GetByKeyAsync(request.VariantId, cancellationToken);
+        ProductVariant? variant = await repository.FindByKeyAsync(request.VariantId, cancellationToken);
 
         if (variant is null)
             return Result<Unit, Error>.Failure(
