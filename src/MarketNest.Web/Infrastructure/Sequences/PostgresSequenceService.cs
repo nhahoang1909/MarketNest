@@ -12,7 +12,7 @@ namespace MarketNest.Web.Infrastructure;
 /// Registered as Singleton — the in-process <c>_provisionedSequences</c> cache
 /// must be shared across all requests to avoid redundant DDL per request.
 /// </summary>
-internal sealed class PostgresSequenceProvider : ISequenceService
+internal sealed class PostgresSequenceService : ISequenceService
 {
     private readonly string _connectionString;
 
@@ -23,7 +23,7 @@ internal sealed class PostgresSequenceProvider : ISequenceService
     /// </summary>
     private readonly ConcurrentDictionary<string, bool> _provisionedSequences = new();
 
-    public PostgresSequenceProvider(IConfiguration configuration)
+    public PostgresSequenceService(IConfiguration configuration)
     {
         _connectionString = configuration.GetConnectionString(AppConstants.DefaultConnectionStringName)
                             ?? throw new InvalidOperationException(
@@ -148,3 +148,4 @@ internal sealed class PostgresSequenceProvider : ISequenceService
     private static bool IsValidSequenceName(string name)
         => System.Text.RegularExpressions.Regex.IsMatch(name, @"^[a-z][a-z0-9_]*\.seq_[a-z0-9_]+$");
 }
+

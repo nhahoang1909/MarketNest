@@ -30,7 +30,7 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 | Project | Purpose |
 |---------|---------|
 | `src/Base/MarketNest.Base.Api` | Base API controller abstractions (`ReadApiV1ControllerBase`, `WriteApiV1ControllerBase`) |
-| `src/Base/MarketNest.Base.Common` | Shared contracts: `IBaseQuery`, `ICacheService`, `CacheKeys`, cross-module service interfaces, `IReferenceDataReadService`, Tier-2 config contracts, `FieldLimits`, `ValidationMessages`, `ValidatorExtensions`, `DateTimeOffsetExtensions`, `EnumExtensions`, `StringExtensions`, `NumericExtensions`, `CollectionExtensions` |
+| `src/Base/MarketNest.Base.Common` | Shared contracts: `IBaseQuery`, `ICacheService`, `CacheKeys`, cross-module service interfaces, `IReferenceDataReadService`, Tier-2 config contracts |
 | `src/Base/MarketNest.Base.Domain` | Shared domain primitives: `Entity<T>`, `AggregateRoot`, `ValueObject`, `ReferenceData` base |
 | `src/Base/MarketNest.Base.Infrastructure` | Shared infra: `IAppLogger<T>`, `AppLogger<T>`, `LogEventId` enum, `BaseRepository<TEntity,TKey,TContext>`, `IBaseRepository<TEntity,TKey>`, `BaseQuery<TEntity,TKey,TContext>`, `DddModelBuilderExtensions` |
 | `src/Base/MarketNest.Base.Utility` | Utility helpers: slug generation, date extensions |
@@ -44,10 +44,10 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 | `src/MarketNest.Reviews` | Reviews, votes, fraud gate |
 | `src/MarketNest.Disputes` | Disputes, messages, resolution |
 | `src/MarketNest.Notifications` | Email/SMS dispatch |
-| `src/MarketNest.Admin` | Back-office: reference data (Country, Gender, Category…), admin-config UI, arbitration, **Announcements** (`Announcement` entity + CQRS — ADR-043) |
+| `src/MarketNest.Admin` | Back-office: reference data (Country, Gender, Category…), admin-config UI, arbitration |
 | `src/MarketNest.Auditing` | Audit logs, login events; `AuditableInterceptor` + `AuditBehavior<,>` |
 | `src/MarketNest.Web` | ASP.NET Core host: Razor Pages + minimal APIs, `DatabaseInitializer`, middleware, `SharedViewPaths` constants |
-| `src/MarketNest.Analyzers` | Roslyn analyzers: 20 MN rules (MN001–MN020), 6 code-fix providers |
+| `src/MarketNest.Analyzers` | Roslyn analyzers: 17 MN rules (MN001–MN017), 5 code-fix providers |
 
 ---
 
@@ -156,14 +156,12 @@ marketnest:admin:config:{key}             TTL: 30m   — platform config
 | `frontend-guide.md` | Frontend stack, page inventory, HTMX/Alpine patterns, component library, BE-FE contracts |
 | `code-rules.md` | Naming conventions, C# idioms, DDD principles, banned patterns |
 | `common-validation-rules.md` | FieldLimits, ValidationMessages, ValidatorExtensions — centralized validation infrastructure |
-| `common-extension-methods.md` | All extension methods: DateTimeOffset, Enum, String (incl. IsValidEmail/Phone/Slug/Url), Numeric, Collection |
-| `extension-methods-cheatsheet.md` | Quick reference card — single-page lookup for all extension method signatures |
 | `excel-import-export.md` | Excel import/export: IExcelService, ClosedXML, antivirus hook, import templates, export options, ADR-037 |
 | `sequence-service.md` | PostgreSQL sequence service: ISequenceService, period-scoped sequences, running number generation, ADR-040 |
 | `notifications.md` | Notifications module: template engine, dispatch pipeline, email/in-app channels, usage guide |
 | `nullable-management.md` | Nullable policy: business-decision model, layer-by-layer rules, banned anti-patterns, review checklist (ADR-039) |
 | `sla-requirements.md` | SLA thresholds: availability, performance, business correctness, data integrity (ADR-026) |
 | `devops-requirements.md` | Docker Compose topology, GitHub Actions, K8s manifests |
-| `analyzers.md` | Roslyn analyzer reference: all 20 MN rules, suppression patterns, adding new rules |
+| `analyzers.md` | Roslyn analyzer reference: all 17 MN rules, suppression patterns, adding new rules |
 | `test-driven-design.md` | TDD guidelines, unit/integration/architecture test patterns |
 | `api-contract.md` | Auto-generated from OpenAPI spec by `ApiContractGenerator` on startup (dev only) |
