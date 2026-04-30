@@ -1,0 +1,38 @@
+﻿@*
+  Form actions row — standardized submit / cancel button row, handles submitting state.
+  Parameters (via ViewData):
+    SubmitLabel  — submit button text (default: "Save")
+    CancelLabel  — cancel button text (default: "Cancel")
+    CancelHref   — cancel link href (omit to hide cancel button)
+    Danger       — "true" styles submit as btn-danger (e.g., delete confirmation)
+    AlignRight   — "true" right-aligns buttons (default is right-aligned)
+    SubmittingVar— Alpine variable name for submitting state (default: "submitting")
+*@
+@{
+  var submitLabel   = ViewData["SubmitLabel"]?.ToString() ?? "Save";
+  var cancelLabel   = ViewData["CancelLabel"]?.ToString() ?? "Cancel";
+  var cancelHref    = ViewData["CancelHref"]?.ToString();
+  var isDanger      = ViewData["Danger"]?.ToString() == "true";
+  var submittingVar = ViewData["SubmittingVar"]?.ToString() ?? "submitting";
+  var submitCss     = isDanger ? "btn-danger" : "btn-primary";
+}
+
+<div class="flex items-center justify-end gap-3 pt-2">
+  @if (!string.IsNullOrEmpty(cancelHref))
+  {
+    <a href="@cancelHref" class="btn-ghost btn-sm">@cancelLabel</a>
+  }
+  <button type="submit"
+          class="@submitCss btn-sm"
+          :disabled="@submittingVar"
+          :class="@submittingVar ? 'btn-loading' : ''"
+          x-on:click="@submittingVar = true">
+    <!-- Spinner (visible while submitting) -->
+    <svg x-show="@submittingVar" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+    </svg>
+    <span x-text="@submittingVar ? 'Saving…' : '@submitLabel'">@submitLabel</span>
+  </button>
+</div>
+

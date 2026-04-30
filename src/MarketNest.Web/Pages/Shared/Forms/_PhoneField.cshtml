@@ -1,0 +1,55 @@
+﻿@*
+  Phone field — E.164 international phone number input.
+  Parameters (via ViewData):
+    Label      — visible label text (required)
+    Name       — input name/id (required)
+    Value      — current value (E.164 format, e.g., +84912345678)
+    HelpText   — hint shown below input
+    Required   — "true" adds required asterisk to label
+    Errors     — IEnumerable<string> validation errors
+*@
+@{
+  var label      = ViewData["Label"]?.ToString() ?? "Phone number";
+  var name       = ViewData["Name"]?.ToString() ?? "phoneNumber";
+  var value      = ViewData["Value"]?.ToString() ?? "";
+  var helpText   = ViewData["HelpText"]?.ToString() ?? "International format: +84 912 345 678";
+  var isRequired = ViewData["Required"]?.ToString() == "true";
+  var errors     = ViewData["Errors"] as IEnumerable<string>;
+  var hasError   = errors?.Any() == true;
+  var inputCss   = hasError ? "form-input input-error pl-10" : "form-input pl-10";
+}
+
+<div class="space-y-1">
+  <label for="@name" class="form-label">
+    @label
+    @if (isRequired) { <span class="text-danger-500 ml-0.5" aria-hidden="true">*</span> }
+  </label>
+  <div class="relative">
+    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+      <svg class="h-4 w-4 text-ink-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 012.43 8.326 13.019 13.019 0 012 5V3.5z" clip-rule="evenodd"/>
+      </svg>
+    </div>
+    <input type="tel" id="@name" name="@name" value="@value"
+           placeholder="+84 912 345 678"
+           class="@inputCss" autocomplete="tel"
+           maxlength="@FieldLimits.PhoneNumber.MaxLength"
+           pattern="^\+[1-9]\d{1,14}$"
+           @(isRequired ? "required" : "")/>
+  </div>
+  @if (hasError)
+  {
+    @foreach (var error in errors!)
+    {
+      <p class="form-error">
+        <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+        @error
+      </p>
+    }
+  }
+  @if (!string.IsNullOrEmpty(helpText) && !hasError)
+  {
+    <p class="form-help">@helpText</p>
+  }
+</div>
+

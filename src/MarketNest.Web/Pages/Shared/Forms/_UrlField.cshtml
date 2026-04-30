@@ -1,0 +1,55 @@
+﻿@*
+  URL field — absolute HTTP/HTTPS URL input tied to FieldLimits.Url.
+  Parameters (via ViewData):
+    Label      — visible label text (required)
+    Name       — input name/id (required)
+    Value      — current URL value
+    Placeholder— placeholder (default: "https://example.com")
+    HelpText   — hint shown below input
+    Required   — "true" adds required asterisk to label
+    Errors     — IEnumerable<string> validation errors
+*@
+@{
+  var label       = ViewData["Label"]?.ToString() ?? "Website URL";
+  var name        = ViewData["Name"]?.ToString() ?? "websiteUrl";
+  var value       = ViewData["Value"]?.ToString() ?? "";
+  var placeholder = ViewData["Placeholder"]?.ToString() ?? "https://example.com";
+  var helpText    = ViewData["HelpText"]?.ToString() ?? "Must start with https:// or http://";
+  var isRequired  = ViewData["Required"]?.ToString() == "true";
+  var errors      = ViewData["Errors"] as IEnumerable<string>;
+  var hasError    = errors?.Any() == true;
+  var inputCss    = hasError ? "form-input input-error pl-10" : "form-input pl-10";
+}
+
+<div class="space-y-1">
+  <label for="@name" class="form-label">
+    @label
+    @if (isRequired) { <span class="text-danger-500 ml-0.5" aria-hidden="true">*</span> }
+  </label>
+  <div class="relative">
+    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+      <svg class="h-4 w-4 text-ink-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z" clip-rule="evenodd"/>
+      </svg>
+    </div>
+    <input type="url" id="@name" name="@name" value="@value" placeholder="@placeholder"
+           class="@inputCss" autocomplete="url"
+           maxlength="@FieldLimits.Url.MaxLength"
+           @(isRequired ? "required" : "")/>
+  </div>
+  @if (hasError)
+  {
+    @foreach (var error in errors!)
+    {
+      <p class="form-error">
+        <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+        @error
+      </p>
+    }
+  }
+  @if (!string.IsNullOrEmpty(helpText) && !hasError)
+  {
+    <p class="form-help">@helpText</p>
+  }
+</div>
+
