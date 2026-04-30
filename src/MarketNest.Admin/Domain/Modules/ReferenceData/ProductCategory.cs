@@ -10,15 +10,17 @@ namespace MarketNest.Admin.Domain;
 public sealed class ProductCategory : ReferenceData
 {
     /// <summary>URL-safe slug. e.g. "electronics", "clothing". Used in shop filter URLs.</summary>
-    public string Slug { get; private set; } = string.Empty;
+    public string Slug { get; private set; }
 
     /// <summary>Optional icon identifier for UI rendering.</summary>
-    public string? IconName { get; private set; }
+    public string? IconName { get; private set; }  // null = no icon configured
 
     /// <summary>Parent category id. <c>null</c> means this is a root (top-level) category.</summary>
-    public int? ParentId { get; private set; }
+    public int? ParentId { get; private set; }  // null = root category
 
+#pragma warning disable CS8618 // Non-nullable field — EF Core uses this constructor
     private ProductCategory() { }
+#pragma warning restore CS8618
 
     public ProductCategory(
         string code,

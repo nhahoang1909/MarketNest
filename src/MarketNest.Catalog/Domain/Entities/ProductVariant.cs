@@ -6,17 +6,19 @@
 /// </summary>
 public class ProductVariant : Entity<Guid>
 {
+#pragma warning disable CS8618 // Non-nullable field — EF Core uses this constructor
     protected ProductVariant() { }
+#pragma warning restore CS8618
 
     public Guid ProductId { get; private set; }
-    public string Sku { get; private set; } = string.Empty;
-    public Money Price { get; private set; } = null!;
-    public Money? CompareAtPrice { get; private set; }
+    public string Sku { get; private set; }
+    public Money Price { get; private set; }
+    public Money? CompareAtPrice { get; private set; }  // null = no compare-at price configured
 
     // ── Sale Price Fields ──────────────────────────────────────────────
-    public Money? SalePrice { get; private set; }
-    public DateTimeOffset? SaleStart { get; private set; }
-    public DateTimeOffset? SaleEnd { get; private set; }
+    public Money? SalePrice { get; private set; }             // null = no active sale
+    public DateTimeOffset? SaleStart { get; private set; }    // null = no active sale
+    public DateTimeOffset? SaleEnd { get; private set; }      // null = no active sale
     // ──────────────────────────────────────────────────────────────────
 
     public int StockQuantity { get; private set; }

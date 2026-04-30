@@ -12,7 +12,9 @@ namespace MarketNest.Notifications.Domain;
 /// </summary>
 public class NotificationTemplate : AggregateRoot
 {
-    private NotificationTemplate() { } // EF Core
+#pragma warning disable CS8618 // Non-nullable field — EF Core uses this constructor
+    private NotificationTemplate() { }
+#pragma warning restore CS8618
 
     public NotificationTemplate(
         string templateKey,
@@ -33,19 +35,19 @@ public class NotificationTemplate : AggregateRoot
     }
 
     /// <summary>Stable key referenced from code, e.g. "order.placed.buyer". Immutable after creation.</summary>
-    public string TemplateKey { get; private set; } = null!;
+    public string TemplateKey { get; private set; }
 
     /// <summary>Admin UI label.</summary>
-    public string DisplayName { get; private set; } = null!;
+    public string DisplayName { get; private set; }
 
     /// <summary>Dispatch channel: Email, InApp, or Both.</summary>
     public NotificationChannel Channel { get; private set; }
 
     /// <summary>Email subject line template. Null for InApp-only templates.</summary>
-    public string? SubjectTemplate { get; private set; }
+    public string? SubjectTemplate { get; private set; }  // null = InApp-only, no email subject
 
     /// <summary>HTML body template with {{Variable}} placeholders.</summary>
-    public string BodyTemplate { get; private set; } = null!;
+    public string BodyTemplate { get; private set; }
 
     /// <summary>Documented list of valid variable names for this template.</summary>
     public string[] AvailableVariables { get; private set; } = [];
@@ -54,10 +56,10 @@ public class NotificationTemplate : AggregateRoot
     public bool IsActive { get; private set; }
 
     /// <summary>Admin who last modified this template.</summary>
-    public Guid? LastModifiedBy { get; private set; }
+    public Guid? LastModifiedBy { get; private set; }  // null = never modified after creation
 
     public DateTimeOffset CreatedAt { get; private set; }
-    public DateTimeOffset? UpdatedAt { get; private set; }
+    public DateTimeOffset? UpdatedAt { get; private set; }  // null = never updated
 
     // ── Domain Methods ─────────────────────────────────────────────────────
 

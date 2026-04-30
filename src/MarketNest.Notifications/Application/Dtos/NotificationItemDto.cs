@@ -3,12 +3,12 @@
 /// <summary>DTO for a single notification inbox item.</summary>
 public record NotificationItemDto
 {
-    public Guid Id { get; init; }
-    public string TemplateKey { get; init; } = null!;
-    public string Title { get; init; } = null!;
-    public string Body { get; init; } = null!;
+    public required Guid Id { get; init; }
+    public required string TemplateKey { get; init; }
+    public required string Title { get; init; }
+    public required string Body { get; init; }
     public string? ActionUrl { get; init; }
-    public bool IsRead { get; init; }
-    public DateTimeOffset CreatedAt { get; init; }
+    public required bool IsRead { get; init; }
+    public required DateTimeOffset CreatedAt { get; init; }
 }
 

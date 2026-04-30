@@ -2,6 +2,6 @@ namespace MarketNest.Admin.Domain;
 
 public record TestValueObject
 {
-    public string Code { get; init; } = string.Empty;
+    public required string Code { get; init; }
     public decimal Amount { get; init; }
 }
