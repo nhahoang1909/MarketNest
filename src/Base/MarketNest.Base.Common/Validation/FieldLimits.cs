@@ -177,6 +177,19 @@ public static class FieldLimits
         ];
     }
 
+    /// <summary>
+    ///     Limits for images uploaded through the rich text editor (Trix).
+    ///     Smaller than product gallery images — inline content should be lightweight.
+    /// </summary>
+    public static class RichEditorImage
+    {
+        public const long MaxSizeBytes = 2 * 1024 * 1024; // 2 MB
+        public const int MaxImagesPerDocument = 10;
+
+        public static readonly string[] AllowedMimeTypes =
+            ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    }
+
     // ── Excel Import ─────────────────────────────────────────────────────
 
     public static class ExcelImport
