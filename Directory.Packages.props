@@ -20,6 +20,8 @@
     <PackageVersion Include="StackExchange.Redis" Version="2.8.16" />
     <PackageVersion Include="MassTransit" Version="8.3.6" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.3.6" />
+    <PackageVersion Include="MailKit" Version="4.16.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
   </ItemGroup>
   <ItemGroup Label="Observability">
     <PackageVersion Include="Serilog" Version="4.2.0" />

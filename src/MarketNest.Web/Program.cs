@@ -173,7 +173,8 @@ try
         typeof(MarketNest.Payments.AssemblyReference).Assembly,
         typeof(MarketNest.Reviews.AssemblyReference).Assembly,
         typeof(MarketNest.Disputes.AssemblyReference).Assembly,
-        typeof(MarketNest.Promotions.AssemblyReference).Assembly
+        typeof(MarketNest.Promotions.AssemblyReference).Assembly,
+        typeof(MarketNest.Notifications.AssemblyReference).Assembly
     };
 
     foreach (Assembly assembly in validatorAssemblies) builder.Services.AddValidatorsFromAssembly(assembly);
@@ -216,7 +217,8 @@ try
     builder.Services.AddModuleInfrastructureServices(
         typeof(MarketNest.Admin.AssemblyReference).Assembly,
         typeof(MarketNest.Catalog.AssemblyReference).Assembly,
-        typeof(MarketNest.Promotions.AssemblyReference).Assembly
+        typeof(MarketNest.Promotions.AssemblyReference).Assembly,
+        typeof(MarketNest.Notifications.AssemblyReference).Assembly
     );
 
     // Background jobs: registry + execution store + hosted runner (Phase 1)
@@ -232,7 +234,8 @@ try
         typeof(MarketNest.Catalog.AssemblyReference).Assembly,
         typeof(MarketNest.Orders.AssemblyReference).Assembly,
         typeof(MarketNest.Payments.AssemblyReference).Assembly,
-        typeof(MarketNest.Promotions.AssemblyReference).Assembly
+        typeof(MarketNest.Promotions.AssemblyReference).Assembly,
+        typeof(MarketNest.Notifications.AssemblyReference).Assembly
     );
 
     // ── Build ─────────────────────────────────────────────────────────
