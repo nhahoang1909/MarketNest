@@ -1,45 +1,45 @@
 ---
 name: api-contract-review
 description: >
-  Quét toàn bộ endpoint layer của MarketNest để review chất lượng API contract: Minimal API
+  Scan the entire endpoint layer of MarketNest to review API contract quality: Razor Pages
   design, HTTP status code convention, Problem Details RFC 7807, FluentValidation wiring,
   response schema consistency, HTMX partial endpoint pattern, antiforgery, rate limit annotation,
-  và HX-Trigger event contract. Sử dụng skill này khi người dùng muốn: review API endpoint,
-  kiểm tra HTTP status code, check Problem Details, review validation wiring, kiểm tra HTMX
-  response header, review rate limit, check antiforgery, hoặc nói bất kỳ cụm từ nào như
+  and HX-Trigger event contract. Use this skill when the user wants to: review API endpoint,
+  check HTTP status code, check Problem Details, review validation wiring, check HTMX
+  response headers, review rate limits, check antiforgery, or says anything like
   "review API", "check endpoint", "HTTP contract", "HTMX pattern", "Problem Details",
   "rate limit annotation", "validation response", "status code", "api design review".
-  Kích hoạt khi người dùng upload file PageModel, Minimal API handler, Program.cs, middleware.
+  Activate when the user uploads PageModel, Minimal API handler, Program.cs, or middleware files.
 compatibility:
-  tools: [bash, read_file, write_file, list_files]
-  agents: [claude-code, gemini-cli, cursor, continue, aider]
+  tools: [bash, read_file, write_file, list_files, grep_search, run_in_terminal]
+  agents: [claude-code, gemini-cli, cursor, continue, aider, copilot]
   stack: [.NET 10, ASP.NET Core 10, Razor Pages, Minimal API, HTMX 2, FluentValidation 11, MediatR 12]
 ---
 
 # API Contract Review Skill — MarketNest
 
-Skill này review toàn bộ endpoint layer của MarketNest theo 7 nhóm rule, từ HTTP status code
-đến HTMX-specific contract. Output là báo cáo phân loại **BLOCKER / HIGH / MEDIUM** với
-fix code sẵn sàng copy-paste.
+This skill reviews the entire endpoint layer of MarketNest across 7 rule groups, from HTTP
+status codes to HTMX-specific contracts. Output is a report classified as
+**BLOCKER / HIGH / MEDIUM** with ready-to-use fix code.
 
 ---
 
-## API Topology của MarketNest
+## API Topology of MarketNest
 
 ```
 Client (Browser)
     │
     ├─ Full page request → Razor Pages (Pages/**/*.cshtml.cs)
     │      OnGet / OnPost / OnPut / OnDelete handlers
-    │      → returns Page() hoặc Partial() tuỳ IsHtmx()
+    │      → returns Page() or Partial() depending on IsHtmx()
     │
-    ├─ HTMX partial request (HX-Request: true) → cùng PageModel
+    ├─ HTMX partial request (HX-Request: true) → same PageModel
     │      → returns Partial("_PartialName", model)
     │      → response headers: HX-Redirect, HX-Retarget, HX-Trigger
     │
-    └─ Minimal API (Phase 2+) → app.Map*() trong Program.cs / Extensions/
-           → returns TypedResults.* (không phải Results.* thuần)
-           → dùng cho: health check, webhook, mobile API
+    └─ Minimal API (Phase 2+) → app.Map*() in Program.cs / Extensions/
+           → returns TypedResults.* (not plain Results.*)
+           → used for: health check, webhook, mobile API
 
 Rate limit layers:
     Nginx: coarse (30r/s api / 5r/m auth)
@@ -48,58 +48,57 @@ Rate limit layers:
 
 ---
 
-## Quy trình thực thi
+## Execution Flow
 
 ```
-Phase 1: SCAN    → Thu thập toàn bộ endpoint files
+Phase 1: SCAN    → Collect all endpoint files
 Phase 2: ANALYZE → 7 rule groups
-Phase 3: REPORT  → BLOCKER / HIGH / MEDIUM với file:line
-Phase 4: FIX     → Code fix sẵn sàng (hỏi xác nhận trước khi apply)
+Phase 3: REPORT  → BLOCKER / HIGH / MEDIUM with file:line
+Phase 4: FIX     → Ready-to-use fix code (confirm before applying)
 Phase 5: VERIFY  → Integration test checklist
 ```
 
 ---
 
-## Phase 1: SCAN — Thu thập endpoint inventory
+## Phase 1: SCAN — Collect Endpoint Inventory
 
 ### 1.1 Razor Pages handlers
 
-```bash
-# Liệt kê tất cả PageModel files
-find src/MarketNest.Web/Pages/ -name "*.cshtml.cs" | sort
+```powershell
+# List all PageModel files
+Get-ChildItem -Path src/MarketNest.Web/Pages -Recurse -Filter *.cshtml.cs |
+  Sort-Object FullName | Select-Object FullName
 
-# Đếm số handler methods per page
-find src/MarketNest.Web/Pages/ -name "*.cshtml.cs" | while read f; do
-    count=$(grep -c "public.*Task.*On\(Get\|Post\|Put\|Delete\|Patch\)" "$f" 2>/dev/null || echo 0)
-    echo "$count  $(basename $f)"
-done | sort -rn | head -20
+# Count handler methods per page
+Get-ChildItem -Path src/MarketNest.Web/Pages -Recurse -Filter *.cshtml.cs |
+  ForEach-Object {
+    $count = (Select-String -Path $_.FullName -Pattern 'public.*Task.*On(Get|Post|Put|Delete|Patch)').Count
+    [PSCustomObject]@{ Count = $count; File = $_.Name }
+  } | Sort-Object Count -Descending | Select-Object -First 20
 
-# Tìm tất cả HTMX partial endpoints (handlers trả về Partial())
-grep -rn "return Partial\|\.Partial(\|Partial(\"_" \
-  src/MarketNest.Web/ --include="*.cshtml.cs" | grep -v "bin/\|obj/" | head -30
+# Find all HTMX partial endpoints (handlers returning Partial())
+Select-String -Path src/MarketNest.Web -Pattern 'return Partial\(|\.Partial\(' -Recurse -Include *.cshtml.cs |
+  Where-Object { $_.Path -notmatch '\\(bin|obj)\\' } | Select-Object Path, Line | Select-Object -First 30
 ```
 
 ### 1.2 Minimal API endpoints
 
-```bash
-# Tìm tất cả Map*() calls
-grep -rn "app\.MapGet\|app\.MapPost\|app\.MapPut\|app\.MapDelete\|app\.MapPatch\|\.MapGroup" \
-  src/MarketNest.Web/ --include="*.cs" | grep -v "bin/\|obj/" | sort
+```powershell
+# Find all Map*() calls
+Select-String -Path src/MarketNest.Web -Pattern 'app\.MapGet|app\.MapPost|app\.MapPut|app\.MapDelete|app\.MapPatch|\.MapGroup' -Recurse -Include *.cs |
+  Where-Object { $_.Path -notmatch '\\(bin|obj)\\' } | Sort-Object Line | Select-Object Path, Line
 
-# Tìm endpoint extension files
-find src/MarketNest.Web/Extensions/ -name "*Endpoints.cs" -o -name "*Api.cs" \
-  | grep -v "bin/\|obj/" | sort
-
-# Liệt kê tất cả route patterns
-grep -rn "\"\/api\/" src/MarketNest.Web/ --include="*.cs" \
-  | grep -v "bin/\|obj/" | head -30
+# List endpoint extension files
+Get-ChildItem -Path src/MarketNest.Web/Extensions -Recurse -Filter *.cs |
+  Where-Object { $_.Name -match 'Endpoints|Api' } | Select-Object FullName
 ```
 
-### 1.3 Middleware pipeline (kiểm tra thứ tự)
+### 1.3 Middleware pipeline order
 
-```bash
-# Đọc Program.cs để verify middleware order
-cat src/MarketNest.Web/Program.cs | grep -E "app\.Use|app\.Map|app\.Run" | head -30
+```powershell
+# Read Program.cs — verify middleware order
+Select-String -Path src/MarketNest.Web/Program.cs -Pattern 'app\.Use|app\.Map|app\.Run' |
+  Select-Object Line | Select-Object -First 30
 ```
 
 ---
