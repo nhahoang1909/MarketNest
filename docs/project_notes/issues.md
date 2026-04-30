@@ -20,6 +20,19 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-30 - feat(base): Common Validation Rules infrastructure — FieldLimits, ValidationMessages, ValidatorExtensions expansion
+- **Status**: Completed
+- **Description**: Implemented centralized validation infrastructure for the entire project:
+  - **`FieldLimits.cs`** (new, `Base.Common/Validation/`): Single source of truth for all field length/numeric limits. Organized as nested static classes by tier (Identifier, InlineShort, InlineStandard, InlineExtended, MultilineStandard, MultilineLong, MultilineDocument) + special formats (Email, URL, PostalCode, CountryCode, CurrencyCode, PhoneNumber, Slug, Sku) + numeric (Money, Percentage, Quantity, Weight, Rating, Pagination) + collections + file upload + domain-specific classes (Address, Product, Storefront, Review, Dispute, Coupon, Notification) that reference tier constants.
+  - **`ValidationMessages.cs`** (new, `Base.Common/Validation/`): Templated error message factory with categories: Required, Length, Numeric, Format, Date, File, Collection, Identity, Excel Import. All validators must use these — no inline string messages.
+  - **`ValidatorExtensions.cs`** (expanded): Added 15+ new extension methods: `MustBeNonNegativeMoney`, `MustBeValidStockQuantity`, `MustBeValidPercentage`, `MustBeValidPhone`, `MustBeValidCountryCode`, `MustBeValidCurrencyCode`, `MustBeValidTimezone`, `MustBeValidUrl`, `MustBeValidPostalCode`, `MustBeValidRating`, `MustBeInlineShort`, `MustBeInlineStandard`, `MustBeInlineExtended`, `MustBeMultilineStandard`, `MustBeMultilineLong`, `MustBeMultilineDocument`, `MustBeValidPagination`. All now use `FieldLimits` + `ValidationMessages` instead of `DomainConstants.Validation`.
+  - **`docs/common-validation-rules.md`** (new): Full documentation of the validation system — principles, string tiers, numeric limits, format validators, usage examples, field reference table.
+- **Files changed**: 3 new (`FieldLimits.cs`, `ValidationMessages.cs`, `docs/common-validation-rules.md`), 1 modified (`ValidatorExtensions.cs`)
+- **Build**: `dotnet build` → 0 warnings, 0 errors ✅
+- **Notes**: `DomainConstants.Validation` constants retained for backward compatibility — existing code (SetSalePriceCommandValidator) still compiles. New code should use `FieldLimits` + `ValidationMessages` exclusively.
+
+---
+
 ### 2026-04-30 - feat(base): PgQueryBuilder — safe raw PostgreSQL query generation utility (ADR-032)
 - **Status**: Completed
 - **Description**: Added `PgQueryBuilder` static utility class to `Base.Infrastructure/Persistence/` for safely generating raw PostgreSQL queries when EF Core is insufficient (complex multi-schema joins, DDL, PostgreSQL-specific features). Key features:
