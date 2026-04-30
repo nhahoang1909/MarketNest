@@ -239,6 +239,7 @@ All located in `docs/` — read before implementing any feature:
 | `docs/notifications.md` | Notifications module: template engine, dispatch pipeline, email/in-app channels, usage guide |
 | `docs/frontend-guide.md` | Frontend stack, page inventory, HTMX/Alpine patterns, component library, BE-FE contracts |
 | `docs/code-rules.md` | Naming conventions, C# idioms, DDD principles, banned patterns |
+| `docs/common-validation-rules.md` | FieldLimits, ValidationMessages, ValidatorExtensions — centralized validation infrastructure |
 | `docs/devops-requirements.md` | Docker Compose topology, GitHub Actions, K8s manifests |
 
 
