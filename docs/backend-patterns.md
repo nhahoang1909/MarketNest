@@ -168,16 +168,56 @@ Modules NEVER reference each other's concrete classes. They use contracts in `Ma
 // Base.Common/Contracts/IOrderCreationService.cs — Cart → Orders
 // Base.Common/Contracts/IInventoryService.cs — Cart/Orders → Catalog
 // Base.Common/Contracts/IPaymentService.cs — Orders → Payments
-// Base.Common/Contracts/INotificationService.cs — All → Notifications
+// Base.Common/Contracts/INotificationService.cs — All → Notifications (template-based dispatch, ADR-034)
 // Base.Common/Contracts/IStorefrontReadService.cs — Payments → Catalog
 // Base.Common/Contracts/IUserPreferencesReadService.cs — Any → Identity
-// Base.Common/Contracts/INotificationPreferenceReadService.cs — Notifications → Identity
+// Base.Common/Contracts/INotificationPreferenceReadService.cs — Notifications → Identity (Phase 2)
 // Base.Common/Contracts/IReferenceDataReadService.cs — Any → Admin (Tier 1 reference data)
 // Base.Common/Contracts/Config/IOrderPolicyConfig.cs + IOrderPolicyConfigWriter.cs — Admin → Orders
 // Base.Common/Contracts/Config/ICommissionConfig.cs + ICommissionConfigWriter.cs — Admin → Payments
 // Base.Common/Contracts/Config/IStorefrontPolicyConfig.cs + IStorefrontPolicyConfigWriter.cs — Admin → Catalog
 // Base.Common/Contracts/Config/IReviewPolicyConfig.cs + IReviewPolicyConfigWriter.cs — Admin → Reviews
 ```
+
+### INotificationService — Template-Based Dispatch (ADR-034)
+
+```csharp
+// Base.Common/Contracts/INotificationService.cs
+public interface INotificationService
+{
+    // Template-based dispatch — email and/or in-app per template Channel setting
+    Task SendAsync(
+        Guid recipientUserId,
+        string templateKey,
+        IReadOnlyDictionary<string, string> variables,
+        CancellationToken ct = default);
+
+    // Send same notification to multiple recipients (e.g., order.placed → buyer + seller)
+    Task SendToMultipleAsync(
+        IEnumerable<Guid> recipientUserIds,
+        string templateKey,
+        IReadOnlyDictionary<string, string> variables,
+        CancellationToken ct = default);
+
+    // Security emails — bypasses preference check entirely, always sent
+    Task SendSecurityEmailAsync(
+        string toEmail,
+        string templateKey,
+        IReadOnlyDictionary<string, string> variables,
+        CancellationToken ct = default);
+}
+```
+
+Template keys are defined as constants in `NotificationTemplateKeys` in `Base.Common`:
+```csharp
+// Usage in domain event handler
+var vars = new OrderPlacedVariables(
+    OrderNumber: order.Number, BuyerName: buyer.Name, ... ).ToVariables();
+
+await notifications.SendAsync(buyer.Id, NotificationTemplateKeys.OrderPlacedBuyer, vars, ct);
+```
+
+See `docs/notifications.md` for the full dispatch pipeline, template engine, and usage guide.
 
 ### Three-Tier Configuration Contracts (ADR-021)
 

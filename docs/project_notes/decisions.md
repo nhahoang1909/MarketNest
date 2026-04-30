@@ -42,6 +42,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-031 | Two-Connection-String Pattern — DefaultConnection (write) + ReadConnection (read-replica fallback) | 2026-04-30 |
 | ADR-032 | PgQueryBuilder — Safe Raw PostgreSQL Query Generation Utility | 2026-04-30 |
 | ADR-033 | Expand LogEventId from 1,000 to 10,000 per module | 2026-04-30 |
+| ADR-034 | Notifications Module — Template-Based Dispatch with Email + In-App Channels | 2026-04-30 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -958,3 +959,29 @@ The Unit of Work pattern is split into two distinct use cases, each with its own
 - ✅ Separate EventIds enable precise filtering and alerting in Seq
 - ✅ Easy mental model: module number × 10000
 - ❌ Larger numeric values (6 digits for later modules) — acceptable for enum usage
+
+---
+
+### ADR-034: Notifications Module — Template-Based Dispatch with Email + In-App Channels (2026-04-30)
+
+**Context:**
+- MarketNest needs a flexible notifications system for both real-time and scheduled messages.
+- Notifications must support multiple channels: Email, SMS, In-App, etc.
+- Admin users should manage templates and triggers without code changes.
+
+**Decision:**
+- New `MarketNest.Notifications` module with `notifications` PostgreSQL schema
+- **Template-based system**: notification templates stored in DB, editable via Admin UI
+- **Channel support**: Email and In-App notifications implemented in Phase 1; SMS and others can be added later
+- **Triggers**: notifications can be sent immediately or scheduled for later
+- **Batching**: support for batch sending of notifications to reduce load
+
+**Alternatives Considered:**
+- Separate microservice for notifications → Rejected: unnecessary complexity in Phase 1
+- Polling-based approach → Rejected: less efficient and more complex than event-driven
+
+**Consequences:**
+- ✅ Flexible and extensible notifications system
+- ✅ Admin users can manage without code changes
+- ✅ Phase 3 ready: can be extracted to a microservice with minimal changes
+

@@ -366,3 +366,21 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 - **PR/Issue**: n/a (inline implementation)
 - **Phase 2 TODO**: DB-backed StorefrontPolicyConfig (Catalog) and ReviewPolicyConfig (Reviews); Admin UI pages for commission config + product categories; per-seller commission overrides
 
+
+### 2026-04-30 - Notifications Module Phase 1 Implementation
+- **Status**: Completed
+- **Description**: Implemented the Notifications module backend (Phase 1): domain entities, infrastructure, application services, template seeder, and background job. Replaced the old `INotificationService` contract with template-based dispatch supporting Email + In-App channels.
+- **Files Created/Modified**:
+  - **Domain**: `NotificationTemplate` (aggregate root), `Notification` (in-app inbox entity), `NotificationChannel` enum, `NotificationLogStatus` enum
+  - **Core Contracts**: Updated `INotificationService` (template-based dispatch), added `NotificationTemplateKeys`, `NotificationVariables` records, `NotificationVariableExtensions`
+  - **Infrastructure**: `NotificationsDbContext`, `NotificationsReadDbContext`, `BaseRepository`/`BaseQuery` wrappers, EF configurations, `HandlebarsTemplateRenderer`, `SmtpEmailSender` (MailKit → MailHog), `EmailLayoutRenderer`, `NotificationTemplateRepository`, `NotificationRepository`, `GetNotificationInboxQuery`, `UnreadCountQuery`, `CleanupExpiredNotificationsJob`, `NotificationTemplateSeeder` (17 default templates)
+  - **Application**: `NotificationService` (dispatch pipeline), `MarkNotificationReadCommand`/Handler, `MarkAllNotificationsReadCommand`/Handler, `ITemplateRenderer`, `IEmailSender`, `IEmailLayoutRenderer`, `INotificationTemplateRepository`, `INotificationRepository`, `IGetNotificationInboxQuery`, `IGetUnreadCountQuery`, `NotificationItemDto`
+  - **Program.cs**: Registered Notifications in `AddModuleInfrastructureServices`, `AddDatabaseInitializer`, FluentValidation assemblies
+  - **Directory.Packages.props**: Added `MailKit 4.16.0`, `Microsoft.Extensions.Options.ConfigurationExtensions`
+  - **appsettings.json**: Expanded `Smtp` section with full options
+- **Build**: `dotnet build` → succeeded ✅ (0 warnings, 0 errors)
+- **Tests**: 80/81 passed (1 pre-existing analyzer test failure unrelated to changes)
+- **PR/Issue**: n/a (inline implementation)
+- **Phase 1 TODO (Frontend)**: Navbar bell icon, `notificationBell` Alpine component, `_NotificationDrawer.cshtml`, `_NotificationItem.cshtml`, notification Razor Pages
+- **Phase 2 TODO**: `NotificationLog` entity, SSE push, Admin notification log UI, `INotificationPreferenceReadService` integration, digest jobs
+

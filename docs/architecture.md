@@ -218,7 +218,7 @@ Each module maps to a future microservice candidate. **No module crosses another
 | **MarketNest.Payments** | `payments.*` | Payments, Payouts, Commission, Payment Methods (Phase 2+) | CapturePayment, ProcessPayout |
 | **MarketNest.Reviews** | `reviews.*` | Reviews, Votes, fraud gate | CreateReview, VoteReview |
 | **MarketNest.Disputes** | `disputes.*` | Disputes, Messages, Resolution | OpenDispute, ResolveDispute |
-| **MarketNest.Notifications** | — | Email/SMS (in-process Phase 1, standalone Phase 3) | SendEmail |
+| **MarketNest.Notifications** | `notifications.*` | NotificationTemplate (admin-managed), Notification (in-app inbox), Email dispatch (MailKit/SMTP), Handlebars template engine. Phase 3: standalone service via RabbitMQ. | `INotificationService.SendAsync()`, `INotificationService.SendSecurityEmailAsync()` |
 | **MarketNest.Promotions** | `promotions.*` | Vouchers (Platform + Shop), VoucherUsages, discount validation | CreateVoucher, ApplyVoucher, ValidateVoucher |
 | **MarketNest.Admin** | `admin.*` + `public.*` | Back-office: arbitration, platform config, reference data management | Admin commands/queries, ArbitrateDispute, UpdateCommission |
 
