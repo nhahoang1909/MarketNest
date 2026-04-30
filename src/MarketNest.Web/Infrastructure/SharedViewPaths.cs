@@ -11,6 +11,8 @@ public static class SharedViewPaths
     public const string LoadingSpinner = "~/Pages/Shared/Display/_LoadingSpinner.cshtml";
     public const string Breadcrumb = "~/Pages/Shared/Display/_Breadcrumb.cshtml";
     public const string EmptyState = "~/Pages/Shared/Display/_EmptyState.cshtml";
+    public const string ImportPreview = "~/Pages/Shared/Display/_ImportPreview.cshtml";
+    public const string ImportErrorTable = "~/Pages/Shared/Display/_ImportErrorTable.cshtml";
 
     // ── Form Components ─────────────────────────────────────────────────
     public const string TextField = "~/Pages/Shared/Forms/_TextField.cshtml";
