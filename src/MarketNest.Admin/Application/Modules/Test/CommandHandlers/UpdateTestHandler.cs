@@ -1,5 +1,5 @@
 using MarketNest.Admin.Domain;
-using MarketNest.Base.Infrastructure;
+using MarketNest.Base.Common;
 using MediatR;
 
 #pragma warning disable IDE0130
@@ -14,7 +14,7 @@ public partial class UpdateTestHandler(
     {
         Log.InfoStart(logger, request.Id);
 
-        TestEntity? entity = await repository.GetByKeyAsync(request.Id, cancellationToken);
+        TestEntity? entity = await repository.FindByKeyAsync(request.Id, cancellationToken);
         if (entity is null)
         {
             Log.WarnNotFound(logger, request.Id);
@@ -28,8 +28,6 @@ public partial class UpdateTestHandler(
         if (request.SubTitles is not null)
             foreach (string title in request.SubTitles)
                 repository.AddSubEntity(new TestSubEntity(Guid.NewGuid(), request.Id, title));
-
-        await repository.SaveChangesAsync(cancellationToken);
 
         Log.InfoSuccess(logger, request.Id);
         return Result<Unit, Error>.Success(Unit.Value);

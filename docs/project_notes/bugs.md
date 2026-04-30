@@ -20,6 +20,12 @@ Keep a reference: _"See `bugs-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-29 - PostgreSQL error: "value too long for type character varying(64)"
+- **Issue**: App crashed on startup with `Npgsql.PostgresException (22001): value too long for type character varying(64)` when trying to save the EF Core model hash during migrations
+- **Root Cause**: `ModelHasher.ComputeHash()` uses SHA512 which produces 128 hex characters, but the `model_hash` column in `__auto_migration_history` table was defined as `VARCHAR(64)` — only half the required size
+- **Solution**: Two fixes in `DatabaseTracker.EnsureTrackingTablesExistAsync()`: (1) Changed `CREATE TABLE` to define `model_hash VARCHAR(128)` (2) Added `ALTER TABLE` migration statement to resize existing columns from VARCHAR(64) to VARCHAR(128). Also fixed misleading comments in `ModelHasher` to correctly document SHA512 usage.
+- **Prevention**: When using cryptographic hashes, document the specific hash algorithm and character count (SHA512 = 128 chars, SHA256 = 64 chars). Ensure DB column sizes match. Add a unit test that calls `ModelHasher.ComputeHash()` and verifies the hash length.
+
 ### 2026-04-25 - htmxHelpers.js redirect to wrong login URL
 - **Issue**: On 401 responses, users were redirected to `/account/login` (non-existent) instead of `/auth/login`
 - **Root Cause**: Hardcoded wrong URL string in `htmxHelpers.js` error handler
@@ -32,7 +38,6 @@ Keep a reference: _"See `bugs-archive-2026.md` for older entries."_
 - **Solution**: Added `[FromForm]` attribute to both `culture` and `returnUrl` parameters in the `MapPost` lambda
 - **Prevention**: When mapping POST endpoints that receive HTML form submissions, always use `[FromForm]` for parameter binding in minimal APIs
 
-_No other bugs logged yet. Add entries as issues are encountered and resolved._
 
 ### 2026-04-25 - Connection string key mismatch between code and appsettings.json
 - **Issue**: `AppConstants.DefaultConnectionStringName` was `"DefaultConnection"` but `appsettings.json` had key `"Default"` — `GetConnectionString()` would return `null` at runtime
@@ -57,3 +62,9 @@ _No other bugs logged yet. Add entries as issues are encountered and resolved._
 - **Root Cause**: Two separate issues: (1) `SharedResource` class was in `MarketNest.Web.Infrastructure` namespace, but resource files lived at `Resources/SharedResource.{culture}.resx`. ASP.NET Core localization with `ResourcesPath = "Resources"` expects files at `Resources/Infrastructure/SharedResource.{culture}.resx` for a class in a sub-namespace — so it couldn't find them and returned raw keys. (2) `Index.cshtml` had Vietnamese text typed without diacritics (plain ASCII).
 - **Solution**: (1) Moved `SharedResource` class to `MarketNest.Web` root namespace so localization resolves `Resources/SharedResource.{culture}.resx` correctly. Added `@using MarketNest.Web` to `_ViewImports.cshtml` files. (2) Added proper Vietnamese diacritical marks to all hardcoded text in `Index.cshtml`.
 - **Prevention**: Localization marker classes must live in the project's root namespace (or resource files must be nested to match the class's sub-namespace). Verify localization works by checking both languages after adding new resource keys.
+
+### 2026-04-28 - App crash: "relation public.countries does not exist"
+- **Issue**: App terminated on startup with `PostgresException 42P01: relation "public.countries" does not exist`. The new admin config pages inject `IReferenceDataReadService` which queries `public.countries`, but the table was never created.
+- **Root Cause**: Two compounding issues in `DatabaseInitializer`: (1) `EnsureCreatedAsync()` is a no-op when the **database** exists — it doesn't check individual tables. After `DropContextTablesAsync`, the DB still exists, so calling `EnsureCreated` again didn't recreate tables. (2) The model hash was saved to the tracker even though tables weren't created, causing subsequent runs to skip migration entirely ("model unchanged").
+- **Solution**: Three fixes in `DatabaseInitializer.ApplyMigrationsAsync`: (a) After dropping tables, use `IRelationalDatabaseCreator.CreateTablesAsync()` instead of `EnsureCreatedAsync()` — this creates tables from the model regardless of DB existence. (b) Added `ContextTablesExistAsync()` — queries `information_schema.tables` to verify at least one table exists. (c) In the "model hash unchanged → skip" path, verify tables actually exist; if missing (stale hash), drop+recreate+clear seeds+save hash directly. Dev-only guard (`!env.IsProduction()`).
+- **Prevention**: Always generate EF migrations (`dotnet ef migrations add`) instead of relying on `EnsureCreated` for modules with evolving schemas. Phase 2: add a proper migration for the Admin module.

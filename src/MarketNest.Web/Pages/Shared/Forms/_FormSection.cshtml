@@ -1,0 +1,29 @@
+﻿@*
+  Form section card — groups related fields inside a named card section.
+  Usage: wrap this partial around your field group using Html.RenderPartialAsync,
+         or use it as a structural wrapper via @{ await Html.RenderPartialAsync("~/Pages/Shared/Forms/_FormSection.cshtml", null, new ViewDataDictionary(ViewData) { ["Title"] = "..." }); }
+  Parameters (via ViewData):
+    Title       — section heading (required)
+    Description — optional subtitle / hint for the whole section
+    NoBorder    — "true" removes the card border (flat style)
+
+  NOTE: This is a structural partial — fields are passed as the main content wrapped
+        by the caller. Use the card + divider classes directly in your page when you
+        need a section shell, or embed fields inside a <div class="card card-body space-y-5">.
+*@
+@{
+  var title       = ViewData["Title"]?.ToString() ?? "Section";
+  var description = ViewData["Description"]?.ToString();
+  var noBorder    = ViewData["NoBorder"]?.ToString() == "true";
+}
+
+<div class="@(noBorder ? "space-y-4" : "card card-body space-y-4")">
+  <div>
+    <h3 class="text-sm font-semibold text-ink-700">@title</h3>
+    @if (!string.IsNullOrEmpty(description))
+    {
+      <p class="mt-0.5 text-xs text-ink-400">@description</p>
+    }
+  </div>
+  <hr class="border-ink-100/60"/>
+</div>

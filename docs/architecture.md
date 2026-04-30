@@ -218,14 +218,23 @@ Each module maps to a future microservice candidate. **No module crosses another
 | **MarketNest.Payments** | `payments.*` | Payments, Payouts, Commission, Payment Methods (Phase 2+) | CapturePayment, ProcessPayout |
 | **MarketNest.Reviews** | `reviews.*` | Reviews, Votes, fraud gate | CreateReview, VoteReview |
 | **MarketNest.Disputes** | `disputes.*` | Disputes, Messages, Resolution | OpenDispute, ResolveDispute |
-| **MarketNest.Notifications** | — | Email/SMS (in-process Phase 1, standalone Phase 3) | SendEmail |
+| **MarketNest.Notifications** | `notifications.*` | NotificationTemplate (admin-managed), Notification (in-app inbox), Email dispatch (MailKit/SMTP), Handlebars template engine. Phase 3: standalone service via RabbitMQ. | `INotificationService.SendAsync()`, `INotificationService.SendSecurityEmailAsync()` |
 | **MarketNest.Promotions** | `promotions.*` | Vouchers (Platform + Shop), VoucherUsages, discount validation | CreateVoucher, ApplyVoucher, ValidateVoucher |
-| **MarketNest.Admin** | — | Back-office: arbitration, platform config | Admin commands/queries |
+| **MarketNest.Admin** | `admin.*` + `public.*` | Back-office: arbitration, platform config, reference data management | Admin commands/queries, ArbitrateDispute, UpdateCommission |
 
 **Communication rules:**
 - ❌ Module A CANNOT reference concrete class of Module B
-- ✅ Sync: via interfaces in `MarketNest.Core/Contracts/`
+- ✅ Sync: via interfaces in `MarketNest.Base.Common/Contracts/`
+- ✅ Admin writes business config via `IXxxConfigWriter` contracts — never injects module DbContexts
 - ✅ Async: via domain events (MediatR Phase 1 → RabbitMQ Phase 3)
+
+### Three-Tier Configuration Model (ADR-021)
+
+| Tier | Examples | Owner | Storage | Access |
+|------|----------|-------|---------|--------|
+| **Tier 1 — Reference Data** | Country, Gender, ProductCategory | Admin module | `public` schema tables | `IReferenceDataReadService` (Redis 24h TTL) |
+| **Tier 2 — Business Config** | CommissionRate, OrderPolicyConfig | Owning module (Orders, Payments, etc.) | Module schema table | `IXxxConfig` read / `IXxxConfigWriter` write contracts |
+| **Tier 3 — System Config** | PasswordMinLength, DefaultCurrency | `MarketNest.Web` | `appsettings.json` only | `IOptions<T>` injection |
 
 ---
 
@@ -251,6 +260,20 @@ marketnest:ratelimit:{userId}:{endpoint}                  TTL: 1min
 marketnest:refresh:{tokenId}                              TTL: 7d
 marketnest:blacklist:{tokenId}                            TTL: 7d
 marketnest:voucher:validate:{code}                        TTL: 30s  (invalidate on Pause/Deplete/Expire)
+
+# Tier 1 — Reference Data (24h TTL)
+marketnest:refdata:countries                              TTL: 24h
+marketnest:refdata:genders                                TTL: 24h
+marketnest:refdata:phone-codes                            TTL: 24h
+marketnest:refdata:nationalities                          TTL: 24h
+marketnest:refdata:categories                             TTL: 24h
+
+# Tier 2 — Business Config (1h TTL, invalidated on Admin write)
+marketnest:config:order-policy                            TTL: 1h
+marketnest:config:commission-default                      TTL: 1h
+marketnest:config:commission:seller:{sellerId}            TTL: 1h
+marketnest:config:storefront-policy                       TTL: 1h
+marketnest:config:review-policy                           TTL: 1h
 ```
 
 ---

@@ -8,22 +8,82 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 
 **When this file exceeds ~20 entries**: Add a Table of Contents at the top.
 
-## Format
+## Table of Contents
 
-### ADR-XXX: Title (YYYY-MM-DD)
+| ADR | Title | Date |
+|-----|-------|------|
+| ADR-001 | Modular Monolith → Microservices → Kubernetes Phased Architecture | 2026-04-25 |
+| ADR-002 | Razor Pages + HTMX + Alpine.js (No SPA Framework) | 2026-04-25 |
+| ADR-003 | Result<T, Error> — No Exceptions for Business Failures | 2026-04-25 |
+| ADR-004 | EF Core with Schema-Per-Module Boundary Enforcement | 2026-04-25 |
+| ADR-005 | No Magic Strings / Magic Numbers | 2026-04-25 |
+| ADR-006 | System Tables in `public` Schema, Module Tables in Named Schemas | 2026-04-25 |
+| ADR-007 | DDD Property Accessor Convention | 2026-04-25 |
+| ADR-008 | Integration Event Infrastructure — Transport-Agnostic Event Bus | 2026-04-25 |
+| ADR-009 | Pre-commit Secret Detection with Gitleaks | 2026-04-25 |
+| ADR-010 | OpenAPI + Scalar for API Documentation | 2026-04-25 |
+| ADR-011 | Distributed User Settings — Each Module Owns Its Domain-Specific Preferences | 2026-04-25 |
+| ADR-012 | Automatic Auditing via Attributes | 2026-04-26 |
+| ADR-013 | Background Job Management Foundation | 2026-04-25 |
+| ADR-014 | [LoggerMessage] Source-Generated Delegates as Mandatory Logging Pattern | 2026-04-26 |
+| ADR-015 | Voucher/Promotions Domain Design — Two-Axis Discount Model | 2026-04-27 |
+| ADR-016 | Order Financial Calculation — Two-Perspective Model | 2026-04-27 |
+| ADR-020 | Consolidate Agent Guidelines into a Single Canonical File | 2026-04-26 |
+| ADR-021 | Three-Tier Configuration Model | 2026-04-28 |
+| ADR-022 | `ReferenceData` Base Entity in `Base.Domain` | 2026-04-28 |
+| ADR-023 | EF Core DDD Property Access Convention — `ApplyDddPropertyAccessConventions()` | 2026-04-28 |
+| ADR-024 | Sale Price as Inline Fields on ProductVariant — Option A | 2026-04-29 |
+| ADR-025 | Canonical BaseQuery / BaseRepository in Base.Infrastructure with Module-Local Thin Wrappers | 2026-04-29 |
+| ADR-026 | SLA Requirements Formalized as First-Class Project Concern | 2026-04-29 |
+| ADR-027 | Unit of Work + [Transaction] Attribute — Domain Event Lifecycle & Transaction Management | 2026-04-29 |
+| ADR-028 | IRuntimeContext — Unified Ambient Request Context | 2026-04-29 |
+| ADR-029 | Four-Layer Caching Strategy & Cross-Module Service Contracts | 2026-04-29 |
+| ADR-030 | Application Constants vs Configuration — Immutable Rules in AppConstants, Environment-Specific Settings in appsettings.json | 2026-04-29 |
+| ADR-031 | Two-Connection-String Pattern — DefaultConnection (write) + ReadConnection (read-replica fallback) | 2026-04-30 |
+| ADR-032 | PgQueryBuilder — Safe Raw PostgreSQL Query Generation Utility | 2026-04-30 |
+| ADR-033 | Expand LogEventId from 1,000 to 10,000 per module | 2026-04-30 |
+| ADR-034 | Notifications Module — Template-Based Dispatch with Email + In-App Channels | 2026-04-30 |
+| ADR-035 | SharedViewPaths — Centralized Razor Partial Path Constants | 2026-04-30 |
+| ADR-036 | Rich Text Editor — Trix with Server-Side HTML Sanitization | 2026-04-30 |
+| ADR-037 | Excel Import/Export — ClosedXML + IExcelService + IAntivirusScanner | 2026-04-30 |
+| ADR-038 | I18N Service — II18NService Wrapper + I18NKeys Constants | 2026-04-30 |
+| ADR-039 | Nullable Management — Business Decision Model with `#pragma` on EF Constructors | 2026-04-30 |
+
+> **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
+
+---
+
+### ADR-025: Canonical BaseQuery / BaseRepository in Base.Infrastructure with Module-Local Thin Wrappers (2026-04-29)
 
 **Context:**
-- Why the decision was needed
+- `BaseQuery<TEntity,TKey,TContext>` and `BaseRepository<TEntity,TKey,TContext>` were previously only in the Admin module, forcing other modules to duplicate the same boilerplate.
+- `IBaseQuery<TEntity,TKey>` was already canonical in `Base.Common`, but had no shared concrete implementation.
+- Need a single authoritative implementation that all modules inherit without duplicating EF Core logic.
 
 **Decision:**
-- What was chosen
+- `BaseQuery<TEntity, TKey, TContext>` (implements `IBaseQuery<TEntity,TKey>`) lives in `Base.Infrastructure` (namespace `MarketNest.Base.Infrastructure`). Provides Count, Any, GetByKey, FindByKey, FirstOrDefault, List, GetPagedList, GetQueryable.
+- `BaseRepository<TEntity, TKey, TContext>` (implements `IBaseRepository<TEntity,TKey>`) lives in `Base.Infrastructure`. Provides GetByKey, FindByKey, Exists, Add, Update, Remove, SaveChanges.
+- `IBaseRepository<TEntity, TKey>` lives in `Base.Infrastructure`.
+- Each module declares a 2-line local alias that pins the module's own `DbContext` type:
+  ```csharp
+  // read side
+  public abstract class BaseQuery<TEntity, TKey>(ModuleReadDbContext db)
+      : BaseQuery<TEntity, TKey, ModuleReadDbContext>(db);
+  // write side
+  public abstract class BaseRepository<TEntity, TKey>(ModuleDbContext db)
+      : BaseRepository<TEntity, TKey, ModuleDbContext>(db);
+  ```
+- `DependencyInjection.cs` extracted to all remaining modules (`Auditing`, `Promotions`) following existing `Admin` / `Orders` pattern (`AddXxxModule()`).
 
 **Alternatives Considered:**
-- Option → Why rejected
+- Keep per-module copies → Rejected: duplication; divergence risk when base logic changes.
+- Source generators / T4 templates → Rejected: unnecessary complexity; inheritance is simpler and type-safe.
 
 **Consequences:**
-- ✅ Benefits
-- ❌ Trade-offs
+- ✅ Single implementation to maintain; all modules pick up bug fixes automatically.
+- ✅ New modules only need a 2-line thin wrapper — no boilerplate to copy.
+- ✅ Consistent query/repository API surface across all modules.
+- ❌ Module `.csproj` files must reference `Base.Infrastructure` (already a common dep).
 
 ---
 
@@ -388,7 +448,41 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 
 ---
 
-### ADR-015: Voucher/Promotions Domain Design — Two-Axis Discount Model, Single Table (2026-04-27)
+### ADR-014: [LoggerMessage] Source-Generated Delegates as Mandatory Logging Pattern (2026-04-26)
+
+**Status**: Implemented ✅ (2026-04-27)
+
+**Context:**
+- `IAppLogger<T>` previously used `params object?[]` overloads → CA1848 + CA2254 suppressed via `#pragma`
+- Runtime cost: template parsed every call, value types boxed, zero allocation skip when level disabled
+- No EventId on any log statement → could not filter precisely in Seq
+- 8 domain modules and 19 pages had zero logging coverage
+
+**Decision:**
+- All production logging must use `[LoggerMessage]` source-generated delegates (CA1848 compliant)
+- `IAppLogger<T>` extended to implement `ILogger` (explicit `ILogger.Log<TState>` via `inner.Log()` — not extension methods, so no CA1848)
+- `.Info()` / `.Warn()` / `.Error()` methods stripped from `IAppLogger<T>` — it is now a DI marker interface; `AppLogger<T>` retains only 3 explicit ILogger members; `#pragma` removed
+- Each module owns a block of 10,000 EventIds — registry lives in `MarketNest.Base.Infrastructure/Logging/LogEventId.cs`
+- `private static partial class Log` nested inside each class; outer class must be `partial`
+- Exception param always last, never in message template
+
+**Alternatives Considered:**
+- Keep `#pragma` suppression → Rejected: hides real issues; CA1848 exists for good reason
+- Expose `ILogger InnerLogger { get; }` on IAppLogger → Rejected: call sites become `_logger.InnerLogger` — noisier, no benefit
+- Replace `IAppLogger<T>` with `ILogger<T>` everywhere → Rejected: large scope, breaks DI conventions already in use
+
+**Consequences (achieved):**
+- ✅ Zero allocation for disabled log levels — hot paths unaffected
+- ✅ Compile-time type safety: wrong param count/type → build error, not runtime bug
+- ✅ Stable EventIds per module → precise Seq filter (`EventId = 2652`)
+- ✅ `#pragma warning disable CA1848, CA2254` eliminated from all production code
+- ✅ 50+ files migrated; 19 pages added first-time observability
+- ❌ Requires `partial` on every class that logs
+- ❌ More boilerplate per file (mitigated by nested `Log` class keeping it local)
+
+---
+
+### ADR-015: Voucher/Promotions Domain Design — Two-Axis Discount Model (2026-04-27)
 
 **Context:**
 - MarketNest needs promotions for both platform-wide campaigns (Admin) and per-shop discounts (Seller)
@@ -453,36 +547,596 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 
 ---
 
-### ADR-014: [LoggerMessage] Source-Generated Delegates as Mandatory Logging Pattern (2026-04-26)
-
-**Status**: Implemented ✅ (2026-04-27)
+### ADR-020: Consolidate Agent Guidelines into a Single Canonical File (2026-04-26)
 
 **Context:**
-- `IAppLogger<T>` previously used `params object?[]` overloads → CA1848 + CA2254 suppressed via `#pragma`
-- Runtime cost: template parsed every call, value types boxed, zero allocation skip when level disabled
-- No EventId on any log statement → could not filter precisely in Seq
-- 8 domain modules and 19 pages had zero logging coverage
+- Multiple overlapping agent-facing rule documents existed: `AGENTS.md`, `CLAUDE.md`, `agents/rules/*.md`
+- Risk of divergence when different AI assistants (Copilot, Claude, Gemini) read different files
+- Duplication meant rule updates had to be applied in 3+ places
 
 **Decision:**
-- All production logging must use `[LoggerMessage]` source-generated delegates (CA1848 compliant)
-- `IAppLogger<T>` extended to implement `ILogger` (explicit `ILogger.Log<TState>` via `inner.Log()` — not extension methods, so no CA1848)
-- `.Info()` / `.Warn()` / `.Error()` methods stripped from `IAppLogger<T>` — it is now a DI marker interface; `AppLogger<T>` retains only 3 explicit ILogger members; `#pragma` removed
-- Each module owns a block of 1000 EventIds — registry lives in `MarketNest.Base.Infrastructure/Logging/LogEventId.cs`
-- `private static partial class Log` nested inside each class; outer class must be `partial`
-- Exception param always last, never in message template
+- Single canonical agent guidelines file at `agents/GUIDELINES.md`
+- `AGENTS.md` and `CLAUDE.md` reference `agents/GUIDELINES.md` rather than duplicating rules
+- Original `agents/rules/*.md` archived under `agents/rules/archive/`; replaced with short pointers
+- ADR stored at `docs/adr/ADR-020-canonical-agent-guidelines.md`
 
 **Alternatives Considered:**
-- Keep `#pragma` suppression → Rejected: hides real issues; CA1848 exists for good reason
-- Expose `ILogger InnerLogger { get; }` on IAppLogger → Rejected: call sites become `_logger.InnerLogger` — noisier, no benefit
-- Replace `IAppLogger<T>` with `ILogger<T>` everywhere → Rejected: large scope, breaks DI conventions already in use
+- Keep multiple files in sync manually → Rejected: proven to drift already
+- Pick one file (CLAUDE.md) as canonical → Rejected: Copilot/Gemini don't read CLAUDE.md
 
-**Consequences (achieved):**
-- ✅ Zero allocation for disabled log levels — hot paths unaffected
-- ✅ Compile-time type safety: wrong param count/type → build error, not runtime bug
-- ✅ Stable EventIds per module → precise Seq filter (`EventId = 2652`)
-- ✅ `#pragma warning disable CA1848, CA2254` eliminated from all production code
-- ✅ 50+ files migrated; 19 pages added first-time observability
-- ❌ Requires `partial` on every class that logs
-- ❌ More boilerplate per file (mitigated by nested `Log` class keeping it local)
+**Consequences:**
+- ✅ Single source of truth reduces maintenance and inconsistent agent behavior
+- ✅ Any AI tool can find the same rules from `agents/GUIDELINES.md`
+- ❌ Adds one extra file to read; mitigated by the pointer links in AGENTS.md/CLAUDE.md
 
 ---
+
+### ADR-021: Three-Tier Configuration Model (2026-04-28)
+
+**Context:**
+- Need a unified way to manage lookup data (dropdowns), runtime business rules, and technical settings.
+- Admin module must not become a "God Module" with direct DB access to other modules.
+
+**Decision:**
+- **Tier 1 — Reference Data**: Country, Gender, PhoneCountryCode, Nationality, ProductCategory. Owned by Admin module (`admin` schema), seeded from embedded JSON. All tables explicitly mapped to `public` schema via EF config. Consumed via `IReferenceDataReadService` contract (in `Base.Common`). Redis TTL: 24h.
+- **Tier 2 — Business Configuration**: OrderPolicyConfig, CommissionPolicy, StorefrontPolicyConfig, ReviewPolicyConfig. *Owned by the module that uses the config* (Orders, Payments, Catalog, Reviews). Admin writes via `IXxxConfigWriter` contracts in `Base.Common/Contracts/Config/`. Redis TTL: 1h.
+- **Tier 3 — System Configuration**: PlatformOptions, ValidationOptions, SecurityOptions. Strongly-typed Options bound from `appsettings.json`. No DB, no UI — change requires redeployment.
+
+**Alternatives Considered:**
+- Single `master_data` table in Admin schema → rejected: blurs module boundaries, Admin becomes God Module (ADR-004 violation)
+- Business Config living in Admin schema → rejected: domain knowledge (e.g. `OrderWindowHours`) would live in the wrong module
+- Redis as source-of-truth for config → rejected: data loss on Redis restart, no fallback
+
+**Consequences:**
+- ✅ Clear ownership: each tier has a single owner (Admin / owning module / Infrastructure)
+- ✅ Admin never references other modules' internals — uses only contract interfaces
+- ✅ Reference data is globally queryable via `IReferenceDataReadService` without cross-module DB joins
+- ✅ Tier 2 config is DB-persistent with Redis caching (survives restarts)
+- ❌ More files per config type (entity + writer service + contract interface)
+- ❌ Tier 2 implementations for Catalog/Reviews are in-memory stubs in Phase 1 (Phase 2 will add DB-backed implementations)
+
+---
+
+### ADR-022: `ReferenceData` Base Entity in `Base.Domain` (2026-04-28)
+
+**Context:**
+- Reference data entities (Country, Gender, etc.) live in `Admin.Domain` and extend a shared base.
+- The base class needs to inherit from `Entity<int>` which is in `Base.Domain`.
+
+**Decision:**
+- `ReferenceData` abstract base class placed in `Base.Domain/ReferenceData/ReferenceData.cs`.
+- Concrete types (Country, Gender, etc.) placed in `Admin.Domain/Modules/ReferenceData/`.
+- EF Core configurations placed in `Admin.Infrastructure/Persistence/Configurations/`.
+- Abstract `ReferenceDataConfiguration<T>` base EF config placed in `Admin.Infrastructure`.
+- Uses `ValueGeneratedOnAdd()` instead of Npgsql-specific `UseIdentityColumn()` to keep Admin module free of Npgsql dependency.
+
+**Consequences:**
+- ✅ Concrete types stay in Admin (owner module); base stays in shared package
+- ✅ Admin module doesn't need Npgsql package reference
+- ❌ Base.Domain now contains a domain concept that is Admin-specific but needed across modules for DTO mapping — acceptable trade-off
+
+---
+
+### ADR-023: EF Core DDD Property Access Convention — `ApplyDddPropertyAccessConventions()` (2026-04-28)
+
+**Context:**
+- ADR-007 mandates `{ get; private set; }` on all entity/aggregate properties to protect invariants.
+- EF Core needs to materialize entities from database rows, raising concern: "Does EF Core require public setters?"
+- EF Core already supports `{ get; private set; }` natively — it uses the compiler-generated backing field (or reflection) to set property values. No `{ get; set; }` is needed.
+- However, **collection navigation properties** exposed as `IReadOnlyList<T>` with an explicit private backing field (e.g., `private readonly List<T> _items`) need `PropertyAccessMode.Field` so EF Core populates the backing field directly instead of trying to use the (non-existent) property setter.
+
+**Decision:**
+- Created `DddModelBuilderExtensions.ApplyDddPropertyAccessConventions()` in `MarketNest.Base.Infrastructure/Persistence/`.
+- The extension method:
+  1. Sets model-level `PropertyAccessMode.PreferField` (explicit, matches EF Core default, documents DDD intent).
+  2. Auto-detects collection navigations with an explicit `_camelCase` backing field and sets `PropertyAccessMode.Field` on those navigations.
+- All module `DbContext.OnModelCreating()` calls `modelBuilder.ApplyDddPropertyAccessConventions()` after `ApplyConfigurationsFromAssembly()`.
+- Collection navigation pattern standardized: always use `private readonly List<T> _items = [];` with `public IReadOnlyList<T> Items => _items.AsReadOnly();` (never auto-property `IReadOnlyList<T> { get; private set; }`).
+
+**Alternatives Considered:**
+- Manual `UsePropertyAccessMode(PropertyAccessMode.Field)` per navigation → Rejected: error-prone, easy to forget in new entities.
+- `{ get; set; }` on entities → Rejected: violates ADR-007, breaks DDD invariant protection.
+- No convention, rely on EF Core defaults → Rejected: implicit behavior is fragile for collection navigations with explicit backing fields.
+
+**Consequences:**
+- ✅ `{ get; private set; }` on scalar properties works with zero extra configuration — EF Core handles it natively.
+- ✅ Collection navigations with explicit backing fields are auto-detected and configured correctly.
+- ✅ Single place to maintain the convention — new modules just call `ApplyDddPropertyAccessConventions()`.
+- ✅ No changes needed to entity designs — ADR-007 accessors are fully compatible with EF Core.
+- ❌ Naming convention dependency: backing field must follow `_camelCase` for `PascalCase` property name.
+
+---
+
+### ADR-024: Sale Price as Inline Fields on ProductVariant — Option A (2026-04-29)
+
+**Context:**
+- Need to support time-limited sale prices on individual product variants.
+- Two candidate designs: (A) three inline fields (`sale_price`, `sale_start`, `sale_end`) directly on the variant row, or (B) a separate `VariantPricePromotion` entity with a FK.
+
+**Decision:** Option A — inline fields on `ProductVariant`.
+
+**Rationale:**
+- Phase 1: one variant = one active sale at a time — no scheduling queue needed.
+- `EffectivePrice` queries require no extra JOIN: `WHERE sale_end > NOW()` is a single-table predicate.
+- Consistent with Shopify/WooCommerce/Lazada design; familiar to domain experts.
+- Checkout snapshot is trivial: call `variant.EffectivePrice()` — no eager-load of a child collection.
+
+**Consequences:**
+- ✅ Simple reads, simple writes, simple EF configuration.
+- ✅ DB CHECK constraints enforce atomicity of all three fields (invariant S5).
+- ✅ Background job (`ExpireSalesJob`, 5-min schedule) cleans up expired sales and raises domain event.
+- ❌ No overlapping/scheduled multi-promotion queue (Phase 2 concern — migrate to Option B then if needed).
+- ❌ No per-sale price history audit trail (mitigated by `[Auditable]` on entity and domain events).
+- **Phase 2 migration path**: Add `VariantPricePromotion` entity, migrate active sale fields → first row, keep `EffectivePrice()` API stable.
+
+---
+
+### ADR-026: SLA Requirements Formalized as First-Class Project Concern (2026-04-29)
+
+**Context:**
+- MarketNest marketplace processes real financial transactions (orders, payouts, commissions). Without explicit SLA thresholds, slow requests and financial drift can go undetected.
+- Business-critical invariants (no oversell, commission accuracy, payment reconciliation) were documented in `domain-and-business-rules.md` but had no corresponding runtime enforcement infrastructure.
+
+**Decision:**
+- Formalize a four-dimension SLA framework: Availability, Performance, Business Correctness, Data Integrity.
+- Capture all thresholds as first-class constants (`SlaConstants` in `Base.Common`) — no magic numbers.
+- Implement Phase 1 foundation: `PerformanceBehavior` (MediatR), `FinancialReconciliationJob` stub (Payments), and `SlaConstants`.
+- Full doc lives at `docs/sla-requirements.md`.
+
+**Consequences:**
+- ✅ All SLA thresholds are typed and searchable — enforced by MN005 no-magic-number analyzer.
+- ✅ `PerformanceBehavior` logs every slow/critical request via Seq from day one.
+- ✅ `FinancialReconciliationJob` skeleton is registered and scheduled; full logic unlocks once Order + Payment aggregates are complete.
+- ✅ Cross-reference table aligns SLA checks with existing domain invariants (I1, P2, §10.2).
+- ❌ P95 statistical tracking deferred to Phase 2 (requires OTEL histogram → Prometheus).
+- ❌ `/admin/sla` dashboard deferred to Phase 2.
+- **Phase 2 path**: Emit OTEL histogram metrics from `PerformanceBehavior`; wire Grafana dashboards; migrate `SlaConstants` thresholds to `AdminConfig` DB backing (ADR-021).
+
+---
+
+### ADR-028: IRuntimeContext — Unified Ambient Request Context (2026-04-29)
+
+**Context:**
+- Every handler, middleware, and page was injecting `ICurrentUserService` separately to get `UserId`.
+- `CorrelationId` was read from `HttpContext.TraceIdentifier` at each call site.
+- Background jobs had no consistent way to carry user/correlation info.
+- Tests required mocking multiple services instead of one.
+
+**Decision:**
+- `IRuntimeContext` is the single injection point for: `CorrelationId`, `RequestId`, `CurrentUser` (Id, Name, Email, Role), `StartedAt`, `ElapsedMs`, `ClientIp`, `UserAgent`, `HttpMethod`, `RequestPath`.
+- `ICurrentUser` contract in `Base.Common`: `Id?`, `Name?`, `Email?`, `Role?`, `IsAuthenticated`, `RequireId()` (throws `UnauthorizedException`), `IdOrNull`.
+- `RuntimeExecutionContext` enum: `HttpRequest | BackgroundJob | Test`.
+- `UnauthorizedException` added to `Base.Common` — thrown by `RequireId()` when anonymous.
+- `HttpRuntimeContext` (Scoped, mutable) populated once by `RuntimeContextMiddleware` after `UseAuthentication()`.
+- `BackgroundJobRuntimeContext` (static factory): `ForSystemJob(jobKey)` and `ForAdminJob(jobKey, adminId)`.
+- `TestRuntimeContext` (UnitTests): `AsAnonymous()`, `AsBuyer()`, `AsSeller()`, `AsAdmin()` builder helpers.
+- `RuntimeContextMiddleware`: enriches Serilog `LogContext` (CorrelationId, UserId, UserRole) + OTel Activity tags + echoes `X-Correlation-ID` response header.
+- LogEventIds `1094` (RequestStart) and `1095` (RequestEnd) added.
+
+**Alternatives Considered:**
+- Keep `ICurrentUserService` → Rejected: scattered injection, no correlation/timing, no background job support.
+- Use `IHttpContextAccessor` directly in handlers → Rejected: couples application layer to HTTP; broken in jobs/tests.
+
+**Consequences:**
+- ✅ Single inject replaces `ICurrentUserService` + `HttpContext.TraceIdentifier` everywhere.
+- ✅ Every log line gets CorrelationId / UserId automatically via Serilog enrichment.
+- ✅ Background jobs get a consistent context via static factories.
+- ✅ Tests need one line: `TestRuntimeContext.AsSeller()`.
+- ✅ OTel Activity tagged for distributed tracing readiness (Phase 2).
+- ❌ Migration: existing code using `ICurrentUserService` should be updated to `IRuntimeContext.CurrentUser` (done incrementally).
+
+---
+
+### ADR-027: Unit of Work + [Transaction] Attribute — Domain Event Lifecycle & Transaction Management (2026-04-29)
+
+**Status**: Updated 2026-04-29. Significant pattern change: **filters now own transaction lifecycle; handlers only mutate entities.**
+
+**Context (original):**
+- Command handlers were calling `dbContext.SaveChangesAsync()` directly, bypassing domain event dispatch and transaction control.
+- Domain events had no ordering guarantee: all events were post-commit which prevented atomic side effects (e.g., reserving inventory in the same TX as placing an order).
+- Write operations in Razor Pages and API controllers had no automatic transaction boundary.
+
+**Decision (revised 2026-04-29):**
+
+The Unit of Work pattern is split into two distinct use cases, each with its own transaction management strategy:
+
+#### HTTP Handlers (via filters — automatic)
+- **`RazorPageTransactionFilter`** and **`TransactionActionFilter`** (global) own the full transaction lifecycle.
+- **New `IUnitOfWork` methods added:**
+  - `BeginTransactionAsync(IsolationLevel, CancellationToken)` — filter opens DB transactions on all module contexts
+  - `CommitAsync(CancellationToken)` — dispatcher calls this ONCE after handler returns; method: dispatch pre-commit events → `SaveChangesAsync` on all contexts
+  - `CommitTransactionAsync(CancellationToken)` — filter calls this to commit DB transactions (point of no return)
+  - `RollbackAsync(CancellationToken)` — filter calls on exception; clears post-commit event queue + rolls back DB transactions
+  - `IAsyncDisposable DisposeAsync()` — filter calls on finally to clean up transaction objects
+- **Command handlers DO NOT inject `IUnitOfWork`** — only repositories. They mutate entities and return. Filter handles commit automatically.
+- **Benefits**: Handlers can't forget to commit. No silent data loss if handler raises an exception after mutations.
+
+#### Background Jobs (explicit management)
+- Background jobs run **outside the HTTP filter** — they must explicitly manage transactions via the new `IUnitOfWork` methods.
+- Pattern: `try { BeginTransaction → CommitAsync → CommitTransactionAsync → DispatchPostCommitEventsAsync } catch RollbackAsync finally DisposeAsync`
+- This ensures **atomicity**: if an exception occurs after `CommitAsync`, the entire transaction is rolled back (including all entity changes).
+
+#### Domain Event Processing
+
+- **`IPreCommitDomainEvent`** (marker, `Base.Domain`): domain events implementing this run INSIDE the open transaction before `SaveChanges`. Used for atomic side effects (e.g., inventory reservation).
+- All other domain events are post-commit (`IDomainEvent` default).
+- **`IHasDomainEvents`** (non-generic interface, `Base.Domain`): added to `Entity<TKey>` so `UnitOfWork` can scan `ChangeTracker` without knowing the key type.
+
+#### Transaction Attributes
+
+- **`[Transaction]` / `[NoTransaction]`** (in `Base.Common`): control transaction wrapping on handlers.
+- **`ReadApiV1ControllerBase`** / **`WriteApiV1ControllerBase`** (in `Base.Api`): write controllers carry `[Transaction]` at class level, enforcing transactions automatically.
+- Both filters open transactions on ALL module DbContexts before the handler runs, then commit/rollback all after the handler returns.
+
+**Consequences:**
+- ✅ **Handlers simplified**: no UoW injection, no commit calls — pure domain mutation code.
+- ✅ **Automatic transactionality**: forget to call commit → impossible; filter handles it.
+- ✅ **Full transaction control**: background jobs manage transaction lifecycle explicitly vs HTTP handlers (automatic via filter).
+- ✅ **Pre-commit events guarantee atomicity**: inventory reservation happens in the same transaction as order placement.
+- ✅ **Phase 3 path**: swap `DispatchPostCommitEventsAsync` to write to Outbox table — no handler code changes.
+- ⚠️ **Opening transactions on all module DbContexts** has overhead per write request (mitigated by PostgreSQL connection pooling + short transactions).
+- ⚠️ **True distributed atomicity** across modules requires saga/outbox (Phase 3). Phase 1 relies on module boundary rule: each command touches one module's DbContext.
+
+---
+
+### ADR-029: Four-Layer Caching Strategy & Cross-Module Service Contracts (2026-04-29)
+
+**Context:**
+- MarketNest needed a comprehensive caching approach: static assets, server-rendered HTML, application-level Redis, and cross-module data access.
+- Static files (`asp-append-version`) were only applied to CSS, not JS. No `Cache-Control` headers were set.
+- HTMX partial responses had no `no-store` protection — browsers could cache stale partials.
+- `OutputCache` was not configured for anonymous Razor Pages.
+- `CacheKeys` existed but only covered Tier 1 (reference data) and Tier 2 (business config) — no module-specific keys for Catalog, Cart, Payments, Identity.
+- Cross-module communication question: gRPC vs BFF vs service contracts for data that's too large to cache.
+
+**Decision:**
+1. **Layer 1 (Static assets)**: `asp-append-version="true"` on all local CSS + JS tags. `StaticFileOptions` with `Cache-Control: immutable` for fingerprinted files, `max-age=86400` for media, `no-cache` for everything else.
+2. **Layer 1b (HTMX)**: `HtmxNoCacheMiddleware` forces `no-store` on all `HX-Request` responses.
+3. **Layer 2 (OutputCache)**: Three named policies (`AnonymousPublic` 60s, `Storefront` 5m, `ProductDetail` 2m) — anonymous users only. Constants in `CachePolicies`.
+4. **Layer 3 (Redis)**: Expanded `CacheKeys` with `Catalog`, `Cart`, `Payments`, `Identity`, `Admin` nested classes and new TTL presets (`VeryShort` 30s, `QuickExpiry` 1m, `VeryLong` 6h).
+5. **Layer 4 (Cross-module)**: **Service contracts via interfaces** (in-process DI injection, not gRPC or BFF). Same pattern as existing `IReferenceDataReadService`, `IStorefrontReadService`. gRPC/BFF deferred to Phase 3 when modules become separate services.
+6. **Redis safety**: Upgraded `RemoveByPrefixAsync` from `KEYS` to `SCAN`-based cursor iteration with batched deletion.
+
+**Alternatives rejected:**
+- gRPC between modules: over-engineering for monolith (serialization overhead, proto files, transport complexity for zero benefit)
+- BFF layer: adds indirection with no value when all modules are in-process
+- `ISharedCacheService` wrapper: unnecessary abstraction over `ICacheService` — key namespace convention prevents collisions
+
+**Trade-offs:**
+- ✅ Four layers cover the full request lifecycle from browser to DB
+- ✅ In-process service contracts are zero-cost and migrate to gRPC in Phase 3 via DI swap
+- ✅ SCAN-based prefix deletion is production-safe
+- ⚠️ OutputCache uses in-memory store (Phase 2: swap to Redis-backed store)
+- ⚠️ No cache stampede prevention yet (Phase 2)
+
+**References:** `docs/caching-strategy.md`
+
+---
+
+### ADR-031: Two-Connection-String Pattern — DefaultConnection (write) + ReadConnection (read-replica fallback) (2026-04-30)
+
+**Context:**
+- All module DbContexts (write side and read side) used a single `DefaultConnection`.
+- Question raised: should separate connection strings be created per module (`AuditConnection`, `NotificationConnection`) to ease future microservice extraction?
+- Phase 2 read-replica scaling is a real concern; microservice extraction is a Phase 3 concern.
+
+**Decision:**
+- **Two connection strings only** — no per-module connection strings:
+  - `DefaultConnection` — used by all write-side DbContexts (and read-side when `ReadConnection` is absent).
+  - `ReadConnection` — **optional**; empty/absent in Phase 1 (falls back to `DefaultConnection`). Phase 2: set to a PostgreSQL read replica to route all `ReadDbContext` queries without any code change.
+- Per-module extras (`AuditConnection`, `NotificationConnection`) are explicitly **rejected** — see "Alternatives Considered".
+- Each module's `DependencyInjection.cs` resolves read connection as:
+  ```csharp
+  string readConnection = configuration.GetConnectionString("ReadConnection")
+      is { Length: > 0 } rc ? rc : writeConnection;
+  ```
+
+**Alternatives Considered:**
+- Per-module connection strings (`AuditConnection`, `NotificationConnection`, …) → Rejected:
+  - When extracting a module to microservice (Phase 3), changing one connection string name is 1% of the total work. Schema isolation (ADR-004) is the real enabler.
+  - Adds 6+ extra config entries (appsettings, .env, docker-compose) with zero Phase 1 operational benefit.
+  - Violates "Simplicity First" — premature complexity for a benefit that materialises only at phase boundary refactoring.
+- Single `DefaultConnection` for everything (status quo) → Rejected: misses Phase 2 read-replica opportunity. `ReadConnection` fallback has concrete value (zero code changes when a replica is added).
+
+**Consequences:**
+- ✅ Zero config noise in Phase 1 — `ReadConnection` is empty, falls back automatically.
+- ✅ Phase 2 read-replica routing: set `ReadConnection` once → all module ReadDbContexts switched, zero code changes.
+- ✅ Config stays clean — appsettings has exactly 2 connection string entries forever.
+- ❌ Module connection string isolation requires explicit work at Phase 3 extraction boundary (but that's intentional and unavoidable).
+
+---
+
+### ADR-030: Application Constants vs Configuration — Immutable Rules in AppConstants, Environment-Specific Settings in appsettings.json (2026-04-29)
+
+**Context:**
+- Original `appsettings.json` mixed business rules (password min-length, file upload limits) with environment-specific settings (security timeouts, rate limits).
+- `ValidationOptions` class existed but was never used in code — developers could not easily reference validation constraints.
+- ADR-005 (No Magic Strings/Numbers) required extraction of all literals, but there was no clear policy on WHERE to extract them.
+
+**Decision:**
+- **AppConstants**: Immutable business rules that never change between dev/staging/production.
+  - Password/username length constraints
+  - File upload size limits
+  - Enumerated values (status names, role names)
+  - Font stacks, color hex codes, CDN URLs
+  - Cache durations, timeout defaults
+  - Validation rule constants
+  - Example: `AppConstants.Validation.PasswordMinLength = 8`
+- **appsettings.json**: Environment-specific settings that vary per deployment.
+  - Database connection strings
+  - API secrets (JWT key, SMTP password)
+  - External service URLs (Seq, Redis, RabbitMQ)
+  - Performance tunings that differ between environments (rate limits, lockout duration, token expiry)
+  - Example: `Security.RateLimitRequestsPerMinute` could be 60 in dev, 10 in prod
+- **Tier 3 Configuration (ADR-021)**: `PlatformOptions`, `SecurityOptions`, `ValidationOptions` are strongly-typed Options bound from appsettings.json. `ValidationOptions` deprecated in favor of `AppConstants.Validation`.
+- `ValidationOptions` class removed; usages replaced with `AppConstants.Validation.*` direct access.
+
+**Rationale:**
+- Business rules are immutable (an 8-character password requirement doesn't change per environment).
+- Code is cleaner with `AppConstants.Validation.PasswordMinLength` than configuring the same value 3 times in appsettings.json.
+- Reduces config file bloat (appsettings becomes focused on secrets and external URLs).
+- Forces developers to think: "Is this a rule or a setting?"
+
+**Alternatives Considered:**
+- All constants in appsettings.json → Rejected: bloats config, forces same value in dev/staging/prod JSON unnecessarily.
+- All constants in AppConstants → Rejected: some settings DO need to vary per environment (rate limits, token expiry).
+
+**Consequences:**
+- ✅ Single source of truth per category: business rules in AppConstants, environment tuning in appsettings.json.
+- ✅ Code is more readable: `AppConstants.Validation.PasswordMinLength` is clearer than `Configuration["Validation:PasswordMinLength"]`.
+- ✅ Reduces config file duplication.
+- ✅ `IOptions<ValidationOptions>` DI binding removed — simpler composition root.
+- ❌ Developers must remember the distinction (mitigated by CLAUDE.md / AGENTS.md policy).
+
+**Enforcement:**
+- PR checklist includes: "Are all business constants in `AppConstants.*`? Are all environment-specific values in `appsettings.json`?"
+- MN005 analyzer (magic numbers) will flag unexplained numeric literals — guide them to `AppConstants.*`.
+
+---
+
+### ADR-032: PgQueryBuilder — Safe Raw PostgreSQL Query Generation Utility (2026-04-30)
+
+**Context:**
+- EF Core covers 95%+ of data access needs. However, some edge cases require raw SQL: complex multi-schema joins, DDL commands (`CREATE SEQUENCE`, `CREATE INDEX`, `CREATE SCHEMA`), PostgreSQL-specific features (`advisory locks`, `LISTEN/NOTIFY`), or bulk operations bypassing the Change Tracker.
+- Writing raw SQL strings directly risks SQL injection, especially when identifier names (table, column, schema) are dynamic.
+- Need a safe, parameterized query builder that's always available but clearly positioned as a last-resort escape hatch.
+
+**Decision:**
+- `PgQueryBuilder` static utility class in `Base.Infrastructure/Persistence/PgQueryBuilder.cs` (namespace `MarketNest.Base.Infrastructure`).
+- All value interpolation via positional parameters (`$1`, `$2`, …) — prevents SQL injection.
+- Identifier quoting (`"schema"."table"`) with double-quote escaping.
+- `RawSqlFragment` for trusted, developer-controlled SQL (column names, keywords) — **never user input**.
+- Builders: `Query` (interpolated), `Select`, `Insert`, `InsertMany`, `Update`, `Delete`, `Upsert`, `InClause`, `NotInClause`, `Combine` (re-indexes parameters), `EscapeLike`.
+- `ToDebugString` for dev logging only — output must never be executed.
+- Uses `[GeneratedRegex]` source-generated regexes (compile-time, zero allocation).
+- `PgQuery` result type is a `sealed record` (immutable, per project convention).
+
+**Alternatives Considered:**
+- Dapper → Rejected: adds another ORM library; EF Core + raw Npgsql is sufficient for edge cases.
+- String concatenation with manual escaping → Rejected: error-prone, SQL injection risk.
+- `FormattableString` with EF Core `FromSqlInterpolated` → Considered: works for queries returning entities, but doesn't help with DDL, cross-schema joins returning DTOs, or non-EF Npgsql commands.
+
+**Consequences:**
+- ✅ SQL injection prevention for all raw query use cases — parameterized by default.
+- ✅ Identifier quoting prevents injection via dynamic table/column names.
+- ✅ Available to all modules via `Base.Infrastructure` reference (already a common dep).
+- ✅ Zero runtime overhead from source-generated regex.
+- ✅ Clear escape hatch positioning — EF Core remains the primary data access tool.
+- ❌ Developers must remember: `Raw()` and `IdentifierRaw()` bypass parameterization — only for trusted input.
+- ❌ No query validation — generated SQL is not checked against the database schema at compile time.
+
+---
+
+### ADR-033 — Expand LogEventId from 1,000 to 10,000 per module
+
+**Date**: 2026-04-30  
+**Status**: Accepted  
+**Supersedes**: Part of ADR-014 (EventId allocation only — rest of ADR-014 unchanged)
+
+**Context:**
+- Original allocation of 1,000 IDs per module (ADR-014) was too small — only 400 slots for Application layer.
+- As modules grow with more handlers, pages, and background jobs, risk of collision or exhaustion was high.
+- Separate Start/Success/Failed EventIds per operation (not grouped) is the correct pattern for Seq filtering and alerting — this requires ~3–4 IDs per use case.
+
+**Decision:**
+- Expand each module's EventId block from 1,000 to 10,000.
+- New sub-allocation: X0000–X1999 (Infrastructure), X2000–X5999 (Application), X6000–X7999 (Web Pages), X8000–X9999 (Reserved).
+- Keep separate EventIds for Start/Success/Failed — do NOT group into single ID. Use `CorrelationId` from `IRuntimeContext` for request tracing instead.
+
+**Module ranges:**
+- Infrastructure/Middleware: 10000–19999
+- Identity: 20000–29999
+- Catalog: 30000–39999
+- Cart: 40000–49999
+- Orders: 50000–59999
+- Payments: 60000–69999
+- Reviews: 70000–79999
+- Disputes: 80000–89999
+- Notifications: 90000–99999
+- Admin: 100000–109999
+- Auditing: 110000–119999
+- Background Jobs: 120000–129999
+- Web/Global Pages: 130000–139999
+- Promotions: 140000–149999
+
+**Trade-offs:**
+- ✅ 10x headroom per module — no risk of exhaustion for Phase 1–4
+- ✅ Separate EventIds enable precise filtering and alerting in Seq
+- ✅ Easy mental model: module number × 10000
+- ❌ Larger numeric values (6 digits for later modules) — acceptable for enum usage
+
+---
+
+### ADR-034: Notifications Module — Template-Based Dispatch with Email + In-App Channels (2026-04-30)
+
+**Context:**
+- MarketNest needs a flexible notifications system for both real-time and scheduled messages.
+- Notifications must support multiple channels: Email, SMS, In-App, etc.
+- Admin users should manage templates and triggers without code changes.
+
+**Decision:**
+- New `MarketNest.Notifications` module with `notifications` PostgreSQL schema
+- **Template-based system**: notification templates stored in DB, editable via Admin UI
+- **Channel support**: Email and In-App notifications implemented in Phase 1; SMS and others can be added later
+- **Triggers**: notifications can be sent immediately or scheduled for later
+- **Batching**: support for batch sending of notifications to reduce load
+
+**Alternatives Considered:**
+- Separate microservice for notifications → Rejected: unnecessary complexity in Phase 1
+- Polling-based approach → Rejected: less efficient and more complex than event-driven
+
+**Consequences:**
+- ✅ Flexible and extensible notifications system
+- ✅ Admin users can manage without code changes
+- ✅ Phase 3 ready: can be extracted to a microservice with minimal changes
+
+---
+
+### ADR-035: SharedViewPaths — Centralized Razor Partial Path Constants (2026-04-30)
+
+**Context:**
+- All shared Razor partial paths (e.g., `~/Pages/Shared/Forms/_TextField.cshtml`) were repeated as magic strings wherever a shared component was used.
+- Violates ADR-005 (No Magic Strings): any path rename would require a grep-and-replace across all views.
+- `SharedViewPaths` already existed with a single entry (`LoadingSpinner`) — pattern was established but not fully applied.
+
+**Decision:**
+- Expand `SharedViewPaths.cs` (`MarketNest.Web.Infrastructure`) to contain all shared component paths as `public const string` fields grouped by category (Display, Form).
+- All Razor views must reference `SharedViewPaths.*` constants instead of hardcoded `~/Pages/Shared/…` strings when using `<partial name="…">` or `Html.PartialAsync(…)`.
+- Grouped sub-prefixes not needed (class is small enough to remain flat).
+
+**Alternatives Considered:**
+- Tag Helpers per component → More abstraction, but higher ceremony for simple partials.
+- Keep magic strings in views → Rejected: violates ADR-005 and breaks refactoring safety.
+
+**Consequences:**
+- ✅ Single place to update if a partial moves or is renamed
+- ✅ Compiler catches misspelled paths (C# const vs string literal in .cshtml)
+- ✅ Consistent with existing `AppRoutes` / `AppConstants` / `FieldLimits` centralization pattern
+- ❌ Developers must add a constant to `SharedViewPaths` before using a new shared partial
+
+---
+
+### ADR-036: Rich Text Editor — Trix with Server-Side HTML Sanitization (2026-04-30)
+
+**Context:**
+- `ProductDescription` and `StorefrontDescription` fields use `FieldLimits.MultilineDocument` (max 20,000 chars) and need rich formatting (bold, italic, lists, headings, images).
+- Plain `<textarea>` cannot handle rich text. The project uses HTMX + Alpine.js without a bundler — no React/Vue editor available.
+- Need inline image upload support (drag/paste into editor → upload → display inline).
+
+**Decision:**
+- Use **Trix Editor** (MIT, by Basecamp) — vendored in `wwwroot/lib/trix/` (v2.1.12). Bundle ~50KB gzip.
+- Shared Razor partial: `_RichTextEditor.cshtml` in `Pages/Shared/Forms/`, referenced via `SharedViewPaths.RichTextEditor`.
+- Alpine.js component: `richEditor.js` with config from `constants.js` (`RichEditorConfig`).
+- Output: HTML string stored directly in DB (no Delta/Markdown conversion layer).
+- **Server-side sanitization mandatory**: `IHtmlSanitizerService` (interface in `Base.Common/Contracts/`) implemented by `TrixHtmlSanitizerService` (Web host) using `HtmlSanitizer` NuGet package. Whitelists only Trix-generated tags/attrs.
+- Image uploads via dedicated endpoint (`/api/v1/uploads/rich-editor-image`), size limit 2MB, types: JPEG/PNG/WebP/GIF.
+- Constants: `FieldLimits.RichEditorImage` (server-side limits), `RichEditorConfig` (JS constants).
+- Rendering: `@Html.Raw(model.Description)` safe because content is sanitized at write time. Styled with `.rich-content` CSS class.
+
+**Alternatives Considered:**
+- Quill → Larger bundle (~100KB), no native image upload, Delta format adds conversion complexity.
+- TinyMCE → 200KB+, overkill for scope, plugin ecosystem overhead.
+- Markdown with preview → Worse UX for non-tech sellers; extra Markdown→HTML conversion at render.
+- Contenteditable DIY → High risk, incompatible with accessibility, XSS-prone.
+
+**Consequences:**
+- ✅ Lightweight, MIT, zero bundler dependency
+- ✅ Native image drag/paste upload
+- ✅ HTML string output — no conversion layer, direct DB storage and render
+- ✅ XSS prevention via server-side whitelist sanitization (never trust client HTML)
+- ❌ No video support (acceptable — out of scope per business rules)
+- ❌ Trix toolbar is opinionated — limited heading levels (h1 only natively)
+- ❌ Vendored library requires manual version updates
+
+---
+
+## ADR-037 — Excel Import/Export — ClosedXML + IExcelService + IAntivirusScanner
+
+**Date**: 2026-04-30
+**Status**: Accepted
+
+**Context:**
+- Phase 1 requires seller bulk product/variant import (upload .xlsx → validate → execute) and admin export (orders, payouts, users).
+- EPPlus has commercial license restrictions. OpenXml SDK is low-level and verbose.
+- Need a contract-first design so module code never references the Excel library directly.
+- File uploads require virus scanning before processing to prevent malicious files.
+
+**Decision:**
+- **ClosedXML 0.104.1** (MIT) as the primary Excel library for both import and export.
+- **MiniExcel** planned for Phase 2 as a streaming fallback for large exports (>10k rows).
+- **`IExcelService`** contract lives in `MarketNest.Base.Common/Excel/` — used by all module handlers.
+- **`ClosedXmlExcelService`** implementation lives in `MarketNest.Web/Infrastructure/Excel/`.
+- **`IAntivirusScanner`** contract in `Base.Common/Security/` — Phase 1: `NoOpAntivirusScanner` (always clean). Phase 2/3: ClamAV via socket (nClam or clamd binding).
+- **Contracts** (`ExcelTemplate<T>`, `ExcelImportResult<T>`, `ExcelExportOptions<T>`) in `Base.Common/Excel/` — enum `ExcelColumnFormat.DecimalNumber` (not `Decimal` — avoids CA1720).
+- **`System.IO.Packaging` CVE fix**: ClosedXML 0.104.1 transitively pulls in `System.IO.Packaging 8.0.0` (CVE-2024-43483, CVE-2024-43484 — DoS, high). Pinned to 10.0.0 in `Directory.Packages.props` and referenced explicitly in `MarketNest.Web.csproj`.
+- **Validation layers** (4 layers): file extension + magic bytes → antivirus → header validation → row-level parse → domain rules.
+- **`VariantImportTemplate`**: Phase 1 import targets `ProductVariant` entities (the only Catalog entity in DbContext). When `Product` aggregate is added, a `ProductImportTemplate` will be added.
+- **Phase 1 imports**: Synchronous (parse + commit in one HTTP request, max 1,000 rows).
+- **Phase 2 imports**: Redis import session (30 min TTL) + background jobs for large files.
+
+**Consequences:**
+- ✅ Module Application layer never references ClosedXML — swap is a single DI binding change
+- ✅ Column definitions use `Func<string, TRow, Result<Unit, string>>` setters — type-safe, testable
+- ✅ Magic-bytes check prevents extension spoofing (e.g., renamed .exe to .xlsx)
+- ✅ Antivirus hook is in place from Phase 1 — easily upgraded to real ClamAV
+- ✅ `System.IO.Packaging` CVE patched via explicit version pin
+- ❌ ClosedXML has no native async API — offloaded to `Task.Run` (acceptable for <10k rows)
+- ❌ FindBySkuAsync is a no-op stub in Phase 1 — update handler creates all rows; Phase 2 adds the real query
+
+---
+
+### ADR-038: I18N Service — II18NService Wrapper + I18NKeys Constants (2026-04-30)
+
+**Context:**
+- Project had raw `IHtmlLocalizer<SharedResource>` usage in layouts and hardcoded Vietnamese strings in Auth pages and Home page.
+- ADR-005 (no magic strings) was violated — inline `"Nav.Home"` key strings in Razor views.
+- Need a single localization entry point that: (a) returns `string.Empty` on missing keys (never crashes), (b) logs warnings for missing keys, (c) enforces `I18NKeys.*` constants.
+
+**Decision:**
+- Introduced `II18NService` contract (indexer + `Get(key, args)` + `KeyExists`) in `MarketNest.Web.Infrastructure`.
+- Implementation `I18NService` wraps `IStringLocalizer<SharedResource>`, returns `string.Empty` on `ResourceNotFound`, uses `IAppLogger<I18NService>` with `[LoggerMessage]` source-gen (EventIds 10800–10801).
+- Static `I18NKeys` class holds all resource key constants — no inline string keys allowed at call sites.
+- `II18NService` injected globally via `_ViewImports.cshtml` as `I18N` — available in every Razor view.
+- Layouts continue using `SharedLocalizer["Key"]` for backward compatibility; new pages and converted pages use `I18N[I18NKeys.Xxx]`.
+- Registered as `Scoped` (culture-per-request matches HTTP lifecycle).
+
+**Consequences:**
+- ✅ Missing keys show blank (not raw key) — cleaner UI, detectable via Seq log EventId 10800
+- ✅ Type-safe keys via `I18NKeys.*` — typos caught at compile time
+- ✅ Single interface for all future localization needs (backend handlers, email subjects, etc.)
+- ✅ Cookie-based culture + `CookieRequestCultureProvider` at index 0 — language persists across sessions
+- ❌ Dual pattern (`SharedLocalizer` in old layouts + `I18N` in new pages) until full migration — acceptable, both resolve the same resource files
+
+---
+
+### ADR-039: Nullable Management — Business Decision Model with `#pragma` on EF Constructors (2026-04-30)
+
+**Context:**
+- C# nullable reference types enabled (`<Nullable>enable</Nullable>`), treating `?` as a domain decision, not an implementation detail.
+- Entity required fields were using `= string.Empty`, `= null!`, or `= default!` as initialization sentinels — violating DDD and misleading developers.
+- EF Core private constructors for entities need special handling to suppress CS8618 (non-nullable field uninitialized).
+- Need a clear company policy: when to use `?`, when to use `required`, how to handle EF constructor suppression.
+
+**Decision:**
+- **Nullable is a business decision**, not an implementation detail: `string?` means "field is allowed to be absent per domain logic", requiring a comment explaining WHY.
+- **Per-layer rules**:
+  - **Entities**: Non-nullable is default. All required fields have NO initializer (`= ...`). Nullable fields have `// null = reason` comments. Collections always initialized `= []`, never null. EF Core private constructors suppressed via `#pragma warning disable CS8618 ... #pragma warning restore CS8618`.
+  - **Value Objects**: NEVER have nullable properties. Constructor validates + throws if input invalid. No sentinel initializers.
+  - **DTOs/Commands/Queries**: Required properties use `required` keyword (no sentinels). Optional use nullable `?`. No `string.Empty` sentinels.
+  - **EF Config**: Non-nullable strings have `.IsRequired()`. Nullable strings do NOT. Optional owned VOs auto-handle nullable columns.
+- **Approved exception**: `Entity<TKey>.Id = default!` is the ONE allowed `default!` — generic type parameter, EF Core handles initialization in all paths. `[BindProperty]` Razor Page models with `= default!` are acceptable (ASP.NET binding guarantees assignment).
+- **New document**: `docs/nullable-management.md` — canonical reference for the entire team (replaces inline comments scattered across code).
+
+**Consequences:**
+- ✅ Nullable correctness enforced by compiler (`<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`).
+- ✅ Every `?` is intentional and documented — readers immediately understand "why null is valid".
+- ✅ No silent `NullReferenceException` from forgotten initialization.
+- ✅ EF Core entities remain fully DDD-compliant: `{ get; private set; }` on required fields, no surprises.
+- ✅ Team guidance lives in one place (`docs/nullable-management.md`) — easier to keep consistent across modules.
+- ❌ Developers must remember to add `#pragma` on EF constructors (mitigated: ADR-039 doc + PR checklist).
+
+**Enforcement:**
+- All C# source code violations caught at compile-time (CI fails if warnings exist).
+- PR checklist includes: "Every nullable field has a domain-reason comment? Every `required` property in DTOs? No `string.Empty` sentinels?"
+- `docs/nullable-management.md` linked from `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`.
+

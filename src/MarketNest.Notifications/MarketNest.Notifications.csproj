@@ -2,13 +2,13 @@
 
     <PropertyGroup>
         <RootNamespace>MarketNest.Notifications</RootNamespace>
-        <Description>Notifications module: email/SMS dispatch. In-process in Phase 1, standalone
+        <Description>Notifications module: email/in-app dispatch. In-process in Phase 1, standalone
             service in Phase 3.
         </Description>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Azure.Identity"/>
+        <PackageReference Include="MailKit"/>
         <PackageReference Include="MediatR"/>
         <PackageReference Include="FluentValidation"/>
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions"/>
@@ -17,18 +17,15 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore"/>
-        <PackageReference Include="OpenTelemetry.Api"/>
-        <PackageReference Include="System.Security.Cryptography.Xml"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Application\Commands\"/>
-        <Folder Include="Application\Queries\"/>
-        <Folder Include="Application\Validators\"/>
-        <Folder Include="Domain\Entities"/>
-        <Folder Include="Domain\Enums"/>
-        <Folder Include="Domain\Events"/>
-        <Folder Include="Infrastructure\Persistence"/>
-        <Folder Include="Infrastructure\Repositories"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Common\MarketNest.Base.Common.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Domain\MarketNest.Base.Domain.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Infrastructure\MarketNest.Base.Infrastructure.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Utility\MarketNest.Base.Utility.csproj"/>
     </ItemGroup>
+
 </Project>

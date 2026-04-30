@@ -1,28 +1,55 @@
-@* Money input — pass Label, Name, Value, Currency, Errors via ViewData *@
+@*
+  Money input — price/amount field enforcing FieldLimits.Money constraints.
+  Parameters (via ViewData):
+    Label      — visible label text (required)
+    Name       — input name/id (required)
+    Value      — current value (decimal string)
+    Currency   — currency symbol displayed as prefix (default: "₫")
+    HelpText   — hint shown below input
+    Required   — "true" adds required asterisk to label
+    AllowZero  — "true" allows 0 (min becomes 0 instead of 0.01)
+    Errors     — IEnumerable<string> validation errors
+*@
 @{
-  var label = ViewData["Label"]?.ToString() ?? "Price";
-  var name = ViewData["Name"]?.ToString() ?? "price";
-  var value = ViewData["Value"]?.ToString() ?? "";
-  var currency = ViewData["Currency"]?.ToString() ?? "$";
-  var errors = ViewData["Errors"] as IEnumerable<string>;
-  var hasError = errors?.Any() == true;
-  var inputCss = hasError ? "form-input input-error pl-8" : "form-input pl-8";
+  var label      = ViewData["Label"]?.ToString() ?? "Price";
+  var name       = ViewData["Name"]?.ToString() ?? "price";
+  var value      = ViewData["Value"]?.ToString() ?? "";
+  var currency   = ViewData["Currency"]?.ToString() ?? "₫";
+  var helpText   = ViewData["HelpText"]?.ToString();
+  var isRequired = ViewData["Required"]?.ToString() == "true";
+  var allowZero  = ViewData["AllowZero"]?.ToString() == "true";
+  var errors     = ViewData["Errors"] as IEnumerable<string>;
+  var hasError   = errors?.Any() == true;
+  var inputCss   = hasError ? "form-input input-error pl-8" : "form-input pl-8";
+  var minValue   = allowZero ? "0" : "0.01";
 }
 
 <div class="space-y-1">
-  <label for="@name" class="form-label">@label</label>
+  <label for="@name" class="form-label">
+    @label
+    @if (isRequired) { <span class="text-danger-500 ml-0.5" aria-hidden="true">*</span> }
+  </label>
   <div class="relative">
-        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 font-medium">
-            @currency
-        </span>
-    <input type="number" id="@name" name="@name" value="@value" step="0.01" min="0" placeholder="0.00"
-           class="@inputCss" inputmode="decimal"/>
+    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-ink-400 font-medium text-sm select-none">
+      @currency
+    </span>
+    <input type="number" id="@name" name="@name" value="@value"
+           step="0.01" min="@minValue" max="@FieldLimits.Money.Max.ToString("F2")"
+           placeholder="0.00" class="@inputCss" inputmode="decimal"
+           @(isRequired ? "required" : "")/>
   </div>
   @if (hasError)
   {
     @foreach (var error in errors!)
     {
-      <p class="form-error">@error</p>
+      <p class="form-error">
+        <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+        @error
+      </p>
     }
+  }
+  @if (!string.IsNullOrEmpty(helpText) && !hasError)
+  {
+    <p class="form-help">@helpText</p>
   }
 </div>

@@ -39,6 +39,9 @@ public static class AppRoutes
         Seller.Dashboard,
         Seller.Storefront,
         Seller.Products,
+        Seller.ProductImport,
+        Seller.ProductExport,
+        Seller.ProductImportTemplate,
         Seller.Orders,
         Seller.Payouts,
         Seller.Reviews,
@@ -54,7 +57,9 @@ public static class AppRoutes
         Api.OpenApiDoc,
         Api.ScalarDocs,
         Api.AdminV1Prefix,
-        Api.PromotionsV1Prefix
+        Api.PromotionsV1Prefix,
+        Api.CatalogV1Prefix,
+        Api.UploadsV1Prefix
     };
 
     /// <summary>
@@ -91,6 +96,8 @@ public static class AppRoutes
         public const string ScalarDocs = "/scalar";
         public const string AdminV1Prefix = "/api/v1/admin";
         public const string PromotionsV1Prefix = "/api/v1/promotions";
+        public const string CatalogV1Prefix = "/api/v1/seller/products";
+        public const string UploadsV1Prefix = "/api/v1/uploads";
     }
 
     // ── Account ──────────────────────────────────────────────────────
@@ -109,6 +116,9 @@ public static class AppRoutes
         public const string Dashboard = "/seller/dashboard";
         public const string Storefront = "/seller/storefront";
         public const string Products = "/seller/products";
+        public const string ProductImport = "/seller/products/import";
+        public const string ProductExport = "/seller/products/export";
+        public const string ProductImportTemplate = "/seller/products/import/template";
         public const string Orders = "/seller/orders";
         public const string Payouts = "/seller/payouts";
         public const string Reviews = "/seller/reviews";
@@ -126,6 +136,11 @@ public static class AppRoutes
         public const string Notifications = "/admin/notifications";
         public const string ConfigPrefix = "/admin/config";
         public const string ConfigCommission = "/admin/config/commission";
+        public const string ConfigCountry = "/admin/config/country";
+        public const string ConfigGender = "/admin/config/gender";
+        public const string ConfigPhoneCode = "/admin/config/phone-code";
+        public const string ConfigProductCategory = "/admin/config/product-category";
+        public const string ConfigNationality = "/admin/config/nationality";
     }
 
     // ── Checkout ─────────────────────────────────────────────────────

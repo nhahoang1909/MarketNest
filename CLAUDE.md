@@ -8,7 +8,7 @@ Shared agent rule files are stored at `agents/rules/` (architecture.md, codestyl
 
 MarketNest is a multi-vendor marketplace (Etsy/Shopee-style) built as a solo learning project. The architecture is intentionally phased: **Modular Monolith → Microservices → Kubernetes** over ~9 months.
 
-**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Module domain logic (Identity, Catalog, etc.) is in progress.
+**Current status**: Phase 1 (Modular Monolith) — actively building. Core kernel, Web host, component library, and infrastructure scaffolding are implemented. Catalog sale-price domain (ADR-024), Promotions/Voucher module, Auditing module, Admin config layer (ADR-021/ADR-022), Roslyn analyzers (MN001–MN017), canonical `BaseQuery`/`BaseRepository` in `Base.Infrastructure` (ADR-025), Unit of Work + `[Transaction]` attribute with pre/post-commit domain event lifecycle (ADR-027), `IRuntimeContext` unified ambient context (ADR-028), Application Constants vs Configuration policy (ADR-030), two-connection-string pattern with `ReadConnection` fallback (ADR-031), `PgQueryBuilder` safe raw SQL utility (ADR-032), Notifications module backend with template-based dispatch (ADR-034), centralized validation infrastructure (`FieldLimits`, `ValidationMessages`, `ValidatorExtensions`) with 14 shared form UI components, `SharedViewPaths` partial-path constants (ADR-035), full UI/HTMX page refactor (Auth forms → HTMX, all pages use `AppRoutes`/`SharedViewPaths`/`FieldLimits`), Trix rich text editor component with HTML sanitization (ADR-036), and Excel import/export infrastructure — `IExcelService`/`ClosedXmlExcelService`, `IAntivirusScanner`/`NoOpAntivirusScanner`, `BulkImportVariantsCommand`, seller variant import UI (ADR-037) — are implemented. Identity, Cart, Orders, Payments domain logic is in progress.
 
 ## Build & Run Commands
 
@@ -45,8 +45,13 @@ Solution file: `MarketNest.slnx` (XML-based `.slnx` format, not `.sln`).
 
 ```
 src/
-  MarketNest.Core/          # Shared kernel: Entity<T>, AggregateRoot, ValueObject, Result<T,Error>,
-                            #   CQRS interfaces, IDataSeeder, IModuleDbContext, Error codes
+  Base/                     # Shared cross-project primitives and helper packages
+    MarketNest.Base.Api/        # ReadApiV1ControllerBase, WriteApiV1ControllerBase
+    MarketNest.Base.Common/     # IBaseQuery<T,K>, ICacheService, CacheKeys, IReferenceDataReadService, Tier-2 config contracts
+    MarketNest.Base.Domain/     # Entity<T>, AggregateRoot, ValueObject, ReferenceData base
+    MarketNest.Base.Infrastructure/ # IAppLogger<T>, LogEventId, BaseQuery<T,K,Ctx>, BaseRepository<T,K,Ctx>, IBaseRepository<T,K>, DddModelBuilderExtensions
+    MarketNest.Base.Utility/    # Slug generation, date extensions
+  MarketNest.Core/          # Shared kernel: Result<T,Error>, CQRS interfaces, IModuleDbContext, IDataSeeder, error codes
   MarketNest.Identity/      # Auth module (users, roles, JWT)
   MarketNest.Catalog/       # Storefronts, products, inventory
   MarketNest.Cart/          # Cart, CartItem
@@ -82,6 +87,7 @@ All rules are specified in `docs/code-rules.md`. Key items:
 - **DDD property accessors (ADR-007)**: Entity/Aggregate properties use `{ get; private set; }` (mutate only via domain methods). Value objects use `{ get; }` (class-based) or `{ get; init; }` (record-based). DTOs/Commands/Queries use `record` with `{ get; init; }`. Infrastructure interfaces (`ISoftDeletable`, `IAuditable`) may use `{ get; set; }`.
 - **CQRS naming**: `PlaceOrderCommand`, `GetOrderByIdQuery`, `OrderPlacedEvent` — always explicit, never abbreviated.
 - **Flat layer-level namespaces**: Namespaces stop at the layer level — `MarketNest.<Module>.Application`, `MarketNest.<Module>.Domain`, `MarketNest.<Module>.Infrastructure`. Sub-folders (Commands/, Queries/, Entities/) are for file organization only and must NOT appear in the namespace. See `docs/code-rules.md` §2.7.
+- **Nullable management (ADR-039)**: `?` is a business decision, not an implementation detail. Every `?` must have a domain-reason comment. Entities use `#pragma warning disable CS8618` on EF Core private constructors; no `= string.Empty`, `= null!` sentinels. Value Objects NEVER nullable. DTOs use `required` keyword, never sentinels. Canonical reference: `docs/nullable-management.md`.
 
 ### Agent enforcement: namespace policy
 
@@ -98,24 +104,41 @@ All rules are specified in `docs/code-rules.md`. Key items:
   - Do NOT include `Account`, `Commands`, `Persistence` in the namespace.
 - **Immutability**: Records for DTOs and value objects (`{ get; init; }`). Primary constructors for dependency injection. Class-based value objects use `{ get; }` only.
 - **No magic strings / magic numbers**: Every repeated string literal and unexplained number must be a `const`, `static readonly`, enum, or bound configuration option. See `docs/code-rules.md` §2.6.
+  - **AppConstants vs appsettings.json (ADR-030)**: **AppConstants** holds immutable business rules (password length, file upload limits, colors, font stacks) that never change between environments. **appsettings.json** holds environment-specific settings (connection strings, secrets, rate limits, token expiry) that vary per deployment. Example: `AppConstants.Validation.PasswordMinLength` is in code; `Security.RateLimitRequestsPerMinute` is configurable in JSON.
 - **English only**: All naming, comments, error messages, log messages, and commit messages must be in English. No Vietnamese or other languages in source code. Localization resource files (`.resx`) are the only exception. See `docs/code-rules.md` §2.1.
 - **Architecture tests** (NetArchTest) enforce that presentation layer cannot reference domain directly.
 - **Central Package Management**: all NuGet versions are pinned in the repo-root `Directory.Packages.props`. Module `.csproj` files reference packages without versions.
 - **Build settings** (`net10.0`, `TreatWarningsAsErrors`, `EnforceCodeStyleInBuild`) are in the repo-root `Directory.Build.props`.
-- **Logging**: inject `IAppLogger<T>` (not `ILogger<T>`) and use `[LoggerMessage]` source-generated delegates in a nested `private static partial class Log`. All classes that log must be `partial`. EventIds come from `LogEventId` enum in `MarketNest.Base.Infrastructure/Logging/`. See `docs/code-rules.md` §9 and ADR-014.
+- **Logging**: inject `IAppLogger<T>` (not `ILogger<T>`) and use `[LoggerMessage]` source-generated delegates in a nested `private static partial class Log`. All classes that log must be `partial`. EventIds come from `LogEventId` enum in `MarketNest.Base.Infrastructure/Logging/` — each module owns a block of 10,000 IDs (ADR-033). See `docs/code-rules.md` §9 and ADR-014.
 - **Route whitelist**: `RouteWhitelistMiddleware` blocks unregistered paths. Add new routes to `AppRoutes` and its `WhitelistedPrefixes` set.
 - **Frontend components** live in `src/MarketNest.Web/Pages/Shared/` organized by category: `Data/`, `Display/`, `Domain/`, `Forms/`, `Navigation/`, `Overlays/`. Naming: `_ComponentName.cshtml`. Layouts (`_Layout.cshtml`, `_LayoutAdmin.cshtml`, `_LayoutSeller.cshtml`) also live in `Pages/Shared/`.
+- **Shared form field components** — always use the shared partials in `Pages/Shared/Forms/` instead of inline `<input>` tags. They enforce `FieldLimits` at the HTML layer. Available: `_TextField`, `_TextArea`, `_SlugField`, `_EmailField`, `_PhoneField`, `_UrlField`, `_MoneyInput`, `_QuantityInput`, `_StockQuantityInput`, `_PercentageInput`, `_RatingInput`, `_SelectField`, `_ImageUpload`, `_ExcelUpload`, `_FormSection`, `_FormActions`. See `docs/common-validation-rules.md` for usage.
+- **SharedViewPaths constants (ADR-035)**: All `<partial name="…">` and `Html.PartialAsync(…)` calls for shared components **must** use `SharedViewPaths.*` constants defined in `MarketNest.Web.Infrastructure/SharedViewPaths.cs` — never inline `~/Pages/Shared/…` magic strings. Example: `<partial name="@SharedViewPaths.TextField" …/>`. Add a new constant to `SharedViewPaths` before using any new shared partial.
+- **Validation infrastructure**: use `FieldLimits` (field length/range constants), `ValidationMessages` (error message factory), and `ValidatorExtensions` (FluentValidation extensions) from `MarketNest.Base.Common`. All three are available in every view via `_ViewImports.cshtml`. See `docs/common-validation-rules.md`.
 - **Event bus**: modules publish integration events via `IEventBus` (`MarketNest.Core/Common/Events/`). Phase 1 uses `InProcessEventBus` (MediatR); Phase 3 swaps to `MassTransitEventBus` (RabbitMQ).
 - **Database initialization**: `DatabaseInitializer` auto-migrates and seeds on startup using model hash tracking and PostgreSQL advisory locks. Seeders implement `IDataSeeder` with `Order` and `Version` properties. Each module's `DbContext` must implement `IModuleDbContext`.
 - **Auditing**: Mark entities `[Auditable]` for automatic EF Core change tracking; mark commands `[Audited("EVENT_TYPE")]` for automatic MediatR audit logging. `IAuditService` in `Core/Contracts/` — never fails the main request. See ADR-012.
+- **Sale price on variants (ADR-024)**: `ProductVariant` carries three inline sale fields (`SalePrice`, `SaleStart`, `SaleEnd`). Always use `variant.EffectivePrice()` at checkout / cart reads — never read `Price` directly. `ExpireSalesJob` (Catalog, 5-min schedule) clears expired sales and raises `VariantSalePriceRemovedEvent`. See §5.4 in `docs/domain-and-business-rules.md`.
+- **Background jobs**: All timer/batch jobs must implement `IBackgroundJob` and expose a `JobDescriptor`. Job keys must be globally unique (e.g., `catalog.variant.expire-sales`). See `docs/backend-patterns.md` §16.
+- **Raw SQL escape hatch (ADR-032)**: When EF Core cannot express the needed SQL (complex multi-schema joins, DDL, PostgreSQL-specific features), use `PgQueryBuilder` (`Base.Infrastructure/Persistence/PgQueryBuilder.cs`). All values are parameterized (`$1`, `$2`, …). Use `Identifier()` for safe column/table quoting. **Never** pass user input to `Raw()` or `IdentifierRaw()`. `ToDebugString()` is for logging only — never execute its output. See `docs/backend-infrastructure.md` §1.4.
+- **Base query/repository (ADR-025)**: canonical `BaseQuery<TEntity,TKey,TContext>` and `BaseRepository<TEntity,TKey,TContext>` live in `Base.Infrastructure`. Each module declares a 2-line thin wrapper that pins its own `DbContext`. Never copy the base logic into a module — inherit it. Rule: CommandHandlers inject `I{Entity}Repository`; QueryHandlers inject `I{Entity}Query : IBaseQuery<T,K>` or a dedicated `IGet{UseCase}Query` for complex reads. Neither `{Module}DbContext` nor `{Module}ReadDbContext` is injected by any Application layer class. `IBaseRepository<TEntity,TKey>` exposes single-entity write methods (`Add`, `Update`, `Remove`) and batch methods (`AddRangeAsync`, `UpdateRangeAsync`, `RemoveRangeAsync` — accept `IEnumerable<TEntity>`). All writes are flushed via `IUnitOfWork.CommitAsync()` — never call `SaveChangesAsync` directly.
+- **Unit of Work (ADR-027)**: Command handlers MUST NOT call `uow.CommitAsync(ct)` or `dbContext.SaveChangesAsync()` directly — the transaction filter calls `uow.CommitAsync()` automatically after the handler returns. `IUnitOfWork` is defined in `Base.Infrastructure`. **Exception**: background jobs run outside the HTTP pipeline and must call `uow.CommitAsync(ct)` themselves. Domain events split into two types: **pre-commit** (`IPreCommitDomainEvent` — dispatched INSIDE the open DB transaction before `SaveChanges`, for atomic side effects) and **post-commit** (plain `IDomainEvent` — dispatched AFTER transaction commit, failures logged only). `UnitOfWork` implementation in `MarketNest.Web.Infrastructure/Persistence/`. See `docs/backend-patterns.md` §22 and ADR-027.
+- **Transaction filters (ADR-027)**: `RazorPageTransactionFilter` (globally registered) auto-wraps `OnPost*`/`OnPut*`/`OnDelete*`/`OnPatch*` Razor Page handlers in a DB transaction — no attribute needed on pages. `OnGet*` always bypassed. `TransactionActionFilter` (globally registered) wraps controller actions only when `[Transaction]` is present on class or action — `WriteApiV1ControllerBase` carries `[Transaction]` at class level. Opt-out: `[NoTransaction]`. Override isolation: `[Transaction(IsolationLevel.Serializable, timeoutSeconds:60)]`. Filters in `MarketNest.Web.Infrastructure/Filters/`.
+- **Controller base classes (ADR-027)**: `ReadApiV1ControllerBase` for GET-only controllers; `WriteApiV1ControllerBase` for POST/PUT/DELETE/PATCH controllers (applies `[Transaction]` automatically). Both in `Base.Api`.
+- **Module DI pattern**: each module exposes `AddXxxModule(IServiceCollection, IConfiguration)` in `Infrastructure/DependencyInjection.cs`. Canonical examples: Admin, Auditing, Promotions, Orders, Payments.
+- **Connection string strategy (ADR-031)**: Two connection strings only — `DefaultConnection` (write-side DbContexts for all modules) and `ReadConnection` (read-side DbContexts; empty in Phase 1 → fallback to `DefaultConnection`; Phase 2: set to PostgreSQL read replica for zero-code-change scaling). **Never add per-module connection strings** (e.g. `AuditConnection`): module extraction at Phase 3 requires far more than a connection string rename, and ADR-004 schema isolation is the real microservice enabler. Fallback pattern used in every module `DependencyInjection.cs`:
+  ```csharp
+  string readConnection = configuration.GetConnectionString("ReadConnection")
+      is { Length: > 0 } rc ? rc : writeConnection;
+  ```
+- **Excel import/export (ADR-037)**: Use `IExcelService` (contract in `Base.Common/Excel/`) for all import and export operations — never reference ClosedXML directly in module code. `ClosedXmlExcelService` is the Web-layer implementation (registered as `Scoped`). Import templates use `ExcelTemplate<TRow>` with typed `Func<string, TRow, Result<Unit, string>>` setter callbacks — all column definitions live in `<Module>/Application/ImportExport/`. Export uses `ExcelExportOptions<T>` with `ExcelColumnExport<T>` column definitions. Template downloads served from `AppRoutes.Seller.ProductImportTemplate`. Column format enum: use `ExcelColumnFormat.DecimalNumber` (not `.Decimal`).
+- **Antivirus scanning (ADR-037)**: All file uploads (images AND Excel) MUST pass through `IAntivirusScanner` (contract in `Base.Common/Security/`) before processing. Phase 1: `NoOpAntivirusScanner` (always clean — acceptable for dev/internal). **⚠️ Phase 2: replace with ClamAV binding (`nClam` or clamd socket) via single DI swap** — never skip this for a public-facing deployment. 4-layer import validation: (1) extension + magic bytes → (2) antivirus scan → (3) header validation → (4) row-level parsing. See `docs/excel-import-export.md`.
 
 ## Agent Behavior Guidelines (rules)
 
-Agent behavior and coding guidelines are maintained under `agents/rules/`.
+Read `agents/GUIDELINES.md` — the canonical, single source of truth for agent-facing guidance (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution). It links to authoritative deep docs (`docs/code-rules.md`, `docs/architecture.md`, etc.). The original per-topic rule files are archived under `agents/rules/archive/`.
 
-Please read `agents/rules/README.md` and the rule files in `agents/rules/` (architecture.md, codestyle.md, git.md, security.md, testing.md) for authoritative, agent-facing guidance (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution) and links to deeper docs (`docs/code-rules.md`, `docs/architecture.md`, etc.).
-
-Note: a single consolidated `agents/GUIDELINES.md` was planned; if present it will be authoritative. For now rely on the `agents/rules/` files and `agents/rules/README.md` which describes the consolidation status.
+**Using specialized subagents**: When a task matches a subagent's responsibility, ALWAYS delegate using the `run_subagent` tool. Available subagents: `Plan` — use for researching and outlining multi-step plans (designs, migration plans, phased work).
 
 ## Specification Documents
 
@@ -125,12 +148,17 @@ All located in `docs/` — read before implementing any feature:
 |------|----------|
 | `docs/architecture.md` | Phased architecture, ADRs, module boundaries, solution structure, project layout |
 | `docs/domain-and-business-rules.md` | DDD aggregates, bounded contexts, entity designs, business rules for all modules |
-| `docs/backend-patterns.md` | Tech stack, CQRS contracts, `Result<T,Error>`, base classes, services, seeding |
+| `docs/backend-patterns.md` | Tech stack, CQRS contracts, `Result<T,Error>`, base classes, services, seeding, background jobs |
 | `docs/backend-infrastructure.md` | Query utilities, caching, transactions, UoW, `[Access]` permissions, file uploads, testing |
+| `docs/caching-strategy.md` | Four-layer caching (static assets, OutputCache, Redis, cross-module), cache keys, invalidation, anti-patterns |
+| `docs/notifications.md` | Notifications module: template engine, dispatch pipeline, email/in-app channels, usage guide |
 | `docs/frontend-guide.md` | Frontend stack, page inventory, HTMX/Alpine patterns, component library, BE-FE contracts |
 | `docs/code-rules.md` | Naming conventions, C# idioms, DDD principles, banned patterns |
+| `docs/common-validation-rules.md` | FieldLimits, ValidationMessages, ValidatorExtensions — centralized validation infrastructure |
+| `docs/excel-import-export.md` | Excel import/export: IExcelService, ClosedXML, antivirus hook, import templates, export options, ADR-037 |
 | `docs/devops-requirements.md` | Docker Compose topology, GitHub Actions, K8s manifests |
 | `docs/analyzers.md` | Roslyn analyzer reference: all 17 MN rules, suppression patterns, adding new rules |
+| `docs/test-driven-design.md` | TDD guidelines, unit/integration/architecture test patterns |
 
 ## Phase 1 Exit Criteria (Month 3)
 

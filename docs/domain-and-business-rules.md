@@ -1,8 +1,9 @@
 ﻿# MarketNest — Domain Design & Business Rules
 
-> Version: 0.3 | Status: Draft | Date: 2026-04
+> Version: 0.4 | Status: Draft | Date: 2026-04-29
 > Consolidated from: `domain-design.md` + `business-logic-requirements.md`
 > Updated: Added Promotions/Voucher domain (§3.8), Order financial calculation spec (§3.4–§3.5), updated invariants, domain events, and notification triggers.
+> Updated 2026-04-29: §3.2 ProductVariant updated to reflect Phase 1 implementation (ADR-024 Sale Price inline fields, simplified inventory, computed helpers). §5.4 Sale Price business rules added. §6/§7 updated with new events and invariants.
 
 ---
 
@@ -108,31 +109,55 @@ Product (Aggregate Root)
 ├── CreatedAt / UpdatedAt
 ├── IsDeleted: bool (soft delete)
 │
-├── Variants: List<ProductVariant> (1..*)
-│   └── ProductVariant
-│       ├── VariantId: Guid
-│       ├── Sku: Sku (value object — platform-unique)
-│       ├── Attributes: Dictionary<string, string> (e.g. { "Size": "M", "Color": "Red" })
-│       ├── Price: Money (value object)
-│       ├── CompareAtPrice: Money? (must be > Price if set)
-│       ├── Status: VariantStatus { Active | Inactive }
-│       └── InventoryItem: InventoryItem (1:1)
-│           ├── QuantityOnHand: int (≥ 0)
-│           ├── QuantityReserved: int (≥ 0)
-│           └── QuantityAvailable: int (computed: OnHand - Reserved)
+└── Variants: List<ProductVariant> (1..*)
+    └── ProductVariant  ← Entity (not separate Aggregate Root; owned by Product)
+        ├── VariantId: Guid
+        ├── ProductId: Guid
+        ├── Sku: string (platform-unique; max 100; unique DB index)
+        │     [Phase 2: migrate to Sku value object]
+        ├── Price: Money (base price; always > 0)
+        ├── CompareAtPrice: Money? (strikethrough price — must be > Price if set)
+        │
+        │   ── Sale Price Fields (ADR-024, Phase 1: one active sale at a time) ──
+        │
+        ├── SalePrice: Money?          ← active sale price; must be < Price
+        ├── SaleStart: DateTimeOffset? ← UTC; must be < SaleEnd
+        ├── SaleEnd: DateTimeOffset?   ← UTC; must be in the future when set
+        │
+        ├── StockQuantity: int (≥ 0; Phase 1 simplified inventory)
+        │     [Phase 2: expand to QuantityOnHand / QuantityReserved / QuantityAvailable]
+        ├── Status: VariantStatus { Active | Inactive }
+        ├── CreatedAt: DateTimeOffset
+        └── UpdatedAt: DateTimeOffset
+
+Computed helpers on ProductVariant (not stored columns):
+  IsSaleActive(at?)          → true when SalePrice is not null & SaleStart ≤ now < SaleEnd
+  EffectivePrice(at?)        → SalePrice (if sale active) else Price  [use everywhere at checkout]
+  DisplayOriginalPrice(at?)  → Price (if sale active) else CompareAtPrice (for UI strikethrough)
 
 Domain Events:
   ProductPublishedEvent, ProductArchivedEvent
-  InventoryLowEvent (QuantityAvailable < 5), InventoryDepletedEvent (= 0)
+  InventoryLowEvent (StockQuantity < 5), InventoryDepletedEvent (= 0)
+  VariantSalePriceSetEvent(VariantId, SalePrice, SaleStart, SaleEnd)
+  VariantSalePriceRemovedEvent(VariantId)
 ```
 
-**Business Rules:**
+**Business Rules (Product):**
 - Product belongs to exactly one Storefront
 - Only Active products appear in search/browse
 - Cannot be published without at least 1 Active variant
 - Price must be > 0; CompareAtPrice must be strictly > Price
 - Sku must be unique across the platform (unique DB index)
-- Inventory can never go negative: guard at DB level (check constraint) AND application level
+- Stock can never go negative: guard at DB (check constraint) AND application level
+- Attributes (variant options like Size/Color) deferred to Phase 2 — variants use free-form SKU for now
+
+**Business Rules (Sale Price — full rules in §5.4):**
+- Sale Price must be strictly less than base Price
+- Sale period: SaleStart < SaleEnd; SaleEnd must be in the future when setting
+- Maximum sale duration: 90 days (configurable via `CatalogConstants.Sale.MaxDurationDays`)
+- Phase 1: one active sale per variant at a time (SetSalePrice overwrites any existing sale)
+- `EffectivePrice()` must be used at all checkout integration points — never read `Price` directly
+- `ExpireSalesJob` runs every 5 minutes, calls `RemoveSalePrice()` on expired variants
 
 ### 3.3 Cart Aggregate
 
@@ -285,6 +310,19 @@ Domain Events:
 | SHIPPED for 30 days, no confirmation | Auto-DELIVERED → auto-COMPLETED |
 | DELIVERED for 3 days, no dispute | Auto-COMPLETED |
 | COMPLETED order | Trigger payout calculation |
+
+**Module Background Jobs (Platform-wide):**
+
+| Job | Module | Schedule | Description |
+|-----|--------|----------|-------------|
+| `ExpireSalesJob` | Catalog | Every 5 min | Clear `SalePrice/SaleStart/SaleEnd` on variants where `SaleEnd ≤ now`. Raises `VariantSalePriceRemovedEvent`. |
+| `VoucherExpiryJob` | Promotions | Every hour | Set `Status = Expired/Depleted` on vouchers past `ExpiryDate` or with `UsageCount ≥ UsageLimit`. |
+| `CleanupExpiredReservations` | Cart | Every 5 min | Release DB reservations where Redis key has expired (TTL > 20 min). |
+| `AutoCancelUnconfirmedOrders` | Orders | Every 30 min | CONFIRMED + 48h no seller action → CANCELLED + Buyer refunded. |
+| `AutoConfirmShippedOrders` | Orders | Daily 01:00 | SHIPPED > 30 days → Auto-DELIVERED. |
+| `AutoCompleteOrders` | Orders | Daily 01:05 | DELIVERED + 3 days no dispute → COMPLETED. |
+| `ProcessPayoutBatch` | Payments | Daily 02:00 | Calculate and disburse payouts for COMPLETED orders. |
+| `ProcessDailyNotificationDigest` | Notifications | Daily 09:00 | Batch digest notifications per user timezone. |
 
 ### 3.5 Payment Aggregate
 
@@ -644,6 +682,39 @@ public record DiscountResult(
 - Platform voucher cost does not affect CommissionBase
 - Commission does not apply to ShippingFee or PaymentSurcharge
 
+### 5.4 Catalog — Sale Price Business Rules
+
+> **Implementation:** `MarketNest.Catalog` module — `ProductVariant` entity. See ADR-024.
+
+**Setting a Sale Price:**
+- `SalePrice` must be strictly less than `Price` (base price)
+- `SaleStart` must be strictly before `SaleEnd`
+- `SaleEnd` must be in the future at the time of setting
+- Maximum sale duration: **90 days** (`CatalogConstants.Sale.MaxDurationDays = 90`)
+- `SalePrice` must be a positive decimal with at most 2 decimal places
+
+**Phase 1 Constraints:**
+- One active sale per variant at a time — calling `SetSalePrice` overwrites any existing sale
+- No overlapping/scheduled multi-promotion queue (Phase 2 concern — migrate to `VariantPricePromotion` entity then)
+
+**Checkout Integration:**
+- All checkout and cart price reads MUST use `EffectivePrice()` — never read `Price` directly
+- `CartItem.SnapshotPrice` should capture `EffectivePrice()` at time of add-to-cart
+- Price drift detection (±5% warning) compares against current `EffectivePrice()`
+
+**Background Job (`ExpireSalesJob`):**
+- Runs every 5 minutes (schedule: `CatalogConstants.Sale.ExpiryJobSchedule = "00:05:00"`)
+- Queries variants where `SalePrice IS NOT NULL AND SaleEnd ≤ utcNow` (uses partial index `idx_variants_active_sale`)
+- Calls `variant.RemoveSalePrice()` which raises `VariantSalePriceRemovedEvent`
+- Job key: `catalog.variant.expire-sales` — must be globally unique
+
+**Authorization:**
+- Seller can only manage sale prices for variants belonging to their own Storefront (Phase 1 TODO: ownership check)
+- Admin can force-remove any variant's sale price via `DELETE api/v1/admin/catalog/variants/{id}/sale`
+- Seller endpoints: `PATCH/DELETE api/v1/seller/products/{productId}/variants/{variantId}/sale`
+
+> **Sale Price Invariants (S1–S5):** See §7 Invariants Table.
+
 ---
 
 ## 6. Domain Events Summary
@@ -667,6 +738,8 @@ public record DiscountResult(
 | `DisputeOpenedEvent` | Dispute | Orders (set DISPUTED), Notifications |
 | `DisputeEscalatedEvent` | Dispute | Notifications (admin) |
 | `DisputeResolvedEvent` | Dispute | Orders, Payments |
+| `VariantSalePriceSetEvent` | ProductVariant | — (audit log, future: wish-list price alert) |
+| `VariantSalePriceRemovedEvent` | ProductVariant / ExpireSalesJob | Notifications → Seller (future) |
 | `VoucherCreatedEvent` | Voucher | Notifications (seller confirmation) |
 | `VoucherActivatedEvent` | Voucher | — |
 | `VoucherPausedEvent` | Voucher | Notifications (seller — if paused by Admin) |
@@ -683,7 +756,7 @@ public record DiscountResult(
 
 | # | Invariant | Enforced In |
 |---|-----------|-------------|
-| 1 | QuantityAvailable ≥ 0 | DB check constraint + Application |
+| 1 | `StockQuantity ≥ 0` (Phase 1 simplified inventory) | DB check constraint + Application |
 | 2 | `BuyerTotal` (all financial fields) immutable after CONFIRMED | Domain method guard |
 | 3 | Payout only for COMPLETED order | Application + Payments domain |
 | 4 | Review only by buyer of COMPLETED order | ReviewGate service |
@@ -693,6 +766,16 @@ public record DiscountResult(
 | 8 | Price of OrderLine immutable after CONFIRMED | OrderLine private setters |
 | 9 | Max 1 open dispute per Order | DB unique constraint + Domain guard |
 | 10 | Seller cannot modify order prices after CONFIRMED | Order state guard |
+
+### Sale Price Invariants
+
+| # | Invariant | Enforced In |
+|---|-----------|-------------|
+| S1 | `SalePrice < Price` (strictly less than base price) | Domain `SetSalePrice()` + FluentValidation |
+| S2 | `SaleStart < SaleEnd` | Domain `SetSalePrice()` + FluentValidation |
+| S3 | `SaleEnd > utcNow` at time of setting | Domain `SetSalePrice()` + FluentValidation |
+| S4 | Sale duration ≤ `MaxDurationDays` (90) | Domain `SetSalePrice()` + FluentValidation |
+| S5 | `SalePrice`, `SaleStart`, `SaleEnd` are all null or all non-null together | DB CHECK constraint `chk_sale_dates_consistent` |
 
 ### Voucher Invariants
 
@@ -731,25 +814,64 @@ public record DiscountResult(
 
 ## 8. Notification Triggers
 
-> All notifications below are subject to user's `NotificationPreference` toggles and frequency settings (§9.5).
-> The Notifications module checks `INotificationPreferenceReadService` before dispatching.
+> **Phase 1 implemented**: Template-based dispatch via `INotificationService` (ADR-034).
+> Full dispatch pipeline, SMTP email sender, in-app inbox, 17 default templates, and seeder are implemented.
+> See `docs/notifications.md` for full technical reference.
+>
+> **Phase 2 pending**: `INotificationPreferenceReadService` integration (user opt-out toggles + frequency).
+> Phase 1 sends all notifications regardless of user preferences.
 
-| Event | Recipients | Channel | Preference Toggle |
-|-------|-----------|---------|-------------------|
-| Order placed | Buyer + Seller | Email | `NotifyOrderPlaced` |
-| Order confirmed by Seller | Buyer | Email | `NotifyOrderConfirmed` |
-| Order shipped (tracking added) | Buyer | Email | `NotifyOrderShipped` |
-| Order auto-confirmed after 7 days | Buyer | Email | `NotifyOrderDelivered` |
-| Dispute opened | Seller + Admin | Email | `NotifyDisputeOpened` |
-| Seller responds to dispute | Buyer + Admin | Email | `NotifyDisputeResolved` |
-| Admin resolves dispute | Buyer + Seller | Email | `NotifyDisputeResolved` |
-| Payout processed | Seller | Email | `NotifyPaymentProcessed` |
-| Review left on storefront | Seller | Email (digest, daily) | `NotifyReviewReceived` |
-| Password reset requested | User | Email | Always sent (security) |
-| New login from unknown device | User | Email | Always sent (security) |
-| Seller's voucher paused by Admin | Seller | Email + In-app | `NotifyVoucherPaused` |
-| Voucher auto-expired | Seller | In-app | `NotifyVoucherExpired` |
-| Voucher depleted (all uses consumed) | Seller | In-app | `NotifyVoucherDepleted` |
+### 8.1 Notification → Template Key Mapping
+
+| Event | Template Keys Used | Channel | Preference Toggle |
+|-------|--------------------|---------|-------------------|
+| Order placed | `order.placed.buyer` + `order.placed.seller` | Both | `NotifyOrderPlaced` |
+| Order confirmed by Seller | `order.confirmed.buyer` | Both | `NotifyOrderConfirmed` |
+| Order shipped (tracking added) | `order.shipped.buyer` | Both | `NotifyOrderShipped` |
+| Order auto-confirmed / delivered | `order.delivered.buyer` | Both | `NotifyOrderDelivered` |
+| Order cancelled | `order.cancelled.buyer` + `order.cancelled.seller` | Both | `NotifyOrderPlaced` |
+| Dispute opened | `dispute.opened.seller` + `dispute.opened.admin` | Both | `NotifyDisputeOpened` |
+| Seller responds to dispute | `dispute.responded.buyer` | Both | `NotifyDisputeResolved` |
+| Admin resolves dispute | `dispute.resolved.buyer` + `dispute.resolved.seller` | Both | `NotifyDisputeResolved` |
+| Payout processed | `payout.processed.seller` | Both | `NotifyPaymentProcessed` |
+| Review left on product | `review.received.seller` | Both (digest) | `NotifyReviewReceived` |
+| Inventory low | `inventory.low.seller` | InApp only | Seller only |
+| Password reset requested | `security.password-reset` | Email | **Always sent** (security) |
+| New login from unknown device | `security.new-login` | Email | **Always sent** (security) |
+
+### 8.2 Domain Event → Handler Mapping
+
+Domain event handlers that call `INotificationService` live in the owning module's Application layer:
+
+| Domain Event | Handler Module | Handler Class |
+|---|---|---|
+| `OrderPlacedEvent` | Orders | `OrderPlacedNotificationHandler` (TODO) |
+| `OrderConfirmedEvent` | Orders | `OrderConfirmedNotificationHandler` (TODO) |
+| `OrderShippedEvent` | Orders | `OrderShippedNotificationHandler` (TODO) |
+| `OrderDeliveredEvent` | Orders | `OrderDeliveredNotificationHandler` (TODO) |
+| `OrderCancelledEvent` | Orders | `OrderCancelledNotificationHandler` (TODO) |
+| `DisputeOpenedEvent` | Disputes | `DisputeOpenedNotificationHandler` (TODO) |
+| `DisputeRespondedEvent` | Disputes | `DisputeRespondedNotificationHandler` (TODO) |
+| `DisputeResolvedEvent` | Disputes | `DisputeResolvedNotificationHandler` (TODO) |
+| `PayoutProcessedEvent` | Payments | `PayoutProcessedNotificationHandler` (TODO) |
+| `ReviewSubmittedEvent` | Reviews | `ReviewReceivedNotificationHandler` (TODO) |
+| `InventoryLowEvent` | Catalog | `InventoryLowNotificationHandler` (TODO) |
+
+> Handlers are post-commit domain event handlers (dispatched AFTER TX commit per ADR-027).
+> Notification failures are caught and logged — they **never** fail the main request.
+
+### 8.3 Security Notification Contract
+
+Security notifications bypass `INotificationPreferenceReadService` entirely — always sent:
+
+```csharp
+// Identity module — password reset flow
+await notifications.SendSecurityEmailAsync(
+    toEmail: user.Email,
+    templateKey: NotificationTemplateKeys.PasswordResetRequest,
+    variables: new PasswordResetVariables(user.Name, resetUrl, "30 minutes").ToVariables(),
+    ct: ct);
+```
 
 ---
 

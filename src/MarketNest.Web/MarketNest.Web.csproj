@@ -31,7 +31,16 @@
         <ProjectReference Include="..\Base\MarketNest.Base.Api\MarketNest.Base.Api.csproj"/>
     </ItemGroup>
 
+    <ItemGroup Label="Excel / Import-Export">
+        <PackageReference Include="ClosedXML"/>
+        <!-- Explicit direct reference to override the vulnerable transitive System.IO.Packaging 8.0.0
+             brought in by ClosedXML 0.104.1 (CVE-2024-43483, CVE-2024-43484 — DoS, high severity).
+             Version is centrally managed in Directory.Packages.props at 10.0.0. -->
+        <PackageReference Include="System.IO.Packaging"/>
+    </ItemGroup>
+
     <ItemGroup Label="Infrastructure Packages">
+        <PackageReference Include="HtmlSanitizer"/>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -111,9 +120,6 @@
       </Content>
       <Content Include="..\..\global.json">
         <Link>global.json</Link>
-      </Content>
-      <Content Include="..\..\qodana.yaml">
-        <Link>qodana.yaml</Link>
       </Content>
     </ItemGroup>
 

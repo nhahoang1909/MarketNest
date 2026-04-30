@@ -18,6 +18,12 @@
         <PackageReference Include="OpenTelemetry.Api"/>
         <PackageReference Include="System.Security.Cryptography.Xml"/>
     </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Base\MarketNest.Base.Api\MarketNest.Base.Api.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Common\MarketNest.Base.Common.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Domain\MarketNest.Base.Domain.csproj"/>
+        <ProjectReference Include="..\Base\MarketNest.Base.Infrastructure\MarketNest.Base.Infrastructure.csproj"/>
+    </ItemGroup>
 
     <ItemGroup>
         <Folder Include="Application\Commands\"/>

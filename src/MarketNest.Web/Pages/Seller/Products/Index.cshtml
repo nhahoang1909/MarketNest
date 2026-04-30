@@ -8,7 +8,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
   <h1 class="text-2xl font-bold text-gray-900">San pham</h1>
-  <a href="/seller/products/create"
+  <a href="@AppRoutes.Seller.Products/create"
      class="btn-accent inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors"
      style="background:#00754A; color:#ffffff;">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -21,13 +21,12 @@
 <!-- Filters -->
 <div class="flex flex-wrap items-center gap-3 mb-5">
   <div class="relative flex-1 min-w-[200px] max-w-sm">
-    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
-         stroke-width="2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round"
-            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z"/>
-    </svg>
-    <input type="text" placeholder="Tim kiem san pham..."
-           class="form-input w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-gray-200 bg-white focus:border-gray-400 focus:ring-2 focus:ring-accent-400/20 focus:outline-none transition-all"/>
+    <partial name="@SharedViewPaths.SearchInput" view-data='@(new ViewDataDictionary(ViewData) {
+        ["TargetUrl"]   = AppRoutes.Seller.Products,
+        ["TargetId"]    = "#products-table",
+        ["Placeholder"] = "Tim kiem san pham...",
+        ["Name"]        = "search"
+    })'/>
   </div>
   <select
     class="form-input px-3 py-2.5 text-sm rounded-xl border border-gray-200 bg-white focus:border-gray-400 focus:outline-none transition-all">
@@ -47,7 +46,7 @@
 </div>
 
 <!-- Products table -->
-<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+<div id="products-table" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
   <div class="overflow-x-auto">
     <table class="admin-table w-full text-sm">
       <thead>
@@ -111,7 +110,7 @@
             </td>
             <td class="px-4 py-3 text-right">
               <div class="flex items-center justify-end gap-1">
-                <a href="/seller/products/edit"
+                <a href="@AppRoutes.Seller.Products/edit"
                    class="px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">Sua</a>
                 <button class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -136,7 +135,8 @@
       <button disabled class="px-3 py-1.5 text-xs font-medium text-gray-400 bg-gray-50 rounded-lg cursor-not-allowed">
         Truoc
       </button>
-      <button class="px-3 py-1.5 text-xs font-medium text-white rounded-lg" style="background:#1e293b;">1</button>
+      <button hx-get="@AppRoutes.Seller.Products?page=1" hx-target="#products-table" hx-swap="outerHTML" hx-push-url="true"
+              class="px-3 py-1.5 text-xs font-medium text-white rounded-lg" style="background:#1e293b;">1</button>
       <button disabled class="px-3 py-1.5 text-xs font-medium text-gray-400 bg-gray-50 rounded-lg cursor-not-allowed">
         Sau
       </button>

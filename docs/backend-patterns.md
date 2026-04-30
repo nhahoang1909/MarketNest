@@ -18,10 +18,10 @@
   - [3. Cross-Module Contracts](#3-cross-module-contracts)
   - [4. DTO Conventions](#4-dto-conventions)
   - [5. Validation Contract](#5-validation-contract)
-  - [6. Base Repository \& Aggregate Repository](#6-base-repository--aggregate-repository)
+  - [6. Base Repository & Aggregate Repository](#6-base-repository--aggregate-repository)
     - [IBaseRepository\<T, TKey\>](#ibaserepositoryt-tkey)
     - [BaseRepository Implementation](#baserepository-implementation)
-    - [AggregateRepository (domain event dispatch)](#aggregaterepository-domain-event-dispatch)
+    - [Domain event dispatch](#domain-event-dispatch)
   - [7. Base Query Handler — Paged Lists](#7-base-query-handler--paged-lists)
     - [BasePagedQueryHandler](#basepagedqueryhandler)
   - [8. Base Command Handlers](#8-base-command-handlers)
@@ -45,9 +45,9 @@
     - [Job Management Strategy](#job-management-strategy)
     - [Required Job Metadata](#required-job-metadata)
     - [Job Execution Data Model](#job-execution-data-model)
-      - [1. Data Schema (Cấu trúc dữ liệu)](#1-data-schema-cấu-trúc-dữ-liệu)
-      - [2. Planned Jobs (Danh sách Job dự kiến)](#2-planned-jobs-danh-sách-job-dự-kiến)
-      - [3. Admin Job Operations Roadmap (Lộ trình phát triển)](#3-admin-job-operations-roadmap-lộ-trình-phát-triển)
+      - [1. Data Schema](#1-data-schema)
+      - [2. Registered \& Planned Jobs](#2-registered--planned-jobs)
+      - [3. Admin Job Operations Roadmap](#3-admin-job-operations-roadmap)
   - [17. Error Handling Strategy](#17-error-handling-strategy)
     - [Global Exception Handler (unexpected only)](#global-exception-handler-unexpected-only)
     - [Security Middleware Pipeline](#security-middleware-pipeline)
@@ -57,6 +57,8 @@
     - [IDataSeeder Contract](#idataseeder-contract)
   - [20. Page Handler Contract](#20-page-handler-contract)
   - [21. Testing Requirements](#21-testing-requirements)
+   - [22. Unit of Work & Transaction Management](#22-unit-of-work--transaction-management)
+  - [23. Runtime Context (IRuntimeContext)](#23-runtime-context-iruntimecontext)
   - [Appendix: Module Contract Checklist](#appendix-module-contract-checklist)
 
 ---
@@ -160,59 +162,112 @@ public record GetOrderDetailQuery(Guid OrderId, Guid RequestingUserId) : IQuery<
 
 ## 3. Cross-Module Contracts
 
-Modules NEVER reference each other's concrete classes. They use contracts in `MarketNest.Core/Contracts/`.
+Modules NEVER reference each other's concrete classes. They use contracts in `MarketNest.Base.Common/Contracts/Contracts/`.
 
 ```csharp
-// Core/Contracts/IOrderCreationService.cs — Cart → Orders
-public interface IOrderCreationService
-{
-    Task<Result<Guid, Error>> CreateFromCartAsync(Guid buyerId, CartSnapshot cart, Address shippingAddress, CancellationToken ct);
-}
+// Base.Common/Contracts/IOrderCreationService.cs — Cart → Orders
+// Base.Common/Contracts/IInventoryService.cs — Cart/Orders → Catalog
+// Base.Common/Contracts/IPaymentService.cs — Orders → Payments
+// Base.Common/Contracts/INotificationService.cs — All → Notifications (template-based dispatch, ADR-034)
+// Base.Common/Contracts/IStorefrontReadService.cs — Payments → Catalog
+// Base.Common/Contracts/IUserPreferencesReadService.cs — Any → Identity
+// Base.Common/Contracts/INotificationPreferenceReadService.cs — Notifications → Identity (Phase 2)
+// Base.Common/Contracts/IReferenceDataReadService.cs — Any → Admin (Tier 1 reference data)
+// Base.Common/Contracts/Config/IOrderPolicyConfig.cs + IOrderPolicyConfigWriter.cs — Admin → Orders
+// Base.Common/Contracts/Config/ICommissionConfig.cs + ICommissionConfigWriter.cs — Admin → Payments
+// Base.Common/Contracts/Config/IStorefrontPolicyConfig.cs + IStorefrontPolicyConfigWriter.cs — Admin → Catalog
+// Base.Common/Contracts/Config/IReviewPolicyConfig.cs + IReviewPolicyConfigWriter.cs — Admin → Reviews
+```
 
-// Core/Contracts/IInventoryService.cs — Cart/Orders → Catalog
-public interface IInventoryService
-{
-    Task<bool> HasStockAsync(Guid variantId, int quantity, CancellationToken ct);
-    Task<Result<Unit, Error>> ReserveAsync(Guid variantId, int quantity, Guid cartId, CancellationToken ct);
-    Task ReleaseAsync(Guid variantId, int quantity, CancellationToken ct);
-    Task CommitAsync(Guid variantId, int quantity, CancellationToken ct);
-}
+### INotificationService — Template-Based Dispatch (ADR-034)
 
-// Core/Contracts/IPaymentService.cs — Orders → Payments
-public interface IPaymentService
-{
-    Task<Result<Guid, Error>> CaptureAsync(Guid orderId, Money amount, string paymentMethod, CancellationToken ct);
-    Task<Result<Unit, Error>> RefundAsync(Guid paymentId, Money amount, string reason, CancellationToken ct);
-}
-
-// Core/Contracts/INotificationService.cs — All → Notifications
+```csharp
+// Base.Common/Contracts/INotificationService.cs
 public interface INotificationService
 {
-    Task SendEmailAsync(string to, string subject, string htmlBody, CancellationToken ct);
-    Task SendTemplatedEmailAsync(string to, string templateName, object model, CancellationToken ct);
-}
+    // Template-based dispatch — email and/or in-app per template Channel setting
+    Task SendAsync(
+        Guid recipientUserId,
+        string templateKey,
+        IReadOnlyDictionary<string, string> variables,
+        CancellationToken ct = default);
 
-// Core/Contracts/IStorefrontReadService.cs — Payments → Catalog
-public interface IStorefrontReadService
-{
-    Task<decimal> GetCommissionRateAsync(Guid storeId, CancellationToken ct);
-    Task<StorefrontInfo?> GetBySlugAsync(string slug, CancellationToken ct);
-}
+    // Send same notification to multiple recipients (e.g., order.placed → buyer + seller)
+    Task SendToMultipleAsync(
+        IEnumerable<Guid> recipientUserIds,
+        string templateKey,
+        IReadOnlyDictionary<string, string> variables,
+        CancellationToken ct = default);
 
-// Core/Contracts/IUserPreferencesReadService.cs — Any module → Identity
-public interface IUserPreferencesReadService
-{
-    Task<UserPreferencesSnapshot?> GetByUserIdAsync(Guid userId, CancellationToken ct);
-}
-
-// Core/Contracts/INotificationPreferenceReadService.cs — Notifications → Identity
-public interface INotificationPreferenceReadService
-{
-    Task<NotificationPreferenceSnapshot?> GetByUserIdAsync(Guid userId, CancellationToken ct);
+    // Security emails — bypasses preference check entirely, always sent
+    Task SendSecurityEmailAsync(
+        string toEmail,
+        string templateKey,
+        IReadOnlyDictionary<string, string> variables,
+        CancellationToken ct = default);
 }
 ```
 
-**Communication pattern:** prefer domain events for async; use service interfaces for sync queries.
+Template keys are defined as constants in `NotificationTemplateKeys` in `Base.Common`:
+```csharp
+// Usage in domain event handler
+var vars = new OrderPlacedVariables(
+    OrderNumber: order.Number, BuyerName: buyer.Name, ... ).ToVariables();
+
+await notifications.SendAsync(buyer.Id, NotificationTemplateKeys.OrderPlacedBuyer, vars, ct);
+```
+
+See `docs/notifications.md` for the full dispatch pipeline, template engine, and usage guide.
+
+### Three-Tier Configuration Contracts (ADR-021)
+
+```csharp
+// Tier 1 — Reference Data (Admin owns DB, all modules read via contract)
+public interface IReferenceDataReadService
+{
+    Task<IReadOnlyList<CountryDto>> GetCountriesAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<ProductCategoryDto>> GetProductCategoriesAsync(CancellationToken ct = default);
+    // ... GetGendersAsync, GetPhoneCountryCodesAsync, GetNationalitiesAsync
+    // ... GetCountryAsync(code), GetCategoryAsync(id), GetCategoryBySlugAsync(slug)
+}
+
+// Tier 2 — Business Config (each module owns its DB table + Redis cache)
+// Admin module injects both read and write contracts — never the concrete service.
+public interface ICommissionConfig
+{
+    decimal DefaultRate { get; }
+    Task<decimal> GetRateForSellerAsync(Guid sellerId, CancellationToken ct);
+}
+public interface ICommissionConfigWriter
+{
+    Task<Result<Unit, Error>> SetDefaultRateAsync(decimal rate, Guid adminId, CancellationToken ct);
+    Task<Result<Unit, Error>> SetSellerOverrideAsync(Guid sellerId, decimal rate, DateTimeOffset from, Guid adminId, CancellationToken ct);
+    Task<Result<Unit, Error>> RemoveSellerOverrideAsync(Guid sellerId, Guid adminId, CancellationToken ct);
+}
+// Same pattern for IOrderPolicyConfig/Writer, IStorefrontPolicyConfig/Writer, IReviewPolicyConfig/Writer
+
+// Tier 3 — System Configuration (no DB, bound from appsettings.json, IOptions<T>)
+// PlatformOptions, ValidationOptions, SecurityOptions
+// Located in MarketNest.Web/Infrastructure/Options/
+```
+
+### ICacheService
+
+```csharp
+// Base.Common/Contracts/ICacheService.cs — implemented by Web/Infrastructure/RedisCacheService.cs
+public interface ICacheService
+{
+    Task<T?> GetAsync<T>(string key, CancellationToken ct = default) where T : class;
+    Task SetAsync<T>(string key, T value, TimeSpan? ttl = null, CancellationToken ct = default) where T : class;
+    Task RemoveAsync(string key, CancellationToken ct = default);
+    Task RemoveByPrefixAsync(string prefix, CancellationToken ct = default);
+    Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? ttl = null, CancellationToken ct = default) where T : class;
+}
+// All cache keys and TTL constants defined in Base.Common/CacheKeys.cs
+// Read-through pattern: DB is always source of truth; Redis is performance layer only
+```
+
+**Communication pattern:** prefer domain events for async; use service interfaces for sync queries. Admin always uses contracts — never references module internals.
 
 ---
 
@@ -270,66 +325,64 @@ public static class ValidatorExtensions
 
 ### IBaseRepository<T, TKey>
 
+Canonical interface in `src/Base/MarketNest.Base.Infrastructure/Persistence/IBaseRepository.cs`
+(namespace `MarketNest.Base.Infrastructure`).
+
 ```csharp
 public interface IBaseRepository<TEntity, TKey> where TEntity : Entity<TKey>
 {
-    Task<TEntity?> GetByKeyAsync(TKey id, CancellationToken ct = default);
-    Task<TEntity>  GetByKeyOrThrowAsync(TKey id, CancellationToken ct = default);
+    // ── Read (load-then-mutate) ───────────────────────────────────────────────
+    Task<TEntity>  GetByKeyAsync(TKey id, CancellationToken ct = default);   // throws KeyNotFoundException
+    Task<TEntity?> FindByKeyAsync(TKey id, CancellationToken ct = default);  // returns null
     Task<bool>     ExistsAsync(TKey id, CancellationToken ct = default);
-    void Add(TEntity entity);
-    void Update(TEntity entity);
-    void Remove(TEntity entity);
-    Task<int> SaveChangesAsync(CancellationToken ct = default);
+
+    // ── Query helpers ─────────────────────────────────────────────────────────
+    Task<long>             CountAsync(Expression<Func<TEntity, bool>>? where = null, CancellationToken ct = default);
+    Task<bool>             AnyAsync(Expression<Func<TEntity, bool>>? where = null, CancellationToken ct = default);
+    Task<TEntity?>         FirstOrDefaultAsync(Expression<Func<TEntity, bool>> where, CancellationToken ct = default);
+    Task<List<TEntity>>    ListAsync(Expression<Func<TEntity, bool>>? where = null,
+                               Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+                               CancellationToken ct = default);
+    Task<PagedResult<TEntity>> GetPagedListAsync(int page, int pageSize,
+                               Expression<Func<TEntity, bool>>? where = null,
+                               Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+                               CancellationToken ct = default);
+    IQueryable<TEntity>    GetQueryable(Expression<Func<TEntity, bool>>? where = null);
+
+    // ── Write ─────────────────────────────────────────────────────────────────
+    void   Add(TEntity entity);
+    Task   AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default);
+
+    void   Update(TEntity entity);
+    Task   UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default);
+
+    void   Remove(TEntity entity);
+    Task   RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default);
 }
 ```
+
+> **Rule**: `Add`/`Update`/`Remove` are synchronous because EF Core only tracks the change in memory — actual persistence happens via `IUnitOfWork.CommitAsync()`.  
+> `AddRangeAsync` / `UpdateRangeAsync` / `RemoveRangeAsync` accept `IEnumerable<TEntity>` for batch operations.  
+> **Never call `SaveChangesAsync` directly** from handlers — the transaction filter calls `CommitAsync` automatically (except background jobs).
 
 ### BaseRepository Implementation
 
-```csharp
-public abstract class BaseRepository<TEntity, TKey>(MarketNestDbContext db)
-    : IBaseRepository<TEntity, TKey> where TEntity : Entity<TKey>
-{
-    protected readonly MarketNestDbContext Db = db;
-    protected readonly DbSet<TEntity> Set = db.Set<TEntity>();
-
-    public virtual async Task<TEntity?> GetByKeyAsync(TKey id, CancellationToken ct)
-        => await Set.FirstOrDefaultAsync(e => e.Id!.Equals(id), ct);
-
-    public virtual async Task<TEntity> GetByKeyOrThrowAsync(TKey id, CancellationToken ct)
-        => await GetByKeyAsync(id, ct)
-           ?? throw new NotFoundException(typeof(TEntity).Name, id!.ToString()!);
-
-    // ... Add, Update, Remove, SaveChanges
-
-    protected IQueryable<TEntity> Query()           => Set.AsNoTracking();
-    protected IQueryable<TEntity> QueryTracked()    => Set;
-    protected IQueryable<TEntity> QueryWithDeleted()=> Set.IgnoreQueryFilters();
-}
-```
-
-### AggregateRepository (domain event dispatch)
+`BaseRepository<TEntity, TKey, TContext>` in `src/Base/MarketNest.Base.Infrastructure/Persistence/BaseRepository.cs`.
+Each module provides a **2-line thin wrapper** pinning its own `DbContext`:
 
 ```csharp
-public abstract class AggregateRepository<TAggregate, TKey>(
-    MarketNestDbContext db, IPublisher publisher)
-    : BaseRepository<TAggregate, TKey>(db)
-    where TAggregate : AggregateRoot<TKey>
-{
-    public new async Task<int> SaveChangesAsync(CancellationToken ct)
-    {
-        var aggregates = Db.ChangeTracker.Entries<AggregateRoot<TKey>>()
-            .Where(e => e.Entity.DomainEvents.Any()).Select(e => e.Entity).ToList();
-        var result = await Db.SaveChangesAsync(ct);
-        foreach (var aggregate in aggregates)
-        {
-            foreach (var domainEvent in aggregate.DomainEvents)
-                await publisher.Publish(domainEvent, ct);
-            aggregate.ClearDomainEvents();
-        }
-        return result;
-    }
-}
+// src/MarketNest.Catalog/Infrastructure/Persistence/BaseRepository.cs
+public abstract class BaseRepository<TEntity, TKey>(CatalogDbContext db)
+    : BaseRepository<TEntity, TKey, CatalogDbContext>(db);
 ```
+
+### Domain event dispatch
+
+Domain events are **no longer dispatched from the repository**. The `UnitOfWork` handles this automatically:
+- **Pre-commit events** (`IPreCommitDomainEvent`) — dispatched inside the transaction before `SaveChangesAsync`
+- **Post-commit events** (plain `IDomainEvent`) — dispatched after the transaction commits
+
+See **§22 Unit of Work** for the full event lifecycle. Aggregates should raise events via `AddDomainEvent()` (on `AggregateRoot<TKey>`); the `UnitOfWork` scans the `ChangeTracker` to collect and dispatch them.
 
 ---
 
@@ -457,17 +510,33 @@ public interface IStorageService
 
 ## 10. Domain Event Pattern
 
-### Phase 1 (In-process via MediatR)
+> **Pre-commit vs post-commit split — see §22 for the full UoW pattern.**
+
+Domain events are raised inside aggregate methods and dispatched by `UnitOfWork.CommitAsync()`:
+- Events implementing **`IPreCommitDomainEvent`** run IN the open DB transaction before `SaveChanges`.
+- All other `IDomainEvent` events run AFTER the transaction commits (post-commit).
+
+### Phase 1 (In-process via MediatR via UnitOfWork)
 
 ```csharp
-// Aggregate raises event
+// Aggregate raises events
 public class Order : AggregateRoot
 {
-    public void Place() {
-        AddDomainEvent(new OrderPlacedEvent(Id, BuyerId, SellerId, Total));
+    public void Place()
+    {
+        AddDomainEvent(new InventoryReservedEvent(Id));  // IPreCommitDomainEvent → atomic
+        AddDomainEvent(new OrderPlacedEvent(Id, Total)); // IDomainEvent → post-commit (email etc.)
     }
 }
-// SaveChangesInterceptor or AggregateRepository dispatches after commit
+
+// Command handler — always use IUnitOfWork.CommitAsync(), never db.SaveChangesAsync()
+public async Task<Result<OrderDto, Error>> Handle(PlaceOrderCommand cmd, CancellationToken ct)
+{
+    var order = Order.Place(...);
+    orders.Add(order);
+    await uow.CommitAsync(ct);   // pre-commit events dispatched here; post-commit after TX
+    return Result.Ok(OrderDto.From(order));
+}
 ```
 
 ### Phase 3+ (Outbox Pattern)
@@ -549,6 +618,43 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
 ---
 
 ## 14. EF Core Common Configurations
+
+### DDD Property Access Convention (ADR-023)
+
+EF Core **natively supports `{ get; private set; }`** — no `{ get; set; }` is ever needed on domain entities.
+
+**How it works** — EF Core uses the compiler-generated backing field (via reflection) to set property values during materialization. The `private set` accessor is never called by EF Core; it goes directly to the underlying field.
+
+**The only special case** is **collection navigation properties** exposed as `IReadOnlyList<T>` with an explicit private backing field:
+
+```csharp
+// ✅ Correct: explicit backing field + read-only property
+private readonly List<VoucherUsage> _usages = [];
+public IReadOnlyList<VoucherUsage> Usages => _usages.AsReadOnly();
+
+// ❌ Wrong: auto-property for collection navigations
+public IReadOnlyList<VoucherUsage> Usages { get; private set; } = new List<VoucherUsage>();
+```
+
+These need `PropertyAccessMode.Field` so EF Core populates the backing field directly.
+
+**Convention extension**: Call `ApplyDddPropertyAccessConventions()` in every `OnModelCreating`:
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.HasDefaultSchema(TableConstants.Schema.MyModule);
+    modelBuilder.ApplyConfigurationsFromAssembly(typeof(MyModuleDbContext).Assembly);
+    modelBuilder.ApplyDddPropertyAccessConventions(); // <-- always add this
+    base.OnModelCreating(modelBuilder);
+}
+```
+
+The extension (in `MarketNest.Base.Infrastructure`):
+1. Sets model-level `PropertyAccessMode.PreferField` (explicit intent for DDD).
+2. Auto-detects collection navigations with a matching `_camelCase` backing field and sets `PropertyAccessMode.Field`.
+
+**Backing field naming convention**: `_camelCase` for `PascalCase` property (e.g., `_usages` for `Usages`).
 
 ### Soft Delete Interceptor
 ```csharp
@@ -742,9 +848,9 @@ public interface IJobExecutionStore
 ```
 ### Job Execution Data Model
 
-**Recommended Table:** `admin.job_executions` (hoặc `jobs.job_executions` nếu mở rộng quy mô trong tương lai).
+**Recommended Table:** `admin.job_executions` (or `jobs.job_executions` if extracted as a dedicated module in Phase 3+).
 
-#### 1. Data Schema (Cấu trúc dữ liệu)
+#### 1. Data Schema
 
 | Column | Description |
 | :--- | :--- |
@@ -766,23 +872,25 @@ public interface IJobExecutionStore
 
 ---
 
-#### 2. Planned Jobs (Danh sách Job dự kiến)
+#### 2. Registered & Planned Jobs
 
-| Job Name | Schedule | Description |
-| :--- | :--- | :--- |
-| **CleanupExpiredReservations** | Every 5 min | Release DB reservations where Redis key expired |
-| **AutoConfirmShippedOrders** | Daily 01:00 | SHIPPED > 30 days → DELIVERED |
-| **AutoCompleteOrders** | Daily 01:05 | DELIVERED + 3 days no dispute → COMPLETED |
-| **AutoCancelUnconfirmedOrders** | Every 30 min | CONFIRMED + 48h no seller action → CANCELLED |
-| **ProcessPayoutBatch** | Daily 02:00 | Calculate payouts for COMPLETED orders |
-| **SendNotificationDigests** | Daily 08:00 | Review digest emails to Sellers |
-| **ProcessHourlyNotificationDigest**| Every hour | Batch notifications for OneHourDigest users |
-| **ProcessDailyNotificationDigest** | Daily 09:00 | Batch notifications (per user Timezone) |
-| **CleanupOrphanWishlistSnapshots**| Weekly | Remove wishlist items for deleted products |
+| Job Name | Module | Schedule | Description |
+| :--- | :--- | :--- | :--- |
+| **ExpireSalesJob** | Catalog | Every 5 min | Clear `SalePrice/SaleStart/SaleEnd` on variants whose sale window ended. Raises `VariantSalePriceRemovedEvent`. JobKey: `catalog.variant.expire-sales` |
+| **VoucherExpiryJob** | Promotions | Every hour | Set `Status = Expired/Depleted` on vouchers past `ExpiryDate` or fully consumed. |
+| **CleanupExpiredReservations** | Cart | Every 5 min | Release DB reservations where Redis key expired |
+| **AutoConfirmShippedOrders** | Orders | Daily 01:00 | SHIPPED > 30 days → DELIVERED |
+| **AutoCompleteOrders** | Orders | Daily 01:05 | DELIVERED + 3 days no dispute → COMPLETED |
+| **AutoCancelUnconfirmedOrders** | Orders | Every 30 min | CONFIRMED + 48h no seller action → CANCELLED |
+| **ProcessPayoutBatch** | Payments | Daily 02:00 | Calculate payouts for COMPLETED orders |
+| **SendNotificationDigests** | Notifications | Daily 08:00 | Review digest emails to Sellers |
+| **ProcessHourlyNotificationDigest**| Notifications | Every hour | Batch notifications for OneHourDigest users |
+| **ProcessDailyNotificationDigest** | Notifications | Daily 09:00 | Batch notifications (per user timezone) |
+| **CleanupOrphanWishlistSnapshots**| Cart | Weekly | Remove wishlist items for deleted products |
 
 ---
 
-#### 3. Admin Job Operations Roadmap (Lộ trình phát triển)
+#### 3. Admin Job Operations Roadmap
 
 | Capability | Phase | Notes |
 | :--- | :--- | :--- |
@@ -936,4 +1044,232 @@ APPLICATION: Commands, Queries, Validators, DTOs, cross-module deps
 INFRASTRUCTURE: Repository interface, EF config, Redis keys, background jobs
 WEB: Pages/routes, HTMX partials, form models
 ```
+
+---
+
+## 22. Unit of Work & Transaction Management
+
+> ADR-027. Files: `Base.Domain/Events/IPreCommitDomainEvent.cs`, `Base.Domain/Events/IHasDomainEvents.cs`, `Base.Infrastructure/Persistence/IUnitOfWork.cs`, `Web/Infrastructure/Persistence/UnitOfWork.cs`, `Web/Infrastructure/Filters/`,  `Base.Common/Attributes/TransactionAttributes.cs`.
+
+### Domain Event Lifecycle Split
+
+Domain events raised by aggregates are partitioned into two categories at commit time:
+
+| Category | Interface | When dispatched | Example |
+|---|---|---|---|
+| **Pre-commit** (executing) | `IPreCommitDomainEvent` | INSIDE the open DB transaction, before `SaveChanges` | `InventoryReservedEvent` |
+| **Post-commit** (executed) | `IDomainEvent` (default) | AFTER the DB transaction commits successfully | `OrderPlacedEvent` (sends email) |
+
+Post-commit failures are **logged but never roll back** the committed transaction. Phase 3 replaces post-commit dispatch with an Outbox pattern for guaranteed delivery.
+
+### IUnitOfWork Contract
+
+```csharp
+// Base.Infrastructure  —  injected by transaction filters only
+public interface IUnitOfWork : IAsyncDisposable
+{
+    // Transaction management (HTTP + background jobs)
+    Task BeginTransactionAsync(IsolationLevel isolation = ReadCommitted, CancellationToken ct = default);
+    Task CommitTransactionAsync(CancellationToken ct = default);
+    Task RollbackAsync(CancellationToken ct = default);
+    
+    // Event & persistence management
+    IReadOnlyList<IDomainEvent> CollectPreCommitEvents();
+    Task<int> CommitAsync(CancellationToken ct = default);  // SaveChanges + pre-commit events
+    Task DispatchPostCommitEventsAsync(CancellationToken ct = default);
+}
+```
+
+**Rules for Command Handlers:**
+- ✅ Mutate entities via repositories — no explicit transaction calls needed.
+- ✅ The filter automatically calls `BeginTransactionAsync()`, `CommitAsync()`, `CommitTransactionAsync()`, `DispatchPostCommitEventsAsync()`, `DisposeAsync()`.
+- ❌ Never call `dbContext.SaveChangesAsync()` directly.
+- ❌ Never call `db.Database.BeginTransactionAsync()`.
+- **Exception — background jobs**: Background jobs run outside the HTTP filter and must explicitly manage the full transaction lifecycle.
+
+### Transaction Lifecycle (HTTP write request via filter)
+
+```
+Filter: BeginTransactionAsync on all module DbContexts
+  ├─ Handler runs
+  │  └─ aggregate.DoSomething()  →  RaiseDomainEvent(...)
+  │     (no uow.CommitAsync call in handler)
+  │
+  ├─ Filter: CommitAsync()
+  │  ├─ CollectPreCommitEvents()
+  │  ├─ publisher.Publish(preCommitEvents)   ← INSIDE TX
+  │  ├─ ClearDomainEvents()
+  │  └─ SaveChangesAsync on all DbContexts   ← still INSIDE TX
+  │
+  ├─ Filter: CommitTransactionAsync()        ← COMMIT the DB transaction
+  │
+  ├─ Filter: DispatchPostCommitEventsAsync() ← AFTER commit (failures logged only)
+  │
+  └─ Filter: DisposeAsync()                  ← Cleanup transaction objects
+```
+
+### Background Job Transaction Lifecycle (explicit management)
+
+```csharp
+try {
+    await uow.BeginTransactionAsync(ct: cancellationToken);
+    // mutate entities via repositories
+    await uow.CommitAsync(cancellationToken);              // SaveChanges + pre-commit events
+    await uow.CommitTransactionAsync(cancellationToken);   // COMMIT
+    await uow.DispatchPostCommitEventsAsync(cancellationToken);
+} catch (Exception ex) {
+    await uow.RollbackAsync(cancellationToken);  // rollback + clear events
+    throw;
+} finally {
+    await uow.DisposeAsync();
+}
+```
+
+### Filters
+
+**`RazorPageTransactionFilter`** — registered globally via `Configure<MvcOptions>`. Wraps `OnPost*`, `OnPut*`, `OnDelete*`, `OnPatch*` automatically. `OnGet*` is never wrapped.
+
+**`TransactionActionFilter`** — registered globally via `Configure<MvcOptions>`. Activates only when `[Transaction]` attribute is present on the controller class or action. `WriteApiV1ControllerBase` applies `[Transaction]` at class level.
+
+### Attributes
+
+```csharp
+// Customize isolation level or timeout on a specific OnPost* or action
+[Transaction(IsolationLevel.Serializable, timeoutSeconds: 60)]
+public async Task<IActionResult> OnPostConfirmAsync(CancellationToken ct) { ... }
+
+// Opt-out from auto-transaction
+[NoTransaction]
+public async Task<IActionResult> OnPostWebhookAsync(CancellationToken ct) { ... }
+```
+
+### Controller Base Classes
+
+```csharp
+// Read controllers — no transaction
+public class MyReadController(IMediator mediator) : ReadApiV1ControllerBase(mediator) { }
+
+// Write controllers — [Transaction] applied automatically
+public class MyWriteController(IMediator mediator) : WriteApiV1ControllerBase(mediator) { }
+```
+
+### Command Handler Example
+
+```csharp
+public class PlaceOrderCommandHandler(IOrderRepository orders)
+    : ICommandHandler<PlaceOrderCommand, Result<OrderDto, Error>>
+{
+    public async Task<Result<OrderDto, Error>> Handle(PlaceOrderCommand cmd, CancellationToken ct)
+    {
+        var order = Order.Create(cmd);    // raises OrderPlacedEvent + InventoryReservedEvent
+        orders.Add(order);
+        return Result.Ok(OrderDto.From(order));
+        // Filter will call CommitAsync/CommitTransactionAsync/DispatchPostCommitEventsAsync automatically
+    }
+}
+```
+
+**No explicit `uow.CommitAsync()` needed** — the transaction filter handles it after the handler returns.
+```
+
+---
+
+## 23. Runtime Context (IRuntimeContext)
+
+> **ADR-028** | Implemented 2026-04-29 | `Base.Common` (contracts) + `MarketNest.Web` (implementations)
+
+`IRuntimeContext` is the **single injection point** that replaces scattered `ICurrentUserService` + manual `HttpContext.TraceIdentifier` calls across handlers, pages, and middlewares.
+
+### Contracts (`MarketNest.Base.Common`)
+
+| Type | Description |
+|------|-------------|
+| `ICurrentUser` | Authenticated user. Anonymous = `IsAuthenticated: false`, all nullable members `null`. |
+| `IRuntimeContext` | Ambient request/job context: `CorrelationId`, `RequestId`, `CurrentUser`, `StartedAt`, HTTP metadata. |
+| `RuntimeExecutionContext` | Enum: `HttpRequest`, `BackgroundJob`, `Test`. |
+| `UnauthorizedException` | Thrown by `ICurrentUser.RequireId()` when user is anonymous. |
+
+### Implementations (`MarketNest.Web.Infrastructure`)
+
+| Class | Scope | Use case |
+|-------|-------|----------|
+| `HttpRuntimeContext` | Scoped | Mutable backing object populated by `RuntimeContextMiddleware`. Never inject directly — use `IRuntimeContext`. |
+| `BackgroundJobRuntimeContext` | — | Immutable. Use `ForSystemJob(jobKey)` or `ForAdminJob(jobKey, adminId)` static factories in background jobs. |
+| `CurrentUser` | Internal | ClaimsPrincipal-backed implementation. Has `IsAdmin`, `IsSeller`, `IsBuyer` computed properties. |
+
+### Test helpers (`MarketNest.UnitTests`)
+
+```csharp
+TestRuntimeContext.AsAnonymous()
+TestRuntimeContext.AsBuyer(buyerId)
+TestRuntimeContext.AsSeller(sellerId)
+TestRuntimeContext.AsAdmin(adminId)
+```
+
+### DI registration (Program.cs)
+
+```csharp
+builder.Services.AddScoped<HttpRuntimeContext>();
+builder.Services.AddScoped<IRuntimeContext>(sp => sp.GetRequiredService<HttpRuntimeContext>());
+builder.Services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<IRuntimeContext>().CurrentUser);
+```
+
+### Middleware pipeline
+
+`RuntimeContextMiddleware` is registered **after** `UseAuthorization()` so JWT claims are already on `HttpContext.User`:
+
+```csharp
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseMiddleware<RuntimeContextMiddleware>();  // populates IRuntimeContext + Serilog enrichment
+```
+
+The middleware:
+1. Resolves or generates `X-Correlation-ID` and echoes it back on the response.
+2. Builds `CurrentUser` from `ClaimsPrincipal`.
+3. Sets Serilog `LogContext` properties (`CorrelationId`, `UserId`, `UserRole`) for the entire request.
+4. Tags the OpenTelemetry `Activity` (`correlation.id`, `user.id`, `user.role`).
+5. Logs request start/end (`LogEventId.RuntimeContextRequestStart/End`, 10700–10701).
+
+### Usage patterns
+
+**Command handler (authenticated write):**
+
+```csharp
+public class PlaceOrderCommandHandler(
+    IOrderRepository orders,
+    IRuntimeContext ctx,
+    IUnitOfWork uow) : ICommandHandler<PlaceOrderCommand, Result<OrderDto, Error>>
+{
+    public async Task<Result<OrderDto, Error>> Handle(PlaceOrderCommand cmd, CancellationToken ct)
+    {
+        var buyerId = ctx.CurrentUser.RequireId();  // throws UnauthorizedException if anonymous
+        // ...
+    }
+}
+```
+
+**Audit interceptor (must not throw):**
+
+```csharp
+public class AuditInterceptor(IRuntimeContext ctx) : SaveChangesInterceptor
+{
+    // Use IdOrNull (never RequireId) — background jobs have no user
+    entry.Entity.CreatedBy = ctx.CurrentUser.IdOrNull;
+}
+```
+
+**Background job:**
+
+```csharp
+public class ExpireSalesJob : IBackgroundJob
+{
+    public async Task ExecuteAsync(JobExecutionContext jobCtx, CancellationToken ct)
+    {
+        var runtimeCtx = BackgroundJobRuntimeContext.ForSystemJob(jobCtx.JobKey);
+        // pass runtimeCtx to services that need it
+    }
+}
+```
+
 

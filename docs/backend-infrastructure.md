@@ -8,7 +8,7 @@
 
 ## Table of Contents
 
-1. [Database Query Utilities](#1-database-query-utilities)
+1. [Database Query Utilities](#1-database-query-utilities) (incl. §1.4 `PgQueryBuilder` — raw SQL escape hatch)
 2. [Caching Infrastructure](#2-caching-infrastructure)
 3. [Event Bus Abstraction](#3-event-bus-abstraction)
 4. [Transaction Attribute & Write/Read Split](#4-transaction-attribute--writeread-split)
@@ -81,6 +81,49 @@ public class BulkOperationService(MarketNestDbContext db)
 }
 ```
 
+### 1.4 Raw PostgreSQL Query Builder (`PgQueryBuilder`)
+
+> **Use only when EF Core cannot express the needed SQL** — e.g. complex multi-schema joins, DDL commands (`CREATE INDEX`, `CREATE SEQUENCE`, `CREATE SCHEMA`), PostgreSQL-specific features (`advisory locks`, `LISTEN/NOTIFY`), or bulk operations that bypass the Change Tracker.
+
+**Location:** `Base.Infrastructure/Persistence/PgQueryBuilder.cs` — namespace `MarketNest.Base.Infrastructure`.
+
+All value interpolation goes through positional parameters (`$1`, `$2`, …) to prevent SQL injection. Identifier quoting handles table/column names safely.
+
+```csharp
+// Interpolated query — values extracted as $1, $2, … automatically
+var q = PgQueryBuilder.Query($"SELECT * FROM users WHERE id = {userId} AND active = {true}");
+// q.Sql        => "SELECT * FROM users WHERE id = $1 AND active = $2"
+// q.Parameters => [userId, true]
+
+// Schema-qualified identifier quoting
+PgQueryBuilder.Identifier("catalog", "variants")  // => "catalog"."variants"
+
+// RawSqlFragment for trusted developer-controlled SQL (NEVER user input)
+var sortCol = PgQueryBuilder.IdentifierRaw("created_at");
+var q2 = PgQueryBuilder.Query($"SELECT * FROM orders ORDER BY {sortCol} DESC");
+
+// LIKE pattern escaping
+string safe = PgQueryBuilder.EscapeLike(userInput) + "%";
+var q3 = PgQueryBuilder.Query($"SELECT * FROM products WHERE name LIKE {safe}");
+```
+
+**Available builders:** `Select`, `Insert`, `InsertMany`, `Update`, `Delete`, `Upsert`, `InClause`, `NotInClause`, `Combine` (re-indexes parameters across fragments), `EscapeLike`, `ToDebugString` (dev-only logging).
+
+**Integration with Npgsql:**
+```csharp
+var q = PgQueryBuilder.Select("users", columns: ["id", "name"], 
+    where: new Dictionary<string, object?> { ["role"] = "admin" }, schema: "identity");
+
+await using var cmd = new NpgsqlCommand(q.Sql, conn);
+for (int i = 0; i < q.Parameters.Count; i++)
+    cmd.Parameters.AddWithValue($"p{i + 1}", q.Parameters[i] ?? DBNull.Value);
+```
+
+**Rules:**
+- Prefer EF Core for all standard CRUD — `PgQueryBuilder` is the escape hatch, not the default.
+- Never pass user input to `Raw()` or `IdentifierRaw()` — these bypass parameterization.
+- `ToDebugString()` is for logging only — never execute its output.
+
 ---
 
 ## 2. Caching Infrastructure
@@ -101,21 +144,25 @@ public interface ICacheService
 ### Cache Key Constants
 
 ```csharp
+// MarketNest.Base.Common/CacheKeys.cs — all keys centralized, no magic strings
 public static class CacheKeys
 {
-    public static string Product(Guid id)       => $"catalog:product:{id}";
-    public static string Storefront(string slug) => $"catalog:storefront:{slug}";
-    public static string CartCount(Guid userId)  => $"cart:count:{userId}";
-    public static string CommissionRate(Guid storeId) => $"payments:commission:{storeId}";
-
-    public static class Ttl
-    {
-        public static readonly TimeSpan Short  = TimeSpan.FromMinutes(1);
-        public static readonly TimeSpan Medium = TimeSpan.FromMinutes(5);
-        public static readonly TimeSpan Long   = TimeSpan.FromMinutes(30);
-    }
+    // Tier 1 — Reference Data (24h TTL)
+    public static class ReferenceData   { Countries, Genders, PhoneCodes, Nationalities, Categories, ... }
+    // Tier 2 — Business Config (1h TTL)
+    public static class BusinessConfig  { OrderPolicy, CommissionDefault, StorefrontPolicy, ReviewPolicy, ... }
+    // Module-specific keys
+    public static class Catalog         { Product(id), ProductVariant(id), Storefront(slug), StorefrontById(id), ProductRating(id) }
+    public static class Cart            { Count(userId) }
+    public static class Payments        { CommissionRate(storeId) }
+    public static class Identity        { UserPreferences(userId) }
+    public static class Admin           { PlatformConfig(key), ProhibitedCategories }
+    // TTL presets
+    public static class Ttl             { VeryShort=30s, QuickExpiry=1m, Brief=5m, Medium=30m, BusinessConfig=1h, VeryLong=6h, ReferenceData=24h }
 }
 ```
+
+Full caching strategy: see `docs/caching-strategy.md`.
 
 ---
 

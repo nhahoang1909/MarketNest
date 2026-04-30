@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MarketNest.Admin.Infrastructure;
 
 [Route("admin/tests")]
-public class TestWriteController(IMediator mediator) : ApiV1ControllerBase(mediator)
+public class TestWriteController(IMediator mediator) : WriteApiV1ControllerBase(mediator)
 {
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTestRequest req, CancellationToken ct)

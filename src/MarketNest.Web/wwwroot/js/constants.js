@@ -62,6 +62,17 @@ export const ImageUploadConfig = Object.freeze({
     IMAGE_MIME_PREFIX: "image/",
 });
 
+// ── Rich Text Editor ─────────────────────────────────────────────────
+export const RichEditorConfig = Object.freeze({
+    DEFAULT_MAX_LENGTH: 20000,
+    MAX_IMAGE_SIZE_BYTES: 2 * 1024 * 1024,       // 2 MB — matches FieldLimits.RichEditorImage.MaxSizeBytes
+    MAX_IMAGE_SIZE_MB: 2,
+    MAX_IMAGES_PER_DOCUMENT: 10,
+    ALLOWED_IMAGE_TYPES: Object.freeze(["image/jpeg", "image/png", "image/webp", "image/gif"]),
+    UPLOAD_URL: "/api/v1/uploads/rich-editor-image",
+    CHAR_WARNING_THRESHOLD: 0.8,                  // show amber at 80% capacity
+});
+
 // ── HTMX ─────────────────────────────────────────────────────────────
 export const HtmxConfig = Object.freeze({
     REQUEST_CLASS: "htmx-request",

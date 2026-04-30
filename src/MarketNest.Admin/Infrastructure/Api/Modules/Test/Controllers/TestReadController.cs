@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MarketNest.Admin.Infrastructure;
 
 [Route("admin/tests")]
-public class TestReadController(IMediator mediator) : ApiV1ControllerBase(mediator)
+public class TestReadController(IMediator mediator) : ReadApiV1ControllerBase(mediator)
 {
     [HttpGet]
     public async Task<IActionResult> GetPaged(

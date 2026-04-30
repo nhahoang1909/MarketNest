@@ -1,0 +1,96 @@
+﻿@*
+  Import preview card row — shows valid/error/skipped counts and the error table.
+  Parameters (via ViewData):
+    ValidCount    — int
+    ErrorCount    — int
+    SkippedCount  — int
+    TotalRows     — int
+    Errors        — IReadOnlyList<ExcelRowError>
+    ImportType    — string (e.g. "variants")
+    SessionId     — string (opaque token for the confirm form hidden input)
+*@
+@using MarketNest.Base.Common
+@{
+    var validCount   = (int)(ViewData["ValidCount"]   ?? 0);
+    var errorCount   = (int)(ViewData["ErrorCount"]   ?? 0);
+    var skippedCount = (int)(ViewData["SkippedCount"] ?? 0);
+    var totalRows    = (int)(ViewData["TotalRows"]    ?? 0);
+    var errors       = ViewData["Errors"] as IReadOnlyList<ExcelRowError> ?? [];
+    var importType   = ViewData["ImportType"]?.ToString() ?? string.Empty;
+    var sessionId    = ViewData["SessionId"]?.ToString() ?? string.Empty;
+    var hasErrors    = errors.Any();
+}
+
+<div id="import-preview" class="space-y-6 animate-in fade-in duration-300">
+
+    <!-- Summary stats -->
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div class="rounded-xl border border-ink-100 bg-white p-4 text-center shadow-sm">
+            <p class="text-2xl font-bold text-ink-900">@totalRows</p>
+            <p class="mt-0.5 text-xs font-medium text-ink-500">Total rows</p>
+        </div>
+        <div class="rounded-xl border border-accent-200 bg-accent-50 p-4 text-center shadow-sm">
+            <p class="text-2xl font-bold text-accent-700">@validCount</p>
+            <p class="mt-0.5 text-xs font-medium text-accent-600">Valid</p>
+        </div>
+        <div class="rounded-xl border p-4 text-center shadow-sm
+                    @(hasErrors ? "border-danger-200 bg-danger-50" : "border-ink-100 bg-white")">
+            <p class="text-2xl font-bold @(hasErrors ? "text-danger-700" : "text-ink-400")">@errorCount</p>
+            <p class="mt-0.5 text-xs font-medium @(hasErrors ? "text-danger-600" : "text-ink-400")">Errors</p>
+        </div>
+        <div class="rounded-xl border border-ink-100 bg-white p-4 text-center shadow-sm">
+            <p class="text-2xl font-bold text-ink-400">@skippedCount</p>
+            <p class="mt-0.5 text-xs font-medium text-ink-400">Skipped</p>
+        </div>
+    </div>
+
+    <!-- Error table -->
+    @if (hasErrors)
+    {
+        <partial name="@SharedViewPaths.ImportErrorTable" view-data='@(new ViewDataDictionary(ViewData) { ["Errors"] = errors })'/>
+    }
+
+    <!-- Confirm form -->
+    @if (validCount > 0)
+    {
+        <form method="post"
+              hx-post="@($"/seller/products/import?handler=Execute")"
+              hx-target="#import-result"
+              hx-swap="innerHTML"
+              hx-indicator="#import-spinner"
+              class="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+            <input type="hidden" name="SessionId" value="@sessionId"/>
+            <input type="hidden" name="TotalValid" value="@validCount"/>
+
+            <h3 class="mb-4 text-sm font-semibold text-ink-900">Choose import mode</h3>
+            <div class="mb-4 flex flex-col gap-2 sm:flex-row">
+                <label class="flex cursor-pointer items-center gap-2 text-sm">
+                    <input type="radio" name="Mode" value="Upsert" checked class="accent-accent-500"/>
+                    <span class="font-medium">Upsert</span>
+                    <span class="text-ink-400 text-xs">— create new &amp; update existing</span>
+                </label>
+                <label class="flex cursor-pointer items-center gap-2 text-sm">
+                    <input type="radio" name="Mode" value="CreateOnly" class="accent-accent-500"/>
+                    <span class="font-medium">Create only</span>
+                </label>
+                <label class="flex cursor-pointer items-center gap-2 text-sm">
+                    <input type="radio" name="Mode" value="UpdateOnly" class="accent-accent-500"/>
+                    <span class="font-medium">Update only</span>
+                </label>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button type="submit"
+                        class="btn-primary"
+                        hx-confirm="Import @validCount valid row(s)?">
+                    <span id="import-spinner" class="htmx-indicator mr-1">⏳</span>
+                    Confirm — import @validCount row(s)
+                </button>
+                <a href="@AppRoutes.Seller.ProductImport" class="btn-ghost text-sm">Cancel</a>
+            </div>
+        </form>
+    }
+
+    <div id="import-result"></div>
+</div>
+

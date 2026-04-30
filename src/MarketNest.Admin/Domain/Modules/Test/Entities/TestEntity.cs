@@ -4,21 +4,24 @@ namespace MarketNest.Admin.Domain;
 
 public class TestEntity : Entity<Guid>
 {
+    private readonly List<TestSubEntity> _subEntities = [];
+
+#pragma warning disable CS8618 // Non-nullable field — EF Core uses this constructor
     protected TestEntity()
     {
     }
+#pragma warning restore CS8618
 
     public TestEntity(Guid id, string name, TestValueObject value)
     {
         Id = id;
         Name = name;
         Value = value;
-        SubEntities = new List<TestSubEntity>();
     }
 
-    public string Name { get; private set; } = string.Empty;
-    public TestValueObject Value { get; private set; } = new();
-    public IReadOnlyList<TestSubEntity> SubEntities { get; private set; } = new List<TestSubEntity>();
+    public string Name { get; private set; }
+    public TestValueObject Value { get; private set; }
+    public IReadOnlyList<TestSubEntity> SubEntities => _subEntities.AsReadOnly();
 
     public void Update(string name, TestValueObject value)
     {
@@ -28,8 +31,6 @@ public class TestEntity : Entity<Guid>
 
     public void AddSubEntity(TestSubEntity sub)
     {
-        var list = SubEntities.ToList();
-        list.Add(sub);
-        SubEntities = list.AsReadOnly();
+        _subEntities.Add(sub);
     }
 }

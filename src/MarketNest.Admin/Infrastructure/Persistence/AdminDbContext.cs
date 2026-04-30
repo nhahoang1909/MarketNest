@@ -11,8 +11,16 @@ public class AdminDbContext : DbContext, IModuleDbContext
     {
     }
 
+    // ── Test entities (scaffold) ─────────────────────────────────────────
     public DbSet<TestEntity> Tests { get; set; } = null!;
     public DbSet<TestSubEntity> TestSubEntities { get; set; } = null!;
+
+    // ── Tier 1 — Reference Data (mapped to public schema) ────────────────
+    public DbSet<Country> Countries { get; set; } = null!;
+    public DbSet<Gender> Genders { get; set; } = null!;
+    public DbSet<PhoneCountryCode> PhoneCountryCodes { get; set; } = null!;
+    public DbSet<Nationality> Nationalities { get; set; } = null!;
+    public DbSet<ProductCategory> ProductCategories { get; set; } = null!;
 
     public string SchemaName => TableConstants.Schema.Admin;
     public string ContextName => "MarketNest.Admin";
@@ -22,6 +30,7 @@ public class AdminDbContext : DbContext, IModuleDbContext
     {
         modelBuilder.HasDefaultSchema(TableConstants.Schema.Admin);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AdminDbContext).Assembly);
+        modelBuilder.ApplyDddPropertyAccessConventions();
         base.OnModelCreating(modelBuilder);
     }
 }

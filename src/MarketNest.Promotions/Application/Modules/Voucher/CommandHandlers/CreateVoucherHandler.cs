@@ -28,7 +28,6 @@ public partial class CreateVoucherHandler(
             request.UsageLimitPerUser);
 
         repository.Add(voucher);
-        await repository.SaveChangesAsync(cancellationToken);
 
         Log.InfoSuccess(logger, voucher.Id);
         return Result<Guid, Error>.Success(voucher.Id);

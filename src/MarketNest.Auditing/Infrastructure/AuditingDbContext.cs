@@ -25,5 +25,6 @@ public class AuditingDbContext(DbContextOptions<AuditingDbContext> options)
     {
         modelBuilder.HasDefaultSchema(Schema);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AuditingDbContext).Assembly);
+        modelBuilder.ApplyDddPropertyAccessConventions();
     }
 }

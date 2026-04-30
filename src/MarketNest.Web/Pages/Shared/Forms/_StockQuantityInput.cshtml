@@ -1,0 +1,48 @@
+﻿@*
+  Stock quantity input — inventory quantity (0–999,999).
+  Parameters (via ViewData):
+    Label      — visible label text (required)
+    Name       — input name/id (required)
+    Value      — current stock value (default: 0)
+    HelpText   — hint (default: shows range)
+    Required   — "true" adds required asterisk to label
+    Errors     — IEnumerable<string> validation errors
+*@
+@{
+  var label      = ViewData["Label"]?.ToString() ?? "Stock quantity";
+  var name       = ViewData["Name"]?.ToString() ?? "stockQuantity";
+  var value      = ViewData["Value"]?.ToString() ?? "0";
+  var helpText   = ViewData["HelpText"]?.ToString()
+                ?? $"0 = out of stock. Max {FieldLimits.Quantity.StockMax:N0}.";
+  var isRequired = ViewData["Required"]?.ToString() == "true";
+  var errors     = ViewData["Errors"] as IEnumerable<string>;
+  var hasError   = errors?.Any() == true;
+  var inputCss   = hasError ? "form-input input-error" : "form-input";
+}
+
+<div class="space-y-1">
+  <label for="@name" class="form-label">
+    @label
+    @if (isRequired) { <span class="text-danger-500 ml-0.5" aria-hidden="true">*</span> }
+  </label>
+  <input type="number" id="@name" name="@name" value="@value"
+         min="@FieldLimits.Quantity.StockMin"
+         max="@FieldLimits.Quantity.StockMax"
+         step="1" class="@inputCss" inputmode="numeric"
+         @(isRequired ? "required" : "")/>
+  @if (hasError)
+  {
+    @foreach (var error in errors!)
+    {
+      <p class="form-error">
+        <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+        @error
+      </p>
+    }
+  }
+  @if (!string.IsNullOrEmpty(helpText) && !hasError)
+  {
+    <p class="form-help">@helpText</p>
+  }
+</div>
+

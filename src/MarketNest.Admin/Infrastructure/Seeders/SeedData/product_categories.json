@@ -1,0 +1,22 @@
+﻿[
+  { "code": "ELECTRONICS", "label": "Electronics", "slug": "electronics", "iconName": "laptop", "parentId": null },
+  { "code": "PHONES_TABLETS", "label": "Phones & Tablets", "slug": "phones-tablets", "iconName": "smartphone", "parentId": null },
+  { "code": "FASHION", "label": "Fashion", "slug": "fashion", "iconName": "shirt", "parentId": null },
+  { "code": "MEN_CLOTHING", "label": "Men's Clothing", "slug": "men-clothing", "iconName": null, "parentId": "FASHION" },
+  { "code": "WOMEN_CLOTHING", "label": "Women's Clothing", "slug": "women-clothing", "iconName": null, "parentId": "FASHION" },
+  { "code": "HOME_LIVING", "label": "Home & Living", "slug": "home-living", "iconName": "home", "parentId": null },
+  { "code": "FURNITURE", "label": "Furniture", "slug": "furniture", "iconName": null, "parentId": "HOME_LIVING" },
+  { "code": "KITCHEN", "label": "Kitchen & Dining", "slug": "kitchen", "iconName": null, "parentId": "HOME_LIVING" },
+  { "code": "BEAUTY_HEALTH", "label": "Beauty & Health", "slug": "beauty-health", "iconName": "heart", "parentId": null },
+  { "code": "SKINCARE", "label": "Skincare", "slug": "skincare", "iconName": null, "parentId": "BEAUTY_HEALTH" },
+  { "code": "SPORTS_OUTDOORS", "label": "Sports & Outdoors", "slug": "sports-outdoors", "iconName": "activity", "parentId": null },
+  { "code": "BOOKS_MEDIA", "label": "Books & Media", "slug": "books-media", "iconName": "book", "parentId": null },
+  { "code": "TOYS_GAMES", "label": "Toys & Games", "slug": "toys-games", "iconName": "gift", "parentId": null },
+  { "code": "AUTOMOTIVE", "label": "Automotive", "slug": "automotive", "iconName": "car", "parentId": null },
+  { "code": "FOOD_GROCERY", "label": "Food & Grocery", "slug": "food-grocery", "iconName": "shopping-bag", "parentId": null },
+  { "code": "HANDMADE_CRAFTS", "label": "Handmade & Crafts", "slug": "handmade-crafts", "iconName": "scissors", "parentId": null },
+  { "code": "PET_SUPPLIES", "label": "Pet Supplies", "slug": "pet-supplies", "iconName": "anchor", "parentId": null },
+  { "code": "OFFICE_STATIONERY", "label": "Office & Stationery", "slug": "office-stationery", "iconName": "briefcase", "parentId": null },
+  { "code": "OTHER", "label": "Other", "slug": "other", "iconName": null, "parentId": null }
+]
+

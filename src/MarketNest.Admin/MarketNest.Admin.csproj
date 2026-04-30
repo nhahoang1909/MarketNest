@@ -27,6 +27,7 @@
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
         <PackageReference Include="OpenTelemetry.Api"/>
         <PackageReference Include="System.Security.Cryptography.Xml"/>
     </ItemGroup>
@@ -34,6 +35,11 @@
     <ItemGroup>
         <!-- Use the shared ASP.NET Core framework for controller types and MVC abstractions -->
         <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Embed JSON seed data as assembly resources -->
+        <EmbeddedResource Include="Infrastructure\Seeders\SeedData\*.json" />
     </ItemGroup>
 
     <ItemGroup>

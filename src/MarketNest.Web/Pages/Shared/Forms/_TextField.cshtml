@@ -1,27 +1,62 @@
-@* Text field — pass Label, Name, Placeholder, HelpText, Value, Errors via ViewData *@
+@*
+  Text field — generic single-line input tied to FieldLimits.
+  Parameters (via ViewData):
+    Label        — visible label text (required)
+    Name         — input name/id (required)
+    Placeholder  — placeholder text
+    HelpText     — hint shown below input
+    Value        — current value
+    MaxLength    — max character count; shows live counter when set
+    Required     — "true" adds required asterisk to label
+    Type         — input type: "text" | "email" | "url" | "tel" (default: "text")
+    Autocomplete — autocomplete attribute value (default: "off")
+    Errors       — IEnumerable<string> validation errors
+*@
 @{
-  var label = ViewData["Label"]?.ToString() ?? "Label";
-  var name = ViewData["Name"]?.ToString() ?? "field";
-  var placeholder = ViewData["Placeholder"]?.ToString() ?? "";
-  var helpText = ViewData["HelpText"]?.ToString();
-  var value = ViewData["Value"]?.ToString() ?? "";
-  var errors = ViewData["Errors"] as IEnumerable<string>;
-  var hasError = errors?.Any() == true;
-  var inputCss = hasError ? "form-input input-error" : "form-input";
+  var label        = ViewData["Label"]?.ToString() ?? "Label";
+  var name         = ViewData["Name"]?.ToString() ?? "field";
+  var placeholder  = ViewData["Placeholder"]?.ToString() ?? "";
+  var helpText     = ViewData["HelpText"]?.ToString();
+  var value        = ViewData["Value"]?.ToString() ?? "";
+  var type         = ViewData["Type"]?.ToString() ?? "text";
+  var autoComplete = ViewData["Autocomplete"]?.ToString() ?? "off";
+  var isRequired   = ViewData["Required"]?.ToString() == "true";
+  var maxLength    = ViewData["MaxLength"] is int mlInt ? mlInt
+                   : ViewData["MaxLength"] is string mlStr && int.TryParse(mlStr, out var mlParsed) ? mlParsed : 0;
+  var errors       = ViewData["Errors"] as IEnumerable<string>;
+  var hasError     = errors?.Any() == true;
+  var inputCss     = hasError ? "form-input input-error" : "form-input";
+  var hasCounter   = maxLength > 0;
+  var currentLen   = value.Length;
 }
 
-<div class="space-y-1">
-  <label for="@name" class="form-label">@label</label>
-  <input type="text" id="@name" name="@name" value="@value" placeholder="@placeholder" class="@inputCss"
-         autocomplete="off"/>
+<div class="space-y-1" @(hasCounter ? $"x-data=\"{{ count: {currentLen} }}\"" : "")>
+  <label for="@name" class="form-label">
+    @label
+    @if (isRequired) { <span class="text-danger-500 ml-0.5" aria-hidden="true">*</span> }
+  </label>
+  <input type="@type" id="@name" name="@name" value="@value" placeholder="@placeholder"
+         class="@inputCss" autocomplete="@autoComplete"
+         @(maxLength > 0 ? $"maxlength=\"{maxLength}\"" : "")
+         @(isRequired ? "required" : "")
+         @(hasCounter ? "x-on:input=\"count = $el.value.length\"" : "")/>
+  @if (hasCounter)
+  {
+    <p class="text-xs text-right" :class="count >= @maxLength ? 'text-danger-400' : 'text-ink-300'">
+      <span x-text="count">@currentLen</span>/@maxLength
+    </p>
+  }
   @if (hasError)
   {
     @foreach (var error in errors!)
     {
-      <p class="form-error">@error</p>
+      <p class="form-error">
+        <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+        @error
+      </p>
     }
   }
-  @if (!string.IsNullOrEmpty(helpText))
+  @if (!string.IsNullOrEmpty(helpText) && !hasError)
   {
     <p class="form-help">@helpText</p>
   }

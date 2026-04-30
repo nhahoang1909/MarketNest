@@ -104,10 +104,18 @@
             <div class="mt-4 flex items-center gap-2">
               <button @@click="showReject = !showReject"
                       :class="showReject ? 'bg-red-600 text-white' : 'bg-white text-red-600 border border-red-200 hover:bg-red-50'"
+                      :hx-post="showReject ? '@(AppRoutes.Admin.Storefronts)/products/reject' : null"
+                      :hx-target="showReject ? 'closest .bg-white' : null"
+                      :hx-swap="showReject ? 'outerHTML swap:300ms' : null"
+                      :hx-confirm="showReject ? 'Xac nhan tu choi san pham nay?' : null"
                       class="px-4 py-2 text-sm font-semibold rounded-xl transition-colors">
                 <span x-text="showReject ? 'Xac nhan tu choi' : 'Tu choi'"></span>
               </button>
-              <button class="px-4 py-2 text-sm font-semibold rounded-xl transition-colors"
+              <button hx-post="@(AppRoutes.Admin.Storefronts)/products/approve"
+                      hx-target="closest .bg-white"
+                      hx-swap="outerHTML swap:300ms"
+                      hx-confirm="Phe duyet san pham nay?"
+                      class="px-4 py-2 text-sm font-semibold rounded-xl transition-colors"
                       style="background:#00754A; color:#ffffff;">
                 Phe duyet
               </button>

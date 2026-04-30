@@ -292,6 +292,95 @@ public record CommissionOptions
 
 **Rule**: Every string literal used more than once and every "unexplained" number **must** be extracted to a `const`, `static readonly`, enum, or configuration option. Exceptions: `0`, `1`, `-1`, `string.Empty`, and obvious boolean comparisons.
 
+**Canonical constant classes (use these — don't invent new top-level classes):**
+
+| What | Class | Location |
+|------|-------|----------|
+| Route URLs (`/shop`, `/admin/users`) | `AppRoutes` | `MarketNest.Web.Infrastructure` |
+| UI colors, fonts, app name | `AppConstants` | `MarketNest.Web.Infrastructure` |
+| Field length / numeric limits | `FieldLimits` | `MarketNest.Base.Common` |
+| Error message text | `ValidationMessages` | `MarketNest.Base.Common` |
+| Redis cache key templates | `CacheKeys` | `MarketNest.Base.Common` |
+| Shared Razor partial paths | `SharedViewPaths` | `MarketNest.Web.Infrastructure` |
+| DB schema / table names | `TableConstants` | `MarketNest.Core` |
+| Status label strings | `EntityStatusNames`, `OrderStatusNames` | `MarketNest.Core` |
+| I18N resource key strings | `I18NKeys` | `MarketNest.Web.Infrastructure` |
+
+**Localization keys — must use `I18NKeys.*` (ADR-038):**
+```razor
+{{!-- ❌ Magic string — typos silently produce blank text --}}
+@I18N["Button.ShopNow"]
+
+{{!-- ✅ Constant — compile-time safety; one place to rename --}}
+@I18N[I18NKeys.Button.ShopNow]
+
+{{!-- ✅ Parameterized string --}}
+@I18N.Get(I18NKeys.Text.ProductCount, "1,245")
+```
+
+**Shared Razor partial paths — must use `SharedViewPaths.*` (ADR-035):**
+```razor
+{{!-- ❌ Magic string — breaks silently if file moves --}}
+<partial name="~/Pages/Shared/Forms/_TextField.cshtml" .../>
+
+{{!-- ✅ Constant — compiler catches typos; refactoring is one-place --}}
+<partial name="@SharedViewPaths.TextField" .../>
+```
+
+**Where to extract constants — AppConstants vs appsettings.json (ADR-030):**
+
+The distinction is: **Business rules live in code as `AppConstants`; environment-specific tuning lives in `appsettings.json`.**
+
+- **AppConstants** (C# static class in `src/MarketNest.Web/Infrastructure/AppConstants.cs`): immutable business rules that are identical across dev, staging, and production.
+  - Password/username length constraints: `AppConstants.Validation.PasswordMinLength`
+  - File upload size limits: `AppConstants.Validation.MaxImageSizeBytes`
+  - Enumerated values: role names, status badges, font stacks, color codes
+  - Cache durations, default timeouts
+  - Any value that will never change per environment
+  - Used directly in code: `if (password.Length < AppConstants.Validation.PasswordMinLength) { ... }`
+
+- **appsettings.json** (configuration file): environment-specific settings that may differ between dev, staging, production.
+  - Database connection strings
+  - API secrets (JWT secret, SMTP password)
+  - External service URLs (Seq server, Redis, RabbitMQ)
+  - Performance tuning metrics (rate limits, token expiry, lockout duration)
+  - Any value that is likely to vary between environments
+  - Used via `IOptions<SecurityOptions>` binding in DI, or `IConfiguration` direct access
+
+**Example:**
+```csharp
+// AppConstants — same everywhere
+public static class AppConstants
+{
+    public static class Validation
+    {
+        public const int PasswordMinLength = 8;  // ← Business rule, never changes
+        public const int MaxImageSizeBytes = 5_242_880;  // ← System limit, never changes
+    }
+}
+
+// appsettings.json — changes per environment
+{
+  "Security": {
+    "AccessTokenExpiryMinutes": 15,     // ← Dev: 15 min, Prod: could be 60 min
+    "RateLimitRequestsPerMinute": 60    // ← Dev: 60, Prod: 10
+  }
+}
+
+// Usage in code
+if (password.Length < AppConstants.Validation.PasswordMinLength)
+    return BadRequest("Password too short");
+
+// IOptions binding in DI
+services.Configure<SecurityOptions>(builder.Configuration.GetSection("Security"));
+
+// Usage in handler
+public class SomeHandler(IOptions<SecurityOptions> securityOptions)
+{
+    var maxAttempts = securityOptions.Value.MaxFailedLoginAttempts; // ← per environment
+}
+```
+
 ### 2.7 Flat Layer-Level Namespaces
 
 Namespaces within a module stop at the **layer level** (Application, Domain, Infrastructure). Sub-folders beneath a layer do **not** add to the namespace.
@@ -525,6 +614,20 @@ public interface ISoftDeletable
 | Value Object (record) property | `{ get; init; }` or `{ get; }` | Immutable; positional records default to `init` |
 | DTO / Command / Query | `{ get; init; }` (record) | Immutable after creation |
 | Infrastructure interface | `{ get; set; }` | EF interceptors need write access |
+
+> **EF Core compatibility (ADR-023):** `{ get; private set; }` is fully supported by EF Core — it uses the compiler-generated backing field to set values during materialization. **No `{ get; set; }` is needed on entities.**
+
+**Collection navigation pattern**: always use an explicit backing field, never an auto-property:
+```csharp
+// ✅ Correct: explicit backing field + read-only property
+private readonly List<OrderLine> _lines = [];
+public IReadOnlyList<OrderLine> Lines => _lines.AsReadOnly();
+
+// ❌ Wrong: auto-property for collection navigations
+public IReadOnlyList<OrderLine> Lines { get; private set; } = new List<OrderLine>();
+```
+
+The `ApplyDddPropertyAccessConventions()` extension auto-detects backing fields (`_camelCase` for `PascalCase` property) and configures `PropertyAccessMode.Field` on those navigations. See `docs/backend-patterns.md` §14.
 
 ### 3.2 Domain Events
 ```csharp
@@ -964,34 +1067,82 @@ Method names follow `{LogLevel}{Subject}{Event}`:
 
 ### 9.5 EventId allocation per module
 
-Each module owns a block of 1000 EventIds. Sub-allocation within each block:
+Each module owns a block of 10,000 EventIds. Sub-allocation within each block:
 
 | Offset | Layer |
 |--------|-------|
-| X000–X199 | Infrastructure / Persistence |
-| X200–X599 | Application layer (Command/Query handlers) |
-| X600–X799 | Web Pages (PageModel handlers) |
-| X800–X999 | Reserved |
+| X0000–X1999 | Infrastructure / Persistence |
+| X2000–X5999 | Application layer (Command/Query handlers) |
+| X6000–X7999 | Web Pages (PageModel handlers) |
+| X8000–X9999 | Reserved |
 
 | Module | EventId Range |
 |--------|--------------|
-| Infrastructure / Middleware | 1000–1999 |
-| Identity | 2000–2999 |
-| Catalog | 3000–3999 |
-| Cart | 4000–4999 |
-| Orders | 5000–5999 |
-| Payments | 6000–6999 |
-| Reviews | 7000–7999 |
-| Disputes | 8000–8999 |
-| Notifications | 9000–9999 |
-| Admin | 10000–10999 |
-| Auditing | 11000–11999 |
-| Background Jobs | 12000–12999 |
-| Web / Global Pages | 13000–13999 |
+| Infrastructure / Middleware | 10000–19999 |
+| Identity | 20000–29999 |
+| Catalog | 30000–39999 |
+| Cart | 40000–49999 |
+| Orders | 50000–59999 |
+| Payments | 60000–69999 |
+| Reviews | 70000–79999 |
+| Disputes | 80000–89999 |
+| Notifications | 90000–99999 |
+| Admin | 100000–109999 |
+| Auditing | 110000–119999 |
+| Background Jobs | 120000–129999 |
+| Web / Global Pages | 130000–139999 |
+| Promotions | 140000–149999 |
 
 ---
 
-## 10. Git Commit Conventions
+## 10. Security & Cryptography Best Practices
+
+### 10.1 Cryptographic Hash Functions — Use SHA-512 or Higher
+
+All cryptographic hashing operations **must** use SHA-512 (256-bit) or higher (e.g., SHA3-512). Weak algorithms like MD5 or SHA-256 are cryptographically broken and must never be used for security-critical operations (password hashing, token generation, model fingerprinting, integrity verification).
+
+**Rule**: The Roslyn analyzer **MN018** will reject any usage of `MD5` or `SHA256` at build time:
+- `MD5.Create()` → **Compile error**
+- `MD5.HashData()` → **Compile error**
+- `SHA256.Create()` → **Compile error**
+- `SHA256.HashData()` → **Compile error**
+
+**Example (CORRECT):**
+```csharp
+using System.Security.Cryptography;
+using System.Text;
+
+public static string ComputeHash(string input)
+{
+    // ✅ SHA512 — cryptographically strong
+    byte[] data = Encoding.UTF8.GetBytes(input);
+    byte[] hash = SHA512.HashData(data);
+    return Convert.ToHexStringLower(hash);  // Returns 128 hex characters
+}
+```
+
+**Example (WRONG — will not compile):**
+```csharp
+// ❌ MD5 — cryptographically broken (MN018 error)
+byte[] hash = MD5.HashData(Encoding.UTF8.GetBytes(input));
+
+// ❌ SHA256 — insufficient for security use (MN018 error)
+byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+```
+
+**Use case examples:**
+| Use Case | Algorithm | Code |
+|----------|-----------|------|
+| Model/schema fingerprinting | SHA512 | `SHA512.HashData(modelBytes)` |
+| Token generation | SHA512 | `SHA512.HashData(tokenBytes)` |
+| Integrity verification | SHA512 | `SHA512.HashData(fileBytes)` |
+| Database seeding tracking | SHA512 | `SHA512.HashData(checksumBytes)` |
+
+> Note: Password hashing is handled by ASP.NET Core Identity's `PasswordHasher<T>`, which uses PBKDF2 internally — never implement custom password hashing.
+
+---
+
+## 11. Git Commit Conventions
 
 Follow **Conventional Commits**:
 ```
@@ -1045,6 +1196,7 @@ Before merging:
 - [ ] No hard-coded hex/rgb/hsl in component CSS or inline styles — use `var(--*)` tokens (see §7.1)
 - [ ] Repeated visual values (radius, shadow, transition) extracted to CSS variables (see §7.3)
 - [ ] `AppConstants.Colors` stays in sync with `input.css` `@theme` tokens (see §7.5)
+- [ ] No cryptographically weak hash algorithms — use SHA512+, never MD5 or SHA256 for security operations (see §10.1)
 
 ---
 

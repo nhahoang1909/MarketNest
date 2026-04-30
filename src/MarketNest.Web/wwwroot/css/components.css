@@ -478,18 +478,7 @@
         @apply rounded-lg bg-cream-200 animate-pulse;
     }
 
-    /* Shimmer variant — gradient sweep for richer UX */
-    .skeleton-shimmer {
-        border-radius: theme('borderRadius.lg');
-        background: linear-gradient(
-            90deg,
-            theme('colors.cream.200') 25%,
-            theme('colors.cream.50')  50%,
-            theme('colors.cream.200') 75%
-        );
-        background-size: 200% 100%;
-        animation: skeleton-sweep 1.6s ease-in-out infinite;
-    }
+    /* Shimmer variant — see @utility skeleton-shimmer below @layer */
 
     /* Button loading state */
     .btn-loading {
@@ -525,7 +514,10 @@
 
     /* Store card skeleton: fixed height matches real _StoreCard */
     .skeleton-store-card {
-        @apply card p-4 flex items-center gap-4;
+        @apply bg-surface border border-ink-100/60 overflow-hidden p-4 flex items-center gap-4;
+        border-radius: 12px;
+        box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.14),
+        0 1px 1px rgba(0, 0, 0, 0.24);
     }
 
     .skeleton-store-card .sk-logo {
@@ -575,7 +567,10 @@
 
     /* Stat card skeleton (dashboard) */
     .skeleton-stat-card {
-        @apply card p-5 space-y-3;
+        @apply bg-surface border border-ink-100/60 overflow-hidden p-5 space-y-3;
+        border-radius: 12px;
+        box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.14),
+        0 1px 1px rgba(0, 0, 0, 0.24);
     }
 
     .skeleton-stat-card .sk-label {
@@ -642,6 +637,294 @@
     .feature-band .text-secondary {
         color: rgba(255, 255, 255, 0.70);
     }
+
+    /* ══════════════════════════════════════════════════════════
+       LOADING OVERLAY — full-screen animated sketch carousel
+       ══════════════════════════════════════════════════════════ */
+
+    /* Overlay backdrop */
+    .mn-loading-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        background: color-mix(in oklab, var(--color-cream-100) 92%, transparent);
+        backdrop-filter: blur(8px) saturate(1.05);
+        -webkit-backdrop-filter: blur(8px) saturate(1.05);
+    }
+
+    /* Center card */
+    .mn-loading-card {
+        width: min(440px, calc(100vw - 48px));
+        @apply bg-surface border border-ink-100/60;
+        border-radius: 24px;
+        box-shadow: 0 24px 56px rgba(0, 0, 0, 0.12),
+                    0 6px 16px rgba(0, 0, 0, 0.06);
+        padding: 40px 36px 36px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    /* Sketch stage — container for rotating SVG illustrations */
+    .mn-sketch-stage {
+        position: relative;
+        width: 240px;
+        height: 240px;
+        margin-bottom: 24px;
+    }
+
+    /* Cream platter behind sketches */
+    .mn-sketch-stage::before {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        border-radius: 22px;
+        @apply bg-cream-100 border border-ink-100/60;
+    }
+
+    /* Accent dot at top-left */
+    .mn-sketch-stage::after {
+        content: "";
+        position: absolute;
+        top: 18px;
+        left: 18px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        @apply bg-accent-400;
+        box-shadow: 0 0 0 4px rgba(0, 117, 74, 0.25);
+    }
+
+    /* Each sketch panel — stacked, only one visible at a time */
+    .mn-sketch {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        opacity: 0;
+        transform: translateY(8px) scale(0.96);
+        transition: opacity 0.55s cubic-bezier(0.22, 0.9, 0.32, 1),
+                    transform 0.55s cubic-bezier(0.22, 0.9, 0.32, 1);
+        pointer-events: none;
+    }
+
+    .mn-sketch[data-active="true"] {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    .mn-sketch svg {
+        width: 168px;
+        height: 168px;
+        overflow: visible;
+    }
+
+    /* SVG stroke & fill classes */
+    .mn-sketch svg .sk-stroke {
+        fill: none;
+        stroke: var(--color-ink-800);
+        stroke-width: 1.6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .mn-sketch svg .sk-stroke--thin {
+        stroke-width: 1;
+        stroke-opacity: 0.55;
+    }
+
+    .mn-sketch svg .sk-accent {
+        fill: var(--color-accent-400);
+        stroke: var(--color-ink-800);
+        stroke-width: 1.6;
+        stroke-linejoin: round;
+    }
+
+    .mn-sketch svg .sk-ink-fill {
+        fill: var(--color-ink-800);
+    }
+
+    /* Draw-on animation — strokes animate in */
+    .mn-sketch[data-active="true"] svg .sk-stroke,
+    .mn-sketch[data-active="true"] svg .sk-accent {
+        stroke-dasharray: 600;
+        stroke-dashoffset: 600;
+        animation: mn-draw-on 1.6s cubic-bezier(0.5, 0.05, 0.25, 1) forwards;
+    }
+
+    /* Gentle bob while active */
+    .mn-sketch[data-active="true"] svg {
+        animation: mn-sketch-bob 4.2s ease-in-out infinite;
+    }
+
+    /* Caption title */
+    .mn-loading-title {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        min-height: 28px;
+        @apply text-ink-800;
+    }
+
+    /* Caption subtitle */
+    .mn-loading-sub {
+        margin: 8px 0 0;
+        font-size: 14.5px;
+        line-height: 1.5;
+        max-width: 320px;
+        min-height: 44px;
+        @apply text-ink-400;
+    }
+
+    /* Progress dots */
+    .mn-loading-dots {
+        display: flex;
+        gap: 6px;
+        margin-top: 22px;
+    }
+
+    .mn-loading-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        @apply bg-ink-300;
+        transition: width 0.35s ease, background 0.35s ease, border-radius 0.35s ease;
+    }
+
+    .mn-loading-dots span[data-active="true"] {
+        width: 22px;
+        border-radius: 999px;
+        @apply bg-accent-400;
+    }
+
+    /* Brand footer */
+    .mn-loading-brand {
+        margin-top: 18px;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        @apply text-ink-300;
+    }
+
+    .mn-loading-brand::before,
+    .mn-loading-brand::after {
+        content: "";
+        width: 18px;
+        height: 1px;
+        @apply bg-ink-200;
+    }
+    /* ══════════════════════════════════════════════════════════
+       RICH TEXT EDITOR (Trix)
+       ══════════════════════════════════════════════════════════ */
+
+    /* Wrapper */
+    .rich-editor-wrapper {
+        @apply relative space-y-1;
+    }
+
+    /* Toolbar — matches form-input border style */
+    .rich-editor-toolbar {
+        @apply border border-ink-200 rounded-t-xl bg-cream-50 px-2 py-1.5;
+    }
+
+    /* Editor content area */
+    .rich-editor-content {
+        @apply block w-full min-h-[200px] px-3 py-2
+               border border-t-0 border-ink-200 rounded-b-xl
+               text-sm bg-surface
+               focus:outline-none focus:ring-[3px] focus:ring-accent-100 focus:border-accent-400
+               transition-all duration-150;
+        color: rgba(0, 0, 0, 0.87);
+    }
+
+    /* Error state */
+    .rich-editor-content--error {
+        @apply border-danger-400 focus:ring-danger-100 focus:border-danger-500;
+    }
+
+    /* Upload progress overlay */
+    .rich-editor-upload-progress {
+        @apply absolute bottom-8 right-3 flex items-center
+               bg-surface border border-ink-200 rounded-xl px-3 py-1.5;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       RICH CONTENT DISPLAY (rendered HTML from Trix)
+       ══════════════════════════════════════════════════════════ */
+
+    .rich-content {
+        @apply text-ink-600 leading-relaxed;
+    }
+
+    .rich-content h1 {
+        @apply text-2xl font-bold text-ink-800 mt-6 mb-3;
+    }
+
+    .rich-content h2 {
+        @apply text-xl font-semibold text-ink-800 mt-5 mb-2;
+    }
+
+    .rich-content p {
+        @apply mb-4;
+    }
+
+    .rich-content ul {
+        @apply list-disc list-inside mb-4 space-y-1;
+    }
+
+    .rich-content ol {
+        @apply list-decimal list-inside mb-4 space-y-1;
+    }
+
+    .rich-content blockquote {
+        @apply border-l-4 border-accent-400 pl-4 italic my-4;
+        color: rgba(0, 0, 0, 0.58);
+    }
+
+    .rich-content pre {
+        @apply bg-cream-100 rounded-xl p-4 text-sm overflow-x-auto mb-4;
+    }
+
+    .rich-content code {
+        @apply bg-cream-100 rounded px-1 text-sm;
+        font-family: var(--font-mono);
+    }
+
+    .rich-content a {
+        @apply text-accent-500 underline hover:text-accent-400;
+    }
+
+    .rich-content img {
+        @apply max-w-full h-auto rounded-xl my-4;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .rich-content figure {
+        @apply my-4 text-center;
+    }
+
+    .rich-content figcaption {
+        @apply text-xs text-ink-400 mt-1;
+    }
+}
+
+/* Loading overlay keyframes — outside @layer so animations always resolve */
+@keyframes mn-draw-on {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes mn-sketch-bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
 }
 
 /* Skeleton shimmer keyframe — defined outside @layer so it is always available */
@@ -649,3 +932,17 @@
     0%   { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+
+/* Shimmer utility — registered as @utility so @apply skeleton-shimmer works inside @layer components */
+@utility skeleton-shimmer {
+    border-radius: var(--radius-lg, 0.5rem);
+    background: linear-gradient(
+        90deg,
+        var(--color-cream-200) 25%,
+        var(--color-cream-50)  50%,
+        var(--color-cream-200) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-sweep 1.6s ease-in-out infinite;
+}
+

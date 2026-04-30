@@ -2,24 +2,26 @@ namespace MarketNest.Promotions.Domain;
 
 public class Voucher : AggregateRoot<Guid>
 {
+#pragma warning disable CS8618 // Non-nullable field — EF Core uses this constructor
     protected Voucher() { }
+#pragma warning restore CS8618
 
-    public VoucherCode Code { get; private set; } = null!;
+    public VoucherCode Code { get; private set; }
     public VoucherScope Scope { get; private set; }
-    public Guid? StoreId { get; private set; }
+    public Guid? StoreId { get; private set; }          // null = platform-wide voucher
     public Guid CreatedByUserId { get; private set; }
 
     public VoucherDiscountType DiscountType { get; private set; }
     public VoucherApplyFor ApplyFor { get; private set; }
     public decimal DiscountValue { get; private set; }
-    public Money? MaxDiscountCap { get; private set; }
+    public Money? MaxDiscountCap { get; private set; }   // null = no cap on discount amount
 
-    public Money? MinOrderValue { get; private set; }
+    public Money? MinOrderValue { get; private set; }    // null = no minimum order required
     public DateTimeOffset EffectiveDate { get; private set; }
     public DateTimeOffset ExpiryDate { get; private set; }
 
-    public int? UsageLimit { get; private set; }
-    public int? UsageLimitPerUser { get; private set; }
+    public int? UsageLimit { get; private set; }          // null = unlimited total uses
+    public int? UsageLimitPerUser { get; private set; }   // null = unlimited per-user uses
     public int UsageCount { get; private set; }
 
     public VoucherStatus Status { get; private set; }

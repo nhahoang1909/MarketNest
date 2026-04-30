@@ -82,7 +82,20 @@
           </div>
         </div>
 
-        <button class="btn-primary w-full">Ap dung bo loc</button>
+        <button hx-get="@AppRoutes.Shop"
+                hx-target="#product-grid"
+                hx-swap="innerHTML"
+                hx-include="[name='category[]'], [name='priceMin'], [name='priceMax'], [name='rating[]']"
+                hx-indicator="#filter-spinner"
+                class="btn-primary w-full">
+          <span id="filter-spinner" class="htmx-indicator">
+            <svg class="animate-spin h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+          </span>
+          Ap dung bo loc
+        </button>
       </div>
     </aside>
 
@@ -94,7 +107,12 @@
             class="font-semibold text-ink-700">248</span> san pham</p>
         <div class="flex items-center gap-2">
           <label class="text-sm text-ink-500">Sap xep:</label>
-          <select class="form-input text-sm py-1.5 pr-8 min-w-[160px]">
+          <select name="sort"
+                  hx-get="@AppRoutes.Shop"
+                  hx-trigger="change"
+                  hx-target="#product-grid"
+                  hx-swap="innerHTML"
+                  class="form-input text-sm py-1.5 pr-8 min-w-[160px]">
             <option>Moi nhat</option>
             <option>Gia thap - cao</option>
             <option>Gia cao - thap</option>
@@ -104,7 +122,7 @@
       </div>
 
       <!-- Product grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
+      <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
         <!-- Product 1 -->
         <a href="@AppRoutes.ShopQuery.Product("gom-bat-trang", Guid.Parse("00000000-0000-0000-0000-000000000001"))"
            class="product-card rounded-2xl overflow-hidden group">
@@ -272,12 +290,17 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
           </svg>
         </button>
-        <button class="btn-primary btn-sm min-w-[36px]">1</button>
-        <button class="btn-ghost btn-sm min-w-[36px]">2</button>
-        <button class="btn-ghost btn-sm min-w-[36px]">3</button>
+        <button hx-get="@AppRoutes.Shop?page=1" hx-target="#product-grid" hx-swap="innerHTML" hx-push-url="true"
+                class="btn-primary btn-sm min-w-[36px]">1</button>
+        <button hx-get="@AppRoutes.Shop?page=2" hx-target="#product-grid" hx-swap="innerHTML" hx-push-url="true"
+                class="btn-ghost btn-sm min-w-[36px]">2</button>
+        <button hx-get="@AppRoutes.Shop?page=3" hx-target="#product-grid" hx-swap="innerHTML" hx-push-url="true"
+                class="btn-ghost btn-sm min-w-[36px]">3</button>
         <span class="text-ink-400 px-1">...</span>
-        <button class="btn-ghost btn-sm min-w-[36px]">21</button>
-        <button class="btn-ghost btn-sm px-3">
+        <button hx-get="@AppRoutes.Shop?page=21" hx-target="#product-grid" hx-swap="innerHTML" hx-push-url="true"
+                class="btn-ghost btn-sm min-w-[36px]">21</button>
+        <button hx-get="@AppRoutes.Shop?page=2" hx-target="#product-grid" hx-swap="innerHTML" hx-push-url="true"
+                class="btn-ghost btn-sm px-3">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
           </svg>

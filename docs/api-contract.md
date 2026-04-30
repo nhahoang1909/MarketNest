@@ -12,6 +12,8 @@
 - [MarketNest.Web](#marketnest.web)
 - [TestRead](#testread)
 - [TestWrite](#testwrite)
+- [VoucherRead](#voucherread)
+- [VoucherWrite](#voucherwrite)
 
 ## MarketNest.Web
 
@@ -122,6 +124,107 @@
 
 ---
 
+## VoucherRead
+
+### `GET /promotions/vouchers`
+
+
+**Parameters**:
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `Scope` | query | `string` | ❌ | — |
+| `Status` | query | `string` | ❌ | — |
+| `StoreId` | query | `string` | ❌ | — |
+| `Page` | query | `integer, string` | ❌ | — |
+| `PageSize` | query | `integer, string` | ❌ | — |
+| `SortBy` | query | `string` | ❌ | — |
+| `SortDesc` | query | `boolean` | ❌ | — |
+| `Search` | query | `string` | ❌ | — |
+| `Skip` | query | `integer, string` | ❌ | — |
+
+**Responses**:
+
+| Status | Description |
+|--------|-------------|
+| `200` | OK |
+
+---
+
+### `GET /promotions/vouchers/{id}`
+
+**Operation ID**: `GetVoucherById`
+
+**Parameters**:
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `id` | path | `string` | ✅ | — |
+
+**Responses**:
+
+| Status | Description |
+|--------|-------------|
+| `200` | OK |
+
+---
+
+## VoucherWrite
+
+### `POST /promotions/vouchers`
+
+
+**Request Body**:
+
+- Content-Type: `application/json`
+  - Schema: `CreateVoucherCommand`
+- Content-Type: `text/json`
+  - Schema: `CreateVoucherCommand`
+- Content-Type: `application/*+json`
+  - Schema: `CreateVoucherCommand`
+
+**Responses**:
+
+| Status | Description |
+|--------|-------------|
+| `200` | OK |
+
+---
+
+### `PATCH /promotions/vouchers/{id}/activate`
+
+
+**Parameters**:
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `id` | path | `string` | ✅ | — |
+
+**Responses**:
+
+| Status | Description |
+|--------|-------------|
+| `200` | OK |
+
+---
+
+### `PATCH /promotions/vouchers/{id}/pause`
+
+
+**Parameters**:
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `id` | path | `string` | ✅ | — |
+
+**Responses**:
+
+| Status | Description |
+|--------|-------------|
+| `200` | OK |
+
+---
+
 ## Schemas
 
 ### `CreateTestRequest`
@@ -133,6 +236,24 @@
 | `valueAmount` | `number, string` | ✅ | — |
 | `subTitles` | `null, array` | ❌ | — |
 
+### `CreateVoucherCommand`
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `code` | `string` | ✅ | — |
+| `scope` | `VoucherScope` | ✅ | — |
+| `storeId` | `null, string` | ✅ | — |
+| `createdByUserId` | `string` | ✅ | — |
+| `discountType` | `VoucherDiscountType` | ✅ | — |
+| `applyFor` | `VoucherApplyFor` | ✅ | — |
+| `discountValue` | `number, string` | ✅ | — |
+| `maxDiscountCap` | `null, number, string` | ✅ | — |
+| `minOrderValue` | `null, number, string` | ✅ | — |
+| `effectiveDate` | `string` | ✅ | — |
+| `expiryDate` | `string` | ✅ | — |
+| `usageLimit` | `null, integer, string` | ✅ | — |
+| `usageLimitPerUser` | `null, integer, string` | ✅ | — |
+
 ### `UpdateTestRequest`
 
 | Property | Type | Required | Description |
@@ -141,4 +262,16 @@
 | `valueCode` | `string` | ✅ | — |
 | `valueAmount` | `number, string` | ✅ | — |
 | `subTitles` | `null, array` | ❌ | — |
+
+### `VoucherApplyFor`
+
+
+### `VoucherDiscountType`
+
+
+### `VoucherScope`
+
+
+### `VoucherStatus`
+
 

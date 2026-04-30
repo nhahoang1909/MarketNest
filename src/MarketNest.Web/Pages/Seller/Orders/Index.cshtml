@@ -13,26 +13,31 @@
 <!-- Filter pills -->
 <div class="flex flex-wrap items-center gap-2 mb-5" x-data="{ filter: 'all' }">
   <button @@click="filter = 'all'"
+          hx-get="@AppRoutes.Seller.Orders" hx-target="#orders-table" hx-swap="innerHTML" hx-push-url="true"
           :class="filter === 'all' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
           class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Tat ca
   </button>
   <button @@click="filter = 'pending'"
+          hx-get="@AppRoutes.Seller.Orders?status=pending" hx-target="#orders-table" hx-swap="innerHTML" hx-push-url="true"
           :class="filter === 'pending' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
           class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Cho xac nhan
   </button>
   <button @@click="filter = 'shipping'"
+          hx-get="@AppRoutes.Seller.Orders?status=shipping" hx-target="#orders-table" hx-swap="innerHTML" hx-push-url="true"
           :class="filter === 'shipping' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
           class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Dang giao
   </button>
   <button @@click="filter = 'delivered'"
+          hx-get="@AppRoutes.Seller.Orders?status=delivered" hx-target="#orders-table" hx-swap="innerHTML" hx-push-url="true"
           :class="filter === 'delivered' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
           class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Da giao
   </button>
   <button @@click="filter = 'cancelled'"
+          hx-get="@AppRoutes.Seller.Orders?status=cancelled" hx-target="#orders-table" hx-swap="innerHTML" hx-push-url="true"
           :class="filter === 'cancelled' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
           class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Da huy
@@ -40,7 +45,7 @@
 </div>
 
 <!-- Orders table -->
-<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+<div id="orders-table" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
   <div class="overflow-x-auto">
     <table class="admin-table w-full text-sm">
       <thead>
@@ -117,18 +122,25 @@
               <div class="flex items-center justify-end gap-1">
                 @if (o.Status == "pending")
                 {
-                  <button class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors"
+                  <button hx-post="@AppRoutes.Seller.Orders/confirm"
+                          hx-vals='{"orderId": "@o.Id"}'
+                          hx-target="closest tr"
+                          hx-swap="outerHTML"
+                          hx-confirm="Xac nhan don hang nay?"
+                          class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors"
                           style="background:#00754A; color:#ffffff;">Xac nhan
                   </button>
                 }
-                <button
-                  class="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                <button hx-get="@AppRoutes.Seller.Orders/print?orderId=@o.Id"
+                        hx-target="#print-area"
+                        class="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
                   In
                 </button>
-                <button
-                  class="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-                  Cap
-                  nhat
+                <button hx-get="@AppRoutes.Seller.Orders/update?orderId=@o.Id"
+                        hx-target="#modal-container"
+                        hx-swap="innerHTML"
+                        class="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                  Cap nhat
                 </button>
               </div>
             </td>

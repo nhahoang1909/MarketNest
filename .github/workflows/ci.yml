@@ -1,18 +1,699 @@
-name: CI
+name: Build & Test & Verify
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, p1-main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, p1-main]
 
+env:
+  DOTNET_VERSION: '10.x'
+  CONFIGURATION: Release
+
+# ──────────────────────────────────────────────────────────────────────────────
+# JOBS
+# ──────────────────────────────────────────────────────────────────────────────
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
 
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │  STAGE 1 — RESTORE                                                        │
+  # └──────────────────────────────────────────────────────────────────────────┘
+  restore:
+    name: "📦 Restore NuGet"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore solution
+        run: dotnet restore
+
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │  STAGE 2 — BUILD (parallel per module group)                              │
+  # │  Each job runs independently — a single module failure is clearly visible  │
+  # └──────────────────────────────────────────────────────────────────────────┘
+
+  build-base:
+    name: "🔨 Build / Base"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore Base packages
+        run: |
+          dotnet restore src/Base/MarketNest.Base.Common
+          dotnet restore src/Base/MarketNest.Base.Domain
+          dotnet restore src/Base/MarketNest.Base.Infrastructure
+          dotnet restore src/Base/MarketNest.Base.Api
+          dotnet restore src/Base/MarketNest.Base.Utility
+      - name: Build Base.Common
+        run: dotnet build src/Base/MarketNest.Base.Common --no-restore -c ${{ env.CONFIGURATION }}
+      - name: Build Base.Domain
+        run: dotnet build src/Base/MarketNest.Base.Domain --no-restore -c ${{ env.CONFIGURATION }}
+      - name: Build Base.Infrastructure
+        run: dotnet build src/Base/MarketNest.Base.Infrastructure --no-restore -c ${{ env.CONFIGURATION }}
+      - name: Build Base.Api
+        run: dotnet build src/Base/MarketNest.Base.Api --no-restore -c ${{ env.CONFIGURATION }}
+      - name: Build Base.Utility
+        run: dotnet build src/Base/MarketNest.Base.Utility --no-restore -c ${{ env.CONFIGURATION }}
+
+  build-core:
+    name: "🔨 Build / Core"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Core
+      - name: Build Core
+        run: dotnet build src/MarketNest.Core --no-restore -c ${{ env.CONFIGURATION }}
+
+  build-identity:
+    name: "🔨 Build / Identity"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Identity
+      - name: Build Identity
+        run: dotnet build src/MarketNest.Identity --no-restore -c ${{ env.CONFIGURATION }}
+
+  build-catalog:
+    name: "🔨 Build / Catalog"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Catalog
+      - name: Build Catalog
+        run: dotnet build src/MarketNest.Catalog --no-restore -c ${{ env.CONFIGURATION }}
+
+  build-cart:
+    name: "🔨 Build / Cart"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Cart
+      - name: Build Cart
+        run: dotnet build src/MarketNest.Cart --no-restore -c ${{ env.CONFIGURATION }}
+
+  build-orders:
+    name: "🔨 Build / Orders"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Orders
+      - name: Build Orders
+        run: dotnet build src/MarketNest.Orders --no-restore -c ${{ env.CONFIGURATION }}
+
+  build-payments:
+    name: "🔨 Build / Payments"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Payments
+      - name: Build Payments
+        run: dotnet build src/MarketNest.Payments --no-restore -c ${{ env.CONFIGURATION }}
+
+  build-reviews-disputes:
+    name: "🔨 Build / Reviews & Disputes"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: |
+          dotnet restore src/MarketNest.Reviews
+          dotnet restore src/MarketNest.Disputes
+      - name: Build Reviews
+        run: dotnet build src/MarketNest.Reviews --no-restore -c ${{ env.CONFIGURATION }}
+      - name: Build Disputes
+        run: dotnet build src/MarketNest.Disputes --no-restore -c ${{ env.CONFIGURATION }}
+
+  build-notifications:
+    name: "🔨 Build / Notifications"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Notifications
+      - name: Build Notifications
+        run: dotnet build src/MarketNest.Notifications --no-restore -c ${{ env.CONFIGURATION }}
+
+  build-admin:
+    name: "🔨 Build / Admin"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Admin
+      - name: Build Admin
+        run: dotnet build src/MarketNest.Admin --no-restore -c ${{ env.CONFIGURATION }}
+
+  build-auditing:
+    name: "🔨 Build / Auditing"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Auditing
+      - name: Build Auditing
+        run: dotnet build src/MarketNest.Auditing --no-restore -c ${{ env.CONFIGURATION }}
+
+  build-promotions:
+    name: "🔨 Build / Promotions"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Promotions
+      - name: Build Promotions
+        run: dotnet build src/MarketNest.Promotions --no-restore -c ${{ env.CONFIGURATION }}
+
+  build-analyzers:
+    name: "🔨 Build / Analyzers"
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Analyzers
+      - name: Build Analyzers
+        run: dotnet build src/MarketNest.Analyzers --no-restore -c ${{ env.CONFIGURATION }}
+
+  # build-web is the final integration build — compiles the full host.
+  # All module builds must pass before this job runs.
+  build-web:
+    name: "🔨 Build / Web Host (full solution)"
+    needs:
+      - build-base
+      - build-core
+      - build-identity
+      - build-catalog
+      - build-cart
+      - build-orders
+      - build-payments
+      - build-reviews-disputes
+      - build-notifications
+      - build-admin
+      - build-auditing
+      - build-promotions
+      - build-analyzers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Web
+      - name: Build Web Host
+        run: dotnet build src/MarketNest.Web --no-restore -c ${{ env.CONFIGURATION }}
+
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │  STAGE 3 — TEST (parallel per module / category)                          │
+  # │  All test jobs depend on build-web (all modules compiled successfully).    │
+  # │  Filters use FullyQualifiedName to isolate tests per module namespace.     │
+  # └──────────────────────────────────────────────────────────────────────────┘
+
+  test-unit-base-core:
+    name: "🧪 Unit Tests / Base & Core"
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
+      - name: Run tests
+        run: |
+          dotnet test tests/MarketNest.UnitTests \
+            --no-restore \
+            -c ${{ env.CONFIGURATION }} \
+            --filter "FullyQualifiedName~MarketNest.Base|FullyQualifiedName~MarketNest.Core" \
+            --logger "trx;LogFileName=unit-base-core.trx" \
+            --results-directory ./test-results
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit-base-core
+          path: ./test-results/*.trx
+
+  test-unit-identity:
+    name: "🧪 Unit Tests / Identity"
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
+      - name: Run tests
+        run: |
+          dotnet test tests/MarketNest.UnitTests \
+            --no-restore \
+            -c ${{ env.CONFIGURATION }} \
+            --filter "FullyQualifiedName~MarketNest.Identity" \
+            --logger "trx;LogFileName=unit-identity.trx" \
+            --results-directory ./test-results
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit-identity
+          path: ./test-results/*.trx
+
+  test-unit-catalog:
+    name: "🧪 Unit Tests / Catalog"
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
+      - name: Run tests
+        run: |
+          dotnet test tests/MarketNest.UnitTests \
+            --no-restore \
+            -c ${{ env.CONFIGURATION }} \
+            --filter "FullyQualifiedName~MarketNest.Catalog" \
+            --logger "trx;LogFileName=unit-catalog.trx" \
+            --results-directory ./test-results
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit-catalog
+          path: ./test-results/*.trx
+
+  test-unit-cart:
+    name: "🧪 Unit Tests / Cart"
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
+      - name: Run tests
+        run: |
+          dotnet test tests/MarketNest.UnitTests \
+            --no-restore \
+            -c ${{ env.CONFIGURATION }} \
+            --filter "FullyQualifiedName~MarketNest.Cart" \
+            --logger "trx;LogFileName=unit-cart.trx" \
+            --results-directory ./test-results
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit-cart
+          path: ./test-results/*.trx
+
+  test-unit-orders:
+    name: "🧪 Unit Tests / Orders"
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
+      - name: Run tests
+        run: |
+          dotnet test tests/MarketNest.UnitTests \
+            --no-restore \
+            -c ${{ env.CONFIGURATION }} \
+            --filter "FullyQualifiedName~MarketNest.Orders" \
+            --logger "trx;LogFileName=unit-orders.trx" \
+            --results-directory ./test-results
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit-orders
+          path: ./test-results/*.trx
+
+  test-unit-payments:
+    name: "🧪 Unit Tests / Payments"
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
+      - name: Run tests
+        run: |
+          dotnet test tests/MarketNest.UnitTests \
+            --no-restore \
+            -c ${{ env.CONFIGURATION }} \
+            --filter "FullyQualifiedName~MarketNest.Payments" \
+            --logger "trx;LogFileName=unit-payments.trx" \
+            --results-directory ./test-results
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit-payments
+          path: ./test-results/*.trx
+
+  test-unit-admin-auditing:
+    name: "🧪 Unit Tests / Admin & Auditing"
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
+      - name: Run tests
+        run: |
+          dotnet test tests/MarketNest.UnitTests \
+            --no-restore \
+            -c ${{ env.CONFIGURATION }} \
+            --filter "FullyQualifiedName~MarketNest.Admin|FullyQualifiedName~MarketNest.Auditing" \
+            --logger "trx;LogFileName=unit-admin-auditing.trx" \
+            --results-directory ./test-results
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit-admin-auditing
+          path: ./test-results/*.trx
+
+  test-unit-promotions:
+    name: "🧪 Unit Tests / Promotions"
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
+      - name: Run tests
+        run: |
+          dotnet test tests/MarketNest.UnitTests \
+            --no-restore \
+            -c ${{ env.CONFIGURATION }} \
+            --filter "FullyQualifiedName~MarketNest.Promotions" \
+            --logger "trx;LogFileName=unit-promotions.trx" \
+            --results-directory ./test-results
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit-promotions
+          path: ./test-results/*.trx
+
+  test-unit-reviews-disputes-notifications:
+    name: "🧪 Unit Tests / Reviews, Disputes & Notifications"
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
+      - name: Run tests
+        run: |
+          dotnet test tests/MarketNest.UnitTests \
+            --no-restore \
+            -c ${{ env.CONFIGURATION }} \
+            --filter "FullyQualifiedName~MarketNest.Reviews|FullyQualifiedName~MarketNest.Disputes|FullyQualifiedName~MarketNest.Notifications" \
+            --logger "trx;LogFileName=unit-reviews-disputes-notifications.trx" \
+            --results-directory ./test-results
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit-reviews-disputes-notifications
+          path: ./test-results/*.trx
+
+  test-architecture:
+    name: "🧪 Architecture Tests"
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.ArchitectureTests
+      - name: Run Architecture Tests
+        run: |
+          dotnet test tests/MarketNest.ArchitectureTests \
+            --no-restore \
+            -c ${{ env.CONFIGURATION }} \
+            --logger "trx;LogFileName=architecture.trx" \
+            --results-directory ./test-results
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-architecture
+          path: ./test-results/*.trx
+
+  test-analyzers:
+    name: "🧪 Analyzer Tests"
+    needs: build-analyzers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.Analyzers.Tests
+      - name: Run Analyzer Tests
+        run: |
+          dotnet test tests/MarketNest.Analyzers.Tests \
+            --no-restore \
+            -c ${{ env.CONFIGURATION }} \
+            --logger "trx;LogFileName=analyzers.trx" \
+            --results-directory ./test-results
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-analyzers
+          path: ./test-results/*.trx
+
+  test-integration:
+    name: "🧪 Integration Tests"
+    needs: build-web
+    runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16-alpine
         env:
           POSTGRES_DB: marketnest_test
           POSTGRES_USER: mn
@@ -21,49 +702,75 @@ jobs:
         options: >-
           --health-cmd pg_isready
           --health-interval 5s
-          --health-retries 5
+          --health-retries 10
       redis:
-        image: redis:7
+        image: redis:7-alpine
         ports: ["6379:6379"]
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 5s
-
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.x'
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/cache/restore@v4
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Unit Tests
-        run: dotnet test tests/MarketNest.UnitTests --no-build --configuration Release --logger "trx;LogFileName=unit-results.trx"
-
-      - name: Architecture Tests
-        run: dotnet test tests/MarketNest.ArchitectureTests --no-build --configuration Release --logger "trx;LogFileName=arch-results.trx"
-
-      - name: Integration Tests
-        run: dotnet test tests/MarketNest.IntegrationTests --no-build --configuration Release --logger "trx;LogFileName=integration-results.trx"
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.IntegrationTests
+      - name: Run Integration Tests
+        run: |
+          dotnet test tests/MarketNest.IntegrationTests \
+            --no-restore \
+            -c ${{ env.CONFIGURATION }} \
+            --logger "trx;LogFileName=integration.trx" \
+            --results-directory ./test-results
         env:
-          ConnectionStrings__Default: "Host=localhost;Database=marketnest_test;Username=mn;Password=mn_secret"
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=marketnest_test;Username=mn;Password=mn_secret"
+          ConnectionStrings__ReadConnection: ""
           Redis__ConnectionString: "localhost:6379"
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-integration
+          path: ./test-results/*.trx
 
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │  STAGE 4 — VERIFY GATE                                                    │
+  # │  Single aggregation job — set branch protection to require only this job.  │
+  # └──────────────────────────────────────────────────────────────────────────┘
+  verify:
+    name: "✅ All checks passed"
+    needs:
+      - test-unit-base-core
+      - test-unit-identity
+      - test-unit-catalog
+      - test-unit-cart
+      - test-unit-orders
+      - test-unit-payments
+      - test-unit-admin-auditing
+      - test-unit-promotions
+      - test-unit-reviews-disputes-notifications
+      - test-architecture
+      - test-analyzers
+      - test-integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: All stages passed
+        run: echo "✅ Build, unit tests, architecture tests, analyzer tests, and integration tests all passed."
+
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │  STAGE 5 — DOCKER BUILD & PUSH (main / p1-main only)                      │
+  # └──────────────────────────────────────────────────────────────────────────┘
   docker-build:
-    needs: build-and-test
-    if: github.ref == 'refs/heads/main'
+    name: "🐳 Docker Build & Push"
+    needs: verify
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/p1-main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

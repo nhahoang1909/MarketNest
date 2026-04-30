@@ -10,11 +10,9 @@ public partial class PauseVoucherHandler(
     {
         Log.InfoStart(logger, request.VoucherId);
 
-        var voucher = await repository.GetByKeyOrThrowAsync(request.VoucherId, cancellationToken);
+        var voucher = await repository.GetByKeyAsync(request.VoucherId, cancellationToken);
         Result<bool, Error> result = voucher.Pause();
         if (!result.IsSuccess) return result;
-
-        await repository.SaveChangesAsync(cancellationToken);
 
         Log.InfoSuccess(logger, request.VoucherId);
         return result;
