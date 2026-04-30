@@ -22,6 +22,24 @@ public record Error(string Code, string Message, ErrorType Type = ErrorType.Vali
     public static Error Conflict(string code, string message)
         => new(code, message, ErrorType.Conflict);
 
+    /// <summary>
+    ///     Creates a concurrency conflict error for a single entity update.
+    ///     Indicates the entity was modified by another user between read and write.
+    /// </summary>
+    public static Error ConcurrencyConflict(string entity, string id)
+        => new(DomainConstants.ErrorCodes.ConcurrencyConflict,
+            $"{entity} '{id}' has been modified by another user. Please reload and try again.",
+            ErrorType.Conflict);
+
+    /// <summary>
+    ///     Creates a concurrency conflict error for bulk operations where some records are stale.
+    ///     The <paramref name="staleIds"/> identifies which items failed the concurrency check.
+    /// </summary>
+    public static Error BulkConcurrencyConflict(string entity, IEnumerable<string> staleIds)
+        => new(DomainConstants.ErrorCodes.ConcurrencyConflict,
+            $"{entity} records [{string.Join(", ", staleIds)}] have been modified by another user. Please reload and try again.",
+            ErrorType.Conflict);
+
     public static Error Unexpected(string? detail = null)
         => new(DomainConstants.ErrorCodes.UnexpectedError, detail ?? DomainConstants.ErrorMessages.UnexpectedError,
             ErrorType.Unexpected);

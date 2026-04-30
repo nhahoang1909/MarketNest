@@ -1,6 +1,8 @@
 ﻿using System.Data;
 using MediatR;
+using MarketNest.Base.Common;
 using MarketNest.Base.Domain;
+using MarketNest.Base.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -86,10 +88,29 @@ internal sealed partial class UnitOfWork(
         }
 
         // 4. SaveChanges on all module contexts — persists within the open DB transaction
+        //    Catches DbUpdateConcurrencyException and wraps it for the filter to handle
         Log.InfoCommitting(logger);
         var totalRows = 0;
-        foreach (IModuleDbContext moduleCtx in moduleContexts)
-            totalRows += await moduleCtx.AsDbContext().SaveChangesAsync(ct);
+        try
+        {
+            foreach (IModuleDbContext moduleCtx in moduleContexts)
+                totalRows += await moduleCtx.AsDbContext().SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            var affectedEntities = ex.Entries
+                .Select(e => e.Entity.GetType().Name)
+                .Distinct()
+                .ToList();
+
+            Log.WarnConcurrencyConflict(logger, string.Join(", ", affectedEntities));
+
+            throw new ConcurrencyConflictException(
+                DomainConstants.ErrorMessages.ConcurrencyConflict, ex)
+            {
+                AffectedEntities = affectedEntities
+            };
+        }
 
         return totalRows;
     }
@@ -182,6 +203,10 @@ internal sealed partial class UnitOfWork(
         [LoggerMessage((int)LogEventId.UoWPostCommitFailed, LogLevel.Warning,
             "Post-commit event dispatch failed for {EventType} — TX already committed, event may be lost")]
         public static partial void WarnPostCommitFailed(ILogger logger, string eventType, Exception ex);
+
+        [LoggerMessage((int)LogEventId.UoWConcurrencyConflict, LogLevel.Warning,
+            "Concurrency conflict detected on entities: {AffectedEntities}")]
+        public static partial void WarnConcurrencyConflict(ILogger logger, string affectedEntities);
     }
 }
 

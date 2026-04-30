@@ -32,6 +32,9 @@ public static class DatabaseServiceExtensions
         services.AddSingleton<DatabaseTracker>();
         services.AddSingleton<DatabaseInitializer>();
 
+        // Register the UpdateTokenInterceptor as singleton (stateless — auto-rotates concurrency tokens)
+        services.AddSingleton<UpdateTokenInterceptor>();
+
         // Auto-discover and register all IDataSeeder implementations from provided assemblies
         foreach (Assembly assembly in seederAssemblies)
         {
@@ -48,6 +51,7 @@ public static class DatabaseServiceExtensions
     /// <summary>
     ///     Registers a module's DbContext and also exposes it as <see cref="IModuleDbContext" />
     ///     so <see cref="DatabaseInitializer" /> can discover and iterate all module contexts.
+    ///     Automatically adds the <see cref="UpdateTokenInterceptor" /> for optimistic concurrency support.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="configureOptions">EF Core DbContext options builder (connection string, etc.).</param>
@@ -59,7 +63,14 @@ public static class DatabaseServiceExtensions
         Action<DbContextOptionsBuilder> configureOptions)
         where TContext : DbContext, IModuleDbContext
     {
-        services.AddDbContext<TContext>(configureOptions);
+        services.AddDbContext<TContext>((sp, opts) =>
+        {
+            configureOptions(opts);
+
+            // Add UpdateTokenInterceptor for automatic concurrency token rotation
+            var updateTokenInterceptor = sp.GetRequiredService<UpdateTokenInterceptor>();
+            opts.AddInterceptors(updateTokenInterceptor);
+        });
 
         // Register as IModuleDbContext so DatabaseInitializer can enumerate all modules
         services.AddScoped<IModuleDbContext>(sp => sp.GetRequiredService<TContext>());
