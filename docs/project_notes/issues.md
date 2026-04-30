@@ -414,7 +414,7 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ---
 
-
+### 2026-04-30 - feat(notifications): Phase 1 backend implementation — templates, dispatch, inbox, jobs
 - **Status**: Completed
 - **Description**: Implemented the Notifications module backend (Phase 1): domain entities, infrastructure, application services, template seeder, and background job. Replaced the old `INotificationService` contract with template-based dispatch supporting Email + In-App channels.
 - **Files Created/Modified**:
@@ -431,3 +431,28 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 - **Phase 1 TODO (Frontend)**: Navbar bell icon, `notificationBell` Alpine component, `_NotificationDrawer.cshtml`, `_NotificationItem.cshtml`, notification Razor Pages
 - **Phase 2 TODO**: `NotificationLog` entity, SSE push, Admin notification log UI, `INotificationPreferenceReadService` integration, digest jobs
 
+### 2026-04-30 - Rich Text Editor (Trix) — Shared Component + Infrastructure (ADR-036)
+- **Status**: Completed (frontend component + sanitizer infrastructure)
+- **Description**: Implemented Trix-based rich text editor as a reusable shared Razor partial (`_RichTextEditor.cshtml`). Includes Alpine.js component, vendored Trix 2.1.12, HTML sanitization service (HtmlSanitizer NuGet), CSS styles for editor + content display, and FieldLimits/constants.
+- **Files Created**:
+  - `src/MarketNest.Web/Pages/Shared/Forms/_RichTextEditor.cshtml` — shared Razor partial
+  - `src/MarketNest.Web/wwwroot/js/components/richEditor.js` — Alpine.js component
+  - `src/MarketNest.Web/wwwroot/lib/trix/` — vendored Trix 2.1.12 (JS + CSS)
+  - `src/Base/MarketNest.Base.Common/Contracts/Contracts/IHtmlSanitizerService.cs` — sanitizer interface
+  - `src/MarketNest.Web/Infrastructure/TrixHtmlSanitizerService.cs` — Ganss.HtmlSanitizer implementation
+- **Files Modified**:
+  - `Directory.Packages.props` — added `HtmlSanitizer 9.0.892`
+  - `src/MarketNest.Web/MarketNest.Web.csproj` — added HtmlSanitizer PackageReference
+  - `src/MarketNest.Web/Program.cs` — registered `IHtmlSanitizerService` as Singleton
+  - `src/MarketNest.Web/Infrastructure/SharedViewPaths.cs` — added `RichTextEditor` constant
+  - `src/MarketNest.Web/Infrastructure/AppRoutes.cs` — added `UploadsV1Prefix` + whitelist
+  - `src/MarketNest.Web/wwwroot/js/constants.js` — added `RichEditorConfig`
+  - `src/MarketNest.Web/wwwroot/js/app.js` — imported `richEditor.js`
+  - `src/MarketNest.Web/wwwroot/css/components.css` — added `.rich-editor-*` + `.rich-content` styles
+  - `src/Base/MarketNest.Base.Common/Validation/FieldLimits.cs` — added `RichEditorImage` limits
+  - `docs/common-validation-rules.md`, `docs/frontend-guide.md` — documented component
+  - `docs/project_notes/decisions.md` — ADR-036
+- **Build**: `dotnet build` → 0 warnings, 0 errors ✅
+- **PR/Issue**: n/a (inline implementation)
+- **Phase 1 TODO (Backend)**: Upload endpoint controller (`/api/v1/uploads/rich-editor-image`), file storage service integration, orphan image cleanup job
+- **Phase 1 TODO (Usage)**: Wire `_RichTextEditor` into Seller product create/edit pages and storefront description edit page

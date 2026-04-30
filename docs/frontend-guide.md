@@ -272,6 +272,7 @@ Pages/Shared/
 │   ├── _SelectField.cshtml        ← Select dropdown — label, options, error state
 │   ├── _ImageUpload.cshtml        ← Drag-drop with preview — JPEG/PNG/WebP, max 5 MB
 │   ├── _ExcelUpload.cshtml        ← Drag-drop Excel upload — .xlsx/.xls, max 10 MB
+│   ├── _RichTextEditor.cshtml    ← Trix rich text editor — HTML output, image upload, char counter
 │   ├── _SearchInput.cshtml        ← HTMX search with debounce + spinner
 │   ├── _FormSection.cshtml        ← Section card wrapper — title + divider heading
 │   └── _FormActions.cshtml        ← Submit/cancel row — loading spinner, Danger variant
@@ -494,6 +495,7 @@ All field components live in `Pages/Shared/Forms/`. They receive parameters via 
 | `_SelectField` | Dropdowns with `IEnumerable<SelectListItem>` |
 | `_ImageUpload` | Product/avatar image drag-drop |
 | `_ExcelUpload` | Batch import .xlsx/.xls |
+| `_RichTextEditor` | Trix rich text editor — HTML output, inline image upload, live char counter |
 | `_FormSection` | Card section header + divider wrapper |
 | `_FormActions` | Submit/Cancel row with loading spinner |
 
