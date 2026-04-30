@@ -1,7 +1,7 @@
 @page
 @model MarketNest.Web.Pages.IndexModel
 @{
-  ViewData["Title"] = "Trang chủ";
+  ViewData["Title"] = I18N[I18NKeys.Page.Home];
 }
 
 <!-- ░░ HERO ░░ -->
@@ -13,16 +13,14 @@
       <div class="flex-1 text-center lg:text-left">
         <h1 class="mn-display font-display text-ink-800 leading-[1.05] tracking-tight"
             style="font-size: clamp(56px, 7vw, 112px);">
-          Khám phá<br class="hidden sm:block"/>
-          thế giới<br class="hidden sm:block"/>
-          mua sắm
+          @I18N[I18NKeys.Text.HeroHeadline]
         </h1>
         <p class="mt-6 text-lg text-ink-400 max-w-md mx-auto lg:mx-0">
-          Sàn thương mại điện tử đa người bán — nơi kết nối những sản phẩm độc đáo từ các nhà bán hàng độc lập.
+          @I18N[I18NKeys.Text.HeroSubtitle]
         </p>
         <div class="mt-8 flex flex-wrap gap-4 justify-center lg:justify-start">
-          <a href="@AppRoutes.Shop" class="btn-primary btn-lg">Mua sắm ngay</a>
-          <a href="@AppRoutes.Auth.RegisterSeller" class="btn-ghost btn-lg">Trở thành người bán</a>
+          <a href="@AppRoutes.Shop" class="btn-primary btn-lg">@I18N[I18NKeys.Button.ShopNow]</a>
+          <a href="@AppRoutes.Auth.RegisterSeller" class="btn-ghost btn-lg">@I18N[I18NKeys.Button.BecomeSeller]</a>
         </div>
       </div>
 
@@ -49,65 +47,65 @@
 <!-- ░░ CATEGORIES ░░ -->
 <section class="bg-surface py-16 lg:py-24" x-data>
   <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-    <p class="mn-eyebrow text-accent-600 mb-2">DANH MỤC</p>
-    <h2 class="mn-h2 text-ink-800 mb-10">Khám phá theo danh mục</h2>
+    <p class="mn-eyebrow text-accent-600 mb-2">@I18N[I18NKeys.Text.CategoriesEyebrow]</p>
+    <h2 class="mn-h2 text-ink-800 mb-10">@I18N[I18NKeys.Text.CategoriesTitle]</h2>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
       <!-- Category cards -->
       <a href="@AppRoutes.ShopQuery.Category("fashion")"
          class="group block rounded-2xl p-6 bg-lilac-100 hover:bg-lilac-200 transition-colors">
         <span class="text-3xl block mb-3">&#x1F457;</span>
-        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Thời trang</h3>
-        <p class="text-sm text-ink-400 mt-1">1.245 sản phẩm</p>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">@I18N[I18NKeys.Text.CategoryFashion]</h3>
+        <p class="text-sm text-ink-400 mt-1">@I18N.Get(I18NKeys.Text.ProductCount, "1,245")</p>
       </a>
 
       <a href="@AppRoutes.ShopQuery.Category("home")"
          class="group block rounded-2xl p-6 bg-mustard-100 hover:bg-mustard-200 transition-colors">
         <span class="text-3xl block mb-3">&#x1F3E0;</span>
-        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Nhà cửa</h3>
-        <p class="text-sm text-ink-400 mt-1">893 sản phẩm</p>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">@I18N[I18NKeys.Text.CategoryHome]</h3>
+        <p class="text-sm text-ink-400 mt-1">@I18N.Get(I18NKeys.Text.ProductCount, "893")</p>
       </a>
 
       <a href="@AppRoutes.ShopQuery.Category("ceramics")"
          class="group block rounded-2xl p-6 bg-accent-100 hover:bg-accent-200 transition-colors">
         <span class="text-3xl block mb-3">&#x1F3FA;</span>
-        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Gốm &amp; Thủ công</h3>
-        <p class="text-sm text-ink-400 mt-1">672 sản phẩm</p>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">@I18N[I18NKeys.Text.CategoryCeramics]</h3>
+        <p class="text-sm text-ink-400 mt-1">@I18N.Get(I18NKeys.Text.ProductCount, "672")</p>
       </a>
 
       <a href="@AppRoutes.ShopQuery.Category("audio")"
          class="group block rounded-2xl p-6 bg-info-100 hover:bg-info-200 transition-colors">
         <span class="text-3xl block mb-3">&#x1F3B5;</span>
-        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Âm thanh</h3>
-        <p class="text-sm text-ink-400 mt-1">314 sản phẩm</p>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">@I18N[I18NKeys.Text.CategoryAudio]</h3>
+        <p class="text-sm text-ink-400 mt-1">@I18N.Get(I18NKeys.Text.ProductCount, "314")</p>
       </a>
 
       <a href="@AppRoutes.ShopQuery.Category("stationery")"
          class="group block rounded-2xl p-6 bg-warn-100 hover:bg-warn-200 transition-colors">
         <span class="text-3xl block mb-3">&#x270F;&#xFE0F;</span>
-        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Văn phòng phẩm</h3>
-        <p class="text-sm text-ink-400 mt-1">528 sản phẩm</p>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">@I18N[I18NKeys.Text.CategoryStationery]</h3>
+        <p class="text-sm text-ink-400 mt-1">@I18N.Get(I18NKeys.Text.ProductCount, "528")</p>
       </a>
 
       <a href="@AppRoutes.ShopQuery.Category("kitchen")"
          class="group block rounded-2xl p-6 bg-danger-100 hover:bg-danger-200 transition-colors">
         <span class="text-3xl block mb-3">&#x1F373;</span>
-        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Nhà bếp</h3>
-        <p class="text-sm text-ink-400 mt-1">456 sản phẩm</p>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">@I18N[I18NKeys.Text.CategoryKitchen]</h3>
+        <p class="text-sm text-ink-400 mt-1">@I18N.Get(I18NKeys.Text.ProductCount, "456")</p>
       </a>
 
       <a href="@AppRoutes.ShopQuery.Category("lighting")"
          class="group block rounded-2xl p-6 bg-mustard-50 hover:bg-mustard-100 transition-colors">
         <span class="text-3xl block mb-3">&#x1F4A1;</span>
-        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Đèn &amp; Ánh sáng</h3>
-        <p class="text-sm text-ink-400 mt-1">287 sản phẩm</p>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">@I18N[I18NKeys.Text.CategoryLighting]</h3>
+        <p class="text-sm text-ink-400 mt-1">@I18N.Get(I18NKeys.Text.ProductCount, "287")</p>
       </a>
 
       <a href="@AppRoutes.ShopQuery.Category("garden")"
          class="group block rounded-2xl p-6 bg-success-100 hover:bg-success-200 transition-colors">
         <span class="text-3xl block mb-3">&#x1F33F;</span>
-        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">Vườn &amp; Cây</h3>
-        <p class="text-sm text-ink-400 mt-1">391 sản phẩm</p>
+        <h3 class="font-semibold text-ink-700 group-hover:text-ink-900">@I18N[I18NKeys.Text.CategoryGarden]</h3>
+        <p class="text-sm text-ink-400 mt-1">@I18N.Get(I18NKeys.Text.ProductCount, "391")</p>
       </a>
     </div>
   </div>
@@ -116,8 +114,8 @@
 <!-- ░░ FEATURED BENTO GRID ░░ -->
 <section class="bg-cream-100 py-16 lg:py-24">
   <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-    <p class="mn-eyebrow text-accent-600 mb-2">NỔI BẬT</p>
-    <h2 class="mn-h2 text-ink-800 mb-10">Sản phẩm được yêu thích</h2>
+    <p class="mn-eyebrow text-accent-600 mb-2">@I18N[I18NKeys.Text.FeaturedEyebrow]</p>
+    <h2 class="mn-h2 text-ink-800 mb-10">@I18N[I18NKeys.Text.FeaturedTitle]</h2>
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-6 auto-rows-[260px]">
       <!-- Large card: spans 1 col, 2 rows -->
@@ -209,20 +207,20 @@
     <!-- Left: dark quote -->
     <div class="bg-ink-700 rounded-3xl p-10 lg:p-14 flex flex-col justify-center">
       <p class="font-display text-cream-100 text-2xl lg:text-3xl leading-relaxed italic">
-        "Mỗi sản phẩm đều mang trong mình một câu chuyện — từ bàn tay người thợ đến ngôi nhà của bạn."
+        "@I18N[I18NKeys.Text.EditorialQuote]"
       </p>
-      <p class="mt-6 text-cream-400 text-sm">— Đội ngũ MarketNest</p>
+      <p class="mt-6 text-cream-400 text-sm">— @I18N[I18NKeys.Text.EditorialAuthor]</p>
     </div>
 
     <!-- Right: accent CTA -->
     <div class="bg-accent-400 rounded-3xl p-10 lg:p-14 flex flex-col justify-center">
-      <h3 class="mn-h3 text-accent-900 mb-3">Bạn có sản phẩm độc đáo?</h3>
+      <h3 class="mn-h3 text-accent-900 mb-3">@I18N[I18NKeys.Text.EditorialCtaTitle]</h3>
       <p class="text-accent-800 mb-6 leading-relaxed">
-        Tham gia cộng đồng người bán trên MarketNest và tiếp cận hàng triệu người mua tiềm năng.
+        @I18N[I18NKeys.Text.EditorialCtaDesc]
       </p>
       <a href="@AppRoutes.Auth.RegisterSeller"
          class="btn-primary self-start bg-ink-700 text-cream-100 hover:bg-ink-800">
-        Mở gian hàng miễn phí
+        @I18N[I18NKeys.Button.OpenStoreFree]
       </a>
     </div>
   </div>
