@@ -169,7 +169,7 @@ Cooperative cancellation is required across the codebase. The following rules ar
 - Public API methods that perform I/O or long-running work MUST accept a `CancellationToken` parameter (preferably named `ct` or `cancellationToken`). Private helper methods that are not part of an API surface may omit the parameter only when cancellation is not meaningful.
 - All methods declared on interfaces or abstract classes that represent asynchronous or cancellable work MUST include a `CancellationToken` parameter in their signature so callers and implementors can observe cancellation.
 - Base classes (protected or public virtual/abstract methods) that are part of an overridable API MUST include a `CancellationToken` parameter so overrides can honor cancellation.
-- MediatR handlers, controller/PageModel handlers, hosted services, background workers and pipeline behaviors MUST accept a `CancellationToken` parameter and forward it to all downstream async calls (repositories, queries, HttpClient, DbContext, IUnitOfWork, etc.). Handlers must pass the received token into repository and unit-of-work calls (for example `await repository.GetByIdAsync(id, ct)` and `await _unitOfWork.SaveChangesAsync(ct)`).
+- MediatR handlers, controller/PageModel handlers, hosted services, background workers and pipeline behaviors MUST accept a `CancellationToken` parameter and forward it to all downstream async calls (repositories, queries, HttpClient, DbContext, etc.). Handlers must pass the received token into repository calls (for example `await repository.GetByIdAsync(id, ct)`). Note: command handlers do NOT call `uow.CommitAsync()` directly (ADR-027) — the transaction filter handles it. Background jobs are the exception and must manage transactions explicitly.
 - When providing overloads, prefer the overload that accepts a `CancellationToken` and chain to it (avoid duplicating logic without token propagation).
 - Avoid defaulting `CancellationToken` to `default` on public APIs if callers are likely to want cancellation. Place the `CancellationToken` as the last parameter.
 
@@ -302,8 +302,8 @@ public record CommissionOptions
 | Error message text | `ValidationMessages` | `MarketNest.Base.Common` |
 | Redis cache key templates | `CacheKeys` | `MarketNest.Base.Common` |
 | Shared Razor partial paths | `SharedViewPaths` | `MarketNest.Web.Infrastructure` |
-| DB schema / table names | `TableConstants` | `MarketNest.Core` |
-| Status label strings | `EntityStatusNames`, `OrderStatusNames` | `MarketNest.Core` |
+| DB schema / table names | `TableConstants` | `MarketNest.Base.Common` |
+| Status label strings | `EntityStatusNames`, `OrderStatusNames` | `MarketNest.Base.Common` |
 | I18N resource key strings | `I18NKeys` | `MarketNest.Web.Infrastructure` |
 
 **Localization keys — must use `I18NKeys.*` (ADR-038):**
@@ -655,7 +655,8 @@ using System.Net.Http;               // or HTTP
 // ✅ Domain only depends on:
 using System;
 using System.Collections.Generic;
-using MarketNest.Core; // shared kernel only
+using MarketNest.Base.Domain;  // shared kernel (Entity, AggregateRoot, ValueObject)
+using MarketNest.Base.Common;  // Result, Error, DomainConstants
 ```
 
 ---
@@ -681,7 +682,7 @@ public interface IQueryHandler<TQuery, TResult>
 
 **Command handler rules:**
 - Delegate business logic to domain methods — the handler orchestrates, it does not decide
-- Call `IUnitOfWork.SaveChangesAsync(ct)`, not `dbContext.SaveChangesAsync(ct)` directly
+- Do NOT call `uow.CommitAsync()` or `dbContext.SaveChangesAsync()` directly — the transaction filter handles commit automatically (ADR-027). **Exception**: background jobs must manage transactions explicitly.
 - Never validate inputs — that is the FluentValidation pipeline's responsibility
 - Never raise domain events — the aggregate raises events inside its own methods
 - Always propagate `CancellationToken ct` to every async call
@@ -1167,7 +1168,7 @@ Before merging:
 - [ ] All commands/queries validated by FluentValidation with explicit `.WithMessage()` (see §4.2)
 - [ ] Every Command has a paired Validator (see §4.2)
 - [ ] Handlers contain no validation or business logic — delegates to domain (see §4.1)
-- [ ] SaveChanges called via `IUnitOfWork`, not `dbContext` directly (see §4.1)
+- [ ] Command handlers do NOT call `uow.CommitAsync()` or `dbContext.SaveChangesAsync()` directly — transaction filter handles it (ADR-027)
 - [ ] No raw SQL strings (Dapper queries use parameters)
 - [ ] No public setters on aggregates
 - [ ] Entity properties use `{ get; private set; }` — no `{ get; set; }` or `{ get; init; }` (ADR-007)
@@ -1176,7 +1177,7 @@ Before merging:
 - [ ] No blocking of async operations via `.Result` or `GetAwaiter().GetResult()` — prefer `async`/`await` (see §2.4)
 - [ ] No `await Task.FromResult(...)` — remove async if no I/O (see §2.4)
 - [ ] Public async/cancellable APIs include `CancellationToken` (interfaces/abstract/base methods included)
-- [ ] Handlers and PageModel/Controller methods forward `CancellationToken` to downstream calls (repositories, IUnitOfWork, DbContext)
+- [ ] Handlers and PageModel/Controller methods forward `CancellationToken` to downstream calls (repositories, DbContext)
 - [ ] `AsNoTracking()` on all read queries (see §5.2)
 - [ ] Query handlers return DTOs, not domain entities (see §4.1)
 - [ ] DI uses primary constructor injection and interface-based registration (see §2.5)
