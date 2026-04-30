@@ -58,6 +58,13 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore Base packages
+        run: |
+          dotnet restore src/Base/MarketNest.Base.Common
+          dotnet restore src/Base/MarketNest.Base.Domain
+          dotnet restore src/Base/MarketNest.Base.Infrastructure
+          dotnet restore src/Base/MarketNest.Base.Api
+          dotnet restore src/Base/MarketNest.Base.Utility
       - name: Build Base.Common
         run: dotnet build src/Base/MarketNest.Base.Common --no-restore -c ${{ env.CONFIGURATION }}
       - name: Build Base.Domain
@@ -83,6 +90,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Core
       - name: Build Core
         run: dotnet build src/MarketNest.Core --no-restore -c ${{ env.CONFIGURATION }}
 
@@ -100,6 +109,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Identity
       - name: Build Identity
         run: dotnet build src/MarketNest.Identity --no-restore -c ${{ env.CONFIGURATION }}
 
@@ -117,6 +128,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Catalog
       - name: Build Catalog
         run: dotnet build src/MarketNest.Catalog --no-restore -c ${{ env.CONFIGURATION }}
 
@@ -134,6 +147,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Cart
       - name: Build Cart
         run: dotnet build src/MarketNest.Cart --no-restore -c ${{ env.CONFIGURATION }}
 
@@ -151,6 +166,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Orders
       - name: Build Orders
         run: dotnet build src/MarketNest.Orders --no-restore -c ${{ env.CONFIGURATION }}
 
@@ -168,6 +185,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Payments
       - name: Build Payments
         run: dotnet build src/MarketNest.Payments --no-restore -c ${{ env.CONFIGURATION }}
 
@@ -185,6 +204,10 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: |
+          dotnet restore src/MarketNest.Reviews
+          dotnet restore src/MarketNest.Disputes
       - name: Build Reviews
         run: dotnet build src/MarketNest.Reviews --no-restore -c ${{ env.CONFIGURATION }}
       - name: Build Disputes
@@ -204,6 +227,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Notifications
       - name: Build Notifications
         run: dotnet build src/MarketNest.Notifications --no-restore -c ${{ env.CONFIGURATION }}
 
@@ -221,6 +246,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Admin
       - name: Build Admin
         run: dotnet build src/MarketNest.Admin --no-restore -c ${{ env.CONFIGURATION }}
 
@@ -238,6 +265,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Auditing
       - name: Build Auditing
         run: dotnet build src/MarketNest.Auditing --no-restore -c ${{ env.CONFIGURATION }}
 
@@ -255,6 +284,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Promotions
       - name: Build Promotions
         run: dotnet build src/MarketNest.Promotions --no-restore -c ${{ env.CONFIGURATION }}
 
@@ -272,6 +303,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Analyzers
       - name: Build Analyzers
         run: dotnet build src/MarketNest.Analyzers --no-restore -c ${{ env.CONFIGURATION }}
 
@@ -304,6 +337,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore src/MarketNest.Web
       - name: Build Web Host
         run: dotnet build src/MarketNest.Web --no-restore -c ${{ env.CONFIGURATION }}
 
@@ -327,6 +362,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
       - name: Run tests
         run: |
           dotnet test tests/MarketNest.UnitTests \
@@ -356,6 +393,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
       - name: Run tests
         run: |
           dotnet test tests/MarketNest.UnitTests \
@@ -385,6 +424,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
       - name: Run tests
         run: |
           dotnet test tests/MarketNest.UnitTests \
@@ -414,6 +455,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
       - name: Run tests
         run: |
           dotnet test tests/MarketNest.UnitTests \
@@ -443,6 +486,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
       - name: Run tests
         run: |
           dotnet test tests/MarketNest.UnitTests \
@@ -472,6 +517,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
       - name: Run tests
         run: |
           dotnet test tests/MarketNest.UnitTests \
@@ -501,6 +548,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
       - name: Run tests
         run: |
           dotnet test tests/MarketNest.UnitTests \
@@ -530,6 +579,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
       - name: Run tests
         run: |
           dotnet test tests/MarketNest.UnitTests \
@@ -559,6 +610,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.UnitTests
       - name: Run tests
         run: |
           dotnet test tests/MarketNest.UnitTests \
@@ -588,6 +641,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.ArchitectureTests
       - name: Run Architecture Tests
         run: |
           dotnet test tests/MarketNest.ArchitectureTests \
@@ -616,6 +671,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.Analyzers.Tests
       - name: Run Analyzer Tests
         run: |
           dotnet test tests/MarketNest.Analyzers.Tests \
@@ -663,6 +720,8 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
+      - name: Restore test project
+        run: dotnet restore tests/MarketNest.IntegrationTests
       - name: Run Integration Tests
         run: |
           dotnet test tests/MarketNest.IntegrationTests \
