@@ -1,22 +1,22 @@
 ---
 name: frontend-code-review
 description: >
-  Quét toàn bộ frontend codebase để review chất lượng toàn diện: CSS variables & design tokens,
-  HTML semantic, JavaScript patterns, performance (Core Web Vitals, image, loading), accessibility
-  (WCAG AA, ARIA, keyboard), HTMX attribute correctness, Alpine.js patterns, Tailwind CSS audit,
-  Razor partial structure, antiforgery, SSE/polling, component design.
-  Sử dụng skill này khi người dùng muốn: review frontend, kiểm tra code quality, audit UI,
-  check CSS, review HTML, kiểm tra accessibility, tối ưu performance, review Alpine, check HTMX,
-  audit Tailwind, tìm anti-pattern frontend, hoặc nói "review frontend", "check UI", "frontend audit",
-  "kiểm tra giao diện", "CSS review", "a11y", "web vitals", "frontend code rules".
-  Kích hoạt khi người dùng upload *.cshtml, *.css, *.js, *.html hoặc hỏi về UI/UX issue.
+  Scan the entire frontend codebase for comprehensive quality review: CSS variables and design
+  tokens, HTML semantics, JavaScript patterns, performance (Core Web Vitals, image, loading),
+  accessibility (WCAG AA, ARIA, keyboard), HTMX attribute correctness, Alpine.js patterns,
+  Tailwind CSS audit, Razor partial structure, antiforgery, SSE/polling, component design.
+  Use this skill when the user wants to: review frontend, check code quality, audit UI,
+  check CSS, review HTML, check accessibility, optimize performance, review Alpine, check HTMX,
+  audit Tailwind, find frontend anti-patterns, or says "review frontend", "check UI",
+  "frontend audit", "CSS review", "a11y", "web vitals", "frontend code rules".
+  Activate when the user uploads *.cshtml, *.css, *.js, *.html files or asks about UI/UX issues.
 compatibility:
-  tools: [bash, read_file, write_file, list_files]
-  agents: [claude-code, gemini-cli, cursor, continue, aider]
-  stack: [HTMX 2.x, Alpine.js 3.x, Tailwind CSS 4.x, Razor Pages .NET 10, Vanilla JS, React, Vue]
+  tools: [bash, read_file, write_file, list_files, grep_search, run_in_terminal]
+  agents: [claude-code, gemini-cli, cursor, continue, aider, copilot]
+  stack: [HTMX 2.x, Alpine.js 3.x, Tailwind CSS 4.x, Razor Pages .NET 10, Vanilla JS]
 ---
 
-# Frontend Code Review Skill
+# Frontend Code Review Skill — MarketNest
 
 Skill duy nhất cover toàn bộ frontend quality: từ CSS architecture đến performance, từ semantic HTML
 đến accessibility, từ JS patterns đến HTMX/Alpine specifics của MarketNest.

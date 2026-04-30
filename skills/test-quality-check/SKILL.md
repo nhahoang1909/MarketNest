@@ -1,18 +1,18 @@
 ---
 name: test-quality-check
 description: >
-  Quét toàn bộ test suite MarketNest để review chất lượng: xUnit convention, FluentAssertions
-  usage, test naming (Given_When_Then), Testcontainers setup, NSubstitute mock/stub best practice,
-  test isolation, missing edge case theo domain invariants, và NetArchTest architecture rules.
-  Sử dụng skill này khi người dùng muốn: review test quality, kiểm tra test convention,
-  tìm missing test case, check test isolation, review mock setup, audit architecture test,
-  hoặc nói bất kỳ cụm từ nào như "review test", "test quality", "missing test", "test convention",
+  Scan the entire MarketNest test suite to review quality: xUnit convention, FluentAssertions
+  usage, test naming (Given_When_Then), Testcontainers setup, NSubstitute mock/stub best practices,
+  test isolation, missing edge cases per domain invariants, and NetArchTest architecture rules.
+  Use this skill when the user wants to: review test quality, check test convention,
+  find missing test cases, check test isolation, review mock setup, audit architecture tests,
+  or says anything like "review test", "test quality", "missing test", "test convention",
   "FluentAssertions", "Testcontainers setup", "mock best practice", "architecture test",
-  "NetArchTest", "test isolation", "Given When Then", "kiểm tra test".
-  Kích hoạt khi người dùng upload file *Tests.cs, *Spec.cs, WebAppFactory.cs, hoặc hỏi về coverage.
+  "NetArchTest", "test isolation", "Given When Then".
+  Activate when the user uploads *Tests.cs, *Spec.cs, WebAppFactory.cs files or asks about coverage.
 compatibility:
-  tools: [bash, read_file, write_file, list_files]
-  agents: [claude-code, gemini-cli, cursor, continue, aider]
+  tools: [bash, read_file, write_file, list_files, grep_search, run_in_terminal]
+  agents: [claude-code, gemini-cli, cursor, continue, aider, copilot]
   stack: [.NET 10, xUnit, FluentAssertions, NSubstitute, Testcontainers, NetArchTest, Respawn]
 ---
 
