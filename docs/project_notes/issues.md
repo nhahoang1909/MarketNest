@@ -20,36 +20,6 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
-### 2026-05-01 - fix(build): Resolve all 13 Roslyn analyzer errors (MN020/MN021/MN029/MN030)
-- **Status**: Completed
-- **Description**: Fixed full solution build that had 13 errors across 5 modules and the Web host. All caused by new/stricter Roslyn analyzer rules.
-- **Fixes applied**:
-  - **MN021** (banned `Service` suffix — must implement `I{ClassName}`): Renamed 4 module config classes from `*ConfigService` → `*ConfigProvider` (Payments: `CommissionConfigProvider`, Orders: `OrderPolicyConfigProvider`, Reviews: `ReviewPolicyConfigProvider`, Catalog: `StorefrontPolicyConfigProvider`). Renamed 5 Web-layer classes: `JobRunnerHostedService` → `BackgroundJobRunner`, `ClosedXmlExcelService` → `ClosedXmlExcelProcessor`, `RedisCacheService` → `RedisCacheStore`, `TrixHtmlSanitizerService` → `TrixHtmlSanitizer`, `PostgresSequenceService` → `PostgresSequenceProvider`. Updated all DI registrations and `Program.cs` references.
-  - **MN030** (handler injects concrete DbContext — use interface): Introduced proper query pattern for Auditing module — created `AuditingReadDbContext`, module `BaseQuery<T,K>` wrapper, `IGetAuditLogsPagedQuery` + `IGetLoginEventsPagedQuery` interfaces (Application), `AuditLogQuery` + `LoginEventQuery` implementations (Infrastructure). Refactored `GetAuditLogsQueryHandler` and `GetLoginEventsQueryHandler` into thin delegating handlers. Updated `DependencyInjection.cs` to register ReadDbContext + queries.
-  - **MN020** (no `.Select()` projection) + **MN029** (no `AsNoTracking()`) in `VoucherQuery`: Added `AsNoTracking()` to `GetByCodeAsync`; inlined `Select(v => new VoucherDto(...))` into the LINQ chain in `ExecuteAsync` (eliminating in-memory `MapToDto` and the false-positive `ToList()` call); suppressed MN020 on `GetByCodeAsync` via `#pragma` (interface returns full entity for domain use).
-- **Files created**: `AuditingReadDbContext.cs`, `BaseQuery.cs` (Auditing), `AuditLogQuery.cs`, `LoginEventQuery.cs`, `IGetAuditLogsPagedQuery.cs`, `IGetLoginEventsPagedQuery.cs`
-- **Files modified**: `CommissionConfigService.cs`, `OrderPolicyConfigService.cs`, `Reviews/DependencyInjection.cs`, `Catalog/DependencyInjection.cs`, `Payments/DependencyInjection.cs`, `Orders/DependencyInjection.cs`, `Auditing/DependencyInjection.cs`, `GetAuditLogsQuery.cs`, `GetLoginEventsQuery.cs`, `VoucherQuery.cs`, `JobRunnerHostedService.cs`, `ClosedXmlExcelService.cs`, `RedisCacheService.cs`, `TrixHtmlSanitizerService.cs`, `PostgresSequenceService.cs`, `SequenceServiceExtensions.cs`, `Program.cs`
-- **Build**: `dotnet build` → 0 errors, 0 warnings ✅
-
----
-
-### 2026-05-01 - feat(admin): Announcement feature — Phase 1 foundation (domain + CQRS + display banner)
-- **Status**: Completed
-- **Description**: Implemented the Announcement feature foundation in the Admin module. Admin can create, edit, publish, and delete announcements with scheduling (start/end dates). Active announcements are displayed as a dismissible banner below the navbar on every public page, loaded lazily via HTMX.
-- **Key deliverables**:
-  - **Domain**: `Announcement` entity (Admin module, `admin` schema), `AnnouncementType` enum (Info/Promotion/Warning/Urgent), domain methods `Publish/Unpublish/IsActive/Update`
-  - **Application**: `CreateAnnouncementCommand`, `UpdateAnnouncementCommand`, `DeleteAnnouncementCommand`, `PublishAnnouncementCommand` + handlers; `GetAnnouncementsPagedQuery`, `GetActiveAnnouncementsQuery` + handlers; `IGetAnnouncementsPagedQuery`, `IGetActiveAnnouncementsQuery` interfaces; `IAnnouncementRepository`; FluentValidation validators using `FieldLimits`/`ValidationMessages`
-  - **Infrastructure**: `AnnouncementConfiguration` (EF, composite index on `IsPublished+Start+End`), `AnnouncementRepository`, `AnnouncementQuery`; services registered in `DependencyInjection.cs`
-  - **Web display**: `_AnnouncementBanner.cshtml` partial (type-based color, Alpine.js localStorage dismiss, SVG icons); `/Shared/AnnouncementBanner` Razor Page (HTMX endpoint with `Layout = null`); banner injected into `_Layout.cshtml` via `hx-get="/Shared/AnnouncementBanner" hx-trigger="load"`
-  - **Infrastructure plumbing**: `LogEventId` entries 102100–102151; `AppRoutes.Admin.Announcements`, `AppRoutes.AnnouncementBanner` + whitelist; `SharedViewPaths.AnnouncementBanner` constant; `AdminDbContext`/`AdminReadDbContext` updated with `DbSet<Announcement>`
-- **Files created**: 26 new files across Domain / Application / Infrastructure / Web layers
-- **Files modified**: `AdminDbContext.cs`, `AdminReadDbContext.cs`, `DependencyInjection.cs`, `LogEventId.cs`, `AppRoutes.cs`, `SharedViewPaths.cs`, `_Layout.cshtml`
-- **Build**: `dotnet build MarketNest.Admin` + `dotnet build MarketNest.Web` → 0 warnings, 0 errors ✅
-- **ADR**: ADR-043 (see decisions.md)
-- **Next steps**: (1) EF Core migration `AddAnnouncements`, (2) Admin Razor Page `/admin/announcements` for CRUD UI, (3) Hero section announcement card for Promotion-type, (4) OutputCache (1–2 min TTL) on `GetActiveAnnouncements` query
-
----
-
 ### 2026-04-30 - feat(analyzers): MN019 + MN020 — Handler Entity Return & QueryHandler Select-Projection rules (ADR-042)
 - **Status**: Completed
 - **Description**: Added two new Roslyn analyzer rules to `MarketNest.Analyzers`:
