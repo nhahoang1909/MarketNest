@@ -500,7 +500,7 @@ All field components live in `Pages/Shared/Forms/`. They receive parameters via 
 **Minimum call pattern:**
 
 ```razor
-<partial name="~/Pages/Shared/Forms/_TextField.cshtml" view-data='@(new ViewDataDictionary(ViewData) {
+<partial name="@SharedViewPaths.TextField" view-data='@(new ViewDataDictionary(ViewData) {
     ["Label"]     = "Product name",
     ["Name"]      = "ProductName",
     ["Value"]     = Model.ProductName,
@@ -509,6 +509,8 @@ All field components live in `Pages/Shared/Forms/`. They receive parameters via 
     ["Errors"]    = ModelState["ProductName"]?.Errors.Select(e => e.ErrorMessage)
 })'/>
 ```
+
+> **Rule — No magic strings for partial paths**: All shared partial paths must reference `SharedViewPaths.*` constants (defined in `MarketNest.Web.Infrastructure/SharedViewPaths.cs`), not inline `~/Pages/Shared/…` strings. This mirrors `AppRoutes` for URLs and `AppConstants` for values. Add a constant to `SharedViewPaths` before using any new partial.
 
 **`FieldLimits` is available in all Razor views** — `MarketNest.Base.Common` is imported via `_ViewImports.cshtml`.
 

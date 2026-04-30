@@ -43,6 +43,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-032 | PgQueryBuilder — Safe Raw PostgreSQL Query Generation Utility | 2026-04-30 |
 | ADR-033 | Expand LogEventId from 1,000 to 10,000 per module | 2026-04-30 |
 | ADR-034 | Notifications Module — Template-Based Dispatch with Email + In-App Channels | 2026-04-30 |
+| ADR-035 | SharedViewPaths — Centralized Razor Partial Path Constants | 2026-04-30 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -985,3 +986,26 @@ The Unit of Work pattern is split into two distinct use cases, each with its own
 - ✅ Admin users can manage without code changes
 - ✅ Phase 3 ready: can be extracted to a microservice with minimal changes
 
+---
+
+### ADR-035: SharedViewPaths — Centralized Razor Partial Path Constants (2026-04-30)
+
+**Context:**
+- All shared Razor partial paths (e.g., `~/Pages/Shared/Forms/_TextField.cshtml`) were repeated as magic strings wherever a shared component was used.
+- Violates ADR-005 (No Magic Strings): any path rename would require a grep-and-replace across all views.
+- `SharedViewPaths` already existed with a single entry (`LoadingSpinner`) — pattern was established but not fully applied.
+
+**Decision:**
+- Expand `SharedViewPaths.cs` (`MarketNest.Web.Infrastructure`) to contain all shared component paths as `public const string` fields grouped by category (Display, Form).
+- All Razor views must reference `SharedViewPaths.*` constants instead of hardcoded `~/Pages/Shared/…` strings when using `<partial name="…">` or `Html.PartialAsync(…)`.
+- Grouped sub-prefixes not needed (class is small enough to remain flat).
+
+**Alternatives Considered:**
+- Tag Helpers per component → More abstraction, but higher ceremony for simple partials.
+- Keep magic strings in views → Rejected: violates ADR-005 and breaks refactoring safety.
+
+**Consequences:**
+- ✅ Single place to update if a partial moves or is renamed
+- ✅ Compiler catches misspelled paths (C# const vs string literal in .cshtml)
+- ✅ Consistent with existing `AppRoutes` / `AppConstants` / `FieldLimits` centralization pattern
+- ❌ Developers must add a constant to `SharedViewPaths` before using a new shared partial

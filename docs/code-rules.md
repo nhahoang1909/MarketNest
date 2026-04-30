@@ -292,6 +292,28 @@ public record CommissionOptions
 
 **Rule**: Every string literal used more than once and every "unexplained" number **must** be extracted to a `const`, `static readonly`, enum, or configuration option. Exceptions: `0`, `1`, `-1`, `string.Empty`, and obvious boolean comparisons.
 
+**Canonical constant classes (use these — don't invent new top-level classes):**
+
+| What | Class | Location |
+|------|-------|----------|
+| Route URLs (`/shop`, `/admin/users`) | `AppRoutes` | `MarketNest.Web.Infrastructure` |
+| UI colors, fonts, app name | `AppConstants` | `MarketNest.Web.Infrastructure` |
+| Field length / numeric limits | `FieldLimits` | `MarketNest.Base.Common` |
+| Error message text | `ValidationMessages` | `MarketNest.Base.Common` |
+| Redis cache key templates | `CacheKeys` | `MarketNest.Base.Common` |
+| Shared Razor partial paths | `SharedViewPaths` | `MarketNest.Web.Infrastructure` |
+| DB schema / table names | `TableConstants` | `MarketNest.Core` |
+| Status label strings | `EntityStatusNames`, `OrderStatusNames` | `MarketNest.Core` |
+
+**Shared Razor partial paths — must use `SharedViewPaths.*` (ADR-035):**
+```razor
+{{!-- ❌ Magic string — breaks silently if file moves --}}
+<partial name="~/Pages/Shared/Forms/_TextField.cshtml" .../>
+
+{{!-- ✅ Constant — compiler catches typos; refactoring is one-place --}}
+<partial name="@SharedViewPaths.TextField" .../>
+```
+
 **Where to extract constants — AppConstants vs appsettings.json (ADR-030):**
 
 The distinction is: **Business rules live in code as `AppConstants`; environment-specific tuning lives in `appsettings.json`.**

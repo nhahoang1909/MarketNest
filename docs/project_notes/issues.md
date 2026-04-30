@@ -392,7 +392,29 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 - **Phase 2 TODO**: DB-backed StorefrontPolicyConfig (Catalog) and ReviewPolicyConfig (Reviews); Admin UI pages for commission config + product categories; per-seller commission overrides
 
 
-### 2026-04-30 - Notifications Module Phase 1 Implementation
+### 2026-04-30 - refactor(ui): Full page audit — HTMX, AppRoutes, SharedViewPaths constants, shared components
+- **Status**: Completed
+- **Description**: Scanned every non-stub `.cshtml` page in `MarketNest.Web/Pages/`. Applied three sweeping refactors for consistency:
+  1. **HTMX forms**: All `<form method="post">` → `hx-post` with `hx-target`/`hx-swap`/`hx-indicator`. Affects `Auth/Login`, `Auth/Register`, `Auth/ForgotPassword`.
+  2. **AppRoutes constants**: Replaced every hardcoded URL string (`href="/shop"`, `href="/account/orders/…"`, etc.) with `AppRoutes.*` constants. Affects Cart, Checkout, Confirmation, Shop/Index, Shop/Products/Detail, Account/Orders/Index+Detail, Seller/Products/Index.
+  3. **Shared form components**: Replaced raw `<input type="text/email">` with `SharedViewPaths.TextField`, `SharedViewPaths.EmailField`, `SharedViewPaths.SearchInput` partials. Replaced hardcoded `<nav>` breadcrumbs with `SharedViewPaths.Breadcrumb`.
+  4. **HTMX on interactive elements**: Filter pills → `hx-get`+`hx-push-url`; pagination buttons → `hx-get`+`hx-push-url`; product grid sort select → `hx-get on change`; Add-to-cart → `hx-post`; seller order confirm/print/update → `hx-post`/`hx-get`+`hx-confirm`; admin product approve/reject → `hx-post`+`hx-confirm`. Added `id=` targets on all HTMX-targeted containers (`#product-grid`, `#orders-table`, `#products-table`, `#users-table`).
+  5. **FieldLimits at HTML layer**: Added `maxlength="@FieldLimits.InlineStandard.MaxLength"` and `maxlength="@FieldLimits.PhoneNumber.MaxLength"` to checkout address inputs.
+- **Files changed**: 14 pages + `SharedViewPaths.cs`
+- **Build**: `dotnet build` → 0 warnings, 0 errors ✅
+
+---
+
+### 2026-04-30 - feat(infra): SharedViewPaths — all shared Razor partial paths as constants (ADR-035)
+- **Status**: Completed
+- **Description**: Expanded `SharedViewPaths.cs` (`MarketNest.Web.Infrastructure`) from 1 entry to 20 entries covering every shared component in `Pages/Shared/`. Added sub-groups: **Display** (`LoadingSpinner`, `Breadcrumb`, `EmptyState`) and **Form** (`TextField`, `TextArea`, `SlugField`, `EmailField`, `PhoneField`, `UrlField`, `MoneyInput`, `QuantityInput`, `StockQuantityInput`, `PercentageInput`, `RatingInput`, `SelectField`, `ImageUpload`, `ExcelUpload`, `SearchInput`, `FormSection`, `FormActions`). All views updated to use `SharedViewPaths.*` instead of inline `~/Pages/Shared/…` strings.
+- **Files changed**: `Infrastructure/SharedViewPaths.cs`, `Auth/Login.cshtml`, `Auth/Register.cshtml`, `Auth/ForgotPassword.cshtml`, `Shop/Products/Detail.cshtml`, `Account/Orders/Detail.cshtml`, `Seller/Products/Index.cshtml`, `Admin/Users/Index.cshtml`
+- **ADR**: ADR-035 (see decisions.md)
+- **Build**: `dotnet build` → 0 warnings, 0 errors ✅
+
+---
+
+
 - **Status**: Completed
 - **Description**: Implemented the Notifications module backend (Phase 1): domain entities, infrastructure, application services, template seeder, and background job. Replaced the old `INotificationService` contract with template-based dispatch supporting Email + In-App channels.
 - **Files Created/Modified**:
