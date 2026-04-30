@@ -1,15 +1,149 @@
 @page "/seller/products/{productId:guid}/edit"
 @model MarketNest.Web.Pages.Seller.Products.EditModel
+@using MarketNest.Base.Common
 @{
-  Layout = "_LayoutSeller";
-  ViewData["Title"] = "Edit Product";
+    Layout = "_LayoutSeller";
+    ViewData["Title"] = "Edit Product";
 }
 
-<h1 class="text-2xl font-bold text-gray-900 mb-6">@ViewData["Title"]</h1>
-
-<!-- TODO: Implement Edit Product page -->
-<div class="card">
-  <div class="card-body">
-    <p class="text-gray-500">This page is under construction.</p>
-  </div>
+<!-- Breadcrumb -->
+@{
+    await Html.PartialAsync(SharedViewPaths.Breadcrumb, new ViewDataDictionary(ViewData)
+    {
+        ["Items"] = new List<(string Label, string Url)>
+        {
+            ("Products", AppRoutes.Seller.Products),
+            ("Edit Product", "")
+        }
+    });
+}
+<!-- Page header -->
+<div class="flex items-center justify-between mb-6 mt-4">
+    <div>
+        <h1 class="text-2xl font-bold text-ink-800">Edit Product</h1>
+        <p class="text-sm text-ink-400 mt-0.5">Update your product details. Changes take effect immediately after saving.</p>
+    </div>
+    <a href="@AppRoutes.Seller.Products" class="btn-ghost btn-sm">Back to Products</a>
 </div>
+
+<!-- Form -->
+<form method="post"
+      x-data="{ submitting: false }"
+      enctype="multipart/form-data"
+      class="space-y-6">
+    @Html.AntiForgeryToken()
+
+    <!-- ── Basic Info ─────────────────────────────────────────── -->
+    <div class="card card-body space-y-5">
+        <div>
+            <h3 class="text-sm font-semibold text-ink-700">Basic Information</h3>
+            <p class="mt-0.5 text-xs text-ink-400">Product name and URL slug.</p>
+        </div>
+        <hr class="border-ink-100/60"/>
+
+        <partial name="@SharedViewPaths.TextField" view-data='@(new ViewDataDictionary(ViewData) {
+            ["Label"]       = "Product Name",
+            ["Name"]        = "Input.Name",
+            ["Value"]       = Model.Input.Name,
+            ["Placeholder"] = "e.g. Handmade Leather Tote Bag",
+            ["MaxLength"]   = FieldLimits.Product.NameMaxLength,
+            ["Required"]    = "true",
+            ["Errors"]      = Model.GetErrors("Input.Name")
+        })'/>
+
+        <partial name="@SharedViewPaths.SlugField" view-data='@(new ViewDataDictionary(ViewData) {
+            ["Label"]     = "Product Slug",
+            ["Name"]      = "Input.Slug",
+            ["Value"]     = Model.Input.Slug,
+            ["MaxLength"] = FieldLimits.Product.SlugMaxLength,
+            ["HelpText"]  = "URL-friendly identifier. Changing this will break existing links.",
+            ["Errors"]    = Model.GetErrors("Input.Slug")
+        })'/>
+    </div>
+
+    <!-- ── Description (Rich Text) ───────────────────────────── -->
+    <div class="card card-body space-y-5">
+        <div>
+            <h3 class="text-sm font-semibold text-ink-700">Description</h3>
+            <p class="mt-0.5 text-xs text-ink-400">Describe your product in detail. Supports rich text and inline images.</p>
+        </div>
+        <hr class="border-ink-100/60"/>
+
+        @{
+            ViewData["Name"]        = "Input.Description";
+            ViewData["FieldId"]     = "product-description";
+            ViewData["Label"]       = "Product Description";
+            ViewData["Required"]    = "true";
+            ViewData["MaxLength"]   = FieldLimits.Product.DescriptionMaxLength;
+            ViewData["Placeholder"] = "Describe your product: materials, dimensions, care instructions…";
+            ViewData["HelpText"]    = "Rich text supported. Inline images up to 2 MB (JPEG, PNG, WebP, GIF).";
+            ViewData["InitialHtml"] = Model.Input.Description;
+            ViewData["Errors"]      = Model.GetErrors("Input.Description");
+        }
+        <partial name="@SharedViewPaths.RichTextEditor"/>
+
+        <partial name="@SharedViewPaths.TextArea" view-data='@(new ViewDataDictionary(ViewData) {
+            ["Label"]       = "Short Description",
+            ["Name"]        = "Input.ShortDescription",
+            ["Value"]       = Model.Input.ShortDescription,
+            ["Placeholder"] = "A brief summary shown in product listings (optional).",
+            ["MaxLength"]   = FieldLimits.MultilineLong.MaxLength,
+            ["Rows"]        = "3",
+            ["Errors"]      = Model.GetErrors("Input.ShortDescription")
+        })'/>
+    </div>
+
+    <!-- ── Pricing & Inventory ────────────────────────────────── -->
+    <div class="card card-body space-y-5">
+        <div>
+            <h3 class="text-sm font-semibold text-ink-700">Pricing &amp; Inventory</h3>
+            <p class="mt-0.5 text-xs text-ink-400">Update base price and stock level.</p>
+        </div>
+        <hr class="border-ink-100/60"/>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <partial name="@SharedViewPaths.MoneyInput" view-data='@(new ViewDataDictionary(ViewData) {
+                ["Label"]    = "Base Price",
+                ["Name"]     = "Input.Price",
+                ["Value"]    = Model.Input.Price.ToString("F2"),
+                ["Required"] = "true",
+                ["Errors"]   = Model.GetErrors("Input.Price")
+            })'/>
+
+            <partial name="@SharedViewPaths.StockQuantityInput" view-data='@(new ViewDataDictionary(ViewData) {
+                ["Label"]  = "Stock Quantity",
+                ["Name"]   = "Input.Stock",
+                ["Value"]  = Model.Input.Stock.ToString(),
+                ["Errors"] = Model.GetErrors("Input.Stock")
+            })'/>
+        </div>
+    </div>
+
+    <!-- ── Images ─────────────────────────────────────────────── -->
+    <div class="card card-body space-y-5">
+        <div>
+            <h3 class="text-sm font-semibold text-ink-700">Product Images</h3>
+            <p class="mt-0.5 text-xs text-ink-400">Upload new images to replace existing ones. JPEG, PNG, WebP — max 5 MB each.</p>
+        </div>
+        <hr class="border-ink-100/60"/>
+
+        <partial name="@SharedViewPaths.ImageUpload" view-data='@(new ViewDataDictionary(ViewData) {
+            ["Name"]     = "Input.Images",
+            ["MaxFiles"] = FieldLimits.Collections.MaxProductImages,
+            ["Accept"]   = "image/jpeg,image/png,image/webp"
+        })'/>
+    </div>
+
+    <!-- ── Form actions ───────────────────────────────────────── -->
+    @{
+        ViewData["SubmitLabel"] = "Save Changes";
+        ViewData["CancelHref"]  = AppRoutes.Seller.Products;
+        ViewData["CancelLabel"] = "Cancel";
+    }
+    <partial name="@SharedViewPaths.FormActions"/>
+</form>
+
+@section Scripts {
+    <link rel="stylesheet" href="~/lib/trix/trix.css" asp-append-version="true"/>
+    <script src="~/lib/trix/trix.umd.min.js" asp-append-version="true"></script>
+}
