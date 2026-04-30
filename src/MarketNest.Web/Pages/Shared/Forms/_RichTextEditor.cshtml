@@ -1,0 +1,177 @@
+﻿@*
+  RichTextEditor — Trix-based rich text editor with image upload support.
+  Requires Trix JS/CSS to be loaded on the page (see @section Scripts example below).
+
+  Parameters (via ViewData):
+    Name         — form field name for the hidden input (required)
+    FieldId      — unique DOM id for the editor instance (required)
+    Label        — visible label text (default: "Description")
+    Placeholder  — placeholder text shown in empty editor
+    HelpText     — hint shown below the editor
+    InitialHtml  — pre-existing HTML content for edit mode
+    MaxLength    — max character count (default: FieldLimits.MultilineDocument.MaxLength = 20000)
+    Required     — "true" adds required asterisk to label
+    UploadUrl    — image upload endpoint URL (default: /api/v1/uploads/rich-editor-image)
+    Errors       — IEnumerable<string> server validation errors
+
+  Usage example:
+    @{ ViewData["Name"] = "Description"; ViewData["FieldId"] = "product-desc"; ... }
+    <partial name="@SharedViewPaths.RichTextEditor" />
+
+  Required scripts (add to @section Scripts on the consuming page):
+    <link rel="stylesheet" href="~/lib/trix/trix.css" />
+    <script src="~/lib/trix/trix.umd.min.js"></script>
+*@
+@using MarketNest.Base.Common
+@{
+    var name        = ViewData["Name"]?.ToString() ?? "description";
+    var fieldId     = ViewData["FieldId"]?.ToString() ?? "rich-editor";
+    var label       = ViewData["Label"]?.ToString() ?? "Description";
+    var placeholder = ViewData["Placeholder"]?.ToString() ?? "Write your description...";
+    var helpText    = ViewData["HelpText"]?.ToString();
+    var initialHtml = ViewData["InitialHtml"]?.ToString() ?? "";
+    var uploadUrl   = ViewData["UploadUrl"]?.ToString() ?? "/api/v1/uploads/rich-editor-image";
+    var isRequired  = ViewData["Required"]?.ToString() == "true";
+    var maxLength   = ViewData["MaxLength"] is int mlInt ? mlInt
+                    : ViewData["MaxLength"] is string mlStr && int.TryParse(mlStr, out var mlParsed)
+                        ? mlParsed
+                        : FieldLimits.MultilineDocument.MaxLength;
+    var errors      = ViewData["Errors"] as IEnumerable<string>;
+    var hasError    = errors?.Any() == true;
+    var warningThreshold = (int)(maxLength * 0.8);
+}
+
+<div x-data="richEditor({
+         fieldId: '@fieldId',
+         maxLength: @maxLength,
+         initialHtml: @System.Text.Json.JsonSerializer.Serialize(initialHtml),
+         uploadUrl: '@uploadUrl'
+     })"
+     class="rich-editor-wrapper">
+
+    @* Label *@
+    <label for="@fieldId-input" class="form-label">
+        @label
+        @if (isRequired) { <span class="text-danger-500 ml-0.5" aria-hidden="true">*</span> }
+    </label>
+
+    @* Hidden input — the actual value submitted with the form *@
+    <input type="hidden"
+           id="@fieldId-input"
+           name="@name"
+           x-model="htmlContent" />
+
+    @* Trix custom toolbar — limited to text formatting + images (no file/video) *@
+    <trix-toolbar id="@fieldId-toolbar" class="rich-editor-toolbar">
+        <div class="trix-button-row">
+            <span class="trix-button-group trix-button-group--text-tools">
+                <button type="button" class="trix-button trix-button--icon trix-button--icon-bold"
+                        data-trix-attribute="bold" title="Bold"></button>
+                <button type="button" class="trix-button trix-button--icon trix-button--icon-italic"
+                        data-trix-attribute="italic" title="Italic"></button>
+                <button type="button" class="trix-button trix-button--icon trix-button--icon-strike"
+                        data-trix-attribute="strike" title="Strikethrough"></button>
+                <button type="button" class="trix-button trix-button--icon trix-button--icon-link"
+                        data-trix-attribute="href" data-trix-action="link" title="Link"></button>
+            </span>
+            <span class="trix-button-group trix-button-group--block-tools">
+                <button type="button" class="trix-button trix-button--icon trix-button--icon-heading-1"
+                        data-trix-attribute="heading1" title="Heading"></button>
+                <button type="button" class="trix-button trix-button--icon trix-button--icon-quote"
+                        data-trix-attribute="quote" title="Quote"></button>
+                <button type="button" class="trix-button trix-button--icon trix-button--icon-code"
+                        data-trix-attribute="code" title="Code"></button>
+                <button type="button" class="trix-button trix-button--icon trix-button--icon-bullet-list"
+                        data-trix-attribute="bullet" title="Bullet List"></button>
+                <button type="button" class="trix-button trix-button--icon trix-button--icon-number-list"
+                        data-trix-attribute="number" title="Numbered List"></button>
+            </span>
+            <span class="trix-button-group trix-button-group--file-tools">
+                <button type="button" class="trix-button trix-button--icon trix-button--icon-attach"
+                        data-trix-action="attachFiles" title="Insert Image"></button>
+            </span>
+            <span class="trix-button-group-spacer"></span>
+            <span class="trix-button-group trix-button-group--history-tools">
+                <button type="button" class="trix-button trix-button--icon trix-button--icon-undo"
+                        data-trix-action="undo" title="Undo"></button>
+                <button type="button" class="trix-button trix-button--icon trix-button--icon-redo"
+                        data-trix-action="redo" title="Redo"></button>
+            </span>
+        </div>
+    </trix-toolbar>
+
+    @* Trix editor element *@
+    <trix-editor
+        id="@fieldId"
+        toolbar="@fieldId-toolbar"
+        input="@fieldId-input"
+        placeholder="@placeholder"
+        class="rich-editor-content @(hasError ? "rich-editor-content--error" : "")"
+        :class="{ 'rich-editor-content--error': hasError }"
+        @@trix-change="onContentChange($event)"
+        @@trix-attachment-add="onAttachmentAdd($event)"
+        @@trix-file-accept="onFileAccept($event)">
+    </trix-editor>
+
+    @* Footer: errors + char counter *@
+    <div class="flex items-center justify-between mt-1.5">
+        <div>
+            @* Server-side validation errors *@
+            @if (hasError)
+            {
+                @foreach (var error in errors!)
+                {
+                    <p class="form-error">
+                        <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                        </svg>
+                        @error
+                    </p>
+                }
+            }
+            @* Client-side validation error *@
+            <p x-show="hasError" x-cloak class="form-error">
+                <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                </svg>
+                <span x-text="errorMessage"></span>
+            </p>
+            @* Upload error *@
+            <p x-show="uploadError" x-cloak class="form-error">
+                <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                </svg>
+                <span x-text="uploadError"></span>
+            </p>
+        </div>
+
+        @* Character counter *@
+        <span class="text-xs tabular-nums transition-colors"
+              :class="{
+                  'text-ink-300': charCount < @warningThreshold,
+                  'text-warn-500': charCount >= @warningThreshold && charCount < @maxLength,
+                  'text-danger-600 font-semibold': charCount >= @maxLength
+              }"
+              aria-live="polite"
+              :aria-label="`${charCount} of @maxLength characters used`">
+            <span x-text="charCount">0</span> / @maxLength.ToString("N0")
+        </span>
+    </div>
+
+    @if (!string.IsNullOrEmpty(helpText) && !hasError)
+    {
+        <p class="form-help">@helpText</p>
+    }
+
+    @* Upload progress indicator *@
+    <div x-show="isUploading" x-cloak class="rich-editor-upload-progress">
+        <svg class="animate-spin h-4 w-4 text-accent-500" xmlns="http://www.w3.org/2000/svg"
+             fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-xs text-ink-500 ml-2">Uploading image…</span>
+    </div>
+</div>
+

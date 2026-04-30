@@ -24,6 +24,7 @@ import "./components/infiniteScroll.js";
 import "./components/datePicker.js";
 import "./components/multiSelect.js";
 import "./components/loadingOverlay.js";
+import "./components/richEditor.js";
 
 // ── HTMX helpers (non-Alpine, self-executing) ─────────────────────
 import "./magic/htmxHelpers.js";

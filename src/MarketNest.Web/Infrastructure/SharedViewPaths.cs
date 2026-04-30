@@ -28,6 +28,7 @@ public static class SharedViewPaths
     public const string ImageUpload = "~/Pages/Shared/Forms/_ImageUpload.cshtml";
     public const string ExcelUpload = "~/Pages/Shared/Forms/_ExcelUpload.cshtml";
     public const string SearchInput = "~/Pages/Shared/Forms/_SearchInput.cshtml";
+    public const string RichTextEditor = "~/Pages/Shared/Forms/_RichTextEditor.cshtml";
     public const string FormSection = "~/Pages/Shared/Forms/_FormSection.cshtml";
     public const string FormActions = "~/Pages/Shared/Forms/_FormActions.cshtml";
 }

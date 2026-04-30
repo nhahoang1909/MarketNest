@@ -32,6 +32,7 @@
     </ItemGroup>
 
     <ItemGroup Label="Infrastructure Packages">
+        <PackageReference Include="HtmlSanitizer"/>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

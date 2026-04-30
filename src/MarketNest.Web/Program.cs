@@ -197,6 +197,9 @@ try
     builder.Services.AddScoped<IRuntimeContext>(sp => sp.GetRequiredService<HttpRuntimeContext>());
     builder.Services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<IRuntimeContext>().CurrentUser);
 
+    // HTML sanitizer — strips unsafe tags from rich text editor output (Trix)
+    builder.Services.AddSingleton<IHtmlSanitizerService, TrixHtmlSanitizerService>();
+
     // ── Module DI ─────────────────────────────────────────────────────────
     builder.Services.AddAuditingModule(builder.Configuration);
     builder.Services.AddIdentityModule(builder.Configuration);
