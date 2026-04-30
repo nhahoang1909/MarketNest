@@ -46,7 +46,7 @@ internal sealed class OrderPolicyConfigService(
 
     // ── Private: load from cache or DB ───────────────────────────────────
 
-    private OrderPolicyConfigSnapshot _snapshot = default!;
+    private OrderPolicyConfigSnapshot? _snapshot;
 
     private OrderPolicyConfigSnapshot GetSnapshot()
     {

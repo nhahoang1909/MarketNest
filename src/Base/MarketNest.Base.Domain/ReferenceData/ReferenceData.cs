@@ -9,10 +9,10 @@
 public abstract class ReferenceData : Entity<int>
 {
     /// <summary>Machine-readable business key: "VN", "MALE". Immutable after creation.</summary>
-    public string Code { get; private set; } = string.Empty;
+    public string Code { get; private set; }
 
     /// <summary>Human-readable display label: "Vietnam", "Male".</summary>
-    public string Label { get; private set; } = string.Empty;
+    public string Label { get; private set; }
 
     /// <summary>Sort position within the list. Lower = higher in dropdown.</summary>
     public int SortOrder { get; private set; }
@@ -21,7 +21,9 @@ public abstract class ReferenceData : Entity<int>
     public bool IsActive { get; private set; }
 
     /// <summary>Required by EF Core.</summary>
+#pragma warning disable CS8618 // Non-nullable field — EF Core uses this constructor
     protected ReferenceData() { }
+#pragma warning restore CS8618
 
     protected ReferenceData(string code, string label, int sortOrder)
     {

@@ -7,7 +7,7 @@ namespace MarketNest.Base.Common;
 public sealed record Money
 {
     public decimal Amount { get; init; }
-    public string Currency { get; init; } = string.Empty;
+    public string Currency { get; init; }
 
     public Money(decimal amount, string currency)
     {

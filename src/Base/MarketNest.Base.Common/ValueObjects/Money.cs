@@ -15,7 +15,7 @@ public sealed record Money
     }
 
     public decimal Amount { get; init; }
-    public string Currency { get; init; } = string.Empty;
+    public string Currency { get; init; }
 
     public override string ToString() => $"{Amount:F2} {Currency}";
 }
