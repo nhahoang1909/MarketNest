@@ -489,7 +489,11 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY ["src/MarketNest.Web/MarketNest.Web.csproj", "MarketNest.Web/"]
-COPY ["src/MarketNest.Core/MarketNest.Core.csproj", "MarketNest.Core/"]
+COPY ["src/Base/MarketNest.Base.Common/MarketNest.Base.Common.csproj", "Base/MarketNest.Base.Common/"]
+COPY ["src/Base/MarketNest.Base.Domain/MarketNest.Base.Domain.csproj", "Base/MarketNest.Base.Domain/"]
+COPY ["src/Base/MarketNest.Base.Infrastructure/MarketNest.Base.Infrastructure.csproj", "Base/MarketNest.Base.Infrastructure/"]
+COPY ["src/Base/MarketNest.Base.Api/MarketNest.Base.Api.csproj", "Base/MarketNest.Base.Api/"]
+COPY ["src/Base/MarketNest.Base.Utility/MarketNest.Base.Utility.csproj", "Base/MarketNest.Base.Utility/"]
 # ... all projects ...
 RUN dotnet restore "MarketNest.Web/MarketNest.Web.csproj"
 

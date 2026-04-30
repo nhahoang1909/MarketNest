@@ -156,6 +156,7 @@ All located in `docs/` — read before implementing any feature:
 | `docs/code-rules.md` | Naming conventions, C# idioms, DDD principles, banned patterns |
 | `docs/common-validation-rules.md` | FieldLimits, ValidationMessages, ValidatorExtensions — centralized validation infrastructure |
 | `docs/excel-import-export.md` | Excel import/export: IExcelService, ClosedXML, antivirus hook, import templates, export options, ADR-037 |
+| `docs/sequence-service.md` | PostgreSQL sequence service: ISequenceService, period-scoped sequences, running number generation, ADR-040 |
 | `docs/devops-requirements.md` | Docker Compose topology, GitHub Actions, K8s manifests |
 | `docs/analyzers.md` | Roslyn analyzer reference: all 17 MN rules, suppression patterns, adding new rules |
 | `docs/test-driven-design.md` | TDD guidelines, unit/integration/architecture test patterns |

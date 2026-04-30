@@ -112,13 +112,13 @@ Phase 4: Kubernetes
 
 ## 4. Solution Structure
 
-Solution has **15 projects** (12 source + 3 test), managed in `MarketNest.slnx`.
+Solution has **18 projects** (14 source + 4 test), managed in `MarketNest.slnx`.
 
 ### Root Files
 
 | File | Purpose |
 |------|---------|
-| `MarketNest.slnx` | .NET solution file (XML format) — all 14 projects |
+| `MarketNest.slnx` | .NET solution file (XML format) — all 18 projects |
 | `global.json` | Pin .NET SDK version 10.0 |
 | `Directory.Build.props` | Global MSBuild: target `net10.0`, nullable, TreatWarningsAsErrors |
 | `Directory.Packages.props` | Central Package Management — all NuGet versions in one place |
@@ -142,32 +142,62 @@ Module/
     └── Seeders/     ← IDataSeeder implementations
 ```
 
-### MarketNest.Core — Shared Kernel
+### Base Packages — Shared Kernel
 
-Foundation for the entire solution. All modules reference this project.
+Foundation for the entire solution. All modules reference these `Base.*` packages (the previous `MarketNest.Core` project has been split and removed from the solution).
 
 ```
-src/MarketNest.Core/
-├── Common/
-│   ├── Entity.cs              ← Base entity with Id + DomainEvents list
-│   ├── AggregateRoot.cs       ← Aggregate root (extends Entity<Guid>)
-│   ├── ValueObject.cs         ← Value object base with structural equality
-│   ├── Error.cs               ← Error record (Code, Message, ErrorType)
-│   ├── Result.cs              ← Result<T, Error> monad
-│   ├── IDataSeeder.cs         ← Database seeding contract (Order, RunInProduction)
-│   ├── Cqrs/                  ← ICommand, ICommandHandler, IQuery, IQueryHandler
-│   ├── Events/                ← IDomainEvent, IDomainEventHandler
-│   ├── Persistence/           ← IBaseRepository<T, TKey>
-│   ├── Queries/               ← PagedQuery, PagedResult<T>
-│   └── Validation/            ← ValidatorExtensions (MustBeSlug, MustBePositiveMoney...)
-├── Contracts/                 ← Cross-module service interfaces
-│   ├── IOrderCreationService.cs
-│   ├── IInventoryService.cs
-│   ├── IPaymentService.cs
-│   ├── INotificationService.cs
-│   └── IStorefrontReadService.cs
-├── Exceptions/                ← DomainException, NotFoundException
-└── ValueObjects/              ← Money, Address
+src/Base/
+├── MarketNest.Base.Domain/        ← Entity<T>, AggregateRoot, ValueObject, domain event interfaces
+│   ├── Entity.cs
+│   ├── AggregateRoot.cs
+│   ├── ValueObject.cs
+│   ├── Events/                    ← IDomainEvent, IPreCommitDomainEvent, IHasDomainEvents
+│   ├── ReferenceData/             ← ReferenceData base class
+│   └── ValueObjects/              ← (domain-level VOs)
+│
+├── MarketNest.Base.Common/        ← Application-layer shared contracts, DTOs, constants
+│   ├── Error.cs                   ← Error record (Code, Message, ErrorType)
+│   ├── Result.cs                  ← Result<T, Error> monad
+│   ├── IDataSeeder.cs             ← Database seeding contract (Order, RunInProduction)
+│   ├── DomainConstants.cs         ← Pagination defaults, validation limits, error codes
+│   ├── TableConstants.cs          ← Schema names, system table names
+│   ├── StatusNames.cs             ← OrderStatusNames, EntityStatusNames
+│   ├── CacheKeys.cs               ← Redis cache key templates
+│   ├── SlaConstants.cs            ← SLA thresholds
+│   ├── Attributes/                ← [Transaction], [NoTransaction], [Auditable], [Audited]
+│   ├── Contracts/                 ← Cross-module service interfaces
+│   │   ├── IAuditService.cs
+│   │   ├── ICacheService.cs
+│   │   ├── ICurrentUser.cs
+│   │   ├── IInventoryService.cs
+│   │   ├── INotificationService.cs
+│   │   ├── IOrderCreationService.cs
+│   │   ├── IPaymentService.cs
+│   │   ├── IReferenceDataReadService.cs
+│   │   ├── IRuntimeContext.cs
+│   │   ├── IStorefrontReadService.cs
+│   │   ├── IUserTimeZoneProvider.cs
+│   │   └── Config/               ← IXxxConfig + IXxxConfigWriter contracts
+│   ├── Cqrs/                      ← ICommand, ICommandHandler, IQuery, IQueryHandler
+│   ├── Events/                    ← IIntegrationEvent, IEventBus, IntegrationEvents/
+│   ├── Excel/                     ← IExcelService, ExcelTemplate, ExcelUploadRules
+│   ├── Exceptions/                ← DomainException, NotFoundException, UnauthorizedException
+│   ├── Queries/                   ← PagedQuery, PagedResult<T>, IBaseQuery<T,K>
+│   ├── Security/                  ← IAntivirusScanner
+│   ├── Sequences/                 ← ISequenceService, SequenceDescriptor
+│   ├── Validation/                ← ValidatorExtensions, FieldLimits, ValidationMessages
+│   └── ValueObjects/              ← Money, Address
+│
+├── MarketNest.Base.Infrastructure/ ← Infrastructure base classes
+│   ├── Logging/                   ← IAppLogger<T>, LogEventId enum
+│   └── Persistence/               ← BaseQuery<T,K,Ctx>, BaseRepository<T,K,Ctx>,
+│                                     IBaseRepository<T,K>, IUnitOfWork, IModuleDbContext,
+│                                     DddModelBuilderExtensions, PgQueryBuilder
+│
+├── MarketNest.Base.Api/           ← ReadApiV1ControllerBase, WriteApiV1ControllerBase
+│
+└── MarketNest.Base.Utility/       ← Slug generation, date extensions
 ```
 
 ### MarketNest.Web — ASP.NET Core Host (Composition Root)
@@ -355,25 +385,30 @@ tests/
 ## 11. Dependency Graph
 
 ```
-MarketNest.Web (host)
-├── MarketNest.Core (shared kernel)
-├── MarketNest.Identity     → Core
-├── MarketNest.Catalog      → Core
-├── MarketNest.Cart         → Core
-├── MarketNest.Orders       → Core
-├── MarketNest.Payments     → Core
-├── MarketNest.Reviews      → Core
-├── MarketNest.Disputes     → Core
-├── MarketNest.Promotions   → Core
-├── MarketNest.Notifications → Core
-└── MarketNest.Admin        → Core
+MarketNest.Web (host / composition root)
+├── Base.Domain              ← Entities, AggregateRoot, ValueObject
+├── Base.Common              ← Result, Error, CQRS, Contracts, Queries, Validation
+├── Base.Infrastructure      ← BaseQuery, BaseRepository, IUnitOfWork, Logging
+├── Base.Api                 ← Controller base classes
+├── Base.Utility             ← Slug, date helpers
+├── MarketNest.Analyzers     ← Roslyn analyzers
+├── MarketNest.Identity      → Base.*
+├── MarketNest.Catalog       → Base.*
+├── MarketNest.Cart          → Base.*
+├── MarketNest.Orders        → Base.*
+├── MarketNest.Payments      → Base.*
+├── MarketNest.Reviews       → Base.*
+├── MarketNest.Disputes      → Base.*
+├── MarketNest.Promotions    → Base.*
+├── MarketNest.Notifications → Base.*
+└── MarketNest.Admin         → Base.*
 
-MarketNest.UnitTests        → Core + all domain modules
-MarketNest.IntegrationTests → Web (full stack)
+MarketNest.UnitTests         → Base.* + all domain modules
+MarketNest.IntegrationTests  → Web (full stack)
 MarketNest.ArchitectureTests → All projects
 ```
 
-**Rule**: Modules NEVER reference each other. Only reference `Core`. Web references all (composition root).
+**Rule**: Modules NEVER reference each other. Only reference `Base.*` packages. Web references all (composition root).
 
 ---
 
@@ -426,7 +461,7 @@ Both contexts use the same `IEntityTypeConfiguration<T>` classes via `ApplyConfi
 
 ### Query Contracts
 
-- `IBaseQuery<TEntity, TKey>` (Core) — simple reads: GetByKey, Exists, List, FirstOrDefault, Count
+- `IBaseQuery<TEntity, TKey>` (Base.Common) — simple reads: GetByKey, Exists, List, FirstOrDefault, Count
 - `I{Entity}Query` (Application) — extends IBaseQuery, simple module-specific reads
 - `IGet{UseCase}Query` (Application) — complex reads (projections, pagination, joins) get a dedicated interface
 
@@ -434,7 +469,7 @@ Rule: any query involving DTO projection, pagination, or multi-table joins MUST 
 
 ### Repository Contracts
 
-- `IBaseRepository<TEntity, TKey>` (Core) — write operations: Add, Update, Remove, SaveChanges, GetByKey
+- `IBaseRepository<TEntity, TKey>` (Base.Infrastructure) — write operations: Add, Update, Remove, GetByKey
 - `I{Entity}Repository` (Application) — extends IBaseRepository, adds aggregate-specific operations
 
 ### Abstract Base Classes (Infrastructure/Persistence)
