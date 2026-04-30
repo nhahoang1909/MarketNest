@@ -47,6 +47,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-036 | Rich Text Editor — Trix with Server-Side HTML Sanitization | 2026-04-30 |
 | ADR-037 | Excel Import/Export — ClosedXML + IExcelService + IAntivirusScanner | 2026-04-30 |
 | ADR-038 | I18N Service — II18NService Wrapper + I18NKeys Constants | 2026-04-30 |
+| ADR-039 | Nullable Management — Business Decision Model with `#pragma` on EF Constructors | 2026-04-30 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -1105,3 +1106,37 @@ The Unit of Work pattern is split into two distinct use cases, each with its own
 - ✅ Single interface for all future localization needs (backend handlers, email subjects, etc.)
 - ✅ Cookie-based culture + `CookieRequestCultureProvider` at index 0 — language persists across sessions
 - ❌ Dual pattern (`SharedLocalizer` in old layouts + `I18N` in new pages) until full migration — acceptable, both resolve the same resource files
+
+---
+
+### ADR-039: Nullable Management — Business Decision Model with `#pragma` on EF Constructors (2026-04-30)
+
+**Context:**
+- C# nullable reference types enabled (`<Nullable>enable</Nullable>`), treating `?` as a domain decision, not an implementation detail.
+- Entity required fields were using `= string.Empty`, `= null!`, or `= default!` as initialization sentinels — violating DDD and misleading developers.
+- EF Core private constructors for entities need special handling to suppress CS8618 (non-nullable field uninitialized).
+- Need a clear company policy: when to use `?`, when to use `required`, how to handle EF constructor suppression.
+
+**Decision:**
+- **Nullable is a business decision**, not an implementation detail: `string?` means "field is allowed to be absent per domain logic", requiring a comment explaining WHY.
+- **Per-layer rules**:
+  - **Entities**: Non-nullable is default. All required fields have NO initializer (`= ...`). Nullable fields have `// null = reason` comments. Collections always initialized `= []`, never null. EF Core private constructors suppressed via `#pragma warning disable CS8618 ... #pragma warning restore CS8618`.
+  - **Value Objects**: NEVER have nullable properties. Constructor validates + throws if input invalid. No sentinel initializers.
+  - **DTOs/Commands/Queries**: Required properties use `required` keyword (no sentinels). Optional use nullable `?`. No `string.Empty` sentinels.
+  - **EF Config**: Non-nullable strings have `.IsRequired()`. Nullable strings do NOT. Optional owned VOs auto-handle nullable columns.
+- **Approved exception**: `Entity<TKey>.Id = default!` is the ONE allowed `default!` — generic type parameter, EF Core handles initialization in all paths. `[BindProperty]` Razor Page models with `= default!` are acceptable (ASP.NET binding guarantees assignment).
+- **New document**: `docs/nullable-management.md` — canonical reference for the entire team (replaces inline comments scattered across code).
+
+**Consequences:**
+- ✅ Nullable correctness enforced by compiler (`<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`).
+- ✅ Every `?` is intentional and documented — readers immediately understand "why null is valid".
+- ✅ No silent `NullReferenceException` from forgotten initialization.
+- ✅ EF Core entities remain fully DDD-compliant: `{ get; private set; }` on required fields, no surprises.
+- ✅ Team guidance lives in one place (`docs/nullable-management.md`) — easier to keep consistent across modules.
+- ❌ Developers must remember to add `#pragma` on EF constructors (mitigated: ADR-039 doc + PR checklist).
+
+**Enforcement:**
+- All C# source code violations caught at compile-time (CI fails if warnings exist).
+- PR checklist includes: "Every nullable field has a domain-reason comment? Every `required` property in DTOs? No `string.Empty` sentinels?"
+- `docs/nullable-management.md` linked from `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`.
+
