@@ -389,6 +389,42 @@ public enum LogEventId
 
     #endregion
 
+    #region Excel Import/Export — 150000-159999
+
+    // ClosedXmlExcelService — 150000-150099
+    ExcelImportComplete = 150000,
+    ExcelImportHeadersMissing = 150001,
+    ExcelImportParseFailed = 150002,
+    ExcelExportComplete = 150010,
+
+    // BulkImportVariantsHandler (Catalog) — 150100-150199
+    CatalogBulkImportStart = 150100,
+    CatalogBulkImportSuccess = 150101,
+    CatalogBulkImportFailed = 150102,
+    CatalogBulkImportRowErrors = 150103,
+
+    // Catalog Export — 150200-150299
+    CatalogExportStart = 150200,
+    CatalogExportComplete = 150201,
+
+    // Antivirus scan — 150300-150399
+    AntivirusScanStart = 150300,
+    AntivirusScanClean = 150301,
+    AntivirusScanInfected = 150302,
+
+    // Seller Import Pages — 156000-156099
+    SellerProductsImportStart = 156000,
+    SellerProductsImportValidated = 156001,
+    SellerProductsImportExecuted = 156002,
+    SellerProductsImportError = 156003,
+    SellerProductsTemplateDownload = 156010,
+    SellerProductsExportStart = 156020,
+    SellerProductsExportComplete = 156021,
+
+    // Reserved — 157000-159999
+
+    #endregion
+
     #region Promotions — 140000-149999
 
     // Infrastructure layer — 140000-141999 (reserved for Promotions DbContext, repositories)

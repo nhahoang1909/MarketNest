@@ -1,0 +1,48 @@
+﻿@*
+  Import row-error table. Shows up to FieldLimits.ExcelImport.MaxErrorsReported errors.
+  Parameters (via ViewData):
+    Errors — IReadOnlyList<ExcelRowError>
+*@
+@using MarketNest.Base.Common
+@{
+    var errors = ViewData["Errors"] as IReadOnlyList<ExcelRowError> ?? [];
+    var shown  = errors.Take(FieldLimits.ExcelImport.MaxErrorsReported).ToList();
+}
+
+<div class="rounded-2xl border border-danger-200 bg-danger-50 p-4">
+    <h3 class="mb-3 text-sm font-semibold text-danger-700">
+        Row errors (@errors.Count)
+    </h3>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+            <thead>
+                <tr class="border-b border-danger-200 text-left text-xs font-semibold text-danger-800">
+                    <th class="px-3 py-2">Row</th>
+                    <th class="px-3 py-2">Column</th>
+                    <th class="px-3 py-2">Error</th>
+                    <th class="px-3 py-2">Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var err in shown)
+                {
+                    <tr class="border-b border-danger-100 hover:bg-danger-100/50 transition-colors">
+                        <td class="px-3 py-1.5 font-mono text-xs text-ink-600">@err.RowNumber</td>
+                        <td class="px-3 py-1.5 font-medium text-ink-700">@err.Column</td>
+                        <td class="px-3 py-1.5 text-danger-700">@err.Message</td>
+                        <td class="px-3 py-1.5 font-mono text-xs text-ink-400">
+                            @(string.IsNullOrWhiteSpace(err.RawValue) ? "—" : err.RawValue)
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (errors.Count > FieldLimits.ExcelImport.MaxErrorsReported)
+    {
+        <p class="mt-2 text-xs text-ink-400">
+            Showing @FieldLimits.ExcelImport.MaxErrorsReported of @errors.Count errors. Fix and re-upload.
+        </p>
+    }
+</div>
+

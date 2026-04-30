@@ -2,6 +2,14 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
+  <ItemGroup Label="Excel / Import-Export">
+    <PackageVersion Include="ClosedXML" Version="0.104.1" />
+    <!-- Explicit version pin to remediate CVE-2024-43483 / CVE-2024-43484 (high severity DoS).
+         ClosedXML 0.104.1 pulls in System.IO.Packaging 8.0.0 which is vulnerable;
+         pinning to 10.0.0 (safe for net10.0 target) resolves both CVEs. -->
+    <PackageVersion Include="System.IO.Packaging" Version="10.0.0" />
+    <!-- MiniExcel added in Phase 2 for large-dataset streaming exports -->
+  </ItemGroup>
   <ItemGroup Label="Core / Shared">
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <PackageVersion Include="HtmlSanitizer" Version="9.0.892" />

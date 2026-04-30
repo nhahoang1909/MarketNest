@@ -39,6 +39,9 @@ public static class AppRoutes
         Seller.Dashboard,
         Seller.Storefront,
         Seller.Products,
+        Seller.ProductImport,
+        Seller.ProductExport,
+        Seller.ProductImportTemplate,
         Seller.Orders,
         Seller.Payouts,
         Seller.Reviews,
@@ -113,6 +116,9 @@ public static class AppRoutes
         public const string Dashboard = "/seller/dashboard";
         public const string Storefront = "/seller/storefront";
         public const string Products = "/seller/products";
+        public const string ProductImport = "/seller/products/import";
+        public const string ProductExport = "/seller/products/export";
+        public const string ProductImportTemplate = "/seller/products/import/template";
         public const string Orders = "/seller/orders";
         public const string Payouts = "/seller/payouts";
         public const string Reviews = "/seller/reviews";

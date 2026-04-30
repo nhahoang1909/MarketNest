@@ -14,6 +14,7 @@ using MarketNest.Orders.Infrastructure;
 using MarketNest.Payments.Infrastructure;
 using MarketNest.Promotions.Infrastructure;
 using MarketNest.Reviews.Infrastructure;
+using MarketNest.Catalog.Application;
 using MarketNest.Web.BackgroundJobs;
 using MarketNest.Web.Hosting;
 using MarketNest.Web.Infrastructure;
@@ -200,6 +201,11 @@ try
     // HTML sanitizer — strips unsafe tags from rich text editor output (Trix)
     builder.Services.AddSingleton<IHtmlSanitizerService, TrixHtmlSanitizerService>();
 
+    // Excel import/export (ADR-037: ClosedXML)
+    builder.Services.AddScoped<IExcelService, ClosedXmlExcelService>();
+    // Antivirus scanning — Phase 1: NoOp (always clean). Phase 2: replace with ClamAV binding.
+    builder.Services.AddSingleton<IAntivirusScanner, NoOpAntivirusScanner>();
+
     // ── Module DI ─────────────────────────────────────────────────────────
     builder.Services.AddAuditingModule(builder.Configuration);
     builder.Services.AddIdentityModule(builder.Configuration);
@@ -326,6 +332,20 @@ try
     app.MapRazorPages();
     app.MapControllers();
     app.MapHealthChecks(AppRoutes.Health);
+
+    // ── Import template download endpoint ─────────────────────────────
+    // GET /seller/products/import/template → download .xlsx import template
+    app.MapGet(AppRoutes.Seller.ProductImportTemplate,
+        async (IExcelService excel, CancellationToken ct) =>
+        {
+            var template = VariantImportTemplate.Build();
+            var bytes = await excel.GenerateImportTemplateAsync(template, ct);
+            return Results.File(bytes, ExcelContentTypes.Xlsx,
+                "variant-import-template.xlsx");
+        })
+        .RequireAuthorization()
+        .WithName("SellerProductImportTemplate")
+        .WithTags("Seller", "Import");
 
     // ── Language switch endpoint ──────────────────────────────────────
     app.MapPost(AppRoutes.Api.SetLanguage,

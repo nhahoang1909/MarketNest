@@ -1,0 +1,96 @@
+﻿@page "/seller/products/import"
+@model MarketNest.Web.Pages.Seller.Products.ImportModel
+@{
+    ViewData["Title"] = "Import Products / Variants";
+    Layout = "~/Pages/Shared/_LayoutSeller.cshtml";
+}
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+
+    <!-- Breadcrumb -->
+    <nav class="mb-6 text-xs text-ink-400 space-x-1">
+        <a href="@AppRoutes.Seller.Dashboard" class="hover:text-accent-600">Dashboard</a>
+        <span>/</span>
+        <a href="@AppRoutes.Seller.Products" class="hover:text-accent-600">Products</a>
+        <span>/</span>
+        <span class="font-medium text-ink-700">Import</span>
+    </nav>
+
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-ink-900">Bulk import variants</h1>
+            <p class="mt-1 text-sm text-ink-500">
+                Upload an .xlsx file to create or update product variants in bulk.
+            </p>
+        </div>
+        <!-- Template download -->
+        <a href="@AppRoutes.Seller.ProductImportTemplate"
+           class="btn-ghost inline-flex items-center gap-1.5 text-sm">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+            </svg>
+            Download template
+        </a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="mb-4 rounded-xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700">
+            @Model.ErrorMessage
+        </div>
+    }
+
+    <!-- Upload form – HTMX validates then shows preview inline -->
+    <div id="upload-section"
+         class="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+
+        <form method="post"
+              asp-page-handler="Validate"
+              enctype="multipart/form-data"
+              hx-post="@AppRoutes.Seller.ProductImport?handler=Validate"
+              hx-target="#preview-section"
+              hx-swap="innerHTML"
+              hx-encoding="multipart/form-data"
+              hx-indicator="#validate-spinner">
+
+            @Html.AntiForgeryToken()
+
+            <partial name="@SharedViewPaths.ExcelUpload"
+                     view-data='@(new ViewDataDictionary(ViewData) {
+                         ["Name"]     = "ImportFile",
+                         ["Label"]    = "Select variant import file (.xlsx)",
+                         ["HelpText"] = $"Max {FieldLimits.FileUpload.MaxExcelSizeBytes / 1024 / 1024} MB · Up to {FieldLimits.ExcelImport.MaxRowsPerBatch:N0} rows · .xlsx only"
+                     })'/>
+
+            <div class="mt-4 flex items-center gap-3">
+                <button type="submit" class="btn-primary">
+                    <span id="validate-spinner" class="htmx-indicator mr-1">⏳</span>
+                    Validate file
+                </button>
+                <span class="text-xs text-ink-400">
+                    Your data will be validated before importing.
+                </span>
+            </div>
+        </form>
+    </div>
+
+    <!-- Preview section populated by HTMX -->
+    <div id="preview-section" class="mt-6">
+        @if (Model.PreviewResult is not null)
+        {
+            <partial name="@SharedViewPaths.ImportPreview"
+                     view-data='@(new ViewDataDictionary(ViewData) {
+                         ["ValidCount"]   = Model.PreviewResult.SuccessCount,
+                         ["ErrorCount"]   = Model.PreviewResult.ErrorCount,
+                         ["SkippedCount"] = Model.PreviewResult.SkippedCount,
+                         ["TotalRows"]    = Model.PreviewResult.TotalRows,
+                         ["Errors"]       = Model.PreviewResult.Errors,
+                         ["ImportType"]   = "variants",
+                         ["SessionId"]    = Model.SessionId
+                     })'/>
+        }
+    </div>
+
+</div>
+
