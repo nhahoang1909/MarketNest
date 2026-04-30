@@ -12,6 +12,20 @@ internal static class Verify<TAnalyzer> where TAnalyzer : DiagnosticAnalyzer, ne
         var test = new CSharpAnalyzerTest<TAnalyzer, DefaultVerifier> { TestCode = source };
         return test.RunAsync();
     }
+
+    /// <summary>
+    /// Runs the analyzer but ignores compiler diagnostics (CS0246, CS0234, etc.).
+    /// Use for tests with unknown namespace stubs (e.g., <c>using Microsoft.EntityFrameworkCore;</c>).
+    /// </summary>
+    public static Task AnalyzerIgnoringCompilerAsync(string source)
+    {
+        var test = new CSharpAnalyzerTest<TAnalyzer, DefaultVerifier>
+        {
+            TestCode = source,
+            CompilerDiagnostics = CompilerDiagnostics.None
+        };
+        return test.RunAsync();
+    }
 }
 
 internal static class VerifyFix<TAnalyzer, TFix>

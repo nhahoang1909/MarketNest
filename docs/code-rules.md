@@ -1143,7 +1143,82 @@ byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
 
 ---
 
-## 11. Git Commit Conventions
+## 11. CQRS Handler Return and Query Projection Rules
+
+### 11.1 Handlers must never return entity types directly (MN019)
+
+`IQueryHandler<TQ, TResult>` and `ICommandHandler<TC, TResult>` must never expose `Entity<T>` or
+`AggregateRoot` subtypes in their `TResult` type argument — including when the entity is wrapped
+inside `Result<T,E>`, `Task<T>`, `IEnumerable<T>`, `IReadOnlyList<T>`, or other generics.
+
+**Roslyn analyzer MN019** enforces this at build time (Warning → fails CI with `TreatWarningsAsErrors`).
+
+```csharp
+// ❌ Violates MN019 — leaks aggregate through handler boundary
+class GetOrderByIdQueryHandler : IQueryHandler<GetOrderByIdQuery, Order> { }
+class ListOrdersQueryHandler   : IQueryHandler<ListOrdersQuery, IReadOnlyList<Order>> { }
+class CreateOrderCommandHandler : ICommandHandler<CreateOrderCommand, Result<Order, Error>> { }
+
+// ✅ Return a purpose-built DTO
+class GetOrderByIdQueryHandler  : IQueryHandler<GetOrderByIdQuery, OrderDetailDto> { }
+class ListOrdersQueryHandler    : IQueryHandler<ListOrdersQuery, IReadOnlyList<OrderSummaryDto>> { }
+class CreateOrderCommandHandler : ICommandHandler<CreateOrderCommand, Result<OrderCreatedDto, Error>> { }
+```
+
+Rationale: returning domain entities couples read-side consumers to the aggregate structure, bypasses
+the DTO boundary, and gives callers write-capability they should not have.
+
+**Suppress only** when returning a _value object_ (never an entity). Add an explanatory comment:
+```csharp
+#pragma warning disable MN019 // Returns Money value object, not an entity
+class GetVariantPriceQueryHandler : IQueryHandler<GetVariantPriceQuery, Money> { }
+#pragma warning restore MN019
+```
+
+### 11.2 QueryHandlers should include a `.Select()` projection (MN020)
+
+Within `IQueryHandler<,>` and `BaseQuery<,,>` subclasses, every terminal LINQ materialisation
+call (`ToListAsync`, `FirstOrDefaultAsync`, `SingleOrDefaultAsync`, `ToArrayAsync`, etc.) should
+be preceded by a `.Select()` or `.SelectMany()` projection. Without one, EF Core loads every
+column from the database row, which is wasteful for read-side projections.
+
+**Roslyn analyzer MN020** enforces this at build time (Warning → fails CI).
+
+```csharp
+// ❌ Violates MN020 — loads all entity columns
+var orders = await _db.Orders
+    .Where(o => o.SellerId == sellerId)
+    .ToListAsync(ct);
+
+// ✅ Project to what the use-case actually needs
+var orders = await _db.Orders
+    .Where(o => o.SellerId == sellerId)
+    .Select(o => new OrderSummaryDto
+    {
+        Id        = o.Id,
+        CreatedAt = o.CreatedAt,
+        Status    = o.Status,
+        Total     = o.TotalAmount,
+    })
+    .ToListAsync(ct);
+```
+
+**CommandHandlers are intentionally exempt.** They load the full aggregate to enforce invariants
+before mutating state. In a CommandHandler context, suppress per-site with a reason:
+
+```csharp
+// In a CommandHandler — loading full aggregate is correct
+#pragma warning disable MN020 // Need full Order aggregate to enforce payment invariants
+var order = await _orderRepo.GetByKeyAsync(id, ct);
+#pragma warning restore MN020
+```
+
+> MN020 uses chain-walking heuristics and cannot track queries split across multiple `var query = …`
+> variable declarations. Those do not need suppression — the rule will not fire.
+
+---
+
+## 12. Git Commit Conventions
 
 Follow **Conventional Commits**:
 ```

@@ -1,8 +1,8 @@
 ﻿---
 name: roslyn-analyzer-review
 description: >
-  Review and validate MarketNest's 18 custom Roslyn analyzer rules (MN001–MN018).
-  Use this skill when the user wants to: understand a build error MN001–MN018, add a new analyzer
+  Review and validate MarketNest's 20 custom Roslyn analyzer rules (MN001–MN020).
+  Use this skill when the user wants to: understand a build error MN001–MN020, add a new analyzer
   rule, write analyzer unit tests, suppress a rule intentionally, debug why an analyzer fires,
   audit the project for analyzer violations, review a new DiagnosticAnalyzer implementation,
   or check analyzer test coverage. Activate when the user says anything like "MN0xx error",
@@ -16,7 +16,7 @@ compatibility:
 
 # Roslyn Analyzer Review Skill — MarketNest
 
-This skill covers the 18 custom Roslyn diagnostic rules (`MN001`–`MN018`) defined in
+This skill covers the 20 custom Roslyn diagnostic rules (`MN001`–`MN020`) defined in
 `src/MarketNest.Analyzers/`. These rules enforce coding standards from `docs/code-rules.md`
 at **build time** — violations produce IDE squiggly lines and fail CI.
 
@@ -25,7 +25,7 @@ at **build time** — violations produce IDE squiggly lines and fail CI.
 
 ---
 
-## Quick Reference — All 18 Rules
+## Quick Reference — All 20 Rules
 
 | ID | Category | Rule | Severity | Code Fix |
 |----|----------|------|----------|----------|
@@ -47,6 +47,8 @@ at **build time** — violations produce IDE squiggly lines and fail CI.
 | MN016 | Architecture | Entity/Aggregate property must not have public setter | Error | ❌ |
 | MN017 | Async | Unnecessary `Task.FromResult(x)` — return directly | Warning | ✅ |
 | MN018 | Security | Insecure hash algorithm (MD5, SHA256 — use SHA512+) | Error | ✅ |
+| MN019 | Architecture | Handler must not return entity type directly | Warning | ❌ |
+| MN020 | Architecture | QueryHandler query is missing a `.Select()` projection | Warning | ❌ |
 
 > `TreatWarningsAsErrors=true` is set in `Directory.Build.props`, so all warnings also fail the build.
 
@@ -96,7 +98,7 @@ src/MarketNest.Analyzers/
     Naming/         MN001, MN002, MN012, MN013, MN014, MN015
     AsyncRules/     MN003, MN004, MN011, MN017
     Logging/        MN005, MN006, MN007
-    Architecture/   MN008, MN009, MN010, MN016, MN018
+    Architecture/   MN008, MN009, MN010, MN016, MN018, MN019, MN020
   CodeFixes/        fixes for MN001, MN003, MN006, MN007, MN017, MN018
   DiagnosticIds.cs  all 18 ID string constants
 ```
@@ -363,6 +365,60 @@ var hash = SHA512.HashData(data);
 
 ---
 
+### MN019 — Handler must not return entity type directly
+
+```csharp
+// ❌ Violates MN019 — leaks domain aggregate across the CQRS boundary
+class GetOrderByIdQueryHandler : IQueryHandler<GetOrderByIdQuery, Order> { }
+class ListOrdersQueryHandler : IQueryHandler<ListOrdersQuery, IReadOnlyList<Order>> { }
+// Also catches wrapped entity types:
+class GetOrderQueryHandler : IQueryHandler<GetOrderByIdQuery, Result<Order, Error>> { }
+
+// ✅ Fixed — return a dedicated DTO
+class GetOrderByIdQueryHandler : IQueryHandler<GetOrderByIdQuery, OrderDetailDto> { }
+class ListOrdersQueryHandler : IQueryHandler<ListOrdersQuery, IReadOnlyList<OrderSummaryDto>> { }
+```
+
+**Applies to**: Classes implementing `ICommandHandler<TC, TResult>` or `IQueryHandler<TQ, TResult>`.
+Entity detection is recursive — `Result<T,E>`, `Task<T>`, `IEnumerable<T>`, `IReadOnlyList<T>`, `List<T>` are all unwrapped.
+
+**Suppress only** when returning a value object (not an entity). Add a comment explaining why:
+```csharp
+#pragma warning disable MN019 // Returns Money value object, not an entity
+class GetItemPriceQueryHandler : IQueryHandler<GetItemPriceQuery, Money> { }
+#pragma warning restore MN019
+```
+
+---
+
+### MN020 — QueryHandler query missing Select projection
+
+```csharp
+// ❌ Violates MN020 — loads every column; ONLY fires in IQueryHandler / BaseQuery subclasses
+var orders = await _db.Orders
+    .Where(o => o.SellerId == sellerId)
+    .ToListAsync(ct);   // no .Select()!
+
+// ✅ Fixed — project to a DTO
+var orders = await _db.Orders
+    .Where(o => o.SellerId == sellerId)
+    .Select(o => new OrderSummaryDto { Id = o.Id, Status = o.Status })
+    .ToListAsync(ct);
+
+// ✅ CommandHandler exemption — loading full aggregate is legitimate; suppress per-site
+#pragma warning disable MN020 // Need full aggregate to enforce payment invariants
+var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id, ct);
+#pragma warning restore MN020
+```
+
+**Applies to**: Classes implementing `IQueryHandler<,>` or inheriting `BaseQuery<,,>`.
+CommandHandlers are **intentionally excluded** — they often need the full entity state.
+
+**Note**: MN020 uses chain-walking heuristics. Queries split across multiple local variables
+will not be detected and do not need suppression.
+
+---
+
 ## Phase 3: TEST — Writing Analyzer Tests
 
 Tests live in `tests/MarketNest.Analyzers.Tests/`. One file per analyzer.
@@ -445,7 +501,7 @@ framework asserts that exactly this diagnostic fires at this location.
 dotnet test tests/MarketNest.Analyzers.Tests/ -v normal
 ```
 
-**Expected**: all 73+ tests green. Zero failures.
+**Expected**: all 84+ tests green. Zero failures.
 
 ---
 
@@ -481,7 +537,7 @@ for inline suppressions.
 
 1. **Add ID constant** in `src/MarketNest.Analyzers/DiagnosticIds.cs`:
    ```csharp
-   public const string MN019 = "MN019";
+   public const string MN021 = "MN021";
    ```
 
 2. **Create analyzer** in `src/MarketNest.Analyzers/Analyzers/{Category}/MyAnalyzer.cs`:
@@ -490,7 +546,7 @@ for inline suppressions.
    public class MyAnalyzer : DiagnosticAnalyzer
    {
        private static readonly DiagnosticDescriptor Rule = new(
-           id:                 DiagnosticIds.MN019,
+           id:                 DiagnosticIds.MN021,
            title:             "My rule title",
            messageFormat:     "My rule message: {0}",
            category:          "Architecture",
