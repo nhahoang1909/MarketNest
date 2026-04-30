@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup Label="Core / Shared">
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
+    <PackageVersion Include="HtmlSanitizer" Version="9.0.892" />
     <PackageVersion Include="MediatR" Version="14.1.0" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />

@@ -133,6 +133,17 @@ marketnest:admin:config:{key}             TTL: 30m   — platform config
 
 ---
 
+## Vendored Frontend Libraries (`wwwroot/lib/`)
+
+| Library | Version | Purpose |
+|---------|---------|---------|
+| Alpine.js | 3.x | Reactive UI components |
+| HTMX | 2.x | Partial page updates |
+| Chart.js | 4.x | Seller analytics charts |
+| Trix | 2.1.12 | Rich text editor (product/storefront descriptions) |
+
+---
+
 ## Specification Documents (`docs/`)
 
 | File | Contents |

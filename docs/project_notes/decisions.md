@@ -44,6 +44,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-033 | Expand LogEventId from 1,000 to 10,000 per module | 2026-04-30 |
 | ADR-034 | Notifications Module — Template-Based Dispatch with Email + In-App Channels | 2026-04-30 |
 | ADR-035 | SharedViewPaths — Centralized Razor Partial Path Constants | 2026-04-30 |
+| ADR-036 | Rich Text Editor — Trix with Server-Side HTML Sanitization | 2026-04-30 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -1009,3 +1010,37 @@ The Unit of Work pattern is split into two distinct use cases, each with its own
 - ✅ Compiler catches misspelled paths (C# const vs string literal in .cshtml)
 - ✅ Consistent with existing `AppRoutes` / `AppConstants` / `FieldLimits` centralization pattern
 - ❌ Developers must add a constant to `SharedViewPaths` before using a new shared partial
+
+---
+
+### ADR-036: Rich Text Editor — Trix with Server-Side HTML Sanitization (2026-04-30)
+
+**Context:**
+- `ProductDescription` and `StorefrontDescription` fields use `FieldLimits.MultilineDocument` (max 20,000 chars) and need rich formatting (bold, italic, lists, headings, images).
+- Plain `<textarea>` cannot handle rich text. The project uses HTMX + Alpine.js without a bundler — no React/Vue editor available.
+- Need inline image upload support (drag/paste into editor → upload → display inline).
+
+**Decision:**
+- Use **Trix Editor** (MIT, by Basecamp) — vendored in `wwwroot/lib/trix/` (v2.1.12). Bundle ~50KB gzip.
+- Shared Razor partial: `_RichTextEditor.cshtml` in `Pages/Shared/Forms/`, referenced via `SharedViewPaths.RichTextEditor`.
+- Alpine.js component: `richEditor.js` with config from `constants.js` (`RichEditorConfig`).
+- Output: HTML string stored directly in DB (no Delta/Markdown conversion layer).
+- **Server-side sanitization mandatory**: `IHtmlSanitizerService` (interface in `Base.Common/Contracts/`) implemented by `TrixHtmlSanitizerService` (Web host) using `HtmlSanitizer` NuGet package. Whitelists only Trix-generated tags/attrs.
+- Image uploads via dedicated endpoint (`/api/v1/uploads/rich-editor-image`), size limit 2MB, types: JPEG/PNG/WebP/GIF.
+- Constants: `FieldLimits.RichEditorImage` (server-side limits), `RichEditorConfig` (JS constants).
+- Rendering: `@Html.Raw(model.Description)` safe because content is sanitized at write time. Styled with `.rich-content` CSS class.
+
+**Alternatives Considered:**
+- Quill → Larger bundle (~100KB), no native image upload, Delta format adds conversion complexity.
+- TinyMCE → 200KB+, overkill for scope, plugin ecosystem overhead.
+- Markdown with preview → Worse UX for non-tech sellers; extra Markdown→HTML conversion at render.
+- Contenteditable DIY → High risk, incompatible with accessibility, XSS-prone.
+
+**Consequences:**
+- ✅ Lightweight, MIT, zero bundler dependency
+- ✅ Native image drag/paste upload
+- ✅ HTML string output — no conversion layer, direct DB storage and render
+- ✅ XSS prevention via server-side whitelist sanitization (never trust client HTML)
+- ❌ No video support (acceptable — out of scope per business rules)
+- ❌ Trix toolbar is opinionated — limited heading levels (h1 only natively)
+- ❌ Vendored library requires manual version updates

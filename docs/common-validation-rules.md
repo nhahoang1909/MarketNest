@@ -39,6 +39,7 @@ Shared Razor partial components in `src/MarketNest.Web/Pages/Shared/Forms/` that
 | `_SelectField.cshtml` | Select dropdown — label, options, error state |
 | `_ImageUpload.cshtml` | Image drag-drop upload — JPEG/PNG/WebP, max 5 MB (existing) |
 | `_ExcelUpload.cshtml` | Excel drag-drop upload — .xlsx/.xls, max 10 MB, file name feedback |
+| `_RichTextEditor.cshtml` | Trix rich text editor — HTML output, image upload, char counter, sanitized server-side |
 | `_FormSection.cshtml` | Section card wrapper — title + divider heading for grouped fields |
 | `_FormActions.cshtml` | Submit/cancel row — loading spinner, Danger style, CancelHref |
 
