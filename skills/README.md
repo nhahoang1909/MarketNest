@@ -30,7 +30,7 @@ read the SKILL.md file, and follow its structured workflow.
 | Skill | When to Use | File |
 |---|---|---|
 | **dotnet-code-review** | Review C# code — naming, async, DI, Result pattern, EF Core, HTMX handlers | [`dotnet-code-review/SKILL.md`](dotnet-code-review/SKILL.md) |
-| **roslyn-analyzer-review** | MN001–MN018 build errors, add new analyzer rule, write analyzer tests | [`roslyn-analyzer-review/SKILL.md`](roslyn-analyzer-review/SKILL.md) |
+| **roslyn-analyzer-review** | MN001–MN020 build errors, add new analyzer rule, write analyzer tests | [`roslyn-analyzer-review/SKILL.md`](roslyn-analyzer-review/SKILL.md) |
 | **architecture-guard** | Layer boundary violations, module isolation, DDD aggregate integrity | [`architecture-guard/SKILL.md`](architecture-guard/SKILL.md) |
 | **database-review** | EF Core migrations, N+1 queries, PostgreSQL indexes, Redis TTL, schema isolation | [`database-review/SKILL.md`](database-review/SKILL.md) |
 | **security-checks** | Security audit — SQL injection, XSS, IDOR, race conditions, OWASP Top 10 | [`security-checks/SKILL.md`](security-checks/SKILL.md) |

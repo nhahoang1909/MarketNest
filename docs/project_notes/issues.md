@@ -20,6 +20,32 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-30 - feat(analyzers): MN019 + MN020 — Handler Entity Return & QueryHandler Select-Projection rules (ADR-042)
+- **Status**: Completed
+- **Description**: Added two new Roslyn analyzer rules to `MarketNest.Analyzers`:
+  - **MN019** `HandlerEntityReturnAnalyzer` (Warning): fires on `ICommandHandler` / `IQueryHandler` whose `TResult` (including wrapped types `Result<T,E>`, `IEnumerable<T>`, etc.) is an `Entity<T>` or `AggregateRoot` subtype. Handlers must return DTOs only.
+  - **MN020** `HandlerQueryProjectionAnalyzer` (Warning): fires on terminal LINQ calls (`ToListAsync`, `FirstOrDefaultAsync`, etc.) inside `IQueryHandler` or `BaseQuery` subclasses that lack a `.Select()` / `.SelectMany()` in the same chain. CommandHandlers are intentionally exempt.
+- **Files changed**: `DiagnosticIds.cs`, 2 new analyzers in `Architecture/`, 2 new test files (16 tests), `AnalyzerReleases.Unshipped.md`, `docs/analyzers.md`, `CLAUDE.md`, `AGENTS.md`, `copilot-instructions.md`, `key_facts.md`, `decisions.md` (ADR-042), `skills/roslyn-analyzer-review/SKILL.md`
+- **Build**: `dotnet build` → 0 warnings, 0 errors ✅ | Tests: 96/97 pass (1 pre-existing MN003 code-fix test failure unrelated to this change) ✅
+- **Notes**: Both rules are `Warning` severity but fail CI because `TreatWarningsAsErrors=true`. Template suppression: `#pragma warning disable MN020 // CommandHandler loads full aggregate for invariant check`.
+
+---
+
+### 2026-04-30 - feat(base): Common Extension Methods library — DateTimeOffset, Enum, String, Numeric, Collection
+- **Status**: Completed
+- **Description**: Added five extension method files to `MarketNest.Base.Common` providing project-wide utilities:
+  - **`DateTimeOffsetExtensions.cs`** (extended): Added `IsInFuture()`, `IsInPast()`, `IsBetween()`, `IsToday(tz)`, `StartOfDay()`, `EndOfDay()`, and nullable overloads for all `Format*` methods with configurable fallback string (default `"—"`).
+  - **`EnumExtensions.cs`** (new): `ToDescription()` (reads `[Description]` attribute, cached in `ConcurrentDictionary`), `FromDescription<T>()`, `FromDescriptionRequired<T>()`, `ParseOrNull<T>()`, `ParseOrDefault<T>()`, `GetValues<T>()`, `GetValuesWithDescriptions<T>()`, `IsDefined<T>()`.
+  - **`StringExtensions.cs`** (new): Null checks (`IsNullOrEmpty`, `IsNullOrWhiteSpace`, `HasValue`), coalescing (`NullIfEmpty`, `NullIfWhiteSpace`, `OrDefault`), `Truncate()`, `ToSlug()`, `RemoveDiacritics()`, `MaskEmail()`, `MaskPhone()`, `ToTitleCase()`, `ToSnakeCase()`, `FirstWords()`, `StripHtml()`. **Validation methods**: `IsValidEmail()`, `IsValidPhoneNumber()` (E.164), `IsValidSlug()`, `IsValidUrl()`, `IsValidCountryCode()`, `IsValidCurrencyCode()`, `IsValidPostalCode()`, `IsStrongPassword()`, `ContainsDigit/UpperCase/LowerCase/SpecialChar()`. All regex via `[GeneratedRegex]` source generators.
+  - **`NumericExtensions.cs`** (new): `Clamp()`, `IsBetween()`, `IsPositive()`, `IsNonNegative()`, `ToCompactString()` (1.5K/1M/2.3B), `ToFormattedNumber()` (thousand separators), `ToPercentageString()`, `ToOrdinal()` (1st/2nd/3rd), `ToFileSize()` (1 MB/5 KB).
+  - **`CollectionExtensions.cs`** (new): `IsNullOrEmpty()` (null-safe), `OrEmpty()`, `Batch(size)`, `ForEach(action)`, `ForEach(action+index)`, `ElementAtOrDefault()`, `JoinNonEmpty()`. Removed `DistinctBy` (already built into .NET 6+).
+- **Files changed**: 1 modified + 4 new in `src/Base/MarketNest.Base.Common/`
+- **Docs created**: `docs/common-extension-methods.md` (full API reference + usage patterns), `docs/extension-methods-cheatsheet.md` (quick reference card)
+- **Build**: `dotnet build` → 0 warnings, 0 errors ✅
+- **Notes**: All string validation methods (`IsValidEmail`, etc.) use the same patterns/constants as `FieldLimits` — no duplicated magic numbers. These are **inline boolean checks** for guard clauses and quick validation; for FluentValidation pipeline rules, use `ValidatorExtensions` as before.
+
+---
+
 ### 2026-04-30 - feat(ui): Shared form field UI components tied to FieldLimits validation rules
 - **Status**: Completed
 - **Description**: Created 10 new + updated 3 existing Razor partial components in `Pages/Shared/Forms/` that directly enforce `FieldLimits` at the HTML layer (maxlength, min/max/step, pattern, inputmode):

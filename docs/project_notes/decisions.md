@@ -50,6 +50,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-039 | Nullable Management — Business Decision Model with `#pragma` on EF Constructors | 2026-04-30 |
 | ADR-040 | Period-Scoped PostgreSQL Sequences for Running Numbers | 2026-04-30 |
 | ADR-041 | Optimistic Concurrency Control via IConcurrencyAware + UpdateToken | 2026-04-30 |
+| ADR-042 | MN019/MN020 — Handler Entity Return & QueryHandler Select-Projection Analyzer Rules | 2026-04-30 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -1168,4 +1169,34 @@ Implement opt-in optimistic concurrency using a `Guid UpdateToken` field:
 - Error factories: `Error.ConcurrencyConflict(entity, id)`, `Error.BulkConcurrencyConflict(entity, staleIds)`
 - Validator: `ValidatorExtensions.MustBeValidUpdateToken()` in `Base.Common`
 - Filter handling: `RazorPageTransactionFilter` + `TransactionActionFilter` catch `ConcurrencyConflictException` → 409
+
+---
+
+### ADR-042: MN019/MN020 — Handler Entity Return & QueryHandler Select-Projection Analyzer Rules (2026-04-30)
+
+**Context:**
+- Handlers that return `Entity<T>` or `AggregateRoot` subtypes leak domain state through the CQRS boundary, break SRP (the caller now has full domain object access), and couple the read contract to aggregate structure.
+- LINQ queries without a `.Select()` projection load every column from the database even if only two columns are actually needed, causing unnecessary I/O at scale. This was already a code-rule guideline but had no build-time enforcement.
+
+**Decision:**
+- **MN019** (`Warning`) — `HandlerEntityReturnAnalyzer`: fires on any class implementing `ICommandHandler<TC, TResult>` or `IQueryHandler<TQ, TResult>` where `TResult` (unwrapped through `Task<T>`, `Result<T,E>`, `IEnumerable<T>`, `IReadOnlyList<T>`, etc.) is a subtype of `Entity<T>` or `AggregateRoot`. Fix: return a DTO or result record with only the fields the use-case needs.
+- **MN020** (`Warning`) — `HandlerQueryProjectionAnalyzer`: fires on terminal LINQ operators (`ToListAsync`, `FirstOrDefaultAsync`, `SingleOrDefaultAsync`, etc.) inside `IQueryHandler<,>` or `BaseQuery<,,>` subclasses when no `.Select()` or `.SelectMany()` appears in the same fluent chain. CommandHandlers are intentionally excluded — they legitimately need the full aggregate state to enforce invariants. Fix: add `.Select(e => new Dto { … })` before the terminal call, or suppress with `#pragma warning disable MN020` + reason.
+
+**Trade-offs:**
+- Severity `Warning` (not `Error`) because both rules have legitimate exemption cases. With `TreatWarningsAsErrors=true` in `Directory.Build.props` they still fail CI.
+- MN020 uses pure syntax chain-walking (no semantic model needed) — fast, but cannot follow queries split across multiple local variables. Complex multi-variable EF queries should be suppressed per-site.
+- MN019 recursive type-unwrapping handles up to 3 levels of nesting; beyond that the false-positive risk is low in practice.
+
+**Consequences:**
+- ✅ Build-time enforcement of the "handlers return DTOs only" rule — replaces a human code-review checklist item
+- ✅ Prevents accidental full-entity SELECT in every query — measurable N+1 and column-bloat reduction
+- ❌ Teams must add `#pragma warning disable MN020` for CommandHandler's legitimate entity-load patterns
+- ❌ MN020 cannot track queries split across multiple `var query = …` statements
+
+**Implementation:**
+- `src/MarketNest.Analyzers/Analyzers/Architecture/HandlerEntityReturnAnalyzer.cs`
+- `src/MarketNest.Analyzers/Analyzers/Architecture/HandlerQueryProjectionAnalyzer.cs`
+- Tests: `tests/MarketNest.Analyzers.Tests/Architecture/HandlerEntityReturnAnalyzerTests.cs` (9 tests)
+- Tests: `tests/MarketNest.Analyzers.Tests/Architecture/HandlerQueryProjectionAnalyzerTests.cs` (7 tests)
+- Docs: `docs/analyzers.md` — table + rule reference sections updated
 

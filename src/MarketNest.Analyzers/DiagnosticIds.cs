@@ -20,4 +20,19 @@ internal static class DiagnosticIds
     public const string MN016 = "MN016";
     public const string MN017 = "MN017";
     public const string MN018 = "MN018";
+    public const string MN019 = "MN019";
+    public const string MN020 = "MN020";
+    public const string MN021 = "MN021";
+    public const string MN022 = "MN022";
+    public const string MN023 = "MN023";
+    public const string MN024 = "MN024";
+    public const string MN025 = "MN025";
+    public const string MN026 = "MN026";
+    public const string MN027 = "MN027";
+    public const string MN028 = "MN028";
+    public const string MN029 = "MN029";
+    public const string MN030 = "MN030";
+    public const string MN031 = "MN031";
+    public const string MN032 = "MN032";
+    public const string MN033 = "MN033";
 }

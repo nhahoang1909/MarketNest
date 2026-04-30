@@ -31,6 +31,36 @@ public static class DateTimeOffsetExtensions
     public static DateTimeOffset ToUserLocalTime(this DateTimeOffset value, TimeZoneInfo userTimeZone)
         => TimeZoneInfo.ConvertTime(value, userTimeZone);
 
+    // ── Comparison / Predicates ─────────────────────────────────────
+
+    /// <summary>Returns true if the value is in the future relative to UTC now.</summary>
+    public static bool IsInFuture(this DateTimeOffset value)
+        => value > DateTimeOffset.UtcNow;
+
+    /// <summary>Returns true if the value is in the past relative to UTC now.</summary>
+    public static bool IsInPast(this DateTimeOffset value)
+        => value < DateTimeOffset.UtcNow;
+
+    /// <summary>Returns true if the value falls between <paramref name="start"/> and <paramref name="end"/> (inclusive).</summary>
+    public static bool IsBetween(this DateTimeOffset value, DateTimeOffset start, DateTimeOffset end)
+        => value >= start && value <= end;
+
+    /// <summary>Returns true if the value is today in the user's time zone.</summary>
+    public static bool IsToday(this DateTimeOffset value, TimeZoneInfo userTimeZone)
+    {
+        DateTimeOffset userLocal = value.ToUserLocalTime(userTimeZone);
+        DateTimeOffset now = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, userTimeZone);
+        return userLocal.Date == now.Date;
+    }
+
+    /// <summary>Returns the start of the day (00:00:00) in UTC for the given value.</summary>
+    public static DateTimeOffset StartOfDay(this DateTimeOffset value)
+        => new(value.Date, value.Offset);
+
+    /// <summary>Returns the end of the day (23:59:59.9999999) in UTC for the given value.</summary>
+    public static DateTimeOffset EndOfDay(this DateTimeOffset value)
+        => new(value.Date.AddDays(1).AddTicks(-1), value.Offset);
+
     // ── Formatting (with explicit TimeZoneInfo) ─────────────────────
 
     /// <summary>Formats as date only (e.g. "2026-04-25") in the user's time zone.</summary>
@@ -72,6 +102,24 @@ public static class DateTimeOffsetExtensions
     public static string FormatAs(this DateTimeOffset value, TimeZoneInfo userTimeZone, string format)
         => value.ToUserLocalTime(userTimeZone)
             .ToString(format, CultureInfo.InvariantCulture);
+
+    // ── Nullable Overloads ──────────────────────────────────────────
+
+    /// <summary>Formats nullable DateTimeOffset as date only, or returns <paramref name="fallback"/> if null.</summary>
+    public static string FormatAsDateOnly(this DateTimeOffset? value, TimeZoneInfo userTimeZone, string fallback = "—")
+        => value.HasValue ? value.Value.FormatAsDateOnly(userTimeZone) : fallback;
+
+    /// <summary>Formats nullable DateTimeOffset as date + time, or returns <paramref name="fallback"/> if null.</summary>
+    public static string FormatAsDateTime(this DateTimeOffset? value, TimeZoneInfo userTimeZone, string fallback = "—")
+        => value.HasValue ? value.Value.FormatAsDateTime(userTimeZone) : fallback;
+
+    /// <summary>Formats nullable DateTimeOffset as full date + time, or returns <paramref name="fallback"/> if null.</summary>
+    public static string FormatAsDateTimeFull(this DateTimeOffset? value, TimeZoneInfo userTimeZone, string fallback = "—")
+        => value.HasValue ? value.Value.FormatAsDateTimeFull(userTimeZone) : fallback;
+
+    /// <summary>Formats nullable DateTimeOffset as relative time, or returns <paramref name="fallback"/> if null.</summary>
+    public static string FormatAsRelative(this DateTimeOffset? value, string fallback = "—")
+        => value.HasValue ? value.Value.FormatAsRelative() : fallback;
 
     // ── Relative Time ───────────────────────────────────────────────
 
