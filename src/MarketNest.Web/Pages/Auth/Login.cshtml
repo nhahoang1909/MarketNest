@@ -21,14 +21,21 @@
         <h1 class="mn-h4 text-center">Dang nhap</h1>
 
         <!-- Form -->
-        <form method="post" class="space-y-4" x-data="{ showPassword: false }">
+        <form hx-post="@AppRoutes.Auth.Login"
+              hx-target="closest .card-body"
+              hx-swap="innerHTML"
+              hx-indicator="#login-spinner"
+              class="space-y-4"
+              x-data="{ showPassword: false }">
           @Html.AntiForgeryToken()
 
           <!-- Email -->
-          <div>
-            <label for="email" class="form-label">Email</label>
-            <input type="email" id="email" name="Email" placeholder="you@example.com" class="form-input" required/>
-          </div>
+          <partial name="@SharedViewPaths.EmailField" view-data='@(new ViewDataDictionary(ViewData) {
+              ["Label"]    = "Email",
+              ["Name"]     = "Email",
+              ["Value"]    = "",
+              ["Required"] = "true"
+          })'/>
 
           <!-- Password -->
           <div>
@@ -71,6 +78,12 @@
 
           <!-- Submit -->
           <button type="submit" class="btn-primary w-full">
+            <span id="login-spinner" class="htmx-indicator">
+              <svg class="animate-spin h-4 w-4 inline mr-2" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+            </span>
             Dang nhap
           </button>
         </form>
