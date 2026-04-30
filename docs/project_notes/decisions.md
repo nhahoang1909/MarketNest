@@ -49,6 +49,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-038 | I18N Service — II18NService Wrapper + I18NKeys Constants | 2026-04-30 |
 | ADR-039 | Nullable Management — Business Decision Model with `#pragma` on EF Constructors | 2026-04-30 |
 | ADR-040 | Period-Scoped PostgreSQL Sequences for Running Numbers | 2026-04-30 |
+| ADR-041 | Optimistic Concurrency Control via IConcurrencyAware + UpdateToken | 2026-04-30 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -1126,3 +1127,45 @@ Use period-scoped PostgreSQL sequences. Each period (month/year) gets its own se
 - Module descriptors: `OrderSequences`, `PaymentSequences`, `CatalogSequences`
 - Cleanup: `CleanupStaleSequencesJob` (`common.cleanup-stale-sequences`, monthly)
 - Full spec: `docs/sequence-service.md`
+
+### ADR-041 — Optimistic Concurrency Control via IConcurrencyAware + UpdateToken
+
+**Date**: 2026-04-30
+**Status**: Accepted
+
+**Context:**
+Multiple users may concurrently edit the same entity (product, storefront, order). Without concurrency control, the "last write wins" — silently overwriting another user's changes. Bulk update operations compound this risk.
+
+**Decision:**
+Implement opt-in optimistic concurrency using a `Guid UpdateToken` field:
+
+1. **Interface**: `IConcurrencyAware` (`Base.Domain`) — entities opt-in by implementing `UpdateToken { get; }` and `RotateUpdateToken()`.
+2. **Interceptor**: `UpdateTokenInterceptor` (`Base.Infrastructure`) — auto-rotates token on every `Added`/`Modified` entity during `SaveChanges`.
+3. **EF Core config**: `ApplyConcurrencyTokenConventions()` in `DddModelBuilderExtensions` — configures `IsConcurrencyToken()` so EF Core adds `WHERE UpdateToken = @original` to UPDATE/DELETE.
+4. **Handler pre-check**: `ConcurrencyGuard.CheckToken(entity, command.UpdateToken)` — returns `Error.ConcurrencyConflict(...)` before mutation if stale.
+5. **Safety net**: `UnitOfWork.CommitAsync` catches `DbUpdateConcurrencyException` → `ConcurrencyConflictException` → transaction filters return HTTP 409 Conflict.
+6. **Bulk strategy**: Fail-all with stale-item reporting — `ConcurrencyGuard.CheckTokens(...)` validates all tokens before any mutation and returns all stale IDs.
+
+**Alternatives considered:**
+- `xmin`/`rowversion` PostgreSQL system column — less portable, implicit, can't be projected to DTOs easily.
+- `[ConcurrencyCheck]` on `ModifiedAt` field — coarser, same-second edits may falsely succeed.
+- MediatR pipeline behavior for automatic validation — rejected because check requires loading the entity first (which the handler already does), and bulk commands have varied shapes.
+
+**Consequences:**
+- ✅ Two-layer protection: explicit pre-check in handler (clear error message) + EF Core safety net (catches race conditions)
+- ✅ Opt-in per entity — no performance overhead on entities that don't need it
+- ✅ Bulk operations report exactly which records are stale
+- ✅ Zero changes required in read-side DbContexts
+- ❌ Requires all read DTOs to include `UpdateToken` for updatable entities
+- ❌ Each module must call `ApplyConcurrencyTokenConventions()` in `OnModelCreating`
+
+**Implementation:**
+- Interface: `src/Base/MarketNest.Base.Domain/IConcurrencyAware.cs`
+- Interceptor: `src/Base/MarketNest.Base.Infrastructure/Persistence/Persistence/UpdateTokenInterceptor.cs`
+- Model config: `ApplyConcurrencyTokenConventions()` in `DddModelBuilderExtensions.cs`
+- Guard: `src/Base/MarketNest.Base.Infrastructure/Persistence/Persistence/ConcurrencyGuard.cs`
+- Exception: `src/Base/MarketNest.Base.Infrastructure/Persistence/Persistence/ConcurrencyConflictException.cs`
+- Error factories: `Error.ConcurrencyConflict(entity, id)`, `Error.BulkConcurrencyConflict(entity, staleIds)`
+- Validator: `ValidatorExtensions.MustBeValidUpdateToken()` in `Base.Common`
+- Filter handling: `RazorPageTransactionFilter` + `TransactionActionFilter` catch `ConcurrencyConflictException` → 409
+
