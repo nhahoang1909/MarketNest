@@ -31,6 +31,7 @@ public class AdminDbContext : DbContext, IModuleDbContext
         modelBuilder.HasDefaultSchema(TableConstants.Schema.Admin);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AdminDbContext).Assembly);
         modelBuilder.ApplyDddPropertyAccessConventions();
+        modelBuilder.ApplyConcurrencyTokenConventions();
         base.OnModelCreating(modelBuilder);
     }
 }
