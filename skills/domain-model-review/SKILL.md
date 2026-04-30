@@ -1,26 +1,26 @@
 ---
 name: domain-model-review
 description: >
-  Quét toàn bộ Domain layer của MarketNest để review chất lượng DDD: aggregate design,
-  value object immutability, domain event naming và placement, state machine transition,
-  invariant enforcement, Result pattern usage, và phát hiện anemic domain model.
-  Sử dụng skill này khi người dùng muốn: review domain model, kiểm tra DDD design,
-  tìm anemic model, check aggregate boundary, review value object, kiểm tra domain event,
-  review state machine, check invariant, hoặc nói bất kỳ cụm từ nào như "domain review",
-  "DDD review", "aggregate design", "value object", "domain event", "anemic model",
-  "invariant", "state machine", "Result pattern", "kiểm tra domain".
-  Kích hoạt khi người dùng upload file trong Domain/ folder hoặc AggregateRoot subclass.
+  Scan the entire Domain layer of MarketNest to review DDD quality: aggregate design,
+  value object immutability, domain event naming and placement, state machine transitions,
+  invariant enforcement, Result pattern usage, and detection of anemic domain models.
+  Use this skill when the user wants to: review domain model, check DDD design, find anemic
+  models, check aggregate boundaries, review value objects, check domain events, review state
+  machines, check invariants, or says anything like "domain review", "DDD review",
+  "aggregate design", "value object", "domain event", "anemic model", "invariant",
+  "state machine", "Result pattern".
+  Activate when the user uploads files from a Domain/ folder or an AggregateRoot subclass.
 compatibility:
-  tools: [bash, read_file, write_file, list_files]
-  agents: [claude-code, gemini-cli, cursor, continue, aider]
+  tools: [bash, read_file, write_file, list_files, grep_search, run_in_terminal]
+  agents: [claude-code, gemini-cli, cursor, continue, aider, copilot]
   stack: [.NET 10, DDD, Clean Architecture, MediatR 12, MarketNest domain]
 ---
 
 # Domain Model Review Skill — MarketNest
 
-Skill này là deep-dive vào domain layer — lớp quan trọng nhất của MarketNest, nơi toàn bộ
-business rules sống. Review theo 7 chiều DDD với reference trực tiếp đến invariants table
-và aggregate designs đã được định nghĩa trong `domain-design.md`.
+This skill performs a deep-dive into the domain layer — the most important layer of MarketNest,
+where all business rules live. Review across 7 DDD dimensions with direct reference to the
+invariants table and aggregate designs defined in `docs/domain-and-business-rules.md`.
 
 ---
 

@@ -332,4 +332,40 @@ This project maintains institutional knowledge in `docs/project_notes/` for cons
 
 **Review cadence:**
 - Review `decisions.md` quarterly — mark stale ADRs as `**Status**: Superseded by ADR-XXX`
+
+---
+
+## Skill Library — AI Agent Skills
+
+> When a task matches a skill below, **always** use `read_file` to load the full SKILL.md
+> before proceeding. Skills contain step-by-step workflows, PowerShell scan commands,
+> before/after fix templates, and checklists specific to this project.
+> Never skip loading the skill — it contains patterns that differ from generic .NET advice.
+
+| Skill | Load When | File |
+|---|---|---|
+| `dotnet-code-review` | Review C# code, check naming / async / DI / Result / EF Core / HTMX handler patterns | `skills/dotnet-code-review/SKILL.md` |
+| `roslyn-analyzer-review` | Build error MN001–MN018, add analyzer rule, write analyzer test, suppress a rule | `skills/roslyn-analyzer-review/SKILL.md` |
+| `architecture-guard` | Check layer boundaries, module isolation, DDD aggregate integrity, cross-module access | `skills/architecture-guard/SKILL.md` |
+| `database-review` | Review EF Core migrations / N+1 / PostgreSQL indexes / Redis TTL / schema isolation | `skills/database-review/SKILL.md` |
+| `security-checks` | Security audit, SQL injection / XSS / IDOR / race condition, OWASP Top 10 | `skills/security-checks/SKILL.md` |
+| `performance-optimizer` | Slow code, bottleneck analysis, EF Core query optimization, memory profiling | `skills/performance-optimizer/SKILL.md` |
+| `test-quality-check` | Review test quality, xUnit/FluentAssertions/NSubstitute convention, Testcontainers, NetArchTest | `skills/test-quality-check/SKILL.md` |
+| `api-contract-review` | HTTP status codes, Problem Details RFC 7807, HTMX patterns, rate limits, antiforgery | `skills/api-contract-review/SKILL.md` |
+| `domain-model-review` | DDD aggregates, value objects, state machines, invariants, Result pattern, anemic model | `skills/domain-model-review/SKILL.md` |
+| `frontend-code-review` | CSS/HTML/JS quality, accessibility, Core Web Vitals, Alpine.js, Tailwind CSS | `skills/frontend-code-review/SKILL.md` |
+| `frontend-htmx-review` | HTMX attributes, hx-swap/hx-trigger/hx-boost patterns, partial responses, anti-flicker | `skills/frontend-htmx-review/SKILL.md` |
+
+### How skills are loaded
+
+```
+User asks: "review this command handler"
+  → Agent matches: dotnet-code-review
+  → Agent calls: read_file("skills/dotnet-code-review/SKILL.md")
+  → Agent follows the SCAN → ANALYZE → REPORT → FIX workflow from the skill
+  → Agent outputs a structured report with CRITICAL/HIGH/MEDIUM findings
+```
+
+The agent should read the skill file **once per session** for a given task. If multiple skills
+are relevant (e.g., "review and check security"), load both SKILL.md files before starting.
 - Never delete old decisions — future developers need the historical context
