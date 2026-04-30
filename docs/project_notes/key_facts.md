@@ -19,7 +19,7 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 
 ## Current Phase
 
-- **Phase**: 1 — Modular Monolith (implementation in progress as of 2026-04-29)
+- **Phase**: 1 — Modular Monolith (implementation in progress as of 2026-04-30)
 - **Branch**: `p1-main-nhahoang` (working branch; PRs target `p1-main`)
 - **Target**: Phase 1 exit by month 3 (real user can browse → register → create storefront → list product → another user buys → order fulfilled)
 
@@ -155,6 +155,12 @@ marketnest:admin:config:{key}             TTL: 30m   — platform config
 | `domain-and-business-rules.md` | DDD aggregates, bounded contexts, entity designs, business rules for all modules |
 | `frontend-guide.md` | Frontend stack, page inventory, HTMX/Alpine patterns, component library, BE-FE contracts |
 | `code-rules.md` | Naming conventions, C# idioms, DDD principles, banned patterns |
+| `common-validation-rules.md` | FieldLimits, ValidationMessages, ValidatorExtensions — centralized validation infrastructure |
+| `excel-import-export.md` | Excel import/export: IExcelService, ClosedXML, antivirus hook, import templates, export options, ADR-037 |
+| `sequence-service.md` | PostgreSQL sequence service: ISequenceService, period-scoped sequences, running number generation, ADR-040 |
+| `notifications.md` | Notifications module: template engine, dispatch pipeline, email/in-app channels, usage guide |
+| `nullable-management.md` | Nullable policy: business-decision model, layer-by-layer rules, banned anti-patterns, review checklist (ADR-039) |
+| `sla-requirements.md` | SLA thresholds: availability, performance, business correctness, data integrity (ADR-026) |
 | `devops-requirements.md` | Docker Compose topology, GitHub Actions, K8s manifests |
 | `analyzers.md` | Roslyn analyzer reference: all 17 MN rules, suppression patterns, adding new rules |
 | `test-driven-design.md` | TDD guidelines, unit/integration/architecture test patterns |

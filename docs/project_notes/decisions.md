@@ -48,6 +48,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-037 | Excel Import/Export — ClosedXML + IExcelService + IAntivirusScanner | 2026-04-30 |
 | ADR-038 | I18N Service — II18NService Wrapper + I18NKeys Constants | 2026-04-30 |
 | ADR-039 | Nullable Management — Business Decision Model with `#pragma` on EF Constructors | 2026-04-30 |
+| ADR-040 | Period-Scoped PostgreSQL Sequences for Running Numbers | 2026-04-30 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -846,54 +847,6 @@ The Unit of Work pattern is split into two distinct use cases, each with its own
 
 ---
 
-### ADR-030: Application Constants vs Configuration — Immutable Rules in AppConstants, Environment-Specific Settings in appsettings.json (2026-04-29)
-
-**Context:**
-- Original `appsettings.json` mixed business rules (password min-length, file upload limits) with environment-specific settings (security timeouts, rate limits).
-- `ValidationOptions` class existed but was never used in code — developers could not easily reference validation constraints.
-- ADR-005 (No Magic Strings/Numbers) required extraction of all literals, but there was no clear policy on WHERE to extract them.
-
-**Decision:**
-- **AppConstants**: Immutable business rules that never change between dev/staging/production.
-  - Password/username length constraints
-  - File upload size limits
-  - Enumerated values (status names, role names)
-  - Font stacks, color hex codes, CDN URLs
-  - Cache durations, timeout defaults
-  - Validation rule constants
-  - Example: `AppConstants.Validation.PasswordMinLength = 8`
-- **appsettings.json**: Environment-specific settings that vary per deployment.
-  - Database connection strings
-  - API secrets (JWT key, SMTP password)
-  - External service URLs (Seq, Redis, RabbitMQ)
-  - Performance tunings that differ between environments (rate limits, lockout duration, token expiry)
-  - Example: `Security.RateLimitRequestsPerMinute` could be 60 in dev, 10 in prod
-- **Tier 3 Configuration (ADR-021)**: `PlatformOptions`, `SecurityOptions`, `ValidationOptions` are strongly-typed Options bound from appsettings.json. `ValidationOptions` deprecated in favor of `AppConstants.Validation`.
-- `ValidationOptions` class removed; usages replaced with `AppConstants.Validation.*` direct access.
-
-**Rationale:**
-- Business rules are immutable (an 8-character password requirement doesn't change per environment).
-- Code is cleaner with `AppConstants.Validation.PasswordMinLength` than configuring the same value 3 times in appsettings.json.
-- Reduces config file bloat (appsettings becomes focused on secrets and external URLs).
-- Forces developers to think: "Is this a rule or a setting?"
-
-**Alternatives Considered:**
-- All constants in appsettings.json → Rejected: bloats config, forces same value in dev/staging/prod JSON unnecessarily.
-- All constants in AppConstants → Rejected: some settings DO need to vary per environment (rate limits, token expiry).
-
-**Consequences:**
-- ✅ Single source of truth per category: business rules in AppConstants, environment tuning in appsettings.json.
-- ✅ Code is more readable: `AppConstants.Validation.PasswordMinLength` is clearer than `Configuration["Validation:PasswordMinLength"]`.
-- ✅ Reduces config file duplication.
-- ✅ `IOptions<ValidationOptions>` DI binding removed — simpler composition root.
-- ❌ Developers must remember the distinction (mitigated by CLAUDE.md / AGENTS.md policy).
-
-**Enforcement:**
-- PR checklist includes: "Are all business constants in `AppConstants.*`? Are all environment-specific values in `appsettings.json`?"
-- MN005 analyzer (magic numbers) will flag unexplained numeric literals — guide them to `AppConstants.*`.
-
----
-
 ### ADR-032: PgQueryBuilder — Safe Raw PostgreSQL Query Generation Utility (2026-04-30)
 
 **Context:**
@@ -1088,55 +1041,88 @@ The Unit of Work pattern is split into two distinct use cases, each with its own
 ### ADR-038: I18N Service — II18NService Wrapper + I18NKeys Constants (2026-04-30)
 
 **Context:**
-- Project had raw `IHtmlLocalizer<SharedResource>` usage in layouts and hardcoded Vietnamese strings in Auth pages and Home page.
-- ADR-005 (no magic strings) was violated — inline `"Nav.Home"` key strings in Razor views.
-- Need a single localization entry point that: (a) returns `string.Empty` on missing keys (never crashes), (b) logs warnings for missing keys, (c) enforces `I18NKeys.*` constants.
+- Auth pages and the Home page had Vietnamese strings hardcoded directly in `.cshtml` views — not using the resource system.
+- The existing `IStringLocalizer<SharedResource>` pattern was verbose (`SharedLocalizer["Key"]`) and offered no compile-time key safety (string keys typo'd silently fell back to the raw key text).
+- Need a clean wrapper that provides strongly-typed key constants and a simple indexer syntax usable from Razor views.
 
 **Decision:**
-- Introduced `II18NService` contract (indexer + `Get(key, args)` + `KeyExists`) in `MarketNest.Web.Infrastructure`.
-- Implementation `I18NService` wraps `IStringLocalizer<SharedResource>`, returns `string.Empty` on `ResourceNotFound`, uses `IAppLogger<I18NService>` with `[LoggerMessage]` source-gen (EventIds 10800–10801).
-- Static `I18NKeys` class holds all resource key constants — no inline string keys allowed at call sites.
-- `II18NService` injected globally via `_ViewImports.cshtml` as `I18N` — available in every Razor view.
-- Layouts continue using `SharedLocalizer["Key"]` for backward compatibility; new pages and converted pages use `I18N[I18NKeys.Xxx]`.
-- Registered as `Scoped` (culture-per-request matches HTTP lifecycle).
+- New `II18NService` interface + `I18NService` implementation in `MarketNest.Web/Infrastructure/Localization/`.
+- `I18NKeys` static class (nested: `Page`, `Label`, `Button`, `Text`, `Link`, `Nav`, `Auth`) provides all resource key constants — no inline string keys in views.
+- Registered as `Scoped`; injected into Razor via `_ViewImports.cshtml` as `@inject II18NService I18N`.
+- View syntax: `@I18N[I18NKeys.Category.Key]` (indexer) or `@I18N.Get(key, args)` (parametrized).
+- `I18NService` uses `IAppLogger<T>` with `[LoggerMessage]` delegates for missing key warnings (EventIds `10800`, `10801`).
+- Resource files at `src/MarketNest.Web/Resources/SharedResource.{culture}.resx` — expanded with 50+ new keys for both `en` and `vi`.
+
+**Alternatives Considered:**
+- Keep `IStringLocalizer<SharedResource>` directly → Rejected: no compile-time key safety; verbose syntax; no project-wide key inventory.
+- Source generator for tightly-typed resources → Considered; overkill for Phase 1.
 
 **Consequences:**
-- ✅ Missing keys show blank (not raw key) — cleaner UI, detectable via Seq log EventId 10800
-- ✅ Type-safe keys via `I18NKeys.*` — typos caught at compile time
-- ✅ Single interface for all future localization needs (backend handlers, email subjects, etc.)
-- ✅ Cookie-based culture + `CookieRequestCultureProvider` at index 0 — language persists across sessions
-- ❌ Dual pattern (`SharedLocalizer` in old layouts + `I18N` in new pages) until full migration — acceptable, both resolve the same resource files
+- ✅ Compile-time key safety — mistyped keys cause a build error (C# const, not a string literal)
+- ✅ Consistent `@I18N[I18NKeys.X.Y]` syntax replaces scattered `@SharedLocalizer["..."]` calls
+- ✅ Coexists with existing `IStringLocalizer` — both resolve the same `.resx` files; migration is gradual
+- ❌ Developers must add new keys to `I18NKeys.cs` AND `.resx` files before using them
 
 ---
 
 ### ADR-039: Nullable Management — Business Decision Model with `#pragma` on EF Constructors (2026-04-30)
 
 **Context:**
-- C# nullable reference types enabled (`<Nullable>enable</Nullable>`), treating `?` as a domain decision, not an implementation detail.
-- Entity required fields were using `= string.Empty`, `= null!`, or `= default!` as initialization sentinels — violating DDD and misleading developers.
-- EF Core private constructors for entities need special handling to suppress CS8618 (non-nullable field uninitialized).
-- Need a clear company policy: when to use `?`, when to use `required`, how to handle EF constructor suppression.
+- `Directory.Build.props` has `<Nullable>enable</Nullable>` + `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` — any nullable warning breaks CI.
+- Developers (and AI agents) used `= default!`, `= null!`, and `= string.Empty` sentinels to silence CS8618 warnings rather than thinking about whether a property is truly optional.
+- No canonical document stated the *project rule* for choosing between nullable and non-nullable: the choice was made per-taste rather than per-domain logic.
 
 **Decision:**
-- **Nullable is a business decision**, not an implementation detail: `string?` means "field is allowed to be absent per domain logic", requiring a comment explaining WHY.
-- **Per-layer rules**:
-  - **Entities**: Non-nullable is default. All required fields have NO initializer (`= ...`). Nullable fields have `// null = reason` comments. Collections always initialized `= []`, never null. EF Core private constructors suppressed via `#pragma warning disable CS8618 ... #pragma warning restore CS8618`.
-  - **Value Objects**: NEVER have nullable properties. Constructor validates + throws if input invalid. No sentinel initializers.
-  - **DTOs/Commands/Queries**: Required properties use `required` keyword (no sentinels). Optional use nullable `?`. No `string.Empty` sentinels.
-  - **EF Config**: Non-nullable strings have `.IsRequired()`. Nullable strings do NOT. Optional owned VOs auto-handle nullable columns.
-- **Approved exception**: `Entity<TKey>.Id = default!` is the ONE allowed `default!` — generic type parameter, EF Core handles initialization in all paths. `[BindProperty]` Razor Page models with `= default!` are acceptable (ASP.NET binding guarantees assignment).
-- **New document**: `docs/nullable-management.md` — canonical reference for the entire team (replaces inline comments scattered across code).
+- Nullable is a **business decision**, not an implementation detail.
+- Every `?` must have a domain-reason comment explaining why absent is a valid domain state.
+- **Entity rules**: Non-nullable = required invariant. Nullable = "not yet happened" (ShippedAt) or "optional FK" (CouponId). Collections: always initialized with `[]`, never nullable.
+- **EF Core private constructors**: use `#pragma warning disable CS8618` on the constructor body only — never on the class, never `= default!` on fields.
+- **Value Objects**: NEVER nullable properties — VOs represent complete data.
+- **DTOs / Commands / Queries**: Required → use `required` keyword (non-nullable). Optional → nullable `?`. Never `string.Empty` sentinels.
+- **Canonical reference**: `docs/nullable-management.md` (rules + quick-ref table + anti-patterns + checklist).
+
+**Alternatives Considered:**
+- `= default!` / `= null!` everywhere → Rejected: silences warnings without communicating intent; hides missing domain modeling.
+- `#pragma` on entire class → Rejected: suppresses warnings for all fields, including ones that should actually be non-nullable.
+- `#nullable disable` in EF constructors → Rejected: disables more than necessary; `#pragma disable CS8618` on the constructor alone is surgical.
 
 **Consequences:**
-- ✅ Nullable correctness enforced by compiler (`<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`).
-- ✅ Every `?` is intentional and documented — readers immediately understand "why null is valid".
-- ✅ No silent `NullReferenceException` from forgotten initialization.
-- ✅ EF Core entities remain fully DDD-compliant: `{ get; private set; }` on required fields, no surprises.
-- ✅ Team guidance lives in one place (`docs/nullable-management.md`) — easier to keep consistent across modules.
-- ❌ Developers must remember to add `#pragma` on EF constructors (mitigated: ADR-039 doc + PR checklist).
+- ✅ Every nullable property communicates domain intent — reviewers can verify correctness
+- ✅ No sentinel values (`string.Empty`, `default!`) leaking into domain entities
+- ✅ Checklist in `nullable-management.md` speeds up code review
+- ✅ Consistent pattern for EF Core constructors across all modules
+- ❌ Requires discipline: developers must add domain comments, not just add `?` to stop the compiler
 
-**Enforcement:**
-- All C# source code violations caught at compile-time (CI fails if warnings exist).
-- PR checklist includes: "Every nullable field has a domain-reason comment? Every `required` property in DTOs? No `string.Empty` sentinels?"
-- `docs/nullable-management.md` linked from `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`.
+---
 
+### ADR-040 — Period-Scoped PostgreSQL Sequences for Running Numbers
+
+**Date**: 2026-04-30
+**Status**: Accepted
+
+**Context:**
+Running number generation (e.g., `ORD202604-00001`) needs to be deadlock-free, race-condition-safe, and support reset by month/year under high concurrent traffic.
+
+**Options considered:**
+1. `MAX(id)+1` — not concurrent-safe, can produce duplicates
+2. `ALTER SEQUENCE RESTART` via cron — has a race window between ALTER and NEXTVAL
+3. `SELECT FOR UPDATE` counter table — serializes all writes, bottleneck
+4. **Period-scoped sequence names** — new PG sequence per period, no reset needed
+
+**Decision:**
+Use period-scoped PostgreSQL sequences. Each period (month/year) gets its own sequence object (e.g., `orders.seq_ord_202604`). Sequences auto-provision on first use via `CREATE SEQUENCE IF NOT EXISTS` (PG catalog lock serializes concurrent DDL).
+
+**Consequences:**
+- ✅ Zero race condition — no `ALTER SEQUENCE RESTART` needed
+- ✅ Deadlock-free — NEXTVAL is always non-blocking
+- ✅ Concurrent-safe — PG guarantees unique values from SEQUENCE
+- ✅ Auto-provision — first request in new period creates sequence (cached in-process)
+- ✅ Old sequences cleaned up by monthly background job
+- ❌ Accumulates ~12 sequences/year per monthly descriptor (negligible DB catalog overhead)
+
+**Implementation:**
+- Contracts: `MarketNest.Base.Common/Sequences/` (`ISequenceService`, `SequenceDescriptor`, `SequenceResetPeriod`)
+- Infrastructure: `MarketNest.Web/Infrastructure/Sequences/PostgresSequenceService.cs` (Singleton)
+- Module descriptors: `OrderSequences`, `PaymentSequences`, `CatalogSequences`
+- Cleanup: `CleanupStaleSequencesJob` (`common.cleanup-stale-sequences`, monthly)
+- Full spec: `docs/sequence-service.md`

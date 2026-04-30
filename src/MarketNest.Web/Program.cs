@@ -209,6 +209,9 @@ try
     // Antivirus scanning — Phase 1: NoOp (always clean). Phase 2: replace with ClamAV binding.
     builder.Services.AddSingleton<IAntivirusScanner, NoOpAntivirusScanner>();
 
+    // PostgreSQL period-scoped sequence service (running numbers: ORD202604-00001, etc.)
+    builder.Services.AddSequenceService();
+
     // ── Module DI ─────────────────────────────────────────────────────────
     builder.Services.AddAuditingModule(builder.Configuration);
     builder.Services.AddIdentityModule(builder.Configuration);
@@ -237,6 +240,9 @@ try
     builder.Services.AddSingleton<IJobRegistry, ServiceCollectionJobRegistry>();
     builder.Services.AddScoped<IJobExecutionStore, NpgsqlJobExecutionStore>();
     builder.Services.AddHostedService<JobRunnerHostedService>();
+
+    // Common background jobs (Web layer)
+    builder.Services.AddScoped<IBackgroundJob, CleanupStaleSequencesJob>();
 
     // ── Database: auto-migrate + seed ─────────────────────────────────
 
