@@ -121,9 +121,6 @@
       <Content Include="..\..\global.json">
         <Link>global.json</Link>
       </Content>
-      <Content Include="..\..\qodana.yaml">
-        <Link>qodana.yaml</Link>
-      </Content>
     </ItemGroup>
 
 
