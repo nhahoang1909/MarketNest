@@ -250,4 +250,23 @@ public static class ValidatorExtensions
             .InclusiveBetween(FieldLimits.Rating.Min, FieldLimits.Rating.Max)
             .WithMessage(ValidationMessages.RangeBetween(fieldName,
                 FieldLimits.Rating.Min, FieldLimits.Rating.Max));
+
+    // ── Concurrency Token ─────────────────────────────────────────────────
+
+    /// <summary>
+    ///     Validates that an UpdateToken (optimistic concurrency) is not empty.
+    ///     Commands that update existing entities must include a valid UpdateToken.
+    /// </summary>
+    public static IRuleBuilderOptions<T, Guid> MustBeValidUpdateToken<T>(
+        this IRuleBuilder<T, Guid> rule, string fieldName = "UpdateToken")
+        => rule
+            .NotEmpty().WithMessage(ValidationMessages.Required(fieldName));
+
+    /// <summary>
+    ///     Validates UpdateToken within a collection item (bulk operations).
+    /// </summary>
+    public static IRuleBuilderOptions<T, Guid> MustBeValidUpdateToken<T, TElement>(
+        this IRuleBuilder<T, Guid> rule, string fieldName = "UpdateToken")
+        => rule
+            .NotEmpty().WithMessage(ValidationMessages.Required(fieldName));
 }

@@ -2,6 +2,7 @@
 using System.Reflection;
 using MarketNest.Base.Common;
 using MarketNest.Base.Infrastructure;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace MarketNest.Web.Infrastructure;
@@ -95,6 +96,18 @@ public sealed partial class TransactionActionFilter(
 
             await uow.DispatchPostCommitEventsAsync(context.HttpContext.RequestAborted);
         }
+        catch (ConcurrencyConflictException ex)
+        {
+            await uow.RollbackAsync(cts.Token).ConfigureAwait(false);
+            Log.WarnConcurrencyConflict(logger, actionName, string.Join(", ", ex.AffectedEntities));
+
+            context.Result = new ConflictObjectResult(new
+            {
+                Code = DomainConstants.ErrorCodes.ConcurrencyConflict,
+                Message = DomainConstants.ErrorMessages.ConcurrencyConflict,
+                AffectedEntities = ex.AffectedEntities
+            });
+        }
         catch (Exception ex)
         {
             await uow.RollbackAsync(cts.Token).ConfigureAwait(false);
@@ -127,6 +140,11 @@ public sealed partial class TransactionActionFilter(
             "Action TX ROLLED BACK (unhandled exception) — Action={Action}")]
         public static partial void ErrorTxRolledBackOnException(
             ILogger logger, string action, Exception ex);
+
+        [LoggerMessage((int)LogEventId.ActionTxConcurrencyConflict, LogLevel.Warning,
+            "Action TX ROLLED BACK (concurrency conflict) — Action={Action} Entities={Entities}")]
+        public static partial void WarnConcurrencyConflict(
+            ILogger logger, string action, string entities);
     }
 }
 

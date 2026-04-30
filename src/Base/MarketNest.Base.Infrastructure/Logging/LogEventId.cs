@@ -67,18 +67,21 @@ public enum LogEventId
     UoWTxBegin = 10403,
     UoWTxCommitted = 10404,
     UoWTxRolledBack = 10405,
+    UoWConcurrencyConflict = 10406,
 
     // RazorPageTransactionFilter — 10500-10520
     RazorPageTxBegin = 10500,
     RazorPageTxCommitted = 10501,
     RazorPageTxRolledBackOnResult = 10502,
     RazorPageTxRolledBackOnException = 10503,
+    RazorPageTxConcurrencyConflict = 10504,
 
     // TransactionActionFilter — 10600-10620
     ActionTxBegin = 10600,
     ActionTxCommitted = 10601,
     ActionTxRolledBackOnResult = 10602,
     ActionTxRolledBackOnException = 10603,
+    ActionTxConcurrencyConflict = 10604,
 
     // RuntimeContextMiddleware — 10700-10710
     RuntimeContextRequestStart = 10700,
