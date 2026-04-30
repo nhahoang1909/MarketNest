@@ -1,23 +1,23 @@
 ---
 name: frontend-htmx-review
 description: >
-  Quét toàn bộ frontend layer của MarketNest để review chất lượng: HTMX attribute correctness,
-  Alpine.js pattern, Tailwind CSS class audit, Razor Page partial structure, hx-boost, hx-swap,
-  hx-trigger, anti-flicker pattern, SSE/polling endpoint. Sử dụng skill này khi người dùng muốn:
-  review frontend, kiểm tra HTMX, audit Alpine.js, review Tailwind, check Razor partial,
-  kiểm tra hx-boost, hx-swap, hx-trigger, antiforgery token, SSE setup, hoặc nói bất kỳ cụm từ
-  nào như "review frontend", "check HTMX", "Alpine pattern", "Tailwind audit", "hx-swap",
-  "anti-flicker", "SSE endpoint", "x-cloak", "kiểm tra frontend", "review cshtml".
-  Kích hoạt khi người dùng upload *.cshtml, *.js file, hoặc hỏi về UI behavior.
+  Scan the entire frontend layer of MarketNest to review quality: HTMX attribute correctness,
+  Alpine.js patterns, Tailwind CSS class audit, Razor Page partial structure, hx-boost, hx-swap,
+  hx-trigger, anti-flicker pattern, SSE/polling endpoints. Use this skill when the user wants to:
+  review frontend, check HTMX, audit Alpine.js, review Tailwind, check Razor partials,
+  check hx-boost, hx-swap, hx-trigger, antiforgery token, SSE setup, or says anything like
+  "review frontend", "check HTMX", "Alpine pattern", "Tailwind audit", "hx-swap",
+  "anti-flicker", "SSE endpoint", "x-cloak", "review cshtml".
+  Activate when the user uploads *.cshtml, *.js files or asks about UI behavior.
 compatibility:
-  tools: [bash, read_file, write_file, list_files]
-  agents: [claude-code, gemini-cli, cursor, continue, aider]
-  stack: [HTMX 2.x, Alpine.js 3.x, Tailwind CSS 4.x, Razor Pages .NET 10, Flowbite]
+  tools: [bash, read_file, write_file, list_files, grep_search, run_in_terminal]
+  agents: [claude-code, gemini-cli, cursor, continue, aider, copilot]
+  stack: [HTMX 2.x, Alpine.js 3.x, Tailwind CSS 4.x, Razor Pages .NET 10]
 ---
 
 # Frontend HTMX Review Skill — MarketNest
 
-Skill này review toàn bộ frontend layer theo 7 rule groups, từ HTMX attribute correctness
+This skill reviews the entire frontend layer across 7 rule groups, from HTMX attribute correctness
 đến Alpine.js state management, Tailwind consistency, và SSE/polling pattern.
 Output: báo cáo **BLOCKER / HIGH / MEDIUM / SUGGESTION** với HTML/C# fix sẵn sàng.
 
