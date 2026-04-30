@@ -304,6 +304,19 @@ public record CommissionOptions
 | Shared Razor partial paths | `SharedViewPaths` | `MarketNest.Web.Infrastructure` |
 | DB schema / table names | `TableConstants` | `MarketNest.Core` |
 | Status label strings | `EntityStatusNames`, `OrderStatusNames` | `MarketNest.Core` |
+| I18N resource key strings | `I18NKeys` | `MarketNest.Web.Infrastructure` |
+
+**Localization keys — must use `I18NKeys.*` (ADR-038):**
+```razor
+{{!-- ❌ Magic string — typos silently produce blank text --}}
+@I18N["Button.ShopNow"]
+
+{{!-- ✅ Constant — compile-time safety; one place to rename --}}
+@I18N[I18NKeys.Button.ShopNow]
+
+{{!-- ✅ Parameterized string --}}
+@I18N.Get(I18NKeys.Text.ProductCount, "1,245")
+```
 
 **Shared Razor partial paths — must use `SharedViewPaths.*` (ADR-035):**
 ```razor
