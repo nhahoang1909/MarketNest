@@ -9,7 +9,7 @@
 
 This document describes the centralized validation infrastructure used across the entire MarketNest project. All validators, EF Core configurations, and Razor views must reference these shared constants and messages.
 
-### Key Files
+### Backend Files
 
 | File | Purpose |
 |------|---------|
@@ -17,7 +17,30 @@ This document describes the centralized validation infrastructure used across th
 | `ValidationMessages.cs` | Human-readable error message factory — no inline strings in validators |
 | `ValidatorExtensions.cs` | Reusable FluentValidation extension methods for common patterns |
 
-All files live in `src/Base/MarketNest.Base.Common/Validation/` with namespace `MarketNest.Base.Common`.
+All backend files live in `src/Base/MarketNest.Base.Common/Validation/` with namespace `MarketNest.Base.Common`.
+
+### Frontend UI Components
+
+Shared Razor partial components in `src/MarketNest.Web/Pages/Shared/Forms/` that enforce `FieldLimits` at the HTML layer:
+
+| Component | Purpose |
+|-----------|---------|
+| `_TextField.cshtml` | Generic text input — supports `MaxLength`, `Required`, `Type`, live char counter |
+| `_TextArea.cshtml` | Multiline textarea — supports `MaxLength`, live char counter, resize mode |
+| `_SlugField.cshtml` | Slug input — auto-lowercases, enforces pattern, optional base URL prefix |
+| `_EmailField.cshtml` | Email input — `type="email"`, max 254, envelope icon |
+| `_PhoneField.cshtml` | Phone E.164 input — `type="tel"`, E.164 pattern hint |
+| `_UrlField.cshtml` | URL input — `type="url"`, max 500, HTTP(S) hint |
+| `_MoneyInput.cshtml` | Price/amount — currency prefix, `FieldLimits.Money` min/max, `AllowZero` option |
+| `_QuantityInput.cshtml` | Cart quantity stepper — +/- buttons, enforces 1–99 (or custom min/max) |
+| `_StockQuantityInput.cshtml` | Inventory quantity — 0–999,999 range |
+| `_PercentageInput.cshtml` | Percentage input — 0–100, % suffix, 4dp |
+| `_RatingInput.cshtml` | Star rating — interactive (radio buttons + Alpine) or read-only display |
+| `_SelectField.cshtml` | Select dropdown — label, options, error state |
+| `_ImageUpload.cshtml` | Image drag-drop upload — JPEG/PNG/WebP, max 5 MB (existing) |
+| `_ExcelUpload.cshtml` | Excel drag-drop upload — .xlsx/.xls, max 10 MB, file name feedback |
+| `_FormSection.cshtml` | Section card wrapper — title + divider heading for grouped fields |
+| `_FormActions.cshtml` | Submit/cancel row — loading spinner, Danger style, CancelHref |
 
 ---
 
@@ -144,7 +167,7 @@ FieldLimits.Review.BodyMaxLength         == FieldLimits.InlineExtended.MaxLength
 
 ## 8. Usage Examples
 
-### FluentValidation Validator
+### FluentValidation Validator (backend)
 
 ```csharp
 public class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
@@ -169,7 +192,7 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
 }
 ```
 
-### EF Core Configuration
+### EF Core Configuration (backend)
 
 ```csharp
 builder.Property(p => p.Name)
@@ -181,12 +204,67 @@ builder.Property(p => p.Slug)
     .IsRequired();
 ```
 
-### Razor View
+### Razor Partial Components (frontend)
 
-```html
-<input asp-for="ProductName"
-       maxlength="@FieldLimits.Product.NameMaxLength"
-       class="..." />
+All components receive parameters via `ViewData` and are called with `Html.PartialAsync`:
+
+```razor
+@* Simple text field with character counter *@
+<partial name="~/Pages/Shared/Forms/_TextField.cshtml" view-data='@(new ViewDataDictionary(ViewData) {
+    ["Label"] = "Product name",
+    ["Name"] = "ProductName",
+    ["Value"] = Model.ProductName,
+    ["MaxLength"] = FieldLimits.Product.NameMaxLength,
+    ["Required"] = "true",
+    ["Errors"] = ModelState["ProductName"]?.Errors.Select(e => e.ErrorMessage)
+})'/>
+
+@* Slug field with live auto-lowercase + base URL prefix *@
+<partial name="~/Pages/Shared/Forms/_SlugField.cshtml" view-data='@(new ViewDataDictionary(ViewData) {
+    ["Label"] = "Store URL",
+    ["Name"] = "Slug",
+    ["Value"] = Model.Slug,
+    ["BaseUrl"] = "marketnest.vn/shop/",
+    ["Errors"] = ModelState["Slug"]?.Errors.Select(e => e.ErrorMessage)
+})'/>
+
+@* Money input — VND *@
+<partial name="~/Pages/Shared/Forms/_MoneyInput.cshtml" view-data='@(new ViewDataDictionary(ViewData) {
+    ["Label"] = "Base price",
+    ["Name"] = "BasePrice",
+    ["Value"] = Model.BasePrice,
+    ["Currency"] = "₫",
+    ["Required"] = "true",
+    ["Errors"] = ModelState["BasePrice"]?.Errors.Select(e => e.ErrorMessage)
+})'/>
+
+@* Quantity stepper (compact mode for cart row) *@
+<partial name="~/Pages/Shared/Forms/_QuantityInput.cshtml" view-data='@(new ViewDataDictionary(ViewData) {
+    ["Name"] = "Quantity",
+    ["Value"] = item.Quantity,
+    ["Compact"] = "true"
+})'/>
+
+@* Rating display (read-only, no interactivity) *@
+<partial name="~/Pages/Shared/Forms/_RatingInput.cshtml" view-data='@(new ViewDataDictionary(ViewData) {
+    ["Label"] = "Your rating",
+    ["Name"] = "Rating",
+    ["Value"] = Model.Rating,
+    ["ReadOnly"] = "true"
+})'/>
+
+@* Form section card + actions row *@
+<partial name="~/Pages/Shared/Forms/_FormSection.cshtml" view-data='@(new ViewDataDictionary(ViewData) {
+    ["Title"] = "Basic information",
+    ["Description"] = "Product name, slug, and category"
+})'/>
+
+@* ... fields here *@
+
+<partial name="~/Pages/Shared/Forms/_FormActions.cshtml" view-data='@(new ViewDataDictionary(ViewData) {
+    ["SubmitLabel"] = "Save product",
+    ["CancelHref"] = AppRoutes.Seller.Products
+})'/>
 ```
 
 ---

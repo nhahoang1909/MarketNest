@@ -258,17 +258,23 @@ Pages/Shared/
 ├── _LayoutAdmin.cshtml        ← Admin layout
 ├── _ViewImports.cshtml
 ├── Forms/
-│   ├── _TextField.cshtml          ← Input + label + validation
-│   ├── _TextArea.cshtml
-│   ├── _SelectField.cshtml
-│   ├── _CheckboxField.cshtml
-│   ├── _RadioGroup.cshtml
-│   ├── _DatePicker.cshtml         ← Alpine date picker
-│   ├── _MoneyInput.cshtml         ← Decimal + currency prefix
-│   ├── _SearchInput.cshtml        ← HTMX search with debounce
-│   ├── _MultiSelect.cshtml        ← Tag-style (Alpine)
-│   ├── _ImageUpload.cshtml        ← Drag-drop with preview
-│   └── _FormSection.cshtml
+│   ├── _TextField.cshtml          ← Generic text input — MaxLength, Type, Required, live char counter
+│   ├── _TextArea.cshtml           ← Multiline — MaxLength, live char counter, Resize mode
+│   ├── _SlugField.cshtml          ← Slug — auto-lowercase (Alpine), BaseUrl prefix, FieldLimits.Slug
+│   ├── _EmailField.cshtml         ← type=email, max 254, envelope icon
+│   ├── _PhoneField.cshtml         ← type=tel, E.164 pattern + hint
+│   ├── _UrlField.cshtml           ← type=url, max 500, HTTPS hint
+│   ├── _MoneyInput.cshtml         ← Decimal + currency prefix, FieldLimits.Money, AllowZero
+│   ├── _QuantityInput.cshtml      ← +/– stepper, Compact mode, FieldLimits.Quantity
+│   ├── _StockQuantityInput.cshtml ← 0–999,999 numeric, FieldLimits.Quantity.StockMax
+│   ├── _PercentageInput.cshtml    ← 0–100 with % suffix, FieldLimits.Percentage
+│   ├── _RatingInput.cshtml        ← Interactive star selector (Alpine) or read-only display
+│   ├── _SelectField.cshtml        ← Select dropdown — label, options, error state
+│   ├── _ImageUpload.cshtml        ← Drag-drop with preview — JPEG/PNG/WebP, max 5 MB
+│   ├── _ExcelUpload.cshtml        ← Drag-drop Excel upload — .xlsx/.xls, max 10 MB
+│   ├── _SearchInput.cshtml        ← HTMX search with debounce + spinner
+│   ├── _FormSection.cshtml        ← Section card wrapper — title + divider heading
+│   └── _FormActions.cshtml        ← Submit/cancel row — loading spinner, Danger variant
 ├── Display/
 │   ├── _StatusBadge.cshtml        ← Colored per domain
 │   ├── _StarRating.cshtml         ← Display 0–5
@@ -463,12 +469,51 @@ public abstract class BasePageModel : PageModel
 
 ### Strategy: Server-First + HTMX Enhancement
 
-1. All validation in domain/application layer
+1. All validation in domain/application layer via `ValidatorExtensions` + `ValidationMessages`
 2. Server returns form partial with inline errors on failure
-3. HTML5 native validation as first-pass client-side
-4. No duplicated validation in Alpine — Alpine handles only UX state
+3. HTML5 native validation as first-pass client-side (`maxlength`, `min`, `max`, `pattern`, `required`)
+4. No duplicated validation in Alpine — Alpine handles only UX state (char counter, slug format, stepper)
+
+### Shared Form Field Components
+
+All field components live in `Pages/Shared/Forms/`. They receive parameters via `ViewData` and enforce `FieldLimits` constants at the HTML layer. **Always prefer these over custom inline inputs.**
+
+| Component | When to use |
+|-----------|------------|
+| `_TextField` | Any single-line text; set `Type="email"/"url"/"tel"` for specialised inputs |
+| `_SlugField` | Storefront/product slug; auto-lowercases client-side |
+| `_EmailField` | Dedicated email input with icon |
+| `_PhoneField` | E.164 phone number with hint |
+| `_UrlField` | Website/social URL |
+| `_TextArea` | Multi-line notes, descriptions |
+| `_MoneyInput` | Price fields (VND default, `AllowZero` for fees) |
+| `_QuantityInput` | Cart/order qty stepper (`Compact="true"` for inline rows) |
+| `_StockQuantityInput` | Inventory stock management |
+| `_PercentageInput` | Commission rates, discount percentages |
+| `_RatingInput` | Star rating submit or read-only display |
+| `_SelectField` | Dropdowns with `IEnumerable<SelectListItem>` |
+| `_ImageUpload` | Product/avatar image drag-drop |
+| `_ExcelUpload` | Batch import .xlsx/.xls |
+| `_FormSection` | Card section header + divider wrapper |
+| `_FormActions` | Submit/Cancel row with loading spinner |
+
+**Minimum call pattern:**
+
+```razor
+<partial name="~/Pages/Shared/Forms/_TextField.cshtml" view-data='@(new ViewDataDictionary(ViewData) {
+    ["Label"]     = "Product name",
+    ["Name"]      = "ProductName",
+    ["Value"]     = Model.ProductName,
+    ["MaxLength"] = FieldLimits.Product.NameMaxLength,
+    ["Required"]  = "true",
+    ["Errors"]    = ModelState["ProductName"]?.Errors.Select(e => e.ErrorMessage)
+})'/>
+```
+
+**`FieldLimits` is available in all Razor views** — `MarketNest.Base.Common` is imported via `_ViewImports.cshtml`.
 
 ### Anti-CSRF
+
 - All forms include `@Html.AntiForgeryToken()`
 - HTMX includes token via `htmx:configRequest` event handler
 

@@ -20,6 +20,18 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-04-30 - feat(ui): Shared form field UI components tied to FieldLimits validation rules
+- **Status**: Completed
+- **Description**: Created 10 new + updated 3 existing Razor partial components in `Pages/Shared/Forms/` that directly enforce `FieldLimits` at the HTML layer (maxlength, min/max/step, pattern, inputmode):
+  - **Updated**: `_TextField.cshtml` (MaxLength, Required, Type, live char counter, error icon), `_TextArea.cshtml` (MaxLength, live char counter, Resize option), `_MoneyInput.cshtml` (FieldLimits.Money min/max, Required, AllowZero)
+  - **New**: `_SlugField.cshtml` (auto-lowercase Alpine behavior, BaseUrl prefix, char counter), `_EmailField.cshtml` (type=email, max 254, envelope icon), `_PhoneField.cshtml` (type=tel, E.164 pattern + hint), `_UrlField.cshtml` (type=url, max 500, HTTPS hint), `_QuantityInput.cshtml` (+/- stepper, Compact mode, FieldLimits.Quantity), `_StockQuantityInput.cshtml` (0–999999), `_PercentageInput.cshtml` (0–100, % suffix, 4dp), `_RatingInput.cshtml` (interactive radio stars + read-only display, Alpine hover), `_ExcelUpload.cshtml` (drag-drop, file name feedback, FieldLimits.FileUpload), `_FormSection.cshtml` (card section wrapper with heading + divider), `_FormActions.cshtml` (submit/cancel row with loading spinner + Danger variant)
+- **Files changed**: 3 updated + 10 new in `src/MarketNest.Web/Pages/Shared/Forms/`
+- **Docs updated**: `docs/common-validation-rules.md` — added UI Components table + full frontend usage examples
+- **Build**: `dotnet build` → 0 warnings, 0 errors ✅
+- **Notes**: All components use `ViewData` dictionary pattern for consistency. `FieldLimits` is available via `MarketNest.Base.Common` which is already imported in `_ViewImports.cshtml`. No Alpine.js components needed for basic fields; complex fields (slug, quantity stepper, rating, excel upload) use inline `x-data`.
+
+---
+
 ### 2026-04-30 - feat(base): Common Validation Rules infrastructure — FieldLimits, ValidationMessages, ValidatorExtensions expansion
 - **Status**: Completed
 - **Description**: Implemented centralized validation infrastructure for the entire project:
