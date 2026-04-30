@@ -45,3 +45,12 @@ logs/
 TestResults/
 *.trx
 coverage/
+
+# ── Claude Code ─────────────────────────────────────────────
+# Claude Code creates git worktrees here for parallel sessions.
+# Each worktree contains a .git file, which GitHub Actions'
+# `git submodule foreach` misidentifies as an unregistered submodule,
+# causing fatal post-job cleanup failures. Always ignore these.
+.claude/worktrees/
+.claude/settings.local.json
+
