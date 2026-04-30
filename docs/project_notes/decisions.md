@@ -46,6 +46,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-035 | SharedViewPaths — Centralized Razor Partial Path Constants | 2026-04-30 |
 | ADR-036 | Rich Text Editor — Trix with Server-Side HTML Sanitization | 2026-04-30 |
 | ADR-037 | Excel Import/Export — ClosedXML + IExcelService + IAntivirusScanner | 2026-04-30 |
+| ADR-038 | I18N Service — II18NService Wrapper + I18NKeys Constants | 2026-04-30 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -1081,3 +1082,26 @@ The Unit of Work pattern is split into two distinct use cases, each with its own
 - ❌ ClosedXML has no native async API — offloaded to `Task.Run` (acceptable for <10k rows)
 - ❌ FindBySkuAsync is a no-op stub in Phase 1 — update handler creates all rows; Phase 2 adds the real query
 
+---
+
+### ADR-038: I18N Service — II18NService Wrapper + I18NKeys Constants (2026-04-30)
+
+**Context:**
+- Project had raw `IHtmlLocalizer<SharedResource>` usage in layouts and hardcoded Vietnamese strings in Auth pages and Home page.
+- ADR-005 (no magic strings) was violated — inline `"Nav.Home"` key strings in Razor views.
+- Need a single localization entry point that: (a) returns `string.Empty` on missing keys (never crashes), (b) logs warnings for missing keys, (c) enforces `I18NKeys.*` constants.
+
+**Decision:**
+- Introduced `II18NService` contract (indexer + `Get(key, args)` + `KeyExists`) in `MarketNest.Web.Infrastructure`.
+- Implementation `I18NService` wraps `IStringLocalizer<SharedResource>`, returns `string.Empty` on `ResourceNotFound`, uses `IAppLogger<I18NService>` with `[LoggerMessage]` source-gen (EventIds 10800–10801).
+- Static `I18NKeys` class holds all resource key constants — no inline string keys allowed at call sites.
+- `II18NService` injected globally via `_ViewImports.cshtml` as `I18N` — available in every Razor view.
+- Layouts continue using `SharedLocalizer["Key"]` for backward compatibility; new pages and converted pages use `I18N[I18NKeys.Xxx]`.
+- Registered as `Scoped` (culture-per-request matches HTTP lifecycle).
+
+**Consequences:**
+- ✅ Missing keys show blank (not raw key) — cleaner UI, detectable via Seq log EventId 10800
+- ✅ Type-safe keys via `I18NKeys.*` — typos caught at compile time
+- ✅ Single interface for all future localization needs (backend handlers, email subjects, etc.)
+- ✅ Cookie-based culture + `CookieRequestCultureProvider` at index 0 — language persists across sessions
+- ❌ Dual pattern (`SharedLocalizer` in old layouts + `I18N` in new pages) until full migration — acceptable, both resolve the same resource files

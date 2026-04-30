@@ -19,6 +19,7 @@
 9. [Forms & Validation](#9-forms--validation)
 10. [Performance & Accessibility](#10-performance--accessibility)
 11. [Frontend Dev Tooling](#11-frontend-dev-tooling)
+12. [Localization (I18N)](#12-localization-i18n)
 
 ---
 
@@ -656,4 +657,115 @@ public class HtmxConfirmTagHelper : TagHelper { ... }
 [HtmlTargetElement("a", Attributes = "mn-nav")]
 public class ActiveNavTagHelper : TagHelper { ... }
 ```
+
+---
+
+## 12. Localization (I18N)
+
+> **ADR-038 (2026-04-30)** — `II18NService` wrapper + `I18NKeys` constants.
+
+### Overview
+
+| Item | Value |
+|------|-------|
+| Interface | `II18NService` in `MarketNest.Web.Infrastructure` |
+| Implementation | `I18NService` — wraps `IStringLocalizer<SharedResource>`, returns `""` on missing key |
+| DI lifetime | `Scoped` (one per HTTP request — matches per-request culture) |
+| View injection | `@inject II18NService I18N` globally via `_ViewImports.cshtml` |
+| Key constants | `I18NKeys` static class in `MarketNest.Web.Infrastructure` |
+| Resource files | `src/MarketNest.Web/Resources/SharedResource.{culture}.resx` |
+| Supported cultures | `en` (English), `vi` (Vietnamese) |
+| Culture selection | Cookie (`CookieRequestCultureProvider` at index 0) — persists across sessions |
+| Missing-key logging | Seq EventId `10800` (`I18NKeyNotFound`) — blank shown to user, never crashes |
+
+### Usage in Razor Views
+
+```razor
+{{!-- Simple key lookup --}}
+@I18N[I18NKeys.Button.ShopNow]
+
+{{!-- Parameterized string (string.Format-style) --}}
+@I18N.Get(I18NKeys.Text.ProductCount, "1,245")
+
+{{!-- Page title --}}
+ViewData["Title"] = I18N[I18NKeys.Page.Home];
+
+{{!-- Conditional / guard --}}
+@if (I18N.KeyExists(I18NKeys.Text.HeroHeadline))
+{
+    <h1>@I18N[I18NKeys.Text.HeroHeadline]</h1>
+}
+```
+
+### `II18NService` API
+
+```csharp
+public interface II18NService
+{
+    /// <summary>Returns localized string for key; returns string.Empty if missing.</summary>
+    string this[string key] { get; }
+
+    /// <summary>Returns localized string with format arguments; returns string.Empty on error.</summary>
+    string Get(string key, params object[] args);
+
+    /// <summary>Returns true if the key exists in the current culture's resource file.</summary>
+    bool KeyExists(string key);
+}
+```
+
+### `I18NKeys` — Key Constant Organization
+
+All resource key strings live in `I18NKeys` (namespace `MarketNest.Web.Infrastructure`). **Never inline key strings** at call sites.
+
+```csharp
+public static class I18NKeys
+{
+    public static class Page   { /* Page.Login, Page.Home, … */ }
+    public static class Label  { /* Label.Email, Label.Password, … */ }
+    public static class Button { /* Button.Login, Button.ShopNow, … */ }
+    public static class Text   { /* Text.Hero.Headline, Text.Category.Fashion, … */ }
+    public static class Link   { /* Link.ForgotPassword, Link.TermsOfService, … */ }
+    public static class Nav    { /* Nav.Home, Nav.Shop, Nav.Search, … */ }
+    public static class Auth   { /* Auth.Login, Auth.Logout, Auth.Register, … */ }
+}
+```
+
+When adding a new user-facing string:
+1. Add a constant to the appropriate `I18NKeys.*` nested class
+2. Add the English value to `SharedResource.en.resx`
+3. Add the Vietnamese translation to `SharedResource.vi.resx`
+4. Use `I18N[I18NKeys.YourKey]` at the call site — never the raw string
+
+### Resource File Location
+
+```
+src/MarketNest.Web/
+└── Resources/
+    ├── SharedResource.cs              ← Empty marker class (namespace MarketNest.Web)
+    ├── SharedResource.en.resx         ← English strings  (~200 keys)
+    └── SharedResource.vi.resx         ← Vietnamese strings
+```
+
+> ⚠️ File location must match the class namespace. `SharedResource` is in namespace `MarketNest.Web` (not a sub-namespace), and resource files are at `Resources/SharedResource.{culture}.resx` with `ResourcesPath = "Resources"` in `Program.cs`. Changing either breaks the resource lookup.
+
+### Layouts — Transitional Pattern
+
+Old layouts (`_Layout.cshtml`, `_LayoutSeller.cshtml`, `_LayoutAdmin.cshtml`) still use `SharedLocalizer["Key"]` for backward compatibility. New pages and converted pages use `I18N[I18NKeys.*]`. Both resolve the same `.resx` files — the dual pattern is intentional until full migration.
+
+```razor
+{{!-- ✅ Old layout (still valid) --}}
+@SharedLocalizer["Nav.Home"]
+
+{{!-- ✅ New pages (preferred for all new code) --}}
+@I18N[I18NKeys.Nav.Home]
+```
+
+### Adding a New Key (Checklist)
+
+- [ ] Add constant to `I18NKeys` in the correct nested class: `I18NKeys.Text.MyNewKey = "Text.MyNewKey"`
+- [ ] Add English entry to `SharedResource.en.resx`: `<data name="Text.MyNewKey"><value>English text</value></data>`
+- [ ] Add Vietnamese entry to `SharedResource.vi.resx`
+- [ ] Use `@I18N[I18NKeys.Text.MyNewKey]` in the Razor view
+- [ ] Build → verify 0 warnings (missing keys log at WARNING in Seq, not compile errors)
+
 

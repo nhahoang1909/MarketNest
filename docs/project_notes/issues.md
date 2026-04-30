@@ -488,3 +488,25 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
   - MiniExcel streaming for large exports (>10k rows) deferred to Phase 2.
   - CSV import deferred to Phase 2.
 
+
+### 2026-04-30 — I18N Service + Full Page Localization (ADR-038)
+
+- **What**: Implemented `II18NService`/`I18NService`, `I18NKeys` constants, and converted all hardcoded Vietnamese strings in Auth pages + Home page to i18n resource keys.
+- **Files created**:
+  - `src/MarketNest.Web/Infrastructure/Localization/II18NService.cs` — interface (indexer, Get, KeyExists)
+  - `src/MarketNest.Web/Infrastructure/Localization/I18NService.cs` — implementation with IAppLogger + [LoggerMessage] (EventIds 10800–10801)
+  - `src/MarketNest.Web/Infrastructure/Localization/I18NKeys.cs` — static key constants (Page, Label, Button, Text, Link, Nav, Auth)
+- **Files modified**:
+  - `src/Base/MarketNest.Base.Infrastructure/Logging/LogEventId.cs` — added `I18NKeyNotFound = 10800`, `I18NFormatError = 10801`
+  - `src/MarketNest.Web/Program.cs` — registered `II18NService` as Scoped
+  - `src/MarketNest.Web/Pages/_ViewImports.cshtml` — injected `II18NService I18N`
+  - `src/MarketNest.Web/Resources/SharedResource.en.resx` — added 50+ new keys (Page, Label, Button, Text, Link)
+  - `src/MarketNest.Web/Resources/SharedResource.vi.resx` — added 50+ new keys (Vietnamese translations)
+  - `src/MarketNest.Web/Pages/Auth/Login.cshtml` — fully localized
+  - `src/MarketNest.Web/Pages/Auth/Register.cshtml` — fully localized
+  - `src/MarketNest.Web/Pages/Auth/ForgotPassword.cshtml` — fully localized
+  - `src/MarketNest.Web/Pages/Index.cshtml` — UI chrome localized (product showcase data stays as placeholder)
+- **Build**: `dotnet build` → 0 errors, 0 warnings ✅
+- **Pattern**: `@I18N[I18NKeys.Category.Key]` in Razor views; `I18N.Get(key, args)` for parameterized strings
+- **Remaining work**: Migrate existing layouts from `SharedLocalizer["Key"]` to `I18N[I18NKeys.Nav.Key]` pattern (low priority — both resolve same .resx)
+
