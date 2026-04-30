@@ -186,7 +186,6 @@ src/Base/
 │   ├── Queries/                   ← PagedQuery, PagedResult<T>, IBaseQuery<T,K>
 │   ├── Security/                  ← IAntivirusScanner
 │   ├── Sequences/                 ← ISequenceService, SequenceDescriptor
-│   ├── Dtos/                      ← IdAndNameDto, SelectOptionDto<T>, DocumentInfo, StatusDto, TimestampDto
 │   ├── Validation/                ← ValidatorExtensions, FieldLimits, ValidationMessages
 │   └── ValueObjects/              ← Money, Address
 │
