@@ -137,4 +137,73 @@
     <data name="Seller.User.Account" xml:space="preserve"><value>Tài khoản</value></data>
     <data name="Seller.User.MyOrders" xml:space="preserve"><value>Đơn của tôi</value></data>
 
+    <!-- Page titles -->
+    <data name="Page.Login" xml:space="preserve"><value>Đăng nhập</value></data>
+    <data name="Page.Register" xml:space="preserve"><value>Tạo tài khoản</value></data>
+    <data name="Page.ForgotPassword" xml:space="preserve"><value>Quên mật khẩu</value></data>
+    <data name="Page.Home" xml:space="preserve"><value>Trang chủ</value></data>
+
+    <!-- Labels -->
+    <data name="Label.Email" xml:space="preserve"><value>Email</value></data>
+    <data name="Label.Password" xml:space="preserve"><value>Mật khẩu</value></data>
+    <data name="Label.ConfirmPassword" xml:space="preserve"><value>Xác nhận mật khẩu</value></data>
+    <data name="Label.FullName" xml:space="preserve"><value>Họ và tên</value></data>
+    <data name="Label.YouAre" xml:space="preserve"><value>Bạn là</value></data>
+    <data name="Label.Password.Placeholder" xml:space="preserve"><value>Nhập mật khẩu</value></data>
+    <data name="Label.Password.MinLength" xml:space="preserve"><value>Ít nhất 8 ký tự</value></data>
+    <data name="Label.ConfirmPassword.Placeholder" xml:space="preserve"><value>Nhập lại mật khẩu</value></data>
+    <data name="Label.FullName.Placeholder" xml:space="preserve"><value>Nguyễn Văn A</value></data>
+
+    <!-- Buttons -->
+    <data name="Button.Login" xml:space="preserve"><value>Đăng nhập</value></data>
+    <data name="Button.Register" xml:space="preserve"><value>Đăng ký</value></data>
+    <data name="Button.SendResetLink" xml:space="preserve"><value>Gửi liên kết đặt lại</value></data>
+    <data name="Button.LoginGoogle" xml:space="preserve"><value>Đăng nhập với Google</value></data>
+    <data name="Button.LoginFacebook" xml:space="preserve"><value>Đăng nhập với Facebook</value></data>
+    <data name="Button.ShopNow" xml:space="preserve"><value>Mua sắm ngay</value></data>
+    <data name="Button.BecomeSeller" xml:space="preserve"><value>Trở thành người bán</value></data>
+    <data name="Button.OpenStoreFree" xml:space="preserve"><value>Mở gian hàng miễn phí</value></data>
+
+    <!-- Text -->
+    <data name="Text.RememberMe" xml:space="preserve"><value>Ghi nhớ đăng nhập</value></data>
+    <data name="Text.Or" xml:space="preserve"><value>hoặc</value></data>
+    <data name="Text.NoAccount" xml:space="preserve"><value>Chưa có tài khoản?</value></data>
+    <data name="Text.HasAccount" xml:space="preserve"><value>Đã có tài khoản?</value></data>
+    <data name="Text.ForgotPassword.Description" xml:space="preserve"><value>Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn liên kết để đặt lại mật khẩu.</value></data>
+    <data name="Text.AgreeTerms" xml:space="preserve"><value>Tôi đồng ý với</value></data>
+    <data name="Text.And" xml:space="preserve"><value>và</value></data>
+    <data name="Text.TogglePassword" xml:space="preserve"><value>Hiện/ẩn mật khẩu</value></data>
+    <data name="Text.Role.Buyer" xml:space="preserve"><value>Người mua</value></data>
+    <data name="Text.Role.Buyer.Desc" xml:space="preserve"><value>Mua sắm sản phẩm</value></data>
+    <data name="Text.Role.Seller" xml:space="preserve"><value>Người bán</value></data>
+    <data name="Text.Role.Seller.Desc" xml:space="preserve"><value>Mở gian hàng</value></data>
+    <data name="Text.Hero.Headline" xml:space="preserve"><value>Khám phá thế giới mua sắm</value></data>
+    <data name="Text.Hero.Subtitle" xml:space="preserve"><value>Sàn thương mại điện tử đa người bán — nơi kết nối những sản phẩm độc đáo từ các nhà bán hàng độc lập.</value></data>
+    <data name="Text.Categories.Eyebrow" xml:space="preserve"><value>DANH MỤC</value></data>
+    <data name="Text.Categories.Title" xml:space="preserve"><value>Khám phá theo danh mục</value></data>
+    <data name="Text.Featured.Eyebrow" xml:space="preserve"><value>NỔI BẬT</value></data>
+    <data name="Text.Featured.Title" xml:space="preserve"><value>Sản phẩm được yêu thích</value></data>
+    <data name="Text.Editorial.Quote" xml:space="preserve"><value>Mỗi sản phẩm đều mang trong mình một câu chuyện — từ bàn tay người thợ đến ngôi nhà của bạn.</value></data>
+    <data name="Text.Editorial.Author" xml:space="preserve"><value>Đội ngũ MarketNest</value></data>
+    <data name="Text.Editorial.CtaTitle" xml:space="preserve"><value>Bạn có sản phẩm độc đáo?</value></data>
+    <data name="Text.Editorial.CtaDesc" xml:space="preserve"><value>Tham gia cộng đồng người bán trên MarketNest và tiếp cận hàng triệu người mua tiềm năng.</value></data>
+    <data name="Text.Category.Fashion" xml:space="preserve"><value>Thời trang</value></data>
+    <data name="Text.Category.Home" xml:space="preserve"><value>Nhà cửa</value></data>
+    <data name="Text.Category.Ceramics" xml:space="preserve"><value>Gốm &amp; Thủ công</value></data>
+    <data name="Text.Category.Audio" xml:space="preserve"><value>Âm thanh</value></data>
+    <data name="Text.Category.Stationery" xml:space="preserve"><value>Văn phòng phẩm</value></data>
+    <data name="Text.Category.Kitchen" xml:space="preserve"><value>Nhà bếp</value></data>
+    <data name="Text.Category.Lighting" xml:space="preserve"><value>Đèn &amp; Ánh sáng</value></data>
+    <data name="Text.Category.Garden" xml:space="preserve"><value>Vườn &amp; Cây</value></data>
+    <data name="Text.ProductCount" xml:space="preserve"><value>{0} sản phẩm</value></data>
+    <data name="Text.ByShop" xml:space="preserve"><value>bởi</value></data>
+
+    <!-- Links -->
+    <data name="Link.ForgotPassword" xml:space="preserve"><value>Quên mật khẩu?</value></data>
+    <data name="Link.RegisterNow" xml:space="preserve"><value>Đăng ký ngay</value></data>
+    <data name="Link.Login" xml:space="preserve"><value>Đăng nhập</value></data>
+    <data name="Link.BackToLogin" xml:space="preserve"><value>Quay lại đăng nhập</value></data>
+    <data name="Link.TermsOfService" xml:space="preserve"><value>Điều khoản sử dụng</value></data>
+    <data name="Link.PrivacyPolicy" xml:space="preserve"><value>Chính sách bảo mật</value></data>
+
 </root>

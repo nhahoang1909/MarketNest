@@ -137,4 +137,73 @@
     <data name="Seller.User.Account" xml:space="preserve"><value>Account</value></data>
     <data name="Seller.User.MyOrders" xml:space="preserve"><value>My orders</value></data>
 
+    <!-- Page titles -->
+    <data name="Page.Login" xml:space="preserve"><value>Log in</value></data>
+    <data name="Page.Register" xml:space="preserve"><value>Create account</value></data>
+    <data name="Page.ForgotPassword" xml:space="preserve"><value>Forgot password</value></data>
+    <data name="Page.Home" xml:space="preserve"><value>Home</value></data>
+
+    <!-- Labels -->
+    <data name="Label.Email" xml:space="preserve"><value>Email</value></data>
+    <data name="Label.Password" xml:space="preserve"><value>Password</value></data>
+    <data name="Label.ConfirmPassword" xml:space="preserve"><value>Confirm password</value></data>
+    <data name="Label.FullName" xml:space="preserve"><value>Full name</value></data>
+    <data name="Label.YouAre" xml:space="preserve"><value>You are</value></data>
+    <data name="Label.Password.Placeholder" xml:space="preserve"><value>Enter password</value></data>
+    <data name="Label.Password.MinLength" xml:space="preserve"><value>At least 8 characters</value></data>
+    <data name="Label.ConfirmPassword.Placeholder" xml:space="preserve"><value>Re-enter password</value></data>
+    <data name="Label.FullName.Placeholder" xml:space="preserve"><value>John Doe</value></data>
+
+    <!-- Buttons -->
+    <data name="Button.Login" xml:space="preserve"><value>Log in</value></data>
+    <data name="Button.Register" xml:space="preserve"><value>Register</value></data>
+    <data name="Button.SendResetLink" xml:space="preserve"><value>Send reset link</value></data>
+    <data name="Button.LoginGoogle" xml:space="preserve"><value>Log in with Google</value></data>
+    <data name="Button.LoginFacebook" xml:space="preserve"><value>Log in with Facebook</value></data>
+    <data name="Button.ShopNow" xml:space="preserve"><value>Shop now</value></data>
+    <data name="Button.BecomeSeller" xml:space="preserve"><value>Become a seller</value></data>
+    <data name="Button.OpenStoreFree" xml:space="preserve"><value>Open store for free</value></data>
+
+    <!-- Text -->
+    <data name="Text.RememberMe" xml:space="preserve"><value>Remember me</value></data>
+    <data name="Text.Or" xml:space="preserve"><value>or</value></data>
+    <data name="Text.NoAccount" xml:space="preserve"><value>Don't have an account?</value></data>
+    <data name="Text.HasAccount" xml:space="preserve"><value>Already have an account?</value></data>
+    <data name="Text.ForgotPassword.Description" xml:space="preserve"><value>Enter your email address and we'll send you a link to reset your password.</value></data>
+    <data name="Text.AgreeTerms" xml:space="preserve"><value>I agree to the</value></data>
+    <data name="Text.And" xml:space="preserve"><value>and</value></data>
+    <data name="Text.TogglePassword" xml:space="preserve"><value>Show/hide password</value></data>
+    <data name="Text.Role.Buyer" xml:space="preserve"><value>Buyer</value></data>
+    <data name="Text.Role.Buyer.Desc" xml:space="preserve"><value>Shop for products</value></data>
+    <data name="Text.Role.Seller" xml:space="preserve"><value>Seller</value></data>
+    <data name="Text.Role.Seller.Desc" xml:space="preserve"><value>Open a store</value></data>
+    <data name="Text.Hero.Headline" xml:space="preserve"><value>Discover the world of shopping</value></data>
+    <data name="Text.Hero.Subtitle" xml:space="preserve"><value>Multi-vendor marketplace — connecting unique products from independent sellers.</value></data>
+    <data name="Text.Categories.Eyebrow" xml:space="preserve"><value>CATEGORIES</value></data>
+    <data name="Text.Categories.Title" xml:space="preserve"><value>Browse by category</value></data>
+    <data name="Text.Featured.Eyebrow" xml:space="preserve"><value>FEATURED</value></data>
+    <data name="Text.Featured.Title" xml:space="preserve"><value>Favourite products</value></data>
+    <data name="Text.Editorial.Quote" xml:space="preserve"><value>Every product carries a story — from the artisan's hands to your home.</value></data>
+    <data name="Text.Editorial.Author" xml:space="preserve"><value>The MarketNest Team</value></data>
+    <data name="Text.Editorial.CtaTitle" xml:space="preserve"><value>Have a unique product?</value></data>
+    <data name="Text.Editorial.CtaDesc" xml:space="preserve"><value>Join the MarketNest seller community and reach millions of potential buyers.</value></data>
+    <data name="Text.Category.Fashion" xml:space="preserve"><value>Fashion</value></data>
+    <data name="Text.Category.Home" xml:space="preserve"><value>Home &amp; Living</value></data>
+    <data name="Text.Category.Ceramics" xml:space="preserve"><value>Ceramics &amp; Crafts</value></data>
+    <data name="Text.Category.Audio" xml:space="preserve"><value>Audio</value></data>
+    <data name="Text.Category.Stationery" xml:space="preserve"><value>Stationery</value></data>
+    <data name="Text.Category.Kitchen" xml:space="preserve"><value>Kitchen</value></data>
+    <data name="Text.Category.Lighting" xml:space="preserve"><value>Lighting</value></data>
+    <data name="Text.Category.Garden" xml:space="preserve"><value>Garden &amp; Plants</value></data>
+    <data name="Text.ProductCount" xml:space="preserve"><value>{0} products</value></data>
+    <data name="Text.ByShop" xml:space="preserve"><value>by</value></data>
+
+    <!-- Links -->
+    <data name="Link.ForgotPassword" xml:space="preserve"><value>Forgot password?</value></data>
+    <data name="Link.RegisterNow" xml:space="preserve"><value>Register now</value></data>
+    <data name="Link.Login" xml:space="preserve"><value>Log in</value></data>
+    <data name="Link.BackToLogin" xml:space="preserve"><value>Back to login</value></data>
+    <data name="Link.TermsOfService" xml:space="preserve"><value>Terms of Service</value></data>
+    <data name="Link.PrivacyPolicy" xml:space="preserve"><value>Privacy Policy</value></data>
+
 </root>

@@ -66,6 +66,9 @@ try
     // ── Services ──────────────────────────────────────────────────────────
     builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
+    // II18NService — localized string wrapper (Scoped, culture-per-request)
+    builder.Services.AddScoped<II18NService, I18NService>();
+
     // Unit of Work — Scoped: collects domain events and saves all module DbContexts in one pass.
     // Must be registered before AddRazorPages/AddControllers so filters can inject it.
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();

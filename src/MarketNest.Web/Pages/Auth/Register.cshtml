@@ -1,7 +1,7 @@
 @page "/auth/register"
 @model MarketNest.Web.Pages.Auth.RegisterModel
 @{
-  ViewData["Title"] = "Tao tai khoan";
+  ViewData["Title"] = I18N[I18NKeys.Page.Register];
 }
 
 <section class="flex items-center justify-center min-h-[calc(100vh-200px)] py-12 px-4">
@@ -18,7 +18,7 @@
         </div>
 
         <!-- Heading -->
-        <h1 class="mn-h4 text-center">Tao tai khoan</h1>
+        <h1 class="mn-h4 text-center">@I18N[I18NKeys.Page.Register]</h1>
 
         <!-- Form -->
         <form hx-post="@AppRoutes.Auth.Register"
@@ -31,17 +31,17 @@
 
           <!-- Full name -->
           <partial name="@SharedViewPaths.TextField" view-data='@(new ViewDataDictionary(ViewData) {
-              ["Label"]       = "Ho va ten",
+              ["Label"]       = I18N[I18NKeys.Label.FullName],
               ["Name"]        = "FullName",
               ["Value"]       = "",
-              ["Placeholder"] = "Nguyen Van A",
+              ["Placeholder"] = I18N[I18NKeys.Label.FullNamePlaceholder],
               ["MaxLength"]   = FieldLimits.InlineStandard.MaxLength,
               ["Required"]    = "true"
           })'/>
 
           <!-- Email -->
           <partial name="@SharedViewPaths.EmailField" view-data='@(new ViewDataDictionary(ViewData) {
-              ["Label"]    = "Email",
+              ["Label"]    = I18N[I18NKeys.Label.Email],
               ["Name"]     = "Email",
               ["Value"]    = "",
               ["Required"] = "true"
@@ -49,13 +49,13 @@
 
           <!-- Password -->
           <div>
-            <label for="password" class="form-label">Mat khau</label>
+            <label for="password" class="form-label">@I18N[I18NKeys.Label.Password]</label>
             <div class="relative">
               <input :type="showPassword ? 'text' : 'password'" id="password" name="Password"
-                     placeholder="It nhat 8 ky tu" class="form-input pr-11" required/>
+                     placeholder="@I18N[I18NKeys.Label.PasswordMinLength]" class="form-input pr-11" required/>
               <button type="button" @@click="showPassword = !showPassword"
                       class="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-600 transition-colors"
-                      aria-label="Hien/an mat khau">
+                      aria-label="@I18N[I18NKeys.Text.TogglePassword]">
                 <svg x-show="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5"
                      viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round"
@@ -73,13 +73,13 @@
 
           <!-- Confirm Password -->
           <div>
-            <label for="confirmPassword" class="form-label">Xac nhan mat khau</label>
+            <label for="confirmPassword" class="form-label">@I18N[I18NKeys.Label.ConfirmPassword]</label>
             <div class="relative">
               <input :type="showConfirm ? 'text' : 'password'" id="confirmPassword" name="ConfirmPassword"
-                     placeholder="Nhap lai mat khau" class="form-input pr-11" required/>
+                     placeholder="@I18N[I18NKeys.Label.ConfirmPasswordPlaceholder]" class="form-input pr-11" required/>
               <button type="button" @@click="showConfirm = !showConfirm"
                       class="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-600 transition-colors"
-                      aria-label="Hien/an mat khau">
+                      aria-label="@I18N[I18NKeys.Text.TogglePassword]">
                 <svg x-show="!showConfirm" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5"
                      viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round"
@@ -97,7 +97,7 @@
 
           <!-- Role selection -->
           <div>
-            <label class="form-label">Ban la</label>
+            <label class="form-label">@I18N[I18NKeys.Label.YouAre]</label>
             <input type="hidden" name="Role" :value="role"/>
             <div class="grid grid-cols-2 gap-3">
               <!-- Buyer card -->
@@ -111,8 +111,8 @@
                   <path stroke-linecap="round" stroke-linejoin="round"
                         d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
                 </svg>
-                <span class="text-sm font-semibold text-ink-700">Nguoi mua</span>
-                <span class="text-xs text-ink-400">Mua sam san pham</span>
+                <span class="text-sm font-semibold text-ink-700">@I18N[I18NKeys.Text.RoleBuyer]</span>
+                <span class="text-xs text-ink-400">@I18N[I18NKeys.Text.RoleBuyerDesc]</span>
               </button>
               <!-- Seller card -->
               <button type="button" @@click="role = '@AppConstants.Roles.Seller'"
@@ -125,8 +125,8 @@
                   <path stroke-linecap="round" stroke-linejoin="round"
                         d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z"/>
                 </svg>
-                <span class="text-sm font-semibold text-ink-700">Nguoi ban</span>
-                <span class="text-xs text-ink-400">Mo gian hang</span>
+                <span class="text-sm font-semibold text-ink-700">@I18N[I18NKeys.Text.RoleSeller]</span>
+                <span class="text-xs text-ink-400">@I18N[I18NKeys.Text.RoleSellerDesc]</span>
               </button>
             </div>
           </div>
@@ -136,13 +136,13 @@
             <input type="checkbox" name="AgreeTerms"
                    class="w-4 h-4 mt-0.5 rounded border-ink-300 text-ink-700 focus:ring-ink-200 transition" required/>
             <span class="text-sm text-ink-600">
-              Toi dong y voi
+              @I18N[I18NKeys.Text.AgreeTerms]
               <a href="#" class="font-semibold underline underline-offset-2 hover:text-ink-700 transition-colors">
-                Dieu khoan su dung
+                @I18N[I18NKeys.Link.TermsOfService]
               </a>
-              va
+              @I18N[I18NKeys.Text.And]
               <a href="#" class="font-semibold underline underline-offset-2 hover:text-ink-700 transition-colors">
-                Chinh sach bao mat
+                @I18N[I18NKeys.Link.PrivacyPolicy]
               </a>
             </span>
           </label>
@@ -155,16 +155,16 @@
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
               </svg>
             </span>
-            Dang ky
+            @I18N[I18NKeys.Button.Register]
           </button>
         </form>
 
         <!-- Login link -->
         <p class="text-sm text-ink-500 text-center">
-          Da co tai khoan?
+          @I18N[I18NKeys.Text.HasAccount]
           <a href="@AppRoutes.Auth.Login"
              class="font-semibold text-ink-700 hover:text-accent-600 underline underline-offset-2 transition-colors">
-            Dang nhap
+            @I18N[I18NKeys.Link.Login]
           </a>
         </p>
 

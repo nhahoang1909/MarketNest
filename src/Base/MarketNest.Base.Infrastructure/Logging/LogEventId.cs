@@ -84,7 +84,11 @@ public enum LogEventId
     RuntimeContextRequestStart = 10700,
     RuntimeContextRequestEnd = 10701,
 
-    // Reserved — 10800-19999
+    // I18NService — 10800-10810
+    I18NKeyNotFound = 10800,
+    I18NFormatError = 10801,
+
+    // Reserved — 10810-19999
 
     #endregion
 
