@@ -267,6 +267,7 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 - **Notes**: ADR-017, ADR-018, ADR-019 reserved/not yet assigned. Next number to use: ADR-023.
 
 ---
+
 ### 2026-04-28 - MarketNest.Analyzers complete — all 17 Roslyn rules wired to solution
 - **Status**: Completed
 - **Description**: Implemented `MarketNest.Analyzers` project: 17 diagnostic rules (MN001–MN017) across four categories (Naming, AsyncRules, Logging, Architecture), 5 code fix providers (MN001, MN003, MN006, MN007, MN017), and 73 tests. Wired to all `src/` projects via `src/Directory.Build.targets`. Fixed all violations surfaced during wiring: Promotions Voucher/VoucherUsage DateTime → DateTimeOffset (MN009); AppLogger.cs MN007 suppress; NpgsqlJobExecutionStore.cs MN004 suppress; MarketNest.Web.csproj MN008 suppress (Razor Pages namespace constraint). Added `docs/analyzers.md` as reference and linked from CLAUDE.md.
@@ -444,7 +445,6 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
   - `Directory.Packages.props` — added `HtmlSanitizer 9.0.892`
   - `src/MarketNest.Web/MarketNest.Web.csproj` — added HtmlSanitizer PackageReference
   - `src/MarketNest.Web/Program.cs` — registered `IHtmlSanitizerService` as Singleton
-  - `src/MarketNest.Web/Infrastructure/SharedViewPaths.cs` — added `RichTextEditor` constant
   - `src/MarketNest.Web/Infrastructure/AppRoutes.cs` — added `UploadsV1Prefix` + whitelist
   - `src/MarketNest.Web/wwwroot/js/constants.js` — added `RichEditorConfig`
   - `src/MarketNest.Web/wwwroot/js/app.js` — imported `richEditor.js`
@@ -456,3 +456,35 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 - **PR/Issue**: n/a (inline implementation)
 - **Phase 1 TODO (Backend)**: Upload endpoint controller (`/api/v1/uploads/rich-editor-image`), file storage service integration, orphan image cleanup job
 - **Phase 1 TODO (Usage)**: Wire `_RichTextEditor` into Seller product create/edit pages and storefront description edit page
+
+---
+
+### 2026-04-30 — Excel Import/Export Infrastructure (Phase 1 Foundation)
+- **Status**: Completed
+- **Description**: Implemented the full Phase 1 Excel import/export infrastructure: contracts, ClosedXML service, antivirus hook, Catalog variant import, and Seller import UI.
+- **Files changed**:
+  - `Directory.Packages.props` — added ClosedXML 0.104.1 + System.IO.Packaging 10.0.0 (CVE fix)
+  - `src/Base/MarketNest.Base.Common/Excel/` — 7 new files: `IExcelService`, `ExcelTemplate<T>`, `ExcelImportResult<T>`, `ExcelExportOptions<T>`, `ExcelImportOptions`, `ExcelSheetDefinition`, `ExcelContentTypes`, `ExcelErrors`, `ExcelUploadRules`, `ExcelColumnFormat`
+  - `src/Base/MarketNest.Base.Common/Security/IAntivirusScanner.cs` — contract + `AntivirusScanResult`
+  - `src/Base/MarketNest.Base.Infrastructure/Logging/LogEventId.cs` — added Excel block (150000–159999)
+  - `src/MarketNest.Web/Infrastructure/Excel/ClosedXmlExcelService.cs` — full import/export/template implementation
+  - `src/MarketNest.Web/Infrastructure/Excel/NoOpAntivirusScanner.cs` — Phase 1 no-op
+  - `src/MarketNest.Web/MarketNest.Web.csproj` — added ClosedXML + System.IO.Packaging refs
+  - `src/MarketNest.Web/Program.cs` — registered IExcelService + IAntivirusScanner; added template download endpoint
+  - `src/MarketNest.Web/Infrastructure/AppRoutes.cs` — added ProductImport, ProductExport, ProductImportTemplate routes
+  - `src/MarketNest.Web/Infrastructure/SharedViewPaths.cs` — added ImportPreview, ImportErrorTable
+  - `src/MarketNest.Catalog/Application/ImportExport/VariantImportTemplate.cs` — columns, DTO, template builder
+  - `src/MarketNest.Catalog/Application/Commands/BulkImportVariantsCommand.cs` — command + result + mode enum
+  - `src/MarketNest.Catalog/Application/CommandHandlers/BulkImportVariantsHandler.cs` — 4-layer validation handler
+  - `src/MarketNest.Web/Pages/Seller/Products/Import.cshtml` + `.cs` — upload/validate/execute flow (HTMX)
+  - `src/MarketNest.Web/Pages/Shared/Display/_ImportPreview.cshtml` — stats + confirm form partial
+  - `src/MarketNest.Web/Pages/Shared/Display/_ImportErrorTable.cshtml` — row error table partial
+  - `docs/project_notes/decisions.md` — ADR-037
+- **Build**: `dotnet build` → 0 errors ✅
+- **Known limitations (Phase 2 TODO)**:
+  - `FindBySkuAsync` is a no-op stub — all imports create new variants; update path skips. Add `IVariantRepository.FindBySkuAsync` in Phase 2.
+  - `NoOpAntivirusScanner` always returns clean — replace with ClamAV integration in Phase 2.
+  - Import session uses TempData (no Redis TTL). Phase 2: `IImportSessionService` with Redis 30-min TTL.
+  - MiniExcel streaming for large exports (>10k rows) deferred to Phase 2.
+  - CSV import deferred to Phase 2.
+
