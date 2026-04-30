@@ -45,6 +45,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-034 | Notifications Module — Template-Based Dispatch with Email + In-App Channels | 2026-04-30 |
 | ADR-035 | SharedViewPaths — Centralized Razor Partial Path Constants | 2026-04-30 |
 | ADR-036 | Rich Text Editor — Trix with Server-Side HTML Sanitization | 2026-04-30 |
+| ADR-037 | Excel Import/Export — ClosedXML + IExcelService + IAntivirusScanner | 2026-04-30 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -1044,3 +1045,39 @@ The Unit of Work pattern is split into two distinct use cases, each with its own
 - ❌ No video support (acceptable — out of scope per business rules)
 - ❌ Trix toolbar is opinionated — limited heading levels (h1 only natively)
 - ❌ Vendored library requires manual version updates
+
+---
+
+## ADR-037 — Excel Import/Export — ClosedXML + IExcelService + IAntivirusScanner
+
+**Date**: 2026-04-30
+**Status**: Accepted
+
+**Context:**
+- Phase 1 requires seller bulk product/variant import (upload .xlsx → validate → execute) and admin export (orders, payouts, users).
+- EPPlus has commercial license restrictions. OpenXml SDK is low-level and verbose.
+- Need a contract-first design so module code never references the Excel library directly.
+- File uploads require virus scanning before processing to prevent malicious files.
+
+**Decision:**
+- **ClosedXML 0.104.1** (MIT) as the primary Excel library for both import and export.
+- **MiniExcel** planned for Phase 2 as a streaming fallback for large exports (>10k rows).
+- **`IExcelService`** contract lives in `MarketNest.Base.Common/Excel/` — used by all module handlers.
+- **`ClosedXmlExcelService`** implementation lives in `MarketNest.Web/Infrastructure/Excel/`.
+- **`IAntivirusScanner`** contract in `Base.Common/Security/` — Phase 1: `NoOpAntivirusScanner` (always clean). Phase 2/3: ClamAV via socket (nClam or clamd binding).
+- **Contracts** (`ExcelTemplate<T>`, `ExcelImportResult<T>`, `ExcelExportOptions<T>`) in `Base.Common/Excel/` — enum `ExcelColumnFormat.DecimalNumber` (not `Decimal` — avoids CA1720).
+- **`System.IO.Packaging` CVE fix**: ClosedXML 0.104.1 transitively pulls in `System.IO.Packaging 8.0.0` (CVE-2024-43483, CVE-2024-43484 — DoS, high). Pinned to 10.0.0 in `Directory.Packages.props` and referenced explicitly in `MarketNest.Web.csproj`.
+- **Validation layers** (4 layers): file extension + magic bytes → antivirus → header validation → row-level parse → domain rules.
+- **`VariantImportTemplate`**: Phase 1 import targets `ProductVariant` entities (the only Catalog entity in DbContext). When `Product` aggregate is added, a `ProductImportTemplate` will be added.
+- **Phase 1 imports**: Synchronous (parse + commit in one HTTP request, max 1,000 rows).
+- **Phase 2 imports**: Redis import session (30 min TTL) + background jobs for large files.
+
+**Consequences:**
+- ✅ Module Application layer never references ClosedXML — swap is a single DI binding change
+- ✅ Column definitions use `Func<string, TRow, Result<Unit, string>>` setters — type-safe, testable
+- ✅ Magic-bytes check prevents extension spoofing (e.g., renamed .exe to .xlsx)
+- ✅ Antivirus hook is in place from Phase 1 — easily upgraded to real ClamAV
+- ✅ `System.IO.Packaging` CVE patched via explicit version pin
+- ❌ ClosedXML has no native async API — offloaded to `Task.Run` (acceptable for <10k rows)
+- ❌ FindBySkuAsync is a no-op stub in Phase 1 — update handler creates all rows; Phase 2 adds the real query
+
