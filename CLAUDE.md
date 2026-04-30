@@ -87,6 +87,7 @@ All rules are specified in `docs/code-rules.md`. Key items:
 - **DDD property accessors (ADR-007)**: Entity/Aggregate properties use `{ get; private set; }` (mutate only via domain methods). Value objects use `{ get; }` (class-based) or `{ get; init; }` (record-based). DTOs/Commands/Queries use `record` with `{ get; init; }`. Infrastructure interfaces (`ISoftDeletable`, `IAuditable`) may use `{ get; set; }`.
 - **CQRS naming**: `PlaceOrderCommand`, `GetOrderByIdQuery`, `OrderPlacedEvent` — always explicit, never abbreviated.
 - **Flat layer-level namespaces**: Namespaces stop at the layer level — `MarketNest.<Module>.Application`, `MarketNest.<Module>.Domain`, `MarketNest.<Module>.Infrastructure`. Sub-folders (Commands/, Queries/, Entities/) are for file organization only and must NOT appear in the namespace. See `docs/code-rules.md` §2.7.
+- **Nullable management (ADR-039)**: `?` is a business decision, not an implementation detail. Every `?` must have a domain-reason comment. Entities use `#pragma warning disable CS8618` on EF Core private constructors; no `= string.Empty`, `= null!` sentinels. Value Objects NEVER nullable. DTOs use `required` keyword, never sentinels. Canonical reference: `docs/nullable-management.md`.
 
 ### Agent enforcement: namespace policy
 
