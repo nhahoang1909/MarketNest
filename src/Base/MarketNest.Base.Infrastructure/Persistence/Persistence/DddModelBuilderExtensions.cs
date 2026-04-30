@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MarketNest.Base.Domain;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace MarketNest.Base.Infrastructure;
@@ -61,6 +62,31 @@ public static class DddModelBuilderExtensions
                     navigation.SetPropertyAccessMode(PropertyAccessMode.Field);
                 }
             }
+        }
+
+        return modelBuilder;
+    }
+
+    /// <summary>
+    ///     Configures EF Core concurrency token for all entities implementing <see cref="IConcurrencyAware"/>.
+    ///     This adds a WHERE clause on UPDATE/DELETE with the original <c>UpdateToken</c> value,
+    ///     causing <see cref="Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException"/> if another
+    ///     transaction modified the row between read and write.
+    /// </summary>
+    /// <remarks>
+    ///     Call this in each module's <c>OnModelCreating</c> after <see cref="ApplyDddPropertyAccessConventions"/>.
+    ///     The <c>UpdateTokenInterceptor</c> rotates the token automatically on every save.
+    /// </remarks>
+    public static ModelBuilder ApplyConcurrencyTokenConventions(this ModelBuilder modelBuilder)
+    {
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (!typeof(IConcurrencyAware).IsAssignableFrom(entityType.ClrType))
+                continue;
+
+            modelBuilder.Entity(entityType.ClrType)
+                .Property(nameof(IConcurrencyAware.UpdateToken))
+                .IsConcurrencyToken();
         }
 
         return modelBuilder;

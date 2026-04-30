@@ -83,6 +83,7 @@ public static class DomainConstants
         public const string Forbidden = "FORBIDDEN";
         public const string UnexpectedError = "UNEXPECTED_ERROR";
         public const string NotFoundSuffix = "NOT_FOUND";
+        public const string ConcurrencyConflict = "CONCURRENCY_CONFLICT";
     }
 
     // ── Error Messages ───────────────────────────────────────────────
@@ -93,5 +94,11 @@ public static class DomainConstants
         public const string UnexpectedError = "An unexpected error occurred";
         public const string PageMustBePositive = "Page must be >= 1";
         public const string PageSizeRange = "PageSize must be between 1 and 100";
+
+        public const string ConcurrencyConflict =
+            "The record has been modified by another user. Please reload and try again.";
+
+        public const string BulkConcurrencyConflict =
+            "One or more records have been modified by another user. Please reload and try again.";
     }
 }
