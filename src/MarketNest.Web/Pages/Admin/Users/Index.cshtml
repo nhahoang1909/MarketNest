@@ -9,47 +9,50 @@
 <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
   <h1 class="text-2xl font-bold text-slate-900">Nguoi dung</h1>
   <div class="flex items-center gap-3">
-    <div class="relative">
-      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
-           stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z"/>
-      </svg>
-      <input type="text" placeholder="Tim kiem nguoi dung..."
-             class="pl-9 pr-4 py-2.5 w-56 text-sm rounded-xl border border-slate-200 bg-white focus:border-slate-400 focus:ring-2 focus:ring-accent-400/20 focus:outline-none transition-all"/>
+    <div class="relative w-56">
+      <partial name="@SharedViewPaths.SearchInput" view-data='@(new ViewDataDictionary(ViewData) {
+          ["TargetUrl"]   = AppRoutes.Admin.Users,
+          ["TargetId"]    = "#users-table",
+          ["Placeholder"] = "Tim kiem nguoi dung...",
+          ["Name"]        = "search"
+      })'/>
     </div>
-    <button
-      class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+    <a href="@AppRoutes.Admin.Users/export-csv"
+       class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round"
               d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
       </svg>
       Xuat CSV
-    </button>
+    </a>
   </div>
 </div>
 
 <!-- Filter pills -->
 <div class="flex flex-wrap items-center gap-2 mb-5" x-data="{ filter: 'all' }">
   <button @@click="filter = 'all'"
+          hx-get="@AppRoutes.Admin.Users" hx-target="#users-table" hx-swap="outerHTML" hx-push-url="true"
           :class="filter === 'all' ? 'text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
           :style="filter === 'all' ? 'background:#1E3932' : ''"
           class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Tat ca
   </button>
   <button @@click="filter = 'buyer'"
+          hx-get="@AppRoutes.Admin.Users?role=buyer" hx-target="#users-table" hx-swap="outerHTML" hx-push-url="true"
           :class="filter === 'buyer' ? 'text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
           :style="filter === 'buyer' ? 'background:#1E3932' : ''"
           class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Nguoi mua
   </button>
   <button @@click="filter = 'seller'"
+          hx-get="@AppRoutes.Admin.Users?role=seller" hx-target="#users-table" hx-swap="outerHTML" hx-push-url="true"
           :class="filter === 'seller' ? 'text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
           :style="filter === 'seller' ? 'background:#1E3932' : ''"
           class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
     Nguoi ban
   </button>
   <button @@click="filter = 'admin'"
+          hx-get="@AppRoutes.Admin.Users?role=admin" hx-target="#users-table" hx-swap="outerHTML" hx-push-url="true"
           :class="filter === 'admin' ? 'text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
           :style="filter === 'admin' ? 'background:#1E3932' : ''"
           class="px-4 py-2 text-sm font-medium rounded-full transition-colors">
@@ -58,7 +61,7 @@
 </div>
 
 <!-- Users table -->
-<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+<div id="users-table" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
   <div class="overflow-x-auto">
     <table class="admin-table w-full text-sm">
       <thead>
@@ -155,7 +158,11 @@
             </td>
             <td class="px-4 py-3 text-xs text-slate-500">@u.Date</td>
             <td class="px-4 py-3 text-right">
-              <a href="#" class="text-xs font-medium transition-colors hover:opacity-80" style="color:#1F3A2E;">Chi
+              <a hx-get="@AppRoutes.Admin.Users/@u.Email"
+                 hx-target="#user-detail-panel"
+                 hx-swap="innerHTML"
+                 hx-push-url="true"
+                 class="text-xs font-medium transition-colors hover:opacity-80 cursor-pointer" style="color:#1F3A2E;">Chi
                 tiet</a>
             </td>
           </tr>
@@ -173,19 +180,20 @@
       <button disabled
               class="px-3 py-1.5 text-xs font-medium text-slate-400 bg-slate-50 rounded-lg cursor-not-allowed">Truoc
       </button>
-      <button class="px-3 py-1.5 text-xs font-medium text-white rounded-lg" style="background:#1E3932;">1</button>
-      <button
-        class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">2
+      <button hx-get="@AppRoutes.Admin.Users?page=1" hx-target="#users-table" hx-swap="outerHTML" hx-push-url="true"
+              class="px-3 py-1.5 text-xs font-medium text-white rounded-lg" style="background:#1E3932;">1</button>
+      <button hx-get="@AppRoutes.Admin.Users?page=2" hx-target="#users-table" hx-swap="outerHTML" hx-push-url="true"
+              class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">2
       </button>
-      <button
-        class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">3
+      <button hx-get="@AppRoutes.Admin.Users?page=3" hx-target="#users-table" hx-swap="outerHTML" hx-push-url="true"
+              class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">3
       </button>
       <span class="px-2 text-slate-400 text-xs">...</span>
-      <button
-        class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">124
+      <button hx-get="@AppRoutes.Admin.Users?page=124" hx-target="#users-table" hx-swap="outerHTML" hx-push-url="true"
+              class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">124
       </button>
-      <button
-        class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Sau
+      <button hx-get="@AppRoutes.Admin.Users?page=2" hx-target="#users-table" hx-swap="outerHTML" hx-push-url="true"
+              class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Sau
       </button>
     </div>
   </div>

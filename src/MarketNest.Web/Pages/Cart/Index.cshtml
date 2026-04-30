@@ -30,7 +30,7 @@
           <span class="text-6xl block mb-4">&#x1F6D2;</span>
           <p class="mn-h4 text-ink-600 mb-2">Gio hang trong</p>
           <p class="text-sm text-ink-400 mb-6">Ban chua co san pham nao trong gio hang.</p>
-          <a href="/shop" class="btn-primary">Bat dau mua sam</a>
+          <a href="@AppRoutes.Shop" class="btn-primary">Bat dau mua sam</a>
         </div>
       </template>
 
@@ -109,13 +109,17 @@
             <div class="mt-5">
               <div class="flex gap-2">
                 <input type="text" x-model="promo" placeholder="Ma giam gia" class="form-input flex-1 text-sm"/>
-                <button class="btn-ghost btn-sm text-xs">Ap dung</button>
+                <button hx-post="@AppRoutes.Cart/promo"
+                        hx-include="[name='promo']"
+                        hx-target="#cart-summary"
+                        hx-swap="outerHTML"
+                        class="btn-ghost btn-sm text-xs">Ap dung</button>
               </div>
             </div>
 
             <!-- CTA -->
-            <a href="/checkout" class="btn-primary w-full mt-5 text-center block">Thanh toan</a>
-            <a href="/shop" class="btn-ghost w-full mt-2 text-center block text-sm">Tiep tuc mua sam</a>
+            <a href="@AppRoutes.Checkout.Index" class="btn-primary w-full mt-5 text-center block">Thanh toan</a>
+            <a href="@AppRoutes.Shop" class="btn-ghost w-full mt-2 text-center block text-sm">Tiep tuc mua sam</a>
           </div>
         </div>
       </div>

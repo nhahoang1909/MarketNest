@@ -7,13 +7,12 @@
 <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
 
   <!-- Breadcrumb -->
-  <nav class="flex items-center gap-2 text-sm text-ink-400 mb-8">
-    <a href="/" class="hover:text-ink-700 transition-colors">Trang chu</a>
-    <span>/</span>
-    <a href="/shop" class="hover:text-ink-700 transition-colors">Cua hang</a>
-    <span>/</span>
-    <span class="text-ink-700 font-medium">Binh gom men ngoc</span>
-  </nav>
+  @await Html.PartialAsync(SharedViewPaths.Breadcrumb, new ViewDataDictionary(ViewData) {
+      ["Items"] = new List<(string Label, string Url)> {
+          ("Cua hang", AppRoutes.Shop),
+          ("Binh gom men ngoc", "")
+      }
+  })
 
   <!-- Main product grid -->
   <div class="flex flex-col lg:flex-row gap-8 lg:gap-12" x-data="{
@@ -131,7 +130,18 @@
 
       <!-- Actions -->
       <div class="mt-8 flex gap-3">
-        <button class="btn-primary btn-lg flex-1">
+        <button hx-post="@AppRoutes.Cart/items"
+                hx-vals='js:{"variantId": "00000000-0000-0000-0000-000000000001", "qty": quantity}'
+                hx-target="#cart-summary"
+                hx-swap="outerHTML"
+                hx-indicator="#add-cart-spinner"
+                class="btn-primary btn-lg flex-1">
+          <span id="add-cart-spinner" class="htmx-indicator">
+            <svg class="animate-spin h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+          </span>
           <svg class="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round"
                   d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
@@ -155,7 +165,7 @@
           <p class="text-sm font-semibold text-ink-700">Gom Bat Trang</p>
           <p class="text-xs text-ink-400">Ha Noi &middot; 4.8 &#9733; (312 danh gia)</p>
         </div>
-        <a href="/shop/gom-bat-trang" class="ml-auto btn-ghost btn-sm text-xs">Xem gian hang</a>
+        <a href="@AppRoutes.Shop/gom-bat-trang" class="ml-auto btn-ghost btn-sm text-xs">Xem gian hang</a>
       </div>
     </div>
   </div>

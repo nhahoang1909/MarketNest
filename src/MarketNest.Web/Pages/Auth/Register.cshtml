@@ -21,21 +21,31 @@
         <h1 class="mn-h4 text-center">Tao tai khoan</h1>
 
         <!-- Form -->
-        <form method="post" class="space-y-4"
+        <form hx-post="@AppRoutes.Auth.Register"
+              hx-target="closest .card-body"
+              hx-swap="innerHTML"
+              hx-indicator="#register-spinner"
+              class="space-y-4"
               x-data="{ showPassword: false, showConfirm: false, role: '@AppConstants.Roles.Buyer' }">
           @Html.AntiForgeryToken()
 
           <!-- Full name -->
-          <div>
-            <label for="fullName" class="form-label">Ho va ten</label>
-            <input type="text" id="fullName" name="FullName" placeholder="Nguyen Van A" class="form-input" required/>
-          </div>
+          <partial name="@SharedViewPaths.TextField" view-data='@(new ViewDataDictionary(ViewData) {
+              ["Label"]       = "Ho va ten",
+              ["Name"]        = "FullName",
+              ["Value"]       = "",
+              ["Placeholder"] = "Nguyen Van A",
+              ["MaxLength"]   = FieldLimits.InlineStandard.MaxLength,
+              ["Required"]    = "true"
+          })'/>
 
           <!-- Email -->
-          <div>
-            <label for="email" class="form-label">Email</label>
-            <input type="email" id="email" name="Email" placeholder="you@example.com" class="form-input" required/>
-          </div>
+          <partial name="@SharedViewPaths.EmailField" view-data='@(new ViewDataDictionary(ViewData) {
+              ["Label"]    = "Email",
+              ["Name"]     = "Email",
+              ["Value"]    = "",
+              ["Required"] = "true"
+          })'/>
 
           <!-- Password -->
           <div>
@@ -139,6 +149,12 @@
 
           <!-- Submit -->
           <button type="submit" class="btn-primary w-full">
+            <span id="register-spinner" class="htmx-indicator">
+              <svg class="animate-spin h-4 w-4 inline mr-2" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+            </span>
             Dang ky
           </button>
         </form>
