@@ -814,25 +814,64 @@ public record DiscountResult(
 
 ## 8. Notification Triggers
 
-> All notifications below are subject to user's `NotificationPreference` toggles and frequency settings (§9.5).
-> The Notifications module checks `INotificationPreferenceReadService` before dispatching.
+> **Phase 1 implemented**: Template-based dispatch via `INotificationService` (ADR-034).
+> Full dispatch pipeline, SMTP email sender, in-app inbox, 17 default templates, and seeder are implemented.
+> See `docs/notifications.md` for full technical reference.
+>
+> **Phase 2 pending**: `INotificationPreferenceReadService` integration (user opt-out toggles + frequency).
+> Phase 1 sends all notifications regardless of user preferences.
 
-| Event | Recipients | Channel | Preference Toggle |
-|-------|-----------|---------|-------------------|
-| Order placed | Buyer + Seller | Email | `NotifyOrderPlaced` |
-| Order confirmed by Seller | Buyer | Email | `NotifyOrderConfirmed` |
-| Order shipped (tracking added) | Buyer | Email | `NotifyOrderShipped` |
-| Order auto-confirmed after 7 days | Buyer | Email | `NotifyOrderDelivered` |
-| Dispute opened | Seller + Admin | Email | `NotifyDisputeOpened` |
-| Seller responds to dispute | Buyer + Admin | Email | `NotifyDisputeResolved` |
-| Admin resolves dispute | Buyer + Seller | Email | `NotifyDisputeResolved` |
-| Payout processed | Seller | Email | `NotifyPaymentProcessed` |
-| Review left on storefront | Seller | Email (digest, daily) | `NotifyReviewReceived` |
-| Password reset requested | User | Email | Always sent (security) |
-| New login from unknown device | User | Email | Always sent (security) |
-| Seller's voucher paused by Admin | Seller | Email + In-app | `NotifyVoucherPaused` |
-| Voucher auto-expired | Seller | In-app | `NotifyVoucherExpired` |
-| Voucher depleted (all uses consumed) | Seller | In-app | `NotifyVoucherDepleted` |
+### 8.1 Notification → Template Key Mapping
+
+| Event | Template Keys Used | Channel | Preference Toggle |
+|-------|--------------------|---------|-------------------|
+| Order placed | `order.placed.buyer` + `order.placed.seller` | Both | `NotifyOrderPlaced` |
+| Order confirmed by Seller | `order.confirmed.buyer` | Both | `NotifyOrderConfirmed` |
+| Order shipped (tracking added) | `order.shipped.buyer` | Both | `NotifyOrderShipped` |
+| Order auto-confirmed / delivered | `order.delivered.buyer` | Both | `NotifyOrderDelivered` |
+| Order cancelled | `order.cancelled.buyer` + `order.cancelled.seller` | Both | `NotifyOrderPlaced` |
+| Dispute opened | `dispute.opened.seller` + `dispute.opened.admin` | Both | `NotifyDisputeOpened` |
+| Seller responds to dispute | `dispute.responded.buyer` | Both | `NotifyDisputeResolved` |
+| Admin resolves dispute | `dispute.resolved.buyer` + `dispute.resolved.seller` | Both | `NotifyDisputeResolved` |
+| Payout processed | `payout.processed.seller` | Both | `NotifyPaymentProcessed` |
+| Review left on product | `review.received.seller` | Both (digest) | `NotifyReviewReceived` |
+| Inventory low | `inventory.low.seller` | InApp only | Seller only |
+| Password reset requested | `security.password-reset` | Email | **Always sent** (security) |
+| New login from unknown device | `security.new-login` | Email | **Always sent** (security) |
+
+### 8.2 Domain Event → Handler Mapping
+
+Domain event handlers that call `INotificationService` live in the owning module's Application layer:
+
+| Domain Event | Handler Module | Handler Class |
+|---|---|---|
+| `OrderPlacedEvent` | Orders | `OrderPlacedNotificationHandler` (TODO) |
+| `OrderConfirmedEvent` | Orders | `OrderConfirmedNotificationHandler` (TODO) |
+| `OrderShippedEvent` | Orders | `OrderShippedNotificationHandler` (TODO) |
+| `OrderDeliveredEvent` | Orders | `OrderDeliveredNotificationHandler` (TODO) |
+| `OrderCancelledEvent` | Orders | `OrderCancelledNotificationHandler` (TODO) |
+| `DisputeOpenedEvent` | Disputes | `DisputeOpenedNotificationHandler` (TODO) |
+| `DisputeRespondedEvent` | Disputes | `DisputeRespondedNotificationHandler` (TODO) |
+| `DisputeResolvedEvent` | Disputes | `DisputeResolvedNotificationHandler` (TODO) |
+| `PayoutProcessedEvent` | Payments | `PayoutProcessedNotificationHandler` (TODO) |
+| `ReviewSubmittedEvent` | Reviews | `ReviewReceivedNotificationHandler` (TODO) |
+| `InventoryLowEvent` | Catalog | `InventoryLowNotificationHandler` (TODO) |
+
+> Handlers are post-commit domain event handlers (dispatched AFTER TX commit per ADR-027).
+> Notification failures are caught and logged — they **never** fail the main request.
+
+### 8.3 Security Notification Contract
+
+Security notifications bypass `INotificationPreferenceReadService` entirely — always sent:
+
+```csharp
+// Identity module — password reset flow
+await notifications.SendSecurityEmailAsync(
+    toEmail: user.Email,
+    templateKey: NotificationTemplateKeys.PasswordResetRequest,
+    variables: new PasswordResetVariables(user.Name, resetUrl, "30 minutes").ToVariables(),
+    ct: ct);
+```
 
 ---
 
