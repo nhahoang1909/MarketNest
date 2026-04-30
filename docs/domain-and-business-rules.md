@@ -1131,7 +1131,7 @@ PaymentMethod
 
 ### 9.12 Settings Cross-Module Contracts
 
-These contracts go in `MarketNest.Core/Contracts/`:
+These contracts go in `Base.Common/Contracts/`:
 
 ```csharp
 // IUserPreferencesReadService — any module that needs user preferences

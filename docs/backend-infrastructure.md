@@ -217,14 +217,25 @@ public class TransactionAttribute(
 ```
 
 ```csharp
-public interface IUnitOfWork
+// Base.Infrastructure/Persistence/IUnitOfWork.cs
+public interface IUnitOfWork : IAsyncDisposable
 {
+    // Transaction management (used by filters + background jobs)
+    Task BeginTransactionAsync(IsolationLevel isolation = ReadCommitted, CancellationToken ct = default);
+    Task CommitTransactionAsync(CancellationToken ct = default);
+    Task RollbackAsync(CancellationToken ct = default);
+
+    // Event & persistence management
     IReadOnlyList<IDomainEvent> CollectPreCommitEvents();
+    Task<int> CommitAsync(CancellationToken ct = default);  // SaveChanges + pre-commit events
     Task DispatchPostCommitEventsAsync(CancellationToken ct = default);
-    Task<int> CommitAsync(CancellationToken ct = default);
 }
 
-// Pre-commit: IPreCommitEvent marker (runs inside TX)
+// NOTE: Command handlers DO NOT inject or call IUnitOfWork directly (ADR-027).
+// The transaction filter (RazorPageTransactionFilter / TransactionActionFilter) manages
+// the full lifecycle automatically. Only background jobs call IUnitOfWork explicitly.
+
+// Pre-commit: IPreCommitDomainEvent marker (runs inside TX)
 // Post-commit: all others (safe to fail, logged, Outbox in Phase 3)
 ```
 

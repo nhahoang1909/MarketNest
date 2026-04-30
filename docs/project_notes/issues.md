@@ -518,6 +518,15 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
   - CSV import deferred to Phase 2.
 
 
+### 2026-04-30 — Nullable Management policy documented (ADR-039)
+- **Status**: Completed
+- **Description**: Established the canonical nullable-management policy for the entire codebase. Core rule: `?` is a business decision — every nullable property must have a domain-reason comment. Formal rules per layer: Entities use `#pragma warning disable CS8618` on EF Core private constructors only (no `= default!` sentinels); Value Objects never have nullable properties; DTOs/Commands use `required` for required fields and `?` for optional. Banned anti-patterns catalogued: `= default!`, `= null!`, `= string.Empty` sentinels, `#nullable disable`, nullable collections.
+- **Files created**: `docs/nullable-management.md` — rules + quick-reference table + anti-patterns list + per-layer review checklist
+- **ADR**: ADR-039 (see decisions.md)
+- **Build**: Documentation-only. All existing code already follows this pattern.
+
+---
+
 ### 2026-04-30 — I18N Service + Full Page Localization (ADR-038)
 
 - **What**: Implemented `II18NService`/`I18NService`, `I18NKeys` constants, and converted all hardcoded Vietnamese strings in Auth pages + Home page to i18n resource keys.
@@ -539,3 +548,19 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 - **Pattern**: `@I18N[I18NKeys.Category.Key]` in Razor views; `I18N.Get(key, args)` for parameterized strings
 - **Remaining work**: Migrate existing layouts from `SharedLocalizer["Key"]` to `I18N[I18NKeys.Nav.Key]` pattern (low priority — both resolve same .resx)
 
+### 2026-04-30 - PostgreSQL Sequence Service (ADR-040)
+- **Status**: Completed
+- **Description**: Implemented period-scoped PostgreSQL sequence service for deadlock-free running number generation (e.g., `ORD202604-00001`). Supports monthly, yearly, and never-reset modes.
+- **Files created**:
+  - `src/Base/MarketNest.Base.Common/Sequences/SequenceResetPeriod.cs` — reset period enum
+  - `src/Base/MarketNest.Base.Common/Sequences/SequenceDescriptor.cs` — immutable descriptor record
+  - `src/Base/MarketNest.Base.Common/Sequences/ISequenceService.cs` — service contract
+  - `src/MarketNest.Web/Infrastructure/Sequences/PostgresSequenceService.cs` — Singleton impl
+  - `src/MarketNest.Web/Infrastructure/Sequences/SequenceServiceExtensions.cs` — DI helper
+  - `src/MarketNest.Web/Infrastructure/Sequences/CleanupStaleSequencesJob.cs` — monthly cleanup job
+  - `src/MarketNest.Orders/Application/Sequences/OrderSequences.cs` — ORD + INV descriptors
+  - `src/MarketNest.Payments/Application/Sequences/PaymentSequences.cs` — PAY descriptor
+  - `src/MarketNest.Catalog/Application/Sequences/CatalogSequences.cs` — SKU descriptor
+  - `docs/sequence-service.md` — full documentation
+- **Build**: `dotnet build` → 0 errors ✅
+- **Notes**: Registered in Program.cs via `AddSequenceService()`. Cleanup job `common.cleanup-stale-sequences` runs 1st of each month at 02:00 UTC.

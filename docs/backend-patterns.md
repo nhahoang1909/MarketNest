@@ -60,6 +60,7 @@
    - [22. Unit of Work & Transaction Management](#22-unit-of-work--transaction-management)
   - [23. Runtime Context (IRuntimeContext)](#23-runtime-context-iruntimecontext)
   - [Appendix: Module Contract Checklist](#appendix-module-contract-checklist)
+  - [24. Sequence Service — Running Number Generation (ADR-040)](#24-sequence-service--running-number-generation-adr-040)
 
 ---
 
@@ -85,24 +86,24 @@
 ### Marker Interfaces
 
 ```csharp
-// Core/Common/Cqrs/ICommand.cs
+// Base.Common/Cqrs/ICommand.cs
 public interface ICommand<TResult> : IRequest<Result<TResult, Error>> { }
 public interface ICommand : ICommand<Unit> { }
 
-// Core/Common/Cqrs/IQuery.cs
+// Base.Common/Cqrs/IQuery.cs
 public interface IQuery<TResult> : IRequest<TResult> { }
 
-// Core/Common/Cqrs/ICommandHandler.cs
+// Base.Common/Cqrs/ICommandHandler.cs
 public interface ICommandHandler<TCommand, TResult>
     : IRequestHandler<TCommand, Result<TResult, Error>>
     where TCommand : ICommand<TResult> { }
 
-// Core/Common/Cqrs/IQueryHandler.cs
+// Base.Common/Cqrs/IQueryHandler.cs
 public interface IQueryHandler<TQuery, TResult>
     : IRequestHandler<TQuery, TResult>
     where TQuery : IQuery<TResult> { }
 
-// Core/Common/Events/IDomainEvent.cs
+// Base.Domain/Events/IDomainEvent.cs
 public interface IDomainEvent : INotification
 {
     Guid EventId => Guid.NewGuid();
@@ -292,7 +293,7 @@ Snapshots: CartSnapshot, CartItemSnapshot (cross-module, serializable)
 Every Command has a paired Validator. No exceptions.
 
 ```csharp
-// Core/Common/Validation/ValidatorExtensions.cs
+// Base.Common/Validation/ValidatorExtensions.cs
 public static class ValidatorExtensions
 {
     public static IRuleBuilderOptions<T, string> MustBeSlug<T>(this IRuleBuilder<T, string> rule)
@@ -389,7 +390,7 @@ See **§22 Unit of Work** for the full event lifecycle. Aggregates should raise 
 ## 7. Base Query Handler — Paged Lists
 
 ```csharp
-// Core/Common/Queries/PagedQuery.cs
+// Base.Common/Queries/PagedQuery.cs
 public abstract record PagedQuery
 {
     public int Page { get; init; } = 1;
@@ -400,7 +401,7 @@ public abstract record PagedQuery
     public int Skip => (Page - 1) * PageSize;
 }
 
-// Core/Common/Queries/PagedResult.cs
+// Base.Common/Queries/PagedResult.cs
 public record PagedResult<T>
 {
     public IReadOnlyList<T> Items { get; init; } = [];
@@ -529,13 +530,14 @@ public class Order : AggregateRoot
     }
 }
 
-// Command handler — always use IUnitOfWork.CommitAsync(), never db.SaveChangesAsync()
+// Command handler — DO NOT call uow.CommitAsync() or db.SaveChangesAsync() directly.
+// The transaction filter handles commit automatically after the handler returns (ADR-027).
 public async Task<Result<OrderDto, Error>> Handle(PlaceOrderCommand cmd, CancellationToken ct)
 {
     var order = Order.Place(...);
     orders.Add(order);
-    await uow.CommitAsync(ct);   // pre-commit events dispatched here; post-commit after TX
     return Result.Ok(OrderDto.From(order));
+    // Transaction filter will call CommitAsync/CommitTransactionAsync/DispatchPostCommitEventsAsync
 }
 ```
 
@@ -1238,13 +1240,12 @@ The middleware:
 ```csharp
 public class PlaceOrderCommandHandler(
     IOrderRepository orders,
-    IRuntimeContext ctx,
-    IUnitOfWork uow) : ICommandHandler<PlaceOrderCommand, Result<OrderDto, Error>>
+    IRuntimeContext ctx) : ICommandHandler<PlaceOrderCommand, Result<OrderDto, Error>>
 {
     public async Task<Result<OrderDto, Error>> Handle(PlaceOrderCommand cmd, CancellationToken ct)
     {
         var buyerId = ctx.CurrentUser.RequireId();  // throws UnauthorizedException if anonymous
-        // ...
+        // ... mutate via repository — no uow.CommitAsync() call needed (filter handles it)
     }
 }
 ```
@@ -1272,4 +1273,37 @@ public class ExpireSalesJob : IBackgroundJob
 }
 ```
 
+---
+
+## 24. Sequence Service — Running Number Generation (ADR-040)
+
+Deadlock-free, period-resettable running numbers via PostgreSQL `SEQUENCE`. Full documentation: `docs/sequence-service.md`.
+
+### Contract (`Base.Common/Sequences/`)
+
+- `SequenceResetPeriod` — enum: `Never`, `Monthly`, `Yearly`
+- `SequenceDescriptor` — immutable record: schema, baseName, prefix, padWidth, resetPeriod
+- `ISequenceService` — `NextFormattedAsync()`, `NextValueAsync()`, `ListSequenceNamesAsync()`, `DropSequenceAsync()`
+
+### Usage
+
+```csharp
+// Define once per module (static descriptor)
+public static class OrderSequences
+{
+    public static readonly SequenceDescriptor OrderNumber = new(
+        schema: "orders", baseName: "ord", prefix: "ORD",
+        padWidth: 5, resetPeriod: SequenceResetPeriod.Monthly);
+}
+
+// Use in handler
+var number = await sequenceService.NextFormattedAsync(OrderSequences.OrderNumber, ct);
+// → "ORD202604-00001"
+```
+
+### Registered Jobs
+
+| Job Key | Schedule | Description |
+|---|---|---|
+| `common.cleanup-stale-sequences` | `0 2 1 * *` | Drops sequences older than retention window |
 
