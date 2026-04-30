@@ -1,0 +1,80 @@
+﻿@*
+  Slug field — auto-lowercases input, enforces FieldLimits.Slug pattern.
+  Parameters (via ViewData):
+    Label       — visible label text (required)
+    Name        — input name/id (required)
+    Value       — current slug value
+    HelpText    — hint below input (default: pattern rule)
+    BaseUrl     — optional base URL prefix shown before the slug (e.g., "marketnest.vn/shop/")
+    Errors      — IEnumerable<string> validation errors
+*@
+@{
+  var label    = ViewData["Label"]?.ToString() ?? "Slug";
+  var name     = ViewData["Name"]?.ToString() ?? "slug";
+  var value    = ViewData["Value"]?.ToString() ?? "";
+  var baseUrl  = ViewData["BaseUrl"]?.ToString();
+  var helpText = ViewData["HelpText"]?.ToString()
+              ?? $"Lowercase letters, numbers and hyphens only. {FieldLimits.Slug.MinLength}–{FieldLimits.Slug.MaxLength} characters.";
+  var errors   = ViewData["Errors"] as IEnumerable<string>;
+  var hasError = errors?.Any() == true;
+  var inputCss = hasError ? "form-input input-error font-mono text-sm" : "form-input font-mono text-sm";
+}
+
+<div class="space-y-1"
+     x-data="{ slug: '@Html.Raw(value.Replace("'", "\\'"))' }"
+     x-init="slug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '')">
+  <label for="@name" class="form-label">
+    @label <span class="text-danger-500 ml-0.5" aria-hidden="true">*</span>
+  </label>
+
+  @if (!string.IsNullOrEmpty(baseUrl))
+  {
+    <div class="flex items-center rounded-xl border border-ink-200 overflow-hidden
+                focus-within:border-accent-400 focus-within:ring-[3px] focus-within:ring-accent-100
+                @(hasError ? "border-danger-400 bg-danger-50" : "bg-surface")
+                transition-all duration-150">
+      <span class="pl-3 pr-2 text-sm text-ink-400 whitespace-nowrap select-none border-r border-ink-100 bg-cream-50 py-2.5 font-mono">
+        @baseUrl
+      </span>
+      <input type="text" id="@name" name="@name"
+             x-model="slug"
+             x-on:input="slug = $el.value.toLowerCase().replace(/[^a-z0-9-]/g, '')"
+             maxlength="@FieldLimits.Slug.MaxLength"
+             pattern="@FieldLimits.Slug.Pattern.TrimStart('^').TrimEnd('$')"
+             placeholder="my-store-name"
+             class="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono focus:outline-none disabled:cursor-not-allowed"
+             autocomplete="off" required/>
+    </div>
+  }
+  else
+  {
+    <input type="text" id="@name" name="@name"
+           x-model="slug"
+           x-on:input="slug = $el.value.toLowerCase().replace(/[^a-z0-9-]/g, '')"
+           maxlength="@FieldLimits.Slug.MaxLength"
+           pattern="@FieldLimits.Slug.Pattern.TrimStart('^').TrimEnd('$')"
+           placeholder="my-store-name"
+           class="@inputCss"
+           autocomplete="off" required/>
+  }
+
+  <p class="text-xs text-right" :class="slug.length >= @FieldLimits.Slug.MaxLength ? 'text-danger-400' : 'text-ink-300'">
+    <span x-text="slug.length">@value.Length</span>/@FieldLimits.Slug.MaxLength
+  </p>
+
+  @if (hasError)
+  {
+    @foreach (var error in errors!)
+    {
+      <p class="form-error">
+        <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+        @error
+      </p>
+    }
+  }
+  @if (!string.IsNullOrEmpty(helpText) && !hasError)
+  {
+    <p class="form-help">@helpText</p>
+  }
+</div>
+

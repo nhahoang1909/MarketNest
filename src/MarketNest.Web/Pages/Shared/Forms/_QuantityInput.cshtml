@@ -1,0 +1,72 @@
+﻿@*
+  Quantity stepper — cart / order quantity (1–99) with +/- buttons.
+  Parameters (via ViewData):
+    Label      — visible label text (required)
+    Name       — input name/id (required)
+    Value      — current quantity (default: 1)
+    Min        — minimum value (default: FieldLimits.Quantity.CartItemMin = 1)
+    Max        — maximum value (default: FieldLimits.Quantity.CartItemMax = 99)
+    HelpText   — hint shown below input
+    Errors     — IEnumerable<string> validation errors
+    Compact    — "true" renders a compact inline stepper (no label/help area)
+*@
+@{
+  var label      = ViewData["Label"]?.ToString() ?? "Quantity";
+  var name       = ViewData["Name"]?.ToString() ?? "quantity";
+  var valueStr   = ViewData["Value"]?.ToString() ?? "1";
+  var minVal     = ViewData["Min"] is string minStr && int.TryParse(minStr, out var minParsed) ? minParsed : FieldLimits.Quantity.CartItemMin;
+  var maxVal     = ViewData["Max"] is string maxStr && int.TryParse(maxStr, out var maxParsed) ? maxParsed : FieldLimits.Quantity.CartItemMax;
+  var helpText   = ViewData["HelpText"]?.ToString();
+  var compact    = ViewData["Compact"]?.ToString() == "true";
+  var errors     = ViewData["Errors"] as IEnumerable<string>;
+  var hasError   = errors?.Any() == true;
+  int.TryParse(valueStr, out var currentVal);
+  currentVal = Math.Max(minVal, Math.Min(maxVal, currentVal == 0 ? minVal : currentVal));
+}
+
+<div class="@(compact ? "" : "space-y-1")"
+     x-data="{ qty: @currentVal, min: @minVal, max: @maxVal }">
+  @if (!compact)
+  {
+    <label for="@name" class="form-label">@label</label>
+  }
+  <div class="inline-flex items-center rounded-xl border @(hasError ? "border-danger-400 bg-danger-50" : "border-ink-200 bg-surface") overflow-hidden">
+    <button type="button"
+            class="flex items-center justify-center w-9 h-9 text-ink-500 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :disabled="qty <= min"
+            x-on:click="qty = Math.max(min, qty - 1)">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/>
+      </svg>
+    </button>
+    <input type="number" id="@name" name="@name"
+           x-model.number="qty"
+           x-on:change="qty = Math.max(min, Math.min(max, parseInt($el.value) || min))"
+           min="@minVal" max="@maxVal"
+           class="w-12 text-center text-sm font-semibold bg-transparent border-x border-ink-200 py-2 focus:outline-none focus:bg-accent-50"
+           inputmode="numeric"/>
+    <button type="button"
+            class="flex items-center justify-center w-9 h-9 text-ink-500 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :disabled="qty >= max"
+            x-on:click="qty = Math.min(max, qty + 1)">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12M6 12h12"/>
+      </svg>
+    </button>
+  </div>
+  @if (hasError)
+  {
+    @foreach (var error in errors!)
+    {
+      <p class="form-error">
+        <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+        @error
+      </p>
+    }
+  }
+  @if (!string.IsNullOrEmpty(helpText) && !hasError && !compact)
+  {
+    <p class="form-help">@helpText</p>
+  }
+</div>
+

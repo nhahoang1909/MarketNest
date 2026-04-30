@@ -1,27 +1,63 @@
-@* TextArea — pass Label, Name, Placeholder, HelpText, Value, Rows, Errors via ViewData *@
+@*
+  TextArea — multiline input tied to FieldLimits tiers.
+  Parameters (via ViewData):
+    Label      — visible label text (required)
+    Name       — input name/id (required)
+    Placeholder— placeholder text
+    HelpText   — hint shown below textarea
+    Value      — current value
+    Rows       — number of visible rows (default: 4)
+    MaxLength  — max character count; shows live counter when set
+    Required   — "true" adds required asterisk to label
+    Resize     — CSS resize behaviour: "none" | "vertical" | "both" (default: "vertical")
+    Errors     — IEnumerable<string> validation errors
+*@
 @{
-  var label = ViewData["Label"]?.ToString() ?? "Label";
-  var name = ViewData["Name"]?.ToString() ?? "field";
+  var label       = ViewData["Label"]?.ToString() ?? "Label";
+  var name        = ViewData["Name"]?.ToString() ?? "field";
   var placeholder = ViewData["Placeholder"]?.ToString() ?? "";
-  var helpText = ViewData["HelpText"]?.ToString();
-  var value = ViewData["Value"]?.ToString() ?? "";
-  var rows = ViewData["Rows"]?.ToString() ?? "4";
-  var errors = ViewData["Errors"] as IEnumerable<string>;
-  var hasError = errors?.Any() == true;
-  var inputCss = hasError ? "form-input input-error" : "form-input";
+  var helpText    = ViewData["HelpText"]?.ToString();
+  var value       = ViewData["Value"]?.ToString() ?? "";
+  var rows        = ViewData["Rows"]?.ToString() ?? "4";
+  var resize      = ViewData["Resize"]?.ToString() ?? "vertical";
+  var isRequired  = ViewData["Required"]?.ToString() == "true";
+  var maxLength   = ViewData["MaxLength"] is int mlInt ? mlInt
+                  : ViewData["MaxLength"] is string mlStr && int.TryParse(mlStr, out var mlParsed) ? mlParsed : 0;
+  var errors      = ViewData["Errors"] as IEnumerable<string>;
+  var hasError    = errors?.Any() == true;
+  var inputCss    = hasError ? "form-input input-error" : "form-input";
+  var hasCounter  = maxLength > 0;
+  var currentLen  = value.Length;
+  var resizeCss   = resize == "none" ? "resize-none" : resize == "both" ? "resize" : "resize-y";
 }
 
-<div class="space-y-1">
-  <label for="@name" class="form-label">@label</label>
-  <textarea id="@name" name="@name" placeholder="@placeholder" rows="@rows" class="@inputCss">@value</textarea>
+<div class="space-y-1" @(hasCounter ? $"x-data=\"{{ count: {currentLen} }}\"" : "")>
+  <label for="@name" class="form-label">
+    @label
+    @if (isRequired) { <span class="text-danger-500 ml-0.5" aria-hidden="true">*</span> }
+  </label>
+  <textarea id="@name" name="@name" placeholder="@placeholder" rows="@rows"
+            class="@inputCss @resizeCss"
+            @(maxLength > 0 ? $"maxlength=\"{maxLength}\"" : "")
+            @(isRequired ? "required" : "")
+            @(hasCounter ? "x-on:input=\"count = $el.value.length\"" : "")>@value</textarea>
+  @if (hasCounter)
+  {
+    <p class="text-xs text-right" :class="count >= @maxLength ? 'text-danger-400' : 'text-ink-300'">
+      <span x-text="count">@currentLen</span>/@maxLength
+    </p>
+  }
   @if (hasError)
   {
     @foreach (var error in errors!)
     {
-      <p class="form-error">@error</p>
+      <p class="form-error">
+        <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+        @error
+      </p>
     }
   }
-  @if (!string.IsNullOrEmpty(helpText))
+  @if (!string.IsNullOrEmpty(helpText) && !hasError)
   {
     <p class="form-help">@helpText</p>
   }

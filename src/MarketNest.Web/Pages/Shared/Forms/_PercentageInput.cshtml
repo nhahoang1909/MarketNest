@@ -1,27 +1,22 @@
-@*
-  Money input — price/amount field enforcing FieldLimits.Money constraints.
+﻿@*
+  Percentage input — 0–100 decimal with % suffix, enforces FieldLimits.Percentage.
   Parameters (via ViewData):
     Label      — visible label text (required)
     Name       — input name/id (required)
-    Value      — current value (decimal string)
-    Currency   — currency symbol displayed as prefix (default: "₫")
+    Value      — current percentage value (decimal string)
     HelpText   — hint shown below input
     Required   — "true" adds required asterisk to label
-    AllowZero  — "true" allows 0 (min becomes 0 instead of 0.01)
     Errors     — IEnumerable<string> validation errors
 *@
 @{
-  var label      = ViewData["Label"]?.ToString() ?? "Price";
-  var name       = ViewData["Name"]?.ToString() ?? "price";
+  var label      = ViewData["Label"]?.ToString() ?? "Percentage";
+  var name       = ViewData["Name"]?.ToString() ?? "percentage";
   var value      = ViewData["Value"]?.ToString() ?? "";
-  var currency   = ViewData["Currency"]?.ToString() ?? "₫";
-  var helpText   = ViewData["HelpText"]?.ToString();
+  var helpText   = ViewData["HelpText"]?.ToString() ?? $"Enter a value between 0 and 100 (up to {FieldLimits.Percentage.DecimalPlaces} decimal places).";
   var isRequired = ViewData["Required"]?.ToString() == "true";
-  var allowZero  = ViewData["AllowZero"]?.ToString() == "true";
   var errors     = ViewData["Errors"] as IEnumerable<string>;
   var hasError   = errors?.Any() == true;
-  var inputCss   = hasError ? "form-input input-error pl-8" : "form-input pl-8";
-  var minValue   = allowZero ? "0" : "0.01";
+  var inputCss   = hasError ? "form-input input-error pr-8" : "form-input pr-8";
 }
 
 <div class="space-y-1">
@@ -30,13 +25,14 @@
     @if (isRequired) { <span class="text-danger-500 ml-0.5" aria-hidden="true">*</span> }
   </label>
   <div class="relative">
-    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-ink-400 font-medium text-sm select-none">
-      @currency
-    </span>
     <input type="number" id="@name" name="@name" value="@value"
-           step="0.01" min="@minValue" max="@FieldLimits.Money.Max.ToString("F2")"
-           placeholder="0.00" class="@inputCss" inputmode="decimal"
+           min="@FieldLimits.Percentage.Min" max="@FieldLimits.Percentage.Max"
+           step="0.0001" placeholder="0.00"
+           class="@inputCss" inputmode="decimal"
            @(isRequired ? "required" : "")/>
+    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-ink-400 font-medium text-sm select-none">
+      %
+    </span>
   </div>
   @if (hasError)
   {
@@ -53,3 +49,4 @@
     <p class="form-help">@helpText</p>
   }
 </div>
+
