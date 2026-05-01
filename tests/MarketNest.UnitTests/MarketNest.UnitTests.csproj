@@ -4,6 +4,7 @@
         <RootNamespace>MarketNest.UnitTests</RootNamespace>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
+        <NoWarn>$(NoWarn);CA1707</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,6 +15,9 @@
         <ProjectReference Include="..\..\src\MarketNest.Payments\MarketNest.Payments.csproj"/>
         <ProjectReference Include="..\..\src\MarketNest.Reviews\MarketNest.Reviews.csproj"/>
         <ProjectReference Include="..\..\src\MarketNest.Disputes\MarketNest.Disputes.csproj"/>
+        <ProjectReference Include="..\..\src\MarketNest.Notifications\MarketNest.Notifications.csproj"/>
+        <ProjectReference Include="..\..\src\MarketNest.Admin\MarketNest.Admin.csproj"/>
+        <ProjectReference Include="..\..\src\MarketNest.Promotions\MarketNest.Promotions.csproj"/>
         <ProjectReference Include="..\..\src\Base\MarketNest.Base.Common\MarketNest.Base.Common.csproj"/>
     </ItemGroup>
 
