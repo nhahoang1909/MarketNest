@@ -155,12 +155,14 @@ lib/                        # Vendored libraries (alpinejs/, htmx/, chart.js/)
   - Correct: `namespace MarketNest.Admin.Application;`
   - Incorrect: `namespace MarketNest.Admin.Application.Commands;`
 - If you find existing files that violate this rule, mention the mismatch in your change summary and propose a minimal fix (preferably editing only the file header namespace) rather than refactoring unrelated code.
-- Module boundaries: no cross-schema DB access; use service interfaces (in `Core/Contracts/`) or domain events
+- Module boundaries: no cross-schema DB access; use service interfaces (in `Base.Common/Contracts/`) or domain events
 - Module folder layout vs namespace mapping:
-- Modules may contain feature sub-folders (e.g., `Modules/Account/Commands`, `Modules/Product/QueryHandlers`) for organization. When you generate or edit files, keep namespaces at the layer level:
-  - `src/MarketNest.Admin/Modules/Account/Commands/CreateAccountCommand.cs` -> `namespace MarketNest.Admin.Application;`
-  - `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs` -> `namespace MarketNest.Admin.Infrastructure;`
-  - Do NOT include `Account`, `Commands`, `Persistence` in the namespace.
+- Each module's Application layer has two top-level folders: `Common/` (module-wide shared constants, DTOs, audit events, sequences) and `Modules/{Feature}/` (feature-specific CQRS: Commands/, CommandHandlers/, Queries/, QueryHandlers/, Repositories/, Validators/, ImportExport/, Timer/). Infrastructure mirrors with `Queries/Modules/{Feature}/` and `Repositories/Modules/{Feature}/`. When you generate or edit files, keep namespaces flat at the layer level:
+  - `src/MarketNest.Catalog/Application/Common/CatalogAuditEvents.cs` → `namespace MarketNest.Catalog.Application;`
+  - `src/MarketNest.Catalog/Application/Modules/Variant/Commands/BulkImportVariantsCommand.cs` → `namespace MarketNest.Catalog.Application;`
+  - `src/MarketNest.Admin/Application/Modules/Announcement/Commands/CreateAnnouncementCommand.cs` → `namespace MarketNest.Admin.Application;`
+  - `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs` → `namespace MarketNest.Admin.Infrastructure;`
+  - Do NOT include `Common`, `Modules`, `Variant`, `Announcement`, `Commands`, `Persistence` in the namespace.
 ### Query + Repository Pattern Enforcement
 
 Before writing any handler:
