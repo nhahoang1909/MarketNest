@@ -6,9 +6,6 @@ namespace MarketNest.Admin.Infrastructure;
 
 public class AdminReadDbContext(DbContextOptions<AdminReadDbContext> options) : DbContext(options)
 {
-    // ── Test entities (scaffold) ─────────────────────────────────────────
-    public DbSet<TestEntity> Tests { get; set; } = null!;
-    public DbSet<TestSubEntity> TestSubEntities { get; set; } = null!;
 
     // ── Announcements ───────────────────────────────────────────────────
     public DbSet<Announcement> Announcements { get; set; } = null!;

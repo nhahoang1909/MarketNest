@@ -9,7 +9,7 @@ namespace MarketNest.Catalog.Infrastructure;
 ///     In-memory defaults implementation of storefront policy config.
 ///     Phase 2: replace with DB-backed implementation and real DbContext.
 /// </summary>
-internal sealed class StorefrontPolicyConfigService : IStorefrontPolicyConfig, IStorefrontPolicyConfigWriter
+internal sealed class StorefrontPolicyConfigProvider : IStorefrontPolicyConfig, IStorefrontPolicyConfigWriter
 {
     public int MaxProductsPerStorefront { get; private set; } = 500;
     public int MaxImagesPerProduct { get; private set; } = 5;
@@ -43,11 +43,11 @@ public static class CatalogServiceExtensions
         services.AddDbContext<CatalogDbContext>(opts => opts.UseNpgsql(connectionString));
         services.AddScoped<IModuleDbContext>(sp => sp.GetRequiredService<CatalogDbContext>());
 
-        services.AddSingleton<StorefrontPolicyConfigService>();
+        services.AddSingleton<StorefrontPolicyConfigProvider>();
         services.AddSingleton<IStorefrontPolicyConfig>(sp =>
-            sp.GetRequiredService<StorefrontPolicyConfigService>());
+            sp.GetRequiredService<StorefrontPolicyConfigProvider>());
         services.AddSingleton<IStorefrontPolicyConfigWriter>(sp =>
-            sp.GetRequiredService<StorefrontPolicyConfigService>());
+            sp.GetRequiredService<StorefrontPolicyConfigProvider>());
 
         // Repository
         services.AddScoped<IVariantRepository, VariantRepository>();

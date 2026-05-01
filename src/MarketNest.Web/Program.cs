@@ -53,7 +53,7 @@ try
         ConnectionMultiplexer.Connect(
             builder.Configuration["Redis:ConnectionString"]
             ?? throw new InvalidOperationException("Configuration key 'Redis:ConnectionString' is not set.")));
-    builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+    builder.Services.AddSingleton<ICacheService, RedisCacheStore>();
 
     // ── Tier 3 Options (system configuration — no DB) ─────────────────────
     builder.Services.Configure<PlatformOptions>(
@@ -202,10 +202,10 @@ try
     builder.Services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<IRuntimeContext>().CurrentUser);
 
     // HTML sanitizer — strips unsafe tags from rich text editor output (Trix)
-    builder.Services.AddSingleton<IHtmlSanitizerService, TrixHtmlSanitizerService>();
+    builder.Services.AddSingleton<IHtmlSanitizerService, TrixHtmlSanitizer>();
 
     // Excel import/export (ADR-037: ClosedXML)
-    builder.Services.AddScoped<IExcelService, ClosedXmlExcelService>();
+    builder.Services.AddScoped<IExcelService, ClosedXmlExcelProcessor>();
     // Antivirus scanning — Phase 1: NoOp (always clean). Phase 2: replace with ClamAV binding.
     builder.Services.AddSingleton<IAntivirusScanner, NoOpAntivirusScanner>();
 
@@ -239,7 +239,7 @@ try
     // Background jobs: registry + execution store + hosted runner (Phase 1)
     builder.Services.AddSingleton<IJobRegistry, ServiceCollectionJobRegistry>();
     builder.Services.AddScoped<IJobExecutionStore, NpgsqlJobExecutionStore>();
-    builder.Services.AddHostedService<JobRunnerHostedService>();
+    builder.Services.AddHostedService<BackgroundJobRunner>();
 
     // Common background jobs (Web layer)
     builder.Services.AddScoped<IBackgroundJob, CleanupStaleSequencesJob>();

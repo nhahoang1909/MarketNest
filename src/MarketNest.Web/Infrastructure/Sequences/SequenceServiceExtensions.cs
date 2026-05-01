@@ -11,7 +11,7 @@ public static class SequenceServiceExtensions
     /// </summary>
     public static IServiceCollection AddSequenceService(this IServiceCollection services)
     {
-        services.AddSingleton<ISequenceService, PostgresSequenceService>();
+        services.AddSingleton<ISequenceService, PostgresSequenceProvider>();
         return services;
     }
 }

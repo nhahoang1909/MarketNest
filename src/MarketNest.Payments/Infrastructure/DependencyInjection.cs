@@ -19,9 +19,9 @@ public static class PaymentsServiceExtensions
         services.AddDbContext<PaymentsDbContext>(opts => opts.UseNpgsql(connectionString));
         services.AddScoped<IModuleDbContext>(sp => sp.GetRequiredService<PaymentsDbContext>());
 
-        services.AddScoped<CommissionConfigService>();
-        services.AddScoped<ICommissionConfig>(sp => sp.GetRequiredService<CommissionConfigService>());
-        services.AddScoped<ICommissionConfigWriter>(sp => sp.GetRequiredService<CommissionConfigService>());
+        services.AddScoped<CommissionConfigProvider>();
+        services.AddScoped<ICommissionConfig>(sp => sp.GetRequiredService<CommissionConfigProvider>());
+        services.AddScoped<ICommissionConfigWriter>(sp => sp.GetRequiredService<CommissionConfigProvider>());
 
         // Background job — singleton (no scoped dependencies)
         services.AddSingleton<IBackgroundJob, FinancialReconciliationJob>();

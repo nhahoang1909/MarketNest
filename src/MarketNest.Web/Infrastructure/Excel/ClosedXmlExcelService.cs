@@ -9,8 +9,8 @@ namespace MarketNest.Web.Infrastructure;
 ///     All parsing, export, and template generation is synchronous inside Task.Run to avoid
 ///     blocking the thread pool — ClosedXML has no native async API.
 /// </summary>
-public partial class ClosedXmlExcelService(
-    IAppLogger<ClosedXmlExcelService> logger) : IExcelService
+public partial class ClosedXmlExcelProcessor(
+    IAppLogger<ClosedXmlExcelProcessor> logger) : IExcelService
 {
     // ── IMPORT ───────────────────────────────────────────────────────────────
 
@@ -170,7 +170,7 @@ public partial class ClosedXmlExcelService(
                 var sheetType = sheet.GetType();
                 if (!sheetType.IsGenericType) continue;
                 var dataType = sheetType.GetGenericArguments()[0];
-                var method = typeof(ClosedXmlExcelService)
+                var method = typeof(ClosedXmlExcelProcessor)
                     .GetMethod(nameof(AddSheet), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
                     .MakeGenericMethod(dataType);
                 method.Invoke(null, [wb, sheetType.GetProperty("Data")!.GetValue(sheet),

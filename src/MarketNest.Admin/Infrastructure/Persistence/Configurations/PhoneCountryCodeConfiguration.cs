@@ -7,7 +7,7 @@ public class PhoneCountryCodeConfiguration : ReferenceDataConfiguration<PhoneCou
 {
     public override void Configure(EntityTypeBuilder<PhoneCountryCode> builder)
     {
-        builder.ToTable("phone_country_codes", TableConstants.Schema.Default);
+        builder.ToTable(TableConstants.ReferenceTable.PhoneCountryCode, TableConstants.Schema.Default);
         base.Configure(builder);
         builder.Property(x => x.DialCode).HasMaxLength(10).IsRequired();
         builder.Property(x => x.CountryCode).HasMaxLength(3).IsRequired();

@@ -36,7 +36,7 @@ public interface IBaseRepository<TEntity, TKey>
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         CancellationToken ct = default);
-    IQueryable<TEntity> GetQueryable(Expression<Func<TEntity, bool>>? where = null);
+    // IQueryable<TEntity> GetQueryable(Expression<Func<TEntity, bool>>? where = null);
 
     // ── Write ─────────────────────────────────────────────────────────────────
     void Add(TEntity entity);

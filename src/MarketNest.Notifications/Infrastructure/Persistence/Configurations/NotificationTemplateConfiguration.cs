@@ -8,7 +8,7 @@ public class NotificationTemplateConfiguration : IEntityTypeConfiguration<Notifi
 {
     public void Configure(EntityTypeBuilder<NotificationTemplate> builder)
     {
-        builder.ToTable("notification_templates");
+        builder.ToTable(TableConstants.NotificationTable.NotificationTemplate, TableConstants.Schema.Notifications);
 
         builder.HasKey(t => t.Id);
 

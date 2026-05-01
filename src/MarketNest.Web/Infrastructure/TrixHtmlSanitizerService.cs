@@ -8,7 +8,7 @@ namespace MarketNest.Web.Infrastructure;
 ///     Strips unsafe tags, attributes, and protocols to prevent XSS.
 ///     Whitelists only the elements and attributes that Trix generates.
 /// </summary>
-public sealed class TrixHtmlSanitizerService : IHtmlSanitizerService
+public sealed class TrixHtmlSanitizer : IHtmlSanitizerService
 {
     private static readonly HtmlSanitizer Sanitizer = BuildSanitizer();
 
@@ -68,4 +68,3 @@ public sealed class TrixHtmlSanitizerService : IHtmlSanitizerService
             ? string.Empty
             : Sanitizer.Sanitize(rawHtml);
 }
-
