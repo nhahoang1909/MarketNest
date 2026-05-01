@@ -42,14 +42,21 @@ Solution file: `MarketNest.slnx` (XML-based `.slnx` format, not `.sln`).
 
 ```
 src/
-  Base/                     # Shared cross-project primitives and helper packages (IBaseQuery, common DTOs, utilities)
-    MarketNest.Base.Api/
-    MarketNest.Base.Common/
-    MarketNest.Base.Domain/
-    MarketNest.Base.Infrastructure/
-    MarketNest.Base.Utility/
-  MarketNest.Core/          # Shared kernel: Entity<T>, AggregateRoot, ValueObject, Result<T,Error>,
-                            #   CQRS interfaces, IDataSeeder, IModuleDbContext, Error codes
+  Base/                     # Shared cross-project primitives and helper packages
+    MarketNest.Base.Api/        # ReadApiV1ControllerBase, WriteApiV1ControllerBase, MapError helper
+    MarketNest.Base.Common/     # Result<T,Error>, Error, ICommand<T>/IQuery<T>, IEventBus, IDataSeeder,
+                                #   DomainConstants, StatusNames, TableConstants, CacheKeys, SlaConstants,
+                                #   FieldLimits, ValidatorExtensions, ValidationMessages,
+                                #   ISequenceService, IExcelService, IAntivirusScanner,
+                                #   IRuntimeContext + Contracts/ (IAuditService, IInventoryService, …),
+                                #   Address/Money ValueObjects, common DTOs, extension methods
+    MarketNest.Base.Domain/     # Entity<T>, AggregateRoot, ValueObject, IConcurrencyAware,
+                                #   IDomainEvent, IPreCommitDomainEvent, ReferenceData base
+    MarketNest.Base.Infrastructure/ # IAppLogger<T>, LogEventId, BaseQuery<T,K,Ctx>, BaseRepository<T,K,Ctx>,
+                                    #   IBaseRepository<T,K>, IUnitOfWork, IModuleDbContext,
+                                    #   DddModelBuilderExtensions, PgQueryBuilder
+    MarketNest.Base.Utility/    # IBackgroundJob, JobDescriptor, IJobRegistry, IJobExecutionStore,
+                                #   JobExecutionContext — background-job contracts (namespace MarketNest.Base.Utility)
   MarketNest.Identity/      # Auth module (users, roles, JWT)
   MarketNest.Catalog/       # Storefronts, products, inventory
   MarketNest.Cart/          # Cart, CartItem
@@ -69,23 +76,42 @@ tests/
   MarketNest.ArchitectureTests/
 ```
 
-Each module exposes an `AssemblyReference` marker class for assembly scanning (MediatR, FluentValidation). Cross-module service contracts live in `MarketNest.Core/Contracts/` (e.g., `IAuditService`, `IInventoryService`, `IPaymentService`, `INotificationService`, `IOrderCreationService`, `IStorefrontReadService`, `IUserTimeZoneProvider`).
+Each module exposes an `AssemblyReference` marker class for assembly scanning (MediatR, FluentValidation). Cross-module service contracts live in `Base.Common/Contracts/` (namespace `MarketNest.Base.Common`) (e.g., `IAuditService`, `IInventoryService`, `IPaymentService`, `INotificationService`, `IOrderCreationService`, `IStorefrontReadService`, `IUserTimeZoneProvider`, `IHtmlSanitizerService`).
 
-Core shared sub-packages in `MarketNest.Core/Common/`:
+Key types by package (all share namespace matching their project name):
 ```
-Common/Cqrs/            # ICommand<T>, IQuery<T>, handler interfaces
-Common/Events/          # IDomainEvent, IIntegrationEvent, IEventBus + IntegrationEvents/ (shared event records)
-Common/Persistence/     # IModuleDbContext, IBaseRepository<TEntity,TKey>, ModelHasher
-Common/Queries/         # PagedQuery (base record), PagedResult<T>
-Common/Validation/      # ValidatorExtensions (MustBeSlug, MustBePositiveMoney, MustBeValidEmail, etc.)
-AuditAttributes.cs      # [Auditable] (entity → EF interceptor) + [Audited("EVENT_TYPE")] (command → MediatR behavior)
-DomainConstants.cs      # Pagination defaults, validation limits, error codes, date formats, relative time labels
-StatusNames.cs          # OrderStatusNames + EntityStatusNames — string constants for status badges
-TableConstants.cs       # TableConstants.Schema.* (all module schema names) + TableConstants.SystemTable.* (__auto_migration_history, __seed_history)
-DateTimeOffsetExtensions.cs  # User-local time conversion + relative time formatting ("5m ago")
+Base.Common:
+  Cqrs/         ICommand<T>, IQuery<T>, ICommandHandler<,>, IQueryHandler<,>
+  Events/       IDomainEvent (integration), IIntegrationEvent, IEventBus + IntegrationEvents/
+  Queries/      PagedQuery (base record with Page/PageSize/SortBy/Skip), PagedResult<T>
+  Validation/   ValidatorExtensions, ValidationMessages, FieldLimits
+  Attributes/   [Auditable], [Audited("EVENT_TYPE")], [Transaction], [NoTransaction]
+  ValueObjects/ Address, Money (shared value objects)
+  Sequences/    ISequenceService, SequenceDescriptor, SequenceResetPeriod
+  Excel/        IExcelService, ExcelTemplate<TRow>, ExcelExportOptions<T>, ExcelUploadRules
+  Security/     IAntivirusScanner
+  Dtos/         IdAndNameDto, SelectOptionDto<TKey>, DocumentInfo, TimestampDto, StatusDto
+  DomainConstants.cs, StatusNames.cs, TableConstants.cs, CacheKeys.cs, SlaConstants.cs
+  DateTimeOffsetExtensions.cs, StringExtensions.cs, EnumExtensions.cs, NumericExtensions.cs,
+  CollectionExtensions.cs, Result.cs, Error.cs, IDataSeeder.cs
+
+Base.Domain:
+  Entity<T>, AggregateRoot, ValueObject, IConcurrencyAware
+  Events/  IDomainEvent, IPreCommitDomainEvent, IDomainEventHandler<T>
+  ReferenceData (base entity for admin-managed lookup tables)
+
+Base.Infrastructure:
+  Persistence/  BaseQuery<T,K,Ctx>, BaseRepository<T,K,Ctx>, IBaseRepository<T,K>,
+                IUnitOfWork, IModuleDbContext, DddModelBuilderExtensions,
+                PgQueryBuilder, ModelHasher, UpdateTokenInterceptor
+  Logging/      IAppLogger<T>, AppLogger<T>, LogEventId enum
+
+Base.Utility:
+  BackgroundJobs/  IBackgroundJob, JobDescriptor, IJobRegistry, IJobExecutionStore,
+                   JobExecutionContext, JobType, JobTriggerSource
 ```
 
-Note: some common query contracts (for example `IBaseQuery<TEntity,TKey>`) live in the `Base` packages rather than `MarketNest.Core`. See `src/Base/MarketNest.Base.Common/Queries/IBaseQuery.cs` (namespace `MarketNest.Base.Common`) for the canonical interface. The canonical abstract implementations `BaseQuery<TEntity,TKey,TContext>` and `BaseRepository<TEntity,TKey,TContext>` live in `src/Base/MarketNest.Base.Infrastructure/` (namespace `MarketNest.Base.Infrastructure`). Each module provides a 2-line thin wrapper that pins its own `DbContext` type.
+The canonical abstract implementations `BaseQuery<TEntity,TKey,TContext>` and `BaseRepository<TEntity,TKey,TContext>` live in `src/Base/MarketNest.Base.Infrastructure/`. Each module provides a 2-line thin wrapper that pins its own `DbContext` type.
 
 Additional top-level directories:
 ```
@@ -105,7 +131,7 @@ css/components.css          # Extracted component styles
 css/site.css                # Built output (generated by npm run build:css)
 js/app.js                   # Main JS entry point
 js/constants.js             # Shared JS constants
-js/components/              # Alpine.js components: confirmDialog, searchBar, starRating, datePicker, imageUploader, infiniteScroll, multiSelect, productForm, reservationTimer
+js/components/              # Alpine.js components: confirmDialog, searchBar, starRating, datePicker, imageUploader, infiniteScroll, multiSelect, productForm, reservationTimer, richEditor, loadingOverlay
 js/magic/                   # HTMX helper utilities (htmxHelpers.js)
 js/stores/                  # Alpine.js stores (cart, toasts, user)
 lib/                        # Vendored libraries (alpinejs/, htmx/, chart.js/)
@@ -114,7 +140,7 @@ lib/                        # Vendored libraries (alpinejs/, htmx/, chart.js/)
 ## Key Conventions
 
 - See `docs/code-rules.md` for full coding standards
-- Use `Result<T, Error>` — never throw for business failures. All CQRS handlers return `Result<T, Error>` via `ICommand<T>` / `IQuery<T>` interfaces in `MarketNest.Core/Common/Cqrs/`
+- Use `Result<T, Error>` — never throw for business failures. All CQRS handlers return `Result<T, Error>` via `ICommand<T>` / `IQuery<T>` interfaces in `Base.Common/Cqrs/` (namespace `MarketNest.Base.Common`)
 - DDD property accessors (ADR-007): Entity/Aggregate → `{ get; private set; }`, Value Object (class) → `{ get; }`, Value Object (record) → `{ get; init; }`, DTO/Command/Query → `record` with `{ get; init; }`, Infrastructure interfaces → `{ get; set; }` allowed
 - **Nullable management (ADR-039)**: `?` is a business decision, not an implementation detail. Every `?` must have a domain-reason comment. Entities use `#pragma warning disable CS8618` on EF Core private constructors only — no `= string.Empty`, `= null!`, `= default!` sentinels anywhere. Value Objects NEVER nullable. DTOs use `required` keyword for required fields. Canonical reference: `docs/nullable-management.md`.
 - **No magic strings / magic numbers**: extract to `const`, `static readonly`, enum, or config options. See `AppConstants` and `AppRoutes` in `src/MarketNest.Web/Infrastructure/` as the canonical examples
@@ -129,7 +155,7 @@ lib/                        # Vendored libraries (alpinejs/, htmx/, chart.js/)
   - Correct: `namespace MarketNest.Admin.Application;`
   - Incorrect: `namespace MarketNest.Admin.Application.Commands;`
 - If you find existing files that violate this rule, mention the mismatch in your change summary and propose a minimal fix (preferably editing only the file header namespace) rather than refactoring unrelated code.
-- Module boundaries: no cross-schema DB access; use service interfaces (in `Core/Contracts/`) or domain events
+- Module boundaries: no cross-schema DB access; use service interfaces (in `Base.Common/Contracts/`) or domain events
 - Module folder layout vs namespace mapping:
 - Modules may contain feature sub-folders (e.g., `Modules/Account/Commands`, `Modules/Product/QueryHandlers`) for organization. When you generate or edit files, keep namespaces at the layer level:
   - `src/MarketNest.Admin/Modules/Account/Commands/CreateAccountCommand.cs` -> `namespace MarketNest.Admin.Application;`
@@ -162,7 +188,7 @@ Controller base classes:
 - Localization: English (`en`) and Vietnamese (`vi`) via resource files in `src/MarketNest.Web/Resources/` and cookie-based culture provider
 - Route whitelist: `RouteWhitelistMiddleware` blocks unregistered paths. Add new routes to `AppRoutes` and its `WhitelistedPrefixes` set
 - Frontend components live in `src/MarketNest.Web/Pages/Shared/` organized by category: `Data/`, `Display/`, `Domain/`, `Forms/`, `Navigation/`, `Overlays/`. Naming: `_ComponentName.cshtml`. Layouts (`_Layout.cshtml`, `_LayoutAdmin.cshtml`, `_LayoutSeller.cshtml`) also live in `Pages/Shared/`
-- **Shared form field components** — always use the shared partials in `Pages/Shared/Forms/` instead of raw `<input>` tags. They enforce `FieldLimits` at the HTML layer. Available: `_TextField`, `_TextArea`, `_SlugField`, `_EmailField`, `_PhoneField`, `_UrlField`, `_MoneyInput`, `_QuantityInput`, `_StockQuantityInput`, `_PercentageInput`, `_RatingInput`, `_SelectField`, `_ImageUpload`, `_ExcelUpload`, `_FormSection`, `_FormActions`. See `docs/common-validation-rules.md` for full usage reference.
+- **Shared form field components** — always use the shared partials in `Pages/Shared/Forms/` instead of raw `<input>` tags. They enforce `FieldLimits` at the HTML layer. Available: `_TextField`, `_TextArea`, `_SlugField`, `_EmailField`, `_PhoneField`, `_UrlField`, `_MoneyInput`, `_QuantityInput`, `_StockQuantityInput`, `_PercentageInput`, `_RatingInput`, `_SelectField`, `_ImageUpload`, `_ExcelUpload`, `_SearchInput`, `_RichTextEditor`, `_FormSection`, `_FormActions`. See `docs/common-validation-rules.md` for full usage reference.
 - **SharedViewPaths constants (ADR-035)**: All `<partial name="…">` and `Html.PartialAsync(…)` calls for shared components **must** use `SharedViewPaths.*` constants defined in `MarketNest.Web.Infrastructure/SharedViewPaths.cs` — never inline `~/Pages/Shared/…` magic strings. Example: `<partial name="@SharedViewPaths.TextField" …/>`. Add a new constant to `SharedViewPaths` before using any new shared partial.
 - **Validation infrastructure**: use `FieldLimits` (field length/range constants), `ValidationMessages` (error message factory), and `ValidatorExtensions` (FluentValidation extensions) from `MarketNest.Base.Common`. All new validators MUST import from these — no inline string messages, no hardcoded numeric limits. `FieldLimits` is available in all Razor views via `_ViewImports.cshtml`. See `docs/common-validation-rules.md`.
 - FluentValidation extensions: use `ValidatorExtensions` (`Base.Common/Validation/`, namespace `MarketNest.Base.Common`) for reusable rules — `MustBeSlug()`, `MustBePositiveMoney()`, `MustBeNonNegativeMoney()`, `MustBeValidEmail()`, `MustBeValidPhone()`, `MustBeValidUrl()`, `MustBeValidId()`, `MustBeValidQuantity()`, `MustBeValidStockQuantity()`, `MustBeValidPercentage()`, `MustBeValidRating()`, `MustBeValidCountryCode()`, `MustBeValidCurrencyCode()`, `MustBeValidTimezone()`, `MustBeValidPostalCode()`, `MustBeInlineStandard()`, `MustBeInlineShort()`, `MustBeMultilineDocument()`, and others. See `docs/common-validation-rules.md` §7. All validators MUST use `ValidationMessages` for error text — no inline string literals.
@@ -170,17 +196,18 @@ Controller base classes:
 - Logging: inject `IAppLogger<T>` (not `ILogger<T>` directly) and use `[LoggerMessage]` source-generated delegates in a nested `private static partial class Log`. All classes that log must be `partial`. `IAppLogger<T>` is defined in `src/Base/MarketNest.Base.Infrastructure/Logging/`; EventIds come from `LogEventId` enum in the same package — each module owns a block of 10,000 IDs (ADR-033). See `docs/code-rules.md` §9
 - Database initialization: `DatabaseInitializer` auto-migrates and seeds on startup using model hash tracking and PostgreSQL advisory locks. Seeders implement `IDataSeeder` with `Order` and `Version` properties
 - Each module's `DbContext` must implement `IModuleDbContext` (defines `SchemaName`, `ContextName`). Register via `AddModuleDbContext<TContext>()` in `DatabaseServiceExtensions` so `DatabaseInitializer` can discover all modules
-- Event bus: modules publish integration events via `IEventBus` (in `MarketNest.Core/Common/Events/`). Phase 1 uses `InProcessEventBus` (MediatR); Phase 3 swaps to `MassTransitEventBus` (RabbitMQ) — transport is a DI swap, module code never references the concrete implementation
-- Domain constants: use `DomainConstants` (`MarketNest.Core/Common/DomainConstants.cs`) for pagination defaults, validation limits, error codes/messages, date formats, and relative time labels. Use `OrderStatusNames` and `EntityStatusNames` (`MarketNest.Core/Common/StatusNames.cs`) for status string constants
-- Value objects `Address` and `Money` live in `MarketNest.Core/ValueObjects/`
+- Event bus: modules publish integration events via `IEventBus` (in `Base.Common/Events/`, namespace `MarketNest.Base.Common`). Phase 1 uses `InProcessEventBus` (MediatR); Phase 3 swaps to `MassTransitEventBus` (RabbitMQ) — transport is a DI swap, module code never references the concrete implementation
+- Domain constants: use `DomainConstants` (`Base.Common/DomainConstants.cs`, namespace `MarketNest.Base.Common`) for pagination defaults, validation limits, error codes/messages, date formats, and relative time labels. Use `OrderStatusNames` and `EntityStatusNames` (`Base.Common/StatusNames.cs`) for status string constants
+- Value objects `Address` and `Money` live in `Base.Common/ValueObjects/` (namespace `MarketNest.Base.Common`)
 - Date/time formatting: use `DateTimeOffsetExtensions` for user-local time conversion and relative time strings. User time zone resolved per-request via `IUserTimeZoneProvider` → `HttpContextUserTimeZoneProvider`
-- Paged queries: inherit from `PagedQuery` (`MarketNest.Core/Common/Queries/`) — provides `Page`, `PageSize`, `SortBy`, `SortDesc`, `Search`, and `Skip` with built-in validation
+- Paged queries: inherit from `PagedQuery` (`Base.Common/Queries/`) — provides `Page`, `PageSize`, `SortBy`, `SortDesc`, `Search`, and `Skip` with built-in validation
 - OpenAPI + Scalar: API docs use `Microsoft.AspNetCore.OpenApi` + `Scalar.AspNetCore` (not Swagger). Scalar UI available at `/scalar` in dev. `ApiContractGenerator` auto-generates `docs/api-contract.md` from the OpenAPI spec on startup
 - Multiple layouts: `_Layout.cshtml` (buyer/public), `_LayoutAdmin.cshtml`, `_LayoutSeller.cshtml` in `src/MarketNest.Web/Pages/Shared/`
 - Design tokens: server-side inline color constants live in `AppConstants.Colors` — keep in sync with Tailwind CSS tokens in `wwwroot/css/input.css`
-- Auditing: mark entities `[Auditable]` for automatic EF Core change tracking; mark commands `[Audited("EVENT_TYPE")]` for automatic MediatR audit logging — `[Audited]` also accepts `EntityType` (entity name override) and `AuditFailures` (default `true`). `IAuditService` in `Core/Contracts/` — never fails the main request. See ADR-012
+- Auditing: mark entities `[Auditable]` for automatic EF Core change tracking; mark commands `[Audited("EVENT_TYPE")]` for automatic MediatR audit logging — `[Audited]` also accepts `EntityType` (entity name override) and `AuditFailures` (default `true`). `IAuditService` in `Base.Common/Contracts/` — never fails the main request. See ADR-012
 - **Sale price on variants (ADR-024)**: `ProductVariant` carries three inline sale fields (`SalePrice`, `SaleStart`, `SaleEnd`). Always use `variant.EffectivePrice()` at checkout / cart reads — never read `Price` directly. `ExpireSalesJob` (Catalog, 5-min schedule) clears expired sales and raises `VariantSalePriceRemovedEvent`. Full rules: `docs/domain-and-business-rules.md` §5.4.
-- **Background jobs**: All timer/batch jobs must implement `IBackgroundJob` and expose a `JobDescriptor` with a globally-unique `JobKey` (e.g., `catalog.variant.expire-sales`). See `docs/backend-patterns.md` §16 for the full list of registered jobs.
+- **Background jobs**: All timer/batch jobs must implement `IBackgroundJob` and expose a `JobDescriptor` with a globally-unique `JobKey` (e.g., `catalog.variant.expire-sales`). Background job contracts (`IBackgroundJob`, `JobDescriptor`, `IJobRegistry`, `IJobExecutionStore`, `JobExecutionContext`) live in `Base.Utility` (namespace `MarketNest.Base.Utility`). `BackgroundJobRunner` (hosted service, polls every 30s) and `ServiceCollectionJobRegistry` live in `src/MarketNest.Web/`. See `docs/backend-patterns.md` §16 for the full list of registered jobs.
+- **Auto-registration DI**: `services.AddModuleInfrastructureServices(params Assembly[])` (in `MarketNest.Web.Infrastructure.ModuleInfrastructureExtensions`) auto-registers all `IBaseRepository<,>` and `IBaseQuery<,>` implementations as `Scoped`. Add a module's `AssemblyReference` assembly here once it has Query/Repository classes.
 - **Unit of Work (ADR-027)**: Command handlers MUST NOT call `uow.CommitAsync(ct)` or `dbContext.SaveChangesAsync()` directly — the transaction filter (`RazorPageTransactionFilter` / `TransactionActionFilter`) owns the full transaction lifecycle and calls `CommitAsync` automatically after the handler returns. `IUnitOfWork` is in `Base.Infrastructure`. **Exception**: background jobs run outside the HTTP pipeline and must manage transactions explicitly. Domain events split into **pre-commit** (`IPreCommitDomainEvent` — runs INSIDE the open DB transaction before `SaveChanges`) and **post-commit** (plain `IDomainEvent` — dispatched AFTER TX commit; failures logged, never rethrow). See `docs/backend-patterns.md` §22 and ADR-027.
 - **RuntimeContext (ADR-028)**: Inject `IRuntimeContext` (contract in `Base.Common`) instead of `ICurrentUserService` + ad-hoc `HttpContext.TraceIdentifier`. Provides `CorrelationId`, `RequestId`, `CurrentUser` (Id, Name, Email, Role), `StartedAt`, `ElapsedMs`, HTTP metadata. Use `ctx.CurrentUser.RequireId()` in write handlers (throws `UnauthorizedException` if anonymous). Use `ctx.CurrentUser.IdOrNull` in audit interceptors/logging (never throws). Background jobs: `BackgroundJobRuntimeContext.ForSystemJob(jobKey)`. Tests: `TestRuntimeContext.AsSeller()`. See `docs/backend-patterns.md` §23 and ADR-028.
 - **Transaction filters (ADR-027)**: `RazorPageTransactionFilter` globally wraps `OnPost*`/`OnPut*`/`OnDelete*`/`OnPatch*` automatically. `TransactionActionFilter` wraps write controller actions when `[Transaction]` is present. `WriteApiV1ControllerBase` carries `[Transaction]` at class level. Opt-out: `[NoTransaction]`. Override isolation: `[Transaction(IsolationLevel.Serializable, timeoutSeconds: 60)]`. In `MarketNest.Web.Infrastructure/Filters/`.
@@ -247,6 +274,8 @@ All located in `docs/` — read before implementing any feature:
 | `docs/devops-requirements.md` | Docker Compose topology, GitHub Actions, K8s manifests |
 | `docs/analyzers.md` | Roslyn analyzer reference: all 33 MN rules, suppression patterns, adding new rules |
 | `docs/test-driven-design.md` | TDD guidelines, unit/integration/architecture test patterns |
+| `docs/sla-requirements.md` | SLA requirements — availability, performance, business correctness, data integrity thresholds (ADR-026) |
+| `docs/extension-methods-cheatsheet.md` | Quick reference card for all extension methods (bookmark for everyday use) |
 
 
 ## Project Memory System
