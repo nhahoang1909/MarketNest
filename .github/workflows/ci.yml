@@ -794,7 +794,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t marketnest:${{ github.sha }} .
+        run: docker build -f src/MarketNest.Web/Dockerfile -t marketnest:${{ github.sha }} .
 
       - name: Push to GHCR
         run: |
