@@ -106,10 +106,12 @@ All rules are specified in `docs/code-rules.md`. Key items:
 - If you encounter existing files using folder-style namespaces (e.g., `.Commands`), report the mismatch in your change summary and prefer minimal edits to correct only the namespace declaration.
 - **Module boundaries**: No module accesses another module's database schema. Cross-module sync calls go through service interfaces; async through domain events.
 - Module folder layout vs namespace mapping (summary):
-- Modules may use feature sub-folders (e.g., `Modules/Account/Commands`, `Modules/Product/QueryHandlers`) for organization. Keep namespaces at the layer level:
-  - `src/MarketNest.Admin/Modules/Account/Commands/CreateAccountCommand.cs` -> `namespace MarketNest.Admin.Application;`
-  - `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs` -> `namespace MarketNest.Admin.Infrastructure;`
-  - Do NOT include `Account`, `Commands`, `Persistence` in the namespace.
+- Each module's Application layer has two top-level folders: `Common/` (module-wide shared constants, DTOs, audit events, sequences) and `Modules/{Feature}/` (feature-specific CQRS: Commands/, CommandHandlers/, Queries/, QueryHandlers/, Repositories/, Validators/, ImportExport/, Timer/). Infrastructure mirrors with `Queries/Modules/{Feature}/` and `Repositories/Modules/{Feature}/`. Keep namespaces flat at the layer level regardless of sub-folder depth:
+  - `src/MarketNest.Catalog/Application/Common/CatalogAuditEvents.cs` → `namespace MarketNest.Catalog.Application;`
+  - `src/MarketNest.Catalog/Application/Modules/Variant/Commands/BulkImportVariantsCommand.cs` → `namespace MarketNest.Catalog.Application;`
+  - `src/MarketNest.Admin/Application/Modules/Announcement/Commands/CreateAnnouncementCommand.cs` → `namespace MarketNest.Admin.Application;`
+  - `src/MarketNest.Admin/Infrastructure/Persistence/AdminDbContext.cs` → `namespace MarketNest.Admin.Infrastructure;`
+  - Do NOT include `Common`, `Modules`, `Variant`, `Commands`, `Persistence` in the namespace.
 - **Immutability**: Records for DTOs and value objects (`{ get; init; }`). Primary constructors for dependency injection. Class-based value objects use `{ get; }` only.
 - **No magic strings / magic numbers**: Every repeated string literal and unexplained number must be a `const`, `static readonly`, enum, or bound configuration option. See `docs/code-rules.md` §2.6.
   - **AppConstants vs appsettings.json (ADR-030)**: **AppConstants** holds immutable business rules (password length, file upload limits, colors, font stacks) that never change between environments. **appsettings.json** holds environment-specific settings (connection strings, secrets, rate limits, token expiry) that vary per deployment. Example: `AppConstants.Validation.PasswordMinLength` is in code; `Security.RateLimitRequestsPerMinute` is configurable in JSON.
