@@ -390,6 +390,45 @@ string? value = list.ElementAtOrDefault(5);        // null (out of range)
 string value = list.ElementAtOrDefault(5, "N/A");  // "N/A"
 ```
 
+### Safe Dictionary Access (MN036)
+
+Direct dictionary indexer access (`dict[key]`) throws `KeyNotFoundException` when the key is absent,
+crashing the request. Use one of these safe alternatives instead.
+
+**`GetValueOrDefault`** — returns a fallback instead of throwing:
+
+```csharp
+// Works on IDictionary<TKey,TValue> and IReadOnlyDictionary<TKey,TValue>
+decimal fee = configMap.GetValueOrDefault("shipping_fee", defaultValue: 0m);
+string label = readonlyMap.GetValueOrDefault("status_label", "—");
+
+// ❌ DO NOT — throws KeyNotFoundException when key is missing
+decimal fee = configMap["shipping_fee"];
+```
+
+**`TryGet`** — returns a `(bool Found, TValue? Value)` tuple for pattern-matching:
+
+```csharp
+var (found, price) = pricingMap.TryGet("SKU-001");
+if (found) ApplyDiscount(price!);
+
+// Or with deconstruction in a condition
+if (configMap.TryGet("feature_flag") is (true, var flag))
+    EnableFeature(flag!);
+```
+
+**When to use which:**
+
+| Pattern | Use when |
+|---------|----------|
+| `TryGetValue(key, out var v)` | You need the value only if it exists (classic pattern) |
+| `GetValueOrDefault(key, fallback)` | You always need a value and have a sensible default |
+| `TryGet(key)` | You need both the existence flag and value in a single expression |
+
+> The analyzer **MN036** warns on all direct dictionary indexer uses. Suppress with
+> `#pragma warning disable MN036` only when the key is guaranteed to exist (e.g. after
+> a `ContainsKey` guard), with a comment explaining why.
+
 ### String Joining (non-empty only)
 
 ```csharp
