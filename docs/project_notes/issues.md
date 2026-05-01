@@ -20,6 +20,25 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-05-01 - refactor(ci): Three-stage test pipeline restructuring
+- **Status**: Completed
+- **Description**: Restructured CI/CD pipeline (`.github/workflows/ci.yml`) from flat test parallelism into **3 sequential test stages with gating**:
+  - **Stage 3A**: Architecture Tests (fast, fail-fast) + Analyzer Tests → `stage1-gate`
+  - **Stage 3B**: Unit Tests (per-module, parallel) → `stage2-gate`
+  - **Stage 3C**: Integration Tests (resource-intensive, only after unit tests pass)
+  - **Final**: `verify` gate aggregates all stages → `docker-build` only on successful verify
+- **Key benefits**:
+  - ✅ **Fast feedback**: Architecture violations caught in 2–3 minutes
+  - ✅ **Resource efficiency**: Don't spin up DB/Redis unless basic tests pass
+  - ✅ **Parallel unit tests**: 9 module-level test jobs run simultaneously
+  - ✅ **Sequential gating**: Each stage gates the next = prevents wasted compute
+  - ✅ **Single branch protection**: Set only `verify` as required check
+- **New documentation**: `docs/CI_PIPELINE_STAGES.md` — full pipeline architecture, execution flow diagram, time estimates, and reversion instructions
+- **Files changed**: `.github/workflows/ci.yml` (restructured), `docs/CI_PIPELINE_STAGES.md` (created)
+- **Time savings**: Red builds now fail in ~15–20 min (if architecture/unit tests fail); green builds take ~25–40 min (full pipeline)
+
+---
+
 ### 2026-05-01 - refactor(catalog): Module folder structure + centralized audit event types (ADR-035 alignment)
 - **Status**: Completed
 - **Description**: Restructured `MarketNest.Catalog` (and updated documentation to reflect correct pattern). Created `CatalogAuditEvents.cs` static class to centralize audit event type constants (e.g., `CatalogAuditEvents.Variant.BulkImport = "CATALOG.VARIANT_BULK_IMPORT"`), replacing magic strings in `[Audited(...)]` attributes. Reorganized folder structure to match the canonical `Admin` module pattern: `Application/Common/` (module-wide shared items like `CatalogAuditEvents`, `CatalogSequences`) + `Application/Modules/Variant/` (feature-specific CQRS). Mirrored in Infrastructure layer: `Repositories/Modules/Variant/`. All namespaces remain flat at layer level per ADR-039.
