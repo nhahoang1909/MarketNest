@@ -93,19 +93,32 @@ public sealed partial class DatabaseInitializer(
 
                     var created = await dbContext.Database.EnsureCreatedAsync(ct);
 
-                    // EnsureCreated returns false if the database already exists (no-op).
-                    // When new entities are added but there are no migration files,
-                    // we must drop this context's tables and recreate in dev.
-                    if (!created && storedHash is not null && !env.IsProduction())
+                    // EnsureCreated returns true if the database was created, false if it already existed.
+                    // When the DB exists but EnsureCreated returns false, we must check if this context's
+                    // tables actually exist. If not, create them. If yes but hash changed (or this is first run),
+                    // drop and recreate in dev.
+                    if (!created)
                     {
-                        Log.InfoCreatingMissingTables(logger, contextName);
-                        await DropContextTablesAsync(dbContext, ct);
-                        // EnsureCreated is a no-op when the DB exists — use CreateTablesAsync
-                        // which creates tables from the model regardless of DB existence.
-                        var creator = dbContext.GetService<Microsoft.EntityFrameworkCore.Storage.IRelationalDatabaseCreator>();
-                        await creator.CreateTablesAsync(ct);
-                        // Clear seed versions so seeders re-populate the recreated tables
-                        await tracker.ClearAllSeedVersionsAsync(ct);
+                        var tablesExist = await ContextTablesExistAsync(dbContext, ct);
+
+                        if (!tablesExist)
+                        {
+                            // Tables don't exist — create them from the model (first run with empty DB)
+                            Log.InfoCreatingMissingTables(logger, contextName);
+                            var creator = dbContext.GetService<Microsoft.EntityFrameworkCore.Storage.IRelationalDatabaseCreator>();
+                            await creator.CreateTablesAsync(ct);
+                            // Clear seed versions so seeders re-populate the new tables
+                            await tracker.ClearAllSeedVersionsAsync(ct);
+                        }
+                        else if (storedHash is not null && !env.IsProduction())
+                        {
+                            // Tables exist but model hash changed — drop and recreate in dev
+                            Log.InfoCreatingMissingTables(logger, contextName);
+                            await DropContextTablesAsync(dbContext, ct);
+                            var creator = dbContext.GetService<Microsoft.EntityFrameworkCore.Storage.IRelationalDatabaseCreator>();
+                            await creator.CreateTablesAsync(ct);
+                            await tracker.ClearAllSeedVersionsAsync(ct);
+                        }
                     }
                 }
                 else if (pending.Count == 0)

@@ -3,9 +3,13 @@ using MarketNest.Base.Utility;
 
 namespace MarketNest.Promotions.Application;
 
+/// <summary>
+///     Transaction lifecycle is managed automatically by <see cref="BackgroundJobTransactionAttribute"/>
+///     — <c>BackgroundJobRunner</c> wraps the full execution in Begin → Commit → Dispatch / Rollback.
+/// </summary>
+[BackgroundJobTransaction]
 public partial class VoucherExpiryJob(
     IVoucherRepository repository,
-    IUnitOfWork uow,
     IAppLogger<VoucherExpiryJob> logger) : IBackgroundJob
 {
     private const string JobKeyValue = "promotions.voucher.expiry";
@@ -38,38 +42,19 @@ public partial class VoucherExpiryJob(
             return;
         }
 
-        try
+        foreach (Domain.Voucher voucher in toExpire)
         {
-            await uow.BeginTransactionAsync(ct: cancellationToken);
-
-            foreach (Domain.Voucher voucher in toExpire)
-            {
-                voucher.MarkExpired();
-                Log.InfoExpired(logger, voucher.Id);
-            }
-
-            foreach (Domain.Voucher voucher in toDepleted)
-            {
-                voucher.MarkDepleted();
-                Log.InfoDepleted(logger, voucher.Id);
-            }
-
-            await uow.CommitAsync(cancellationToken);
-            await uow.CommitTransactionAsync(cancellationToken);
-            await uow.DispatchPostCommitEventsAsync(cancellationToken);
-
-            Log.InfoCompleted(logger, context.ExecutionId, toExpire.Count, toDepleted.Count);
+            voucher.MarkExpired();
+            Log.InfoExpired(logger, voucher.Id);
         }
-        catch (Exception ex)
+
+        foreach (Domain.Voucher voucher in toDepleted)
         {
-            await uow.RollbackAsync(cancellationToken).ConfigureAwait(false);
-            Log.ErrorFailed(logger, context.ExecutionId, ex);
-            throw;
+            voucher.MarkDepleted();
+            Log.InfoDepleted(logger, voucher.Id);
         }
-        finally
-        {
-            await uow.DisposeAsync();
-        }
+
+        Log.InfoCompleted(logger, context.ExecutionId, toExpire.Count, toDepleted.Count);
     }
 
     private static partial class Log
