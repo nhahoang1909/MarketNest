@@ -19,9 +19,10 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 
 ## Current Phase
 
-- **Phase**: 1 — Modular Monolith (implementation in progress as of 2026-04-30)
+- **Phase**: 1 — Modular Monolith (implementation in progress as of 2026-05-01)
 - **Branch**: `p1-main-nhahoang` (working branch; PRs target `p1-main`)
 - **Target**: Phase 1 exit by month 3 (real user can browse → register → create storefront → list product → another user buys → order fulfilled)
+- **Latest updates**: Announcement feature foundation (ADR-043), Roslyn analyzer refinements (MN019–MN021), BulkImportVariantsHandler (Excel import with 4-layer validation)
 
 ---
 
@@ -47,7 +48,7 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 | `src/MarketNest.Admin` | Back-office: reference data (Country, Gender, Category…), admin-config UI, arbitration, **Announcements** (`Announcement` entity + CQRS — ADR-043) |
 | `src/MarketNest.Auditing` | Audit logs, login events; `AuditableInterceptor` + `AuditBehavior<,>` |
 | `src/MarketNest.Web` | ASP.NET Core host: Razor Pages + minimal APIs, `DatabaseInitializer`, middleware, `SharedViewPaths` constants |
-| `src/MarketNest.Analyzers` | Roslyn analyzers: 20 MN rules (MN001–MN020), 6 code-fix providers |
+| `src/MarketNest.Analyzers` | Roslyn analyzers: 36 MN rules (MN001–MN036), 6 code-fix providers |
 
 ---
 
@@ -164,6 +165,6 @@ marketnest:admin:config:{key}             TTL: 30m   — platform config
 | `nullable-management.md` | Nullable policy: business-decision model, layer-by-layer rules, banned anti-patterns, review checklist (ADR-039) |
 | `sla-requirements.md` | SLA thresholds: availability, performance, business correctness, data integrity (ADR-026) |
 | `devops-requirements.md` | Docker Compose topology, GitHub Actions, K8s manifests |
-| `analyzers.md` | Roslyn analyzer reference: all 20 MN rules, suppression patterns, adding new rules |
+| `analyzers.md` | Roslyn analyzer reference: all 36 MN rules (MN001–MN036), suppression patterns, adding new rules |
 | `test-driven-design.md` | TDD guidelines, unit/integration/architecture test patterns |
 | `api-contract.md` | Auto-generated from OpenAPI spec by `ApiContractGenerator` on startup (dev only) |
