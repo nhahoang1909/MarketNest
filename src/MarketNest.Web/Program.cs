@@ -244,9 +244,6 @@ try
     // Common background jobs (Web layer)
     builder.Services.AddScoped<IBackgroundJob, CleanupStaleSequencesJob>();
 
-    // Common background jobs (Web layer)
-    builder.Services.AddScoped<IBackgroundJob, CleanupStaleSequencesJob>();
-
     // ── Database: auto-migrate + seed ─────────────────────────────────
 
     // Register DatabaseInitializer + auto-discover seeders from module assemblies
