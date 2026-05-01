@@ -20,6 +20,16 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-05-01 - feat(base): [BackgroundJobTransaction] attribute — automatic TX lifecycle for background jobs
+- **Status**: Completed
+- **Description**: Added `[BackgroundJobTransaction]` attribute so jobs opt-in to automatic transaction management without writing boilerplate UoW code.
+- **Key deliverables**:
+  - **`BackgroundJobTransactionAttribute`** in `Base.Utility/BackgroundJobs/` — supports `IsolationLevel` + `TimeoutSeconds`. Applied to job class. Job must NOT inject `IUnitOfWork` itself.
+  - **`BackgroundJobRunner.RunWithTransactionAsync`** — private helper in `JobRunnerHostedService.cs` that auto-wraps jobs carrying the attribute: `BeginTransactionAsync` → `ExecuteAsync` → `CommitAsync` → `CommitTransactionAsync` → `DispatchPostCommitEventsAsync` / on error `RollbackAsync(CancellationToken.None)` / always `DisposeAsync`.
+  - **`RunOneAsync` fixed** — now uses `await using var scope = provider.CreateAsyncScope()` (was `CreateScope()`) to prevent async disposal crash (see bugs.md 2026-05-01).
+  - **`ExpireSalesJob`** (Catalog) and **`VoucherExpiryJob`** (Promotions) — refactored to use attribute; removed manual UoW try/catch/finally boilerplate.
+  - **3 new `LogEventId`s**: `JobRunnerTxBegin` (120006), `JobRunnerTxCommitted` (120007), `JobRunnerTxRolledBack` (120008).
+
 ### 2026-05-01 - feat(base): TrackableInterceptor — automatic CreatedAt/ModifiedAt stamping
 - **Status**: Implemented (infrastructure only; not yet registered in Program.cs)
 - **Description**: Implemented `TrackableInterceptor` EF Core SaveChanges interceptor in `Base.Infrastructure/Persistence/` that automatically stamps audit-trail fields on entities implementing `ITrackable` interface.
