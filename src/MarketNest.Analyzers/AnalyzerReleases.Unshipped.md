@@ -36,4 +36,5 @@ MN032 | Architecture | Warning | DeepIncludeChainExceedsThreeLevels
 MN033 | Architecture | Error | CacheUsageInDomainLayer
 MN034 | Architecture | Error | CommandHandlerMustNotInjectQuerySideTypes
 MN035 | Architecture | Error | QueryHandlerMustNotInjectWriteSideOrHandlerTypes
+MN036 | Architecture | Warning | UnsafeDictionaryIndexerAccess
 

@@ -498,6 +498,54 @@ var bad = order.CreatedAt.ToString("yyyy-MM-dd");  // BAD — uses server time
 - Use `DateTimeOffsetExtensions` methods for consistent formatting across the app
 - Format constants live in `DomainConstants.DateTimeFormats`
 
+### 2.10 Safe Collection Access — No Direct Index Access on Dictionaries
+
+Direct dictionary indexer access crashes the request when the key is absent.
+
+```csharp
+// ❌ DON'T — throws KeyNotFoundException when "shipping_fee" is not in the map
+decimal fee = configMap["shipping_fee"];
+
+// ❌ DON'T — un-guarded access throws KeyNotFoundException at runtime
+var label = statusLabels[order.Status];
+```
+
+**Why it crashes**: `IDictionary<TKey,TValue>[key]` and `IReadOnlyDictionary<TKey,TValue>[key]`
+throw `KeyNotFoundException` if the key is absent — silently crashing the request with no error
+message surfaced to the caller.
+
+**Preferred patterns** (use the first option that fits):
+
+```csharp
+// ✅ OPTION 1 — TryGetValue (built-in, explicit branch)
+if (configMap.TryGetValue("shipping_fee", out var fee))
+    ApplyFee(fee);
+
+// ✅ OPTION 2 — GetValueOrDefault (BCL extension, returns null/default instead of throwing)
+decimal fee = configMap.GetValueOrDefault("shipping_fee", defaultValue: 0m);
+
+// ✅ OPTION 3 — CollectionExtensions.TryGet (project helper, tuple pattern-matching)
+var (found, label) = statusLabels.TryGet(order.Status);
+if (found) DisplayLabel(label!);
+
+// ✅ OPTION 4 — CollectionExtensions.GetValueOrDefault overload on IReadOnlyDictionary
+string display = readonlyMap.GetValueOrDefault("key", "—");
+```
+
+**For list / array access** — bounds checking is not enforced by the analyzer, but prefer
+`ElementAtOrDefault()` from `CollectionExtensions` when the index is not guaranteed to be valid:
+
+```csharp
+// ❌ Throws ArgumentOutOfRangeException when items is empty
+var first = items[0];
+
+// ✅ Returns null/default instead of throwing
+var first = items.ElementAtOrDefault(0);
+```
+
+**Rule enforced by**: Roslyn analyzer **MN036** (Warning — promoted to Error by `TreatWarningsAsErrors`).
+Suppression: `#pragma warning disable MN036 // indexer is safe — bounds checked above`.
+
 ---
 
 ## 3. Domain Layer Rules
@@ -1319,6 +1367,7 @@ Before merging:
 - [ ] No cryptographically weak hash algorithms — use SHA512+, never MD5 or SHA256 for security operations (see §10.1)
 - [ ] CommandHandlers inject only write-side types (`I*Repository`, helpers) — no `I*Query` or `IQueryHandler` (MN034)
 - [ ] QueryHandlers inject only read-side types (`I*Query`, helpers) — no `I*Repository`, `ICommandHandler`, or another `IQueryHandler` (MN035)
+- [ ] No direct dictionary indexer access (`dict[key]`) — use `TryGetValue`, `GetValueOrDefault`, or `TryGet` extension (MN036, see §2.10)
 
 ---
 
