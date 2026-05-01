@@ -940,7 +940,88 @@ public interface IJobExecutionStore
 
 ---
 
-#### 2. Registered & Planned Jobs
+#### 2. BackgroundJobTransaction Attribute — Automatic Transaction Management
+
+Background jobs (running outside the HTTP pipeline) need explicit transaction management. Instead of boilerplate try/catch/finally UoW code in every job, use the `[BackgroundJobTransaction]` attribute:
+
+```csharp
+[BackgroundJobTransaction(IsolationLevel = IsolationLevel.ReadCommitted, TimeoutSeconds = 60)]
+public class ExpireSalesJob : IBackgroundJob
+{
+    private readonly IVariantRepository _variantRepository;
+    
+    public ExpireSalesJob(IVariantRepository variantRepository)
+    {
+        _variantRepository = variantRepository;  // No IUnitOfWork injection needed
+    }
+    
+    public JobDescriptor Descriptor => new(
+        "catalog.variant.expire-sales",
+        "Expire Sale Prices",
+        "Catalog",
+        JobType.Timer,
+        "*/5 * * * *",  // Every 5 minutes
+        true,
+        false,
+        0,
+        "Expire variants whose sale window has ended"
+    );
+    
+    public async Task ExecuteAsync(JobExecutionContext context, CancellationToken ct)
+    {
+        // Just mutate entities via repository; filter handles transaction lifecycle
+        var expired = await _variantRepository.GetExpiredSalesAsync(ct);
+        foreach (var variant in expired)
+        {
+            variant.RemoveSalePrice();  // Raises VariantSalePriceRemovedEvent
+            _variantRepository.Update(variant);
+        }
+        // Transaction committed automatically after this method returns (or rolled back on exception)
+    }
+}
+```
+
+**How it works:**
+1. Job class decorated with `[BackgroundJobTransaction]` attribute (optional `IsolationLevel` and `TimeoutSeconds`)
+2. Job **DO NOT inject `IUnitOfWork`** — transaction management is automatic
+3. `JobRunnerHostedService` detects the attribute and wraps `ExecuteAsync` with:
+   - `BeginTransactionAsync` on all module DbContexts
+   - Run handler
+   - `CommitAsync` → `CommitTransactionAsync` → `DispatchPostCommitEventsAsync`
+   - On exception: `RollbackAsync`
+   - Finally: `DisposeAsync` cleanup
+4. All domain events (pre-commit and post-commit) dispatched automatically
+
+**Compared to manual UoW:**
+```csharp
+// Manual (error-prone, boilerplate)
+public async Task ExecuteAsync(...)
+{
+    await _uow.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
+    try
+    {
+        var expired = await _variantRepository.GetExpiredSalesAsync(ct);
+        foreach (var variant in expired) { variant.RemoveSalePrice(); _variantRepository.Update(variant); }
+        await _uow.CommitAsync(ct);
+        await _uow.CommitTransactionAsync(ct);
+        await _uow.DispatchPostCommitEventsAsync(ct);
+    }
+    catch { await _uow.RollbackAsync(ct); throw; }
+    finally { await _uow.DisposeAsync(); }
+}
+
+// With [BackgroundJobTransaction] (clean, automatic)
+[BackgroundJobTransaction]
+public async Task ExecuteAsync(...)
+{
+    var expired = await _variantRepository.GetExpiredSalesAsync(ct);
+    foreach (var variant in expired) { variant.RemoveSalePrice(); _variantRepository.Update(variant); }
+}
+```
+
+---
+
+#### 4. Registered & Planned Jobs
 
 | Job Name | Module | Schedule | Description |
 | :--- | :--- | :--- | :--- |
@@ -958,7 +1039,7 @@ public interface IJobExecutionStore
 
 ---
 
-#### 3. Admin Job Operations Roadmap
+#### 5. Admin Job Operations Roadmap
 
 | Capability | Phase | Notes |
 | :--- | :--- | :--- |
@@ -977,7 +1058,7 @@ public interface IJobExecutionStore
 ---
 
 
-## 17. Error Handling Strategy
+## 18. Error Handling Strategy
 
 ### Global Exception Handler (unexpected only)
 ```csharp
@@ -1002,7 +1083,7 @@ app.MapHealthChecks("/health");
 
 ---
 
-## 18. Module Registration Convention
+## 19. Module Registration Convention
 
 ```csharp
 // Each module: {Module}/Infrastructure/DependencyInjection.cs
@@ -1031,7 +1112,7 @@ builder.Services
 
 ---
 
-## 19. Database Startup & Seeding
+## 20. Database Startup & Seeding
 
 ### DatabaseInitializer
 
