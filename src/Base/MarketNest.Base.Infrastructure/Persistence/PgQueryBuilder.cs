@@ -55,7 +55,10 @@ public static partial class PgQueryBuilder
 
         string sql = FormatPlaceholderRegex().Replace(format, match =>
         {
+            // MN036: Group 1 is guaranteed by the regex pattern @"\{(\d+)(?::[^}]*)?\}"
+#pragma warning disable MN036
             int index = int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+#pragma warning restore MN036
             object? value = index < args.Length ? args[index] : null;
 
             // RawSqlFragment is inlined verbatim — never parameterized
@@ -403,7 +406,10 @@ public static partial class PgQueryBuilder
 
             string reindexed = ParameterPlaceholderRegex().Replace(query.Sql, m =>
             {
+                // MN036: Group 1 is guaranteed by the regex pattern @"\$(\d+)"
+#pragma warning disable MN036
                 int n = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
+#pragma warning restore MN036
                 return "$" + (n + offset).ToString(CultureInfo.InvariantCulture);
             });
 
