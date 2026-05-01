@@ -68,6 +68,7 @@ public class Voucher : AggregateRoot<Guid>
             UpdatedAt = DateTimeOffset.UtcNow
         };
 
+        voucher.EnsureInvariants();
         voucher.AddDomainEvent(new VoucherCreatedEvent(voucher.Id, code.Value));
         return voucher;
     }
@@ -80,6 +81,7 @@ public class Voucher : AggregateRoot<Guid>
 
         Status = VoucherStatus.Active;
         UpdatedAt = DateTimeOffset.UtcNow;
+        EnsureInvariants();
         AddDomainEvent(new VoucherActivatedEvent(Id));
         return Result<bool, Error>.Success(true);
     }
@@ -92,6 +94,7 @@ public class Voucher : AggregateRoot<Guid>
 
         Status = VoucherStatus.Paused;
         UpdatedAt = DateTimeOffset.UtcNow;
+        EnsureInvariants();
         AddDomainEvent(new VoucherPausedEvent(Id));
         return Result<bool, Error>.Success(true);
     }
@@ -100,6 +103,7 @@ public class Voucher : AggregateRoot<Guid>
     {
         Status = VoucherStatus.Expired;
         UpdatedAt = DateTimeOffset.UtcNow;
+        EnsureInvariants();
         AddDomainEvent(new VoucherExpiredEvent(Id));
     }
 
@@ -107,6 +111,7 @@ public class Voucher : AggregateRoot<Guid>
     {
         Status = VoucherStatus.Depleted;
         UpdatedAt = DateTimeOffset.UtcNow;
+        EnsureInvariants();
         AddDomainEvent(new VoucherDepletedEvent(Id));
     }
 
@@ -126,6 +131,7 @@ public class Voucher : AggregateRoot<Guid>
         if (UsageLimit.HasValue && UsageCount >= UsageLimit.Value)
             MarkDepleted();
 
+        EnsureInvariants();
         AddDomainEvent(new VoucherAppliedEvent(Id, orderId, userId, discountApplied));
         return Result<VoucherUsage, Error>.Success(usage);
     }
@@ -134,8 +140,38 @@ public class Voucher : AggregateRoot<Guid>
     {
         UsageCount = Math.Max(0, UsageCount - 1);
         UpdatedAt = DateTimeOffset.UtcNow;
+        EnsureInvariants();
         AddDomainEvent(new VoucherUsageReversedEvent(Id, orderId));
     }
 
     public bool HasUsages => _usages.Count > 0;
+
+    // ── Invariants ─────────────────────────────────────────────────────
+
+    protected override void EnsureInvariants()
+    {
+        if (DiscountValue <= 0)
+            throw new DomainException("Voucher discount value must be positive.");
+
+        if (EffectiveDate >= ExpiryDate)
+            throw new DomainException("Voucher effective date must be before expiry date.");
+
+        if (UsageCount < 0)
+            throw new DomainException("Voucher usage count cannot be negative.");
+
+        if (UsageLimit.HasValue && UsageLimit.Value <= 0)
+            throw new DomainException("Voucher usage limit, when set, must be positive.");
+
+        if (UsageLimitPerUser.HasValue && UsageLimitPerUser.Value <= 0)
+            throw new DomainException("Voucher per-user usage limit, when set, must be positive.");
+
+        if (DiscountType == VoucherDiscountType.PercentageOff && DiscountValue > 100)
+            throw new DomainException("Voucher percentage discount cannot exceed 100%.");
+
+        if (Scope == VoucherScope.Shop && StoreId is null)
+            throw new DomainException("Shop-scoped voucher must have a StoreId.");
+
+        if (Scope == VoucherScope.Platform && StoreId is not null)
+            throw new DomainException("Platform-scoped voucher must not have a StoreId.");
+    }
 }

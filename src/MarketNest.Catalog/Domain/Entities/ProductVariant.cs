@@ -47,6 +47,7 @@ public class ProductVariant : Entity<Guid>
             UpdatedAt = DateTimeOffset.UtcNow
         };
 
+        variant.EnsureInvariants();
         return variant;
     }
 
@@ -113,6 +114,7 @@ public class ProductVariant : Entity<Guid>
         SaleEnd = end;
         UpdatedAt = DateTimeOffset.UtcNow;
 
+        EnsureInvariants();
         AddDomainEvent(new VariantSalePriceSetEvent(Id, salePrice, start, end));
         return Result<Unit, Error>.Success(Unit.Value);
     }
@@ -130,8 +132,30 @@ public class ProductVariant : Entity<Guid>
         SaleEnd = null;
         UpdatedAt = DateTimeOffset.UtcNow;
 
+        EnsureInvariants();
         AddDomainEvent(new VariantSalePriceRemovedEvent(Id));
         return Result<Unit, Error>.Success(Unit.Value);
     }
-}
 
+    // ── Invariants ─────────────────────────────────────────────────────
+
+    protected override void EnsureInvariants()
+    {
+        if (Price.Amount <= 0)
+            throw new DomainException("ProductVariant base price must be positive.");
+
+        if (StockQuantity < 0)
+            throw new DomainException("ProductVariant stock quantity cannot be negative.");
+
+        if (SalePrice is not null && SalePrice.Amount >= Price.Amount)
+            throw new DomainException("ProductVariant sale price must be strictly less than base price.");
+
+        bool hasSaleFields = SalePrice is not null || SaleStart is not null || SaleEnd is not null;
+        bool hasAllSaleFields = SalePrice is not null && SaleStart is not null && SaleEnd is not null;
+        if (hasSaleFields && !hasAllSaleFields)
+            throw new DomainException("ProductVariant sale fields (SalePrice, SaleStart, SaleEnd) must be all set or all null.");
+
+        if (SaleStart is not null && SaleEnd is not null && SaleStart >= SaleEnd)
+            throw new DomainException("ProductVariant sale start must be before sale end.");
+    }
+}

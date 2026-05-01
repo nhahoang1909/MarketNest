@@ -32,6 +32,8 @@ public class NotificationTemplate : AggregateRoot
         AvailableVariables = availableVariables;
         IsActive = true;
         CreatedAt = DateTimeOffset.UtcNow;
+
+        EnsureInvariants();
     }
 
     /// <summary>Stable key referenced from code, e.g. "order.placed.buyer". Immutable after creation.</summary>
@@ -69,6 +71,8 @@ public class NotificationTemplate : AggregateRoot
         BodyTemplate = bodyTemplate;
         LastModifiedBy = modifiedBy;
         UpdatedAt = DateTimeOffset.UtcNow;
+
+        EnsureInvariants();
     }
 
     public void Activate(Guid modifiedBy)
@@ -84,5 +88,18 @@ public class NotificationTemplate : AggregateRoot
         LastModifiedBy = modifiedBy;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
-}
 
+    // ── Invariants ─────────────────────────────────────────────────────
+
+    protected override void EnsureInvariants()
+    {
+        if (string.IsNullOrWhiteSpace(TemplateKey))
+            throw new DomainException("NotificationTemplate key must not be empty.");
+
+        if (string.IsNullOrWhiteSpace(BodyTemplate))
+            throw new DomainException("NotificationTemplate body must not be empty.");
+
+        if (Channel != NotificationChannel.InApp && string.IsNullOrWhiteSpace(SubjectTemplate))
+            throw new DomainException("NotificationTemplate with email channel must have a subject template.");
+    }
+}
