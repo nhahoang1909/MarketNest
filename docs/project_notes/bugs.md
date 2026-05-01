@@ -75,3 +75,8 @@ Keep a reference: _"See `bugs-archive-2026.md` for older entries."_
 - **Solution**: Changed `CleanupExpiredNotificationsJob.ExecuteAsync()` to use `await using var scope = serviceProvider.CreateAsyncScope()` instead. This ensures the scope is properly disposed asynchronously, invoking `DisposeAsync()` on all `IAsyncDisposable` services like `UnitOfWork`.
 - **Prevention**: Background jobs that manually create service scopes must use `CreateAsyncScope()` with `await using`, not `CreateScope()` with `using`. All other jobs (VoucherExpiryJob, ExpireSalesJob, etc.) inject dependencies directly and manage UnitOfWork manually in try/finally/DisposeAsync, which is the preferred pattern.
 
+### 2026-05-01 - CI failed: Dockerfile references non-existent MarketNest.Core project
+- **Issue**: Docker build failed at stage 1 with `failed to calculate checksum of ref: "/src/MarketNest.Core/MarketNest.Core.csproj": not found`
+- **Root Cause**: Dockerfile still referenced `MarketNest.Core` which was refactored into `Base/` packages (`Base.Api`, `Base.Common`, `Base.Domain`, `Base.Infrastructure`, `Base.Utility`). Also missing `MarketNest.Promotions` and `MarketNest.Analyzers` projects.
+- **Solution**: Removed the `MarketNest.Core` COPY line and added missing `MarketNest.Promotions` and `MarketNest.Analyzers` projects. Reordered alphabetically for maintainability.
+- **Prevention**: When refactoring/renaming modules, always update Dockerfile COPY statements. Consider a CI step that validates Dockerfile references against actual `src/` directory structure.
