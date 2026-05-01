@@ -1216,6 +1216,50 @@ var order = await _orderRepo.GetByKeyAsync(id, ct);
 > MN020 uses chain-walking heuristics and cannot track queries split across multiple `var query = …`
 > variable declarations. Those do not need suppression — the rule will not fire.
 
+### 11.3 No read/write side mixing in a single handler (MN034, MN035)
+
+Every handler class must be strictly **read-side** or **write-side** — never both.
+
+| Class type | May inject | Must NOT inject |
+|---|---|---|
+| `ICommandHandler` | `I*Repository`, domain services, helpers | `I*Query` interfaces, `IQueryHandler` |
+| `IQueryHandler` | `I*Query` interfaces, helpers | `I*Repository`, `ICommandHandler`, `IQueryHandler` |
+
+**Why?** Mixing read and write dependencies in the same constructor:
+- makes it unclear whether a handler is safe to call in a read-only context
+- breaks the ability to route reads to a read replica (ADR-031) without side-effects
+- complicates testing: you must set up both read and write mocks for every test
+- creates a hidden pathway for accidental mutations inside a handler that "looks like" a query
+
+**Correct pattern — CommandHandler:**
+```csharp
+// ❌ Violates MN034 — reads and writes in the same handler
+class CreateOrderHandler(IOrderRepository repo, IGetCartQuery cartQuery)
+    : ICommandHandler<CreateOrderCommand, Guid> { ... }
+
+// ✅ Extract shared logic to a helper, inject only write-side
+class CartSnapshotBuilder { ... }        // helper — no handler interface
+class CreateOrderHandler(IOrderRepository repo, CartSnapshotBuilder cartBuilder)
+    : ICommandHandler<CreateOrderCommand, Guid> { ... }
+```
+
+**Correct pattern — QueryHandler cross-aggregate read:**
+```csharp
+// ❌ Violates MN035 — repository is write-side
+class GetOrderDetailHandler(IOrderRepository repo)
+    : IQueryHandler<GetOrderDetailQuery, OrderDetailDto> { ... }
+
+// ❌ Violates MN035 — handler chaining is forbidden
+class GetOrderDetailHandler(IQueryHandler<GetItemsQuery, IReadOnlyList<ItemDto>> inner)
+    : IQueryHandler<GetOrderDetailQuery, OrderDetailDto> { ... }
+
+// ✅ Inject I*Query for cross-aggregate reads within the same module
+class GetOrderDetailHandler(IOrderItemQuery itemQuery)
+    : IQueryHandler<GetOrderDetailQuery, OrderDetailDto> { ... }
+```
+
+**Roslyn analyzers MN034/MN035** enforce this at build time (Error → fails CI).
+
 ---
 
 ## 12. Git Commit Conventions
@@ -1273,6 +1317,8 @@ Before merging:
 - [ ] Repeated visual values (radius, shadow, transition) extracted to CSS variables (see §7.3)
 - [ ] `AppConstants.Colors` stays in sync with `input.css` `@theme` tokens (see §7.5)
 - [ ] No cryptographically weak hash algorithms — use SHA512+, never MD5 or SHA256 for security operations (see §10.1)
+- [ ] CommandHandlers inject only write-side types (`I*Repository`, helpers) — no `I*Query` or `IQueryHandler` (MN034)
+- [ ] QueryHandlers inject only read-side types (`I*Query`, helpers) — no `I*Repository`, `ICommandHandler`, or another `IQueryHandler` (MN035)
 
 ---
 
