@@ -33,7 +33,7 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 | `src/Base/MarketNest.Base.Api` | Base API controller abstractions (`ReadApiV1ControllerBase`, `WriteApiV1ControllerBase`) |
 | `src/Base/MarketNest.Base.Common` | Shared contracts: `IBaseQuery`, `ICacheService`, `CacheKeys`, cross-module service interfaces, `IReferenceDataReadService`, Tier-2 config contracts, `FieldLimits`, `ValidationMessages`, `ValidatorExtensions`, `DateTimeOffsetExtensions`, `EnumExtensions`, `StringExtensions`, `NumericExtensions`, `CollectionExtensions` |
 | `src/Base/MarketNest.Base.Domain` | Shared domain primitives: `Entity<T>`, `AggregateRoot`, `ValueObject`, `ReferenceData` base |
-| `src/Base/MarketNest.Base.Infrastructure` | Shared infra: `IAppLogger<T>`, `AppLogger<T>`, `LogEventId` enum, `BaseRepository<TEntity,TKey,TContext>`, `IBaseRepository<TEntity,TKey>`, `BaseQuery<TEntity,TKey,TContext>`, `DddModelBuilderExtensions` |
+| `src/Base/MarketNest.Base.Infrastructure` | Shared infra: `IAppLogger<T>`, `AppLogger<T>`, `LogEventId` enum, `BaseRepository<TEntity,TKey,TContext>`, `IBaseRepository<TEntity,TKey>`, `BaseQuery<TEntity,TKey,TContext>`, `DddModelBuilderExtensions`, `TrackableInterceptor`, `UpdateTokenInterceptor` |
 | `src/Base/MarketNest.Base.Utility` | Utility helpers: slug generation, date extensions |
 | `src/MarketNest.Core` | Shared kernel: `Result<T,Error>`, `Error`, CQRS interfaces, `IModuleDbContext`, `IDataSeeder`, validation extensions, domain constants, status names |
 | `src/MarketNest.Identity` | Auth: users, roles, JWT, refresh tokens, user preferences, notification preferences |
