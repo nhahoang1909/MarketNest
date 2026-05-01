@@ -8,7 +8,7 @@ namespace MarketNest.Payments.Infrastructure;
 ///     <see cref="ICommissionConfigWriter" /> (write) contracts.
 ///     Registered as scoped in <c>AddPaymentsModule</c>.
 /// </summary>
-internal sealed class CommissionConfigService(
+internal sealed class CommissionConfigProvider(
     PaymentsDbContext db,
     ICacheService cache) : ICommissionConfig, ICommissionConfigWriter
 {

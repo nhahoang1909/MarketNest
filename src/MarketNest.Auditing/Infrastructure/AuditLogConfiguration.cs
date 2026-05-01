@@ -1,4 +1,5 @@
 ﻿using MarketNest.Auditing.Domain;
+using MarketNest.Base.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,7 +9,7 @@ public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
 {
     public void Configure(EntityTypeBuilder<AuditLog> builder)
     {
-        builder.ToTable("audit_logs");
+        builder.ToTable(TableConstants.AuditingTable.AuditLog, TableConstants.Schema.Auditing);
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();

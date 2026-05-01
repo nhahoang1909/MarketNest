@@ -8,7 +8,7 @@ namespace MarketNest.Orders.Infrastructure;
 ///     write (<see cref="IOrderPolicyConfigWriter" />) contracts for order policy configuration.
 ///     Registered as scoped in <c>AddOrdersModule</c>.
 /// </summary>
-internal sealed class OrderPolicyConfigService(
+internal sealed class OrderPolicyConfigProvider(
     OrdersDbContext db,
     ICacheService cache) : IOrderPolicyConfig, IOrderPolicyConfigWriter
 {

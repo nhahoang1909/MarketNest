@@ -4,11 +4,11 @@ using MarketNest.Base.Utility;
 
 namespace MarketNest.Web.Hosting;
 
-// NOTE: JobRunnerHostedService is registered as a singleton IHostedService. It must NOT directly
+// NOTE: BackgroundJobRunner is registered as a singleton IHostedService. It must NOT directly
 // depend on scoped services. Resolve IJobExecutionStore from the per-job IServiceScope below.
-public partial class JobRunnerHostedService(
+public partial class BackgroundJobRunner(
     IServiceProvider provider,
-    IAppLogger<JobRunnerHostedService> logger,
+    IAppLogger<BackgroundJobRunner> logger,
     IJobRegistry registry) : BackgroundService
 {
     private readonly TimeSpan _pollInterval = TimeSpan.FromSeconds(30);
@@ -95,11 +95,11 @@ public partial class JobRunnerHostedService(
     private static partial class Log
     {
         [LoggerMessage((int)LogEventId.JobRunnerStarting, LogLevel.Information,
-            "JobRunnerHostedService starting")]
+            "BackgroundJobRunner starting")]
         public static partial void InfoStarting(ILogger logger);
 
         [LoggerMessage((int)LogEventId.JobRunnerStopping, LogLevel.Information,
-            "JobRunnerHostedService stopping")]
+            "BackgroundJobRunner stopping")]
         public static partial void InfoStopping(ILogger logger);
 
         [LoggerMessage((int)LogEventId.JobRunnerJobFailed - 1, LogLevel.Warning,

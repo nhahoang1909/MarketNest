@@ -35,4 +35,63 @@ public static class TableConstants
         public const string AutoMigrationHistory = "__auto_migration_history";
         public const string SeedHistory = "__seed_history";
     }
+
+    public static class AuditingTable
+    {
+        public const string AuditLog = "audit_logs";
+        public const string LoginEvent = "login_events";
+    }
+
+    public static class PromotionTable
+    {
+        public const string Voucher = "vouchers";
+        public const string VoucherUsage = "voucher_usages";
+    }
+
+    public static class AdminTable
+    {
+        public const string Announcement = "announcements";
+    }
+
+    public static class CartsTable { }
+
+    public static class CatalogTable
+    {
+        public const string Variant = "variants";
+    }
+
+    public static class DisputesTable { }
+
+    public static class IdentityTable { }
+
+    public static class NotificationTable
+    {
+        public const string Notification = "notifications";
+        public const string NotificationTemplate = "notification_templates";
+    }
+
+    public static class OrdersTable
+    {
+        public const string OrderPolicyConfig = "order_policy_config";
+    }
+
+    public static class PaymentsTable
+    {
+        public const string CommissionPolicy = "commission_policies";
+    }
+
+    public static class ReviewsTable { }
+
+    /// <summary>
+    ///     Shared reference data tables that live in the <c>public</c> schema
+    ///     and are managed by the Admin module but readable across all modules.
+    /// </summary>
+    public static class ReferenceTable
+    {
+        public const string Country = "countries";
+        public const string Gender = "genders";
+        public const string Nationality = "nationalities";
+        public const string PhoneCountryCode = "phone_country_codes";
+        public const string ProductCategory = "product_categories";
+    }
 }

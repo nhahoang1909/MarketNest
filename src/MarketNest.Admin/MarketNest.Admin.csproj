@@ -44,13 +44,9 @@
 
     <ItemGroup>
         <Folder Include="Application\Common\" />
-        <Folder Include="Application\Modules\Test\DomainEventHandlers\" />
-        <Folder Include="Application\Modules\Test\IntegrationEventHandlers\" />
         <Folder Include="Application\Validators\"/>
         <Folder Include="Domain\Common\Enums\" />
         <Folder Include="Domain\Common\Events\" />
-        <Folder Include="Domain\Modules\Test\Enums\" />
-        <Folder Include="Domain\Modules\Test\Events\" />
         <Folder Include="Infrastructure\Api\Common\" />
         <Folder Include="Infrastructure\Api\Modules\" />
         <Folder Include="Infrastructure\Queries\Modules\" />

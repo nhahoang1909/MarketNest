@@ -7,8 +7,10 @@ namespace MarketNest.Promotions.Infrastructure;
 public class VoucherQuery(PromotionsReadDbContext db)
     : BaseQuery<Voucher, Guid>(db), IVoucherQuery, IGetVouchersPagedQuery
 {
+#pragma warning disable MN020 // GetByCode intentionally loads full entity for domain use
     public Task<Voucher?> GetByCodeAsync(string code, CancellationToken ct = default)
-        => Db.Vouchers.FirstOrDefaultAsync(v => v.Code == new VoucherCode(code), ct);
+        => Db.Vouchers.AsNoTracking().FirstOrDefaultAsync(v => v.Code == new VoucherCode(code), ct);
+#pragma warning restore MN020
 
     public async Task<PagedResult<VoucherDto>> ExecuteAsync(
         GetVouchersPagedQuery query, CancellationToken ct = default)
@@ -20,24 +22,25 @@ public class VoucherQuery(PromotionsReadDbContext db)
         if (query.StoreId.HasValue) q = q.Where(v => v.StoreId == query.StoreId.Value);
 
         int total = await q.CountAsync(ct);
-        List<Voucher> items = await q
+
+        List<VoucherDto> items = await q
             .OrderByDescending(v => v.CreatedAt)
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
+            .AsNoTracking()
+            .Select(v => new VoucherDto(
+                v.Id, v.Code.Value, v.Scope, v.StoreId, v.DiscountType, v.ApplyFor,
+                v.DiscountValue, v.MaxDiscountCap!.Amount, v.MinOrderValue!.Amount,
+                v.EffectiveDate, v.ExpiryDate, v.UsageLimit, v.UsageLimitPerUser,
+                v.UsageCount, v.Status, v.CreatedAt))
             .ToListAsync(ct);
 
         return new PagedResult<VoucherDto>
         {
-            Items = items.Select(MapToDto).ToList(),
+            Items = items,
             TotalCount = total,
             Page = query.Page,
             PageSize = query.PageSize
         };
     }
-
-    private static VoucherDto MapToDto(Voucher v) =>
-        new(v.Id, v.Code.Value, v.Scope, v.StoreId, v.DiscountType, v.ApplyFor,
-            v.DiscountValue, v.MaxDiscountCap?.Amount, v.MinOrderValue?.Amount,
-            v.EffectiveDate, v.ExpiryDate, v.UsageLimit, v.UsageLimitPerUser,
-            v.UsageCount, v.Status, v.CreatedAt);
 }

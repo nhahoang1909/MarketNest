@@ -11,10 +11,6 @@ public class AdminDbContext : DbContext, IModuleDbContext
     {
     }
 
-    // ── Test entities (scaffold) ─────────────────────────────────────────
-    public DbSet<TestEntity> Tests { get; set; } = null!;
-    public DbSet<TestSubEntity> TestSubEntities { get; set; } = null!;
-
     // ── Announcements ───────────────────────────────────────────────────
     public DbSet<Announcement> Announcements { get; set; } = null!;
 
