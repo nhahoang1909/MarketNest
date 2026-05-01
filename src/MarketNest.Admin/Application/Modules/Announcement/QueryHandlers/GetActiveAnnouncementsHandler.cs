@@ -2,9 +2,9 @@
 namespace MarketNest.Admin.Application;
 #pragma warning restore IDE0130
 
-public partial class GetActiveAnnouncementsHandler(
+public partial class GetActiveAnnouncementsQueryHandler(
     IGetActiveAnnouncementsQuery query,
-    IAppLogger<GetActiveAnnouncementsHandler> logger) : IQueryHandler<GetActiveAnnouncementsQuery, IReadOnlyList<ActiveAnnouncementDto>>
+    IAppLogger<GetActiveAnnouncementsQueryHandler> logger) : IQueryHandler<GetActiveAnnouncementsQuery, IReadOnlyList<ActiveAnnouncementDto>>
 {
     public Task<IReadOnlyList<ActiveAnnouncementDto>> Handle(
         GetActiveAnnouncementsQuery request, CancellationToken cancellationToken)

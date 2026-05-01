@@ -2,9 +2,9 @@
 namespace MarketNest.Admin.Application;
 #pragma warning restore IDE0130
 
-public partial class GetAnnouncementsPagedHandler(
+public partial class GetAnnouncementsPagedQueryHandler(
     IGetAnnouncementsPagedQuery query,
-    IAppLogger<GetAnnouncementsPagedHandler> logger) : IQueryHandler<GetAnnouncementsPagedQuery, PagedResult<AnnouncementDto>>
+    IAppLogger<GetAnnouncementsPagedQueryHandler> logger) : IQueryHandler<GetAnnouncementsPagedQuery, PagedResult<AnnouncementDto>>
 {
     public Task<PagedResult<AnnouncementDto>> Handle(
         GetAnnouncementsPagedQuery request, CancellationToken cancellationToken)

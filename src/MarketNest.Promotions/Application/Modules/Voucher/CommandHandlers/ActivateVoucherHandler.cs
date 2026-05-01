@@ -2,9 +2,9 @@ using MarketNest.Base.Infrastructure;
 
 namespace MarketNest.Promotions.Application;
 
-public partial class ActivateVoucherHandler(
+public partial class ActivateVoucherCommandHandler(
     IVoucherRepository repository,
-    IAppLogger<ActivateVoucherHandler> logger) : ICommandHandler<ActivateVoucherCommand, bool>
+    IAppLogger<ActivateVoucherCommandHandler> logger) : ICommandHandler<ActivateVoucherCommand, bool>
 {
     public async Task<Result<bool, Error>> Handle(ActivateVoucherCommand request, CancellationToken cancellationToken)
     {
