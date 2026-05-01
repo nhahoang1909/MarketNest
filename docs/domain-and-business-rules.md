@@ -552,6 +552,34 @@ Discount never makes a component negative:
 
 ---
 
+### 3.9 Announcement Entity (Admin Module)
+
+**Schema**: `admin.Announcements`
+
+**Purpose**: Platform-wide site banner content managed by admin. Displayed below the navbar and (optionally) in the hero section.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Id` | `Guid` | Primary key |
+| `Title` | `string` (max 255) | Banner headline |
+| `Message` | `string` (max 5000) | Banner body text |
+| `Type` | `AnnouncementType` | Info / Promotion / Warning / Urgent |
+| `LinkUrl` | `string?` (max 500) | Optional CTA link URL |
+| `LinkText` | `string?` (max 100) | Optional CTA link display text |
+| `StartDateUtc` | `DateTimeOffset` | Earliest moment announcement is visible |
+| `EndDateUtc` | `DateTimeOffset` | Moment announcement stops being visible |
+| `IsPublished` | `bool` | Admin publish toggle |
+| `IsDismissible` | `bool` | Whether user can dismiss the banner |
+| `SortOrder` | `int` | Display order (DESC — higher = shown first) |
+
+**Domain methods:** `Publish()`, `Unpublish()`, `Update(…)`, `IsActive(DateTimeOffset utcNow)`
+
+**DB index:** `IX_Announcements_Active` on `(IsPublished, StartDateUtc, EndDateUtc)` — used by `GetActiveAnnouncements` query.
+
+**Note:** Not an Aggregate Root — no child entities. Simple Entity owned by Admin module.
+
+---
+
 ## 4. Value Objects
 
 > **Convention (ADR-007):** Class-based VOs use `{ get; }`. Record-based VOs use `{ get; init; }` or `{ get; }` for validated VOs.
@@ -714,6 +742,42 @@ public record DiscountResult(
 - Seller endpoints: `PATCH/DELETE api/v1/seller/products/{productId}/variants/{variantId}/sale`
 
 > **Sale Price Invariants (S1–S5):** See §7 Invariants Table.
+
+---
+
+### 5.5 Announcement Business Rules (ADR-043)
+
+**Ownership:** `Announcement` entity lives in the Admin module (`admin` schema). Only admin users create and publish announcements.
+
+**Lifecycle:**
+- Created in draft state (`IsPublished = false`)
+- Admin calls `Publish()` to activate; `Unpublish()` to deactivate
+- Once `EndDateUtc` passes, `IsActive()` returns `false` automatically — no explicit unpublish needed
+
+**Scheduling:**
+- `StartDateUtc` < `EndDateUtc` (validated at creation + update)
+- `IsActive(utcNow)` = `IsPublished && StartDateUtc ≤ utcNow && EndDateUtc > utcNow`
+- Active query uses composite DB index `IX_Announcements_Active` (`IsPublished + StartDateUtc + EndDateUtc`)
+
+**Types (AnnouncementType enum):**
+| Type | Use Case | Display Color |
+|------|----------|---------------|
+| `Info` | General news, feature updates | Blue |
+| `Promotion` | Black Friday, flash sales, voucher launches | Accent (green) |
+| `Warning` | Scheduled maintenance, policy changes | Amber |
+| `Urgent` | Critical system outages, immediate action required | Red |
+
+**Display:**
+- Active announcements appear as a banner below the navbar on every public page (via HTMX lazy-load `/Shared/AnnouncementBanner`)
+- Multiple active announcements display as stacked banners, ordered by `SortOrder DESC, StartDateUtc DESC`
+- Banners with `IsDismissible = true` show an ✕ button — dismiss state stored in `localStorage` (key: `mn-dismiss-{id}`)
+- Announcements with `LinkUrl + LinkText` render a CTA link inside the banner
+
+**Constraints (Phase 1):**
+- No per-user targeting — announcements are platform-wide
+- No A/B testing or audience segmentation
+- No impression tracking or click analytics
+- Dismiss is browser-local (not persisted to DB) — Phase 2 can add DB-backed user dismiss preferences
 
 ---
 

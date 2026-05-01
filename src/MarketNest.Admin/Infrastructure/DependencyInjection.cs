@@ -37,6 +37,11 @@ public static class AdminServiceExtensions
         // Reference Data read service (Tier 1) — scoped because AdminReadDbContext is scoped
         services.AddScoped<IReferenceDataReadService, ReferenceDataReadService>();
 
+        // Announcement — repository + queries
+        services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
+        services.AddScoped<IGetAnnouncementsPagedQuery, AnnouncementQuery>();
+        services.AddScoped<IGetActiveAnnouncementsQuery, AnnouncementQuery>();
+
         // Background job — singleton because it has no scoped dependencies
         services.AddSingleton<IBackgroundJob, TestTimerJob>();
 

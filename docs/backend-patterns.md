@@ -286,6 +286,47 @@ Commands: {Action}{Entity}Command : ICommand<TResult>
 Snapshots: CartSnapshot, CartItemSnapshot (cross-module, serializable)
 ```
 
+### 4.1 Common Shared DTOs (`Base.Common/Dtos/`)
+
+Reusable DTOs shared across all modules and the UI layer. Namespace: `MarketNest.Base.Common`.
+
+| Record | Purpose | Key Properties |
+|--------|---------|----------------|
+| `IdAndNameDto` | Minimal lookup (Guid key) | `Id`, `Name` |
+| `IdAndNameIntDto` | Minimal lookup (int key) | `Id`, `Name` |
+| `SelectOptionDto<TKey>` | Full dropdown/multi-select option | `Id`, `Name`, `Value?`, `Description?`, `Disabled` |
+| `SelectOptionDto` | Alias: `SelectOptionDto<Guid>` | — |
+| `SelectOptionIntDto` | Alias: `SelectOptionDto<int>` | — |
+| `DocumentInfo` | File/document reference value object | `Id`, `FileName`, `FileType`, `FileSizeBytes`, `Url`, `Title?`, `UploadedAt?`, `FileSizeDisplay` (computed) |
+| `TimestampDto` | Created/Updated audit display | `CreatedAt`, `UpdatedAt?` |
+| `StatusDto` | Status badge for lists | `Code`, `Label`, `Color?` |
+
+**When to use which:**
+- **`IdAndNameDto`** — autocomplete suggestions, simple lookup lists, cross-module references where only id+name matter.
+- **`SelectOptionDto`** — `<select>` dropdowns and multi-select components that need extra metadata (value/code, description, disabled state).
+- **`DocumentInfo`** — any stored file reference (product images, dispute attachments, import receipts). Validated value object with constructor guards.
+- **`StatusDto`** — rendering status badges with semantic color on list pages.
+- **`TimestampDto`** — displaying "Created X ago / Updated Y ago" on list items.
+
+```csharp
+// Dropdown options for a select field
+var options = await query.Select(x => new SelectOptionDto
+{
+    Id = x.Id, Name = x.Name, Value = x.Slug
+}).ToListAsync(ct);
+
+// Simple lookup list
+var items = await query.Select(x => new IdAndNameDto { Id = x.Id, Name = x.Name }).ToListAsync(ct);
+
+// Document reference
+var doc = new DocumentInfo(fileId, "report.pdf", "application/pdf", 204800, "/files/report.pdf")
+{
+    Title = "Monthly Report",
+    UploadedAt = DateTimeOffset.UtcNow
+};
+// doc.FileSizeDisplay → "200.0 KB"
+```
+
 ---
 
 ## 5. Validation Contract
