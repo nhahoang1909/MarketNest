@@ -20,6 +20,23 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-05-01 - feat(base): TrackableInterceptor — automatic CreatedAt/ModifiedAt stamping
+- **Status**: Implemented (infrastructure only; not yet registered in Program.cs)
+- **Description**: Implemented `TrackableInterceptor` EF Core SaveChanges interceptor in `Base.Infrastructure/Persistence/` that automatically stamps audit-trail fields on entities implementing `ITrackable` interface.
+- **Key deliverables**:
+   - **`ITrackable`** interface in `Base.Domain` — opt-in for entities needing automatic audit stamping. Declares: `CreatedAt`, `CreatedBy`, `ModifiedAt`, `ModifiedBy` (all nullable per ADR-039, domain-reason documented). Explicit interface methods `StampCreated(at, by)`, `StampModified(at, by)`.
+   - **`TrackableInterceptor`** in `Base.Infrastructure` — sealed class implementing `SaveChangesInterceptor`. Auto-stamps on any Added/Modified entities. Resolves current user from `IRuntimeContext` via DbContext's service provider (gracefully handles null for EF migrations — acceptable for system/seeded records).
+   - **Two capture points**: synchronous (`SavingChanges`) and async (`SavingChangesAsync`).
+   - **User context resolution**: attempts to get `IRuntimeContext` from the DbContext's service provider. If null (design-time tools), stamps `CreatedBy/ModifiedBy` as null (valid for system records).
+- **Usage pattern**: Entities inherit from `Entity<K>` (or `AggregateRoot`), mark `public class MyEntity : AggregateRoot, ITrackable`, expose properties `{ get; private set; }`, implement explicit interface methods to set them.
+- **Files created**: 1 (`TrackableInterceptor.cs`)
+- **Files modified**: `ITrackable.cs` (created new in Base.Domain)
+- **Build**: `dotnet build` → 0 errors ✅
+- **Integration TODO (Phase 1)**: Register `TrackableInterceptor` in Program.cs — add to all module write DbContexts via `optionsBuilder.AddInterceptors(new TrackableInterceptor())`. Then test that any entity implementing `ITrackable` gets auto-stamped on create/update.
+- **Notes**: Complements `UpdateTokenInterceptor` (ADR-041) and `AuditableInterceptor` (ADR-012). The three interceptors work together: TrackableInterceptor (audit trail), UpdateTokenInterceptor (optimistic concurrency), AuditableInterceptor (detailed change snapshots).
+
+---
+
 ### 2026-05-01 - refactor(ci): Three-stage test pipeline restructuring
 - **Status**: Completed
 - **Description**: Restructured CI/CD pipeline (`.github/workflows/ci.yml`) from flat test parallelism into **3 sequential test stages with gating**:
