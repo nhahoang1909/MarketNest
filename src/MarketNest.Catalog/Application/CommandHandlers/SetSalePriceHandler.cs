@@ -3,9 +3,9 @@ using MarketNest.Catalog.Domain;
 
 namespace MarketNest.Catalog.Application;
 
-public partial class SetSalePriceHandler(
+public partial class SetSalePriceCommandHandler(
     IVariantRepository repository,
-    IAppLogger<SetSalePriceHandler> logger) : ICommandHandler<SetSalePriceCommand, Unit>
+    IAppLogger<SetSalePriceCommandHandler> logger) : ICommandHandler<SetSalePriceCommand, Unit>
 {
     public async Task<Result<Unit, Error>> Handle(SetSalePriceCommand request, CancellationToken cancellationToken)
     {

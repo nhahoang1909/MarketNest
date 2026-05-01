@@ -4,9 +4,9 @@
 namespace MarketNest.Admin.Application;
 #pragma warning restore IDE0130
 
-public partial class CreateAnnouncementHandler(
+public partial class CreateAnnouncementCommandHandler(
     IAnnouncementRepository repository,
-    IAppLogger<CreateAnnouncementHandler> logger) : ICommandHandler<CreateAnnouncementCommand, Guid>
+    IAppLogger<CreateAnnouncementCommandHandler> logger) : ICommandHandler<CreateAnnouncementCommand, Guid>
 {
     public Task<Result<Guid, Error>> Handle(CreateAnnouncementCommand request, CancellationToken cancellationToken)
     {

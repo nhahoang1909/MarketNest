@@ -3,7 +3,7 @@ using MediatR;
 
 namespace MarketNest.Notifications.Application;
 
-public class MarkNotificationReadHandler(INotificationRepository notifications)
+public class MarkNotificationReadCommandHandler(INotificationRepository notifications)
     : ICommandHandler<MarkNotificationReadCommand, Unit>
 {
     public async Task<Result<Unit, Error>> Handle(
@@ -22,7 +22,7 @@ public class MarkNotificationReadHandler(INotificationRepository notifications)
     }
 }
 
-public class MarkAllNotificationsReadHandler(INotificationRepository notifications)
+public class MarkAllNotificationsReadCommandHandler(INotificationRepository notifications)
     : ICommandHandler<MarkAllNotificationsReadCommand, Unit>
 {
     public async Task<Result<Unit, Error>> Handle(

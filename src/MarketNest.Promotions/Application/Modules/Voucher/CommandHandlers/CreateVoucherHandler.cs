@@ -3,9 +3,9 @@ using MarketNest.Promotions.Domain;
 
 namespace MarketNest.Promotions.Application;
 
-public partial class CreateVoucherHandler(
+public partial class CreateVoucherCommandHandler(
     IVoucherRepository repository,
-    IAppLogger<CreateVoucherHandler> logger) : ICommandHandler<CreateVoucherCommand, Guid>
+    IAppLogger<CreateVoucherCommandHandler> logger) : ICommandHandler<CreateVoucherCommand, Guid>
 {
     public async Task<Result<Guid, Error>> Handle(CreateVoucherCommand request, CancellationToken cancellationToken)
     {

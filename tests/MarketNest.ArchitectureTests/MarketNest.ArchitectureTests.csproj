@@ -4,6 +4,8 @@
         <RootNamespace>MarketNest.ArchitectureTests</RootNamespace>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
+        <NuGetAudit>false</NuGetAudit>
+        <NoWarn>$(NoWarn);CA1707</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,6 +19,8 @@
         <ProjectReference
             Include="..\..\src\MarketNest.Notifications\MarketNest.Notifications.csproj"/>
         <ProjectReference Include="..\..\src\MarketNest.Admin\MarketNest.Admin.csproj"/>
+        <ProjectReference Include="..\..\src\MarketNest.Auditing\MarketNest.Auditing.csproj"/>
+        <ProjectReference Include="..\..\src\MarketNest.Promotions\MarketNest.Promotions.csproj"/>
         <ProjectReference Include="..\..\src\MarketNest.Web\MarketNest.Web.csproj"/>
     </ItemGroup>
 
