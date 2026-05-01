@@ -1,9 +1,10 @@
 ﻿# MarketNest — Domain Design & Business Rules
 
-> Version: 0.4 | Status: Draft | Date: 2026-04-29
+> Version: 0.4 | Status: Draft | Date: 2026-05-01
 > Consolidated from: `domain-design.md` + `business-logic-requirements.md`
 > Updated: Added Promotions/Voucher domain (§3.8), Order financial calculation spec (§3.4–§3.5), updated invariants, domain events, and notification triggers.
 > Updated 2026-04-29: §3.2 ProductVariant updated to reflect Phase 1 implementation (ADR-024 Sale Price inline fields, simplified inventory, computed helpers). §5.4 Sale Price business rules added. §6/§7 updated with new events and invariants.
+> Updated 2026-05-01: Announcement feature foundation documented in ADR-043 (admin-managed site-wide banners with scheduling).
 
 ---
 
