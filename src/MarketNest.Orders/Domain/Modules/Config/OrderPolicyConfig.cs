@@ -72,7 +72,24 @@ public class OrderPolicyConfig : Entity<int>
         UpdatedByAdminId = adminId;
         UpdatedAt = DateTimeOffset.UtcNow;
 
+        EnsureInvariants();
         return Result<Unit, Error>.Success(Unit.Value);
     }
-}
 
+    // ── Invariants ─────────────────────────────────────────────────────
+
+    protected override void EnsureInvariants()
+    {
+        if (SellerConfirmWindowHours <= 0)
+            throw new DomainException("Seller confirm window hours must be positive.");
+
+        if (AutoDeliverAfterShippedDays <= 0)
+            throw new DomainException("Auto-deliver days must be positive.");
+
+        if (AutoCompleteAfterDeliveredDays <= 0)
+            throw new DomainException("Auto-complete days must be positive.");
+
+        if (DisputeWindowAfterDeliveredDays <= 0)
+            throw new DomainException("Dispute window days must be positive.");
+    }
+}
