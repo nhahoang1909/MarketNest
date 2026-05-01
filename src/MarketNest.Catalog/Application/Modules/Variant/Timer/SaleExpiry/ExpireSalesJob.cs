@@ -8,10 +8,13 @@ namespace MarketNest.Catalog.Application;
 ///     Background job that cleans up expired sale prices on variants.
 ///     Runs every 5 minutes. Calls <c>RemoveSalePrice()</c> to raise the
 ///     <see cref="VariantSalePriceRemovedEvent"/> domain event for downstream notifications.
+///
+///     Transaction lifecycle is managed automatically by <see cref="BackgroundJobTransactionAttribute"/>
+///     — <c>BackgroundJobRunner</c> wraps the full execution in Begin → Commit → Dispatch / Rollback.
 /// </summary>
+[BackgroundJobTransaction]
 public partial class ExpireSalesJob(
     IVariantRepository repository,
-    IUnitOfWork uow,
     IAppLogger<ExpireSalesJob> logger) : IBackgroundJob
 {
     public JobDescriptor Descriptor { get; } = new(
@@ -39,32 +42,13 @@ public partial class ExpireSalesJob(
             return;
         }
 
-        try
+        foreach (ProductVariant variant in expired)
         {
-            await uow.BeginTransactionAsync(ct: cancellationToken);
-
-            foreach (ProductVariant variant in expired)
-            {
-                variant.RemoveSalePrice();
-                Log.InfoExpired(logger, variant.Id);
-            }
-
-            await uow.CommitAsync(cancellationToken);
-            await uow.CommitTransactionAsync(cancellationToken);
-            await uow.DispatchPostCommitEventsAsync(cancellationToken);
-
-            Log.InfoCompleted(logger, context.ExecutionId, expired.Count);
+            variant.RemoveSalePrice();
+            Log.InfoExpired(logger, variant.Id);
         }
-        catch (Exception ex)
-        {
-            await uow.RollbackAsync(cancellationToken).ConfigureAwait(false);
-            Log.ErrorFailed(logger, context.ExecutionId, ex);
-            throw;
-        }
-        finally
-        {
-            await uow.DisposeAsync();
-        }
+
+        Log.InfoCompleted(logger, context.ExecutionId, expired.Count);
     }
 
     private static partial class Log
@@ -86,6 +70,3 @@ public partial class ExpireSalesJob(
         public static partial void ErrorFailed(ILogger logger, Guid executionId, Exception ex);
     }
 }
-
-
-
