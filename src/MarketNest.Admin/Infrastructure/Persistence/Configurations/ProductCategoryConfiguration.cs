@@ -7,7 +7,7 @@ public class ProductCategoryConfiguration : ReferenceDataConfiguration<ProductCa
 {
     public override void Configure(EntityTypeBuilder<ProductCategory> builder)
     {
-        builder.ToTable("product_categories", TableConstants.Schema.Default);
+        builder.ToTable(TableConstants.ReferenceTable.ProductCategory, TableConstants.Schema.Default);
         base.Configure(builder);
         builder.Property(x => x.Slug).HasMaxLength(60).IsRequired();
         builder.Property(x => x.IconName).HasMaxLength(50);

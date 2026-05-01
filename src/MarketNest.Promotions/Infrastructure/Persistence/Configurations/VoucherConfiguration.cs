@@ -6,7 +6,7 @@ public class VoucherConfiguration : IEntityTypeConfiguration<Voucher>
 {
     public void Configure(EntityTypeBuilder<Voucher> builder)
     {
-        builder.ToTable("vouchers");
+        builder.ToTable(TableConstants.PromotionTable.Voucher, TableConstants.Schema.Promotions);
         builder.HasKey(v => v.Id);
         builder.Property(v => v.Id).HasColumnName("voucher_id");
 

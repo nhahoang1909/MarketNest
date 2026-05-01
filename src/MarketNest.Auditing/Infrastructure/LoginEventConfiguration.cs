@@ -1,4 +1,5 @@
 ﻿using MarketNest.Auditing.Domain;
+using MarketNest.Base.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,7 +9,7 @@ public class LoginEventConfiguration : IEntityTypeConfiguration<LoginEvent>
 {
     public void Configure(EntityTypeBuilder<LoginEvent> builder)
     {
-        builder.ToTable("login_events");
+        builder.ToTable(TableConstants.AuditingTable.LoginEvent, TableConstants.Schema.Auditing);
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();

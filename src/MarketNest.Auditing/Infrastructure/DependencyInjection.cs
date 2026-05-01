@@ -1,4 +1,5 @@
-﻿using MarketNest.Base.Common;
+﻿using MarketNest.Auditing.Application;
+using MarketNest.Base.Common;
 using MarketNest.Base.Infrastructure;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -15,15 +16,28 @@ public static class AuditingServiceExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        string connectionString = configuration.GetConnectionString(ConnectionStringName)
+        string writeConnection = configuration.GetConnectionString(ConnectionStringName)
             ?? throw new InvalidOperationException(
                 $"Connection string '{ConnectionStringName}' is not configured.");
 
-        services.AddDbContext<AuditingDbContext>(opts => opts.UseNpgsql(connectionString));
+        // ReadConnection falls back to DefaultConnection when empty — Phase 2: point to read replica
+        string readConnection = configuration.GetConnectionString("ReadConnection")
+                                    is { Length: > 0 } rc ? rc : writeConnection;
+
+        services.AddDbContext<AuditingDbContext>(opts => opts.UseNpgsql(writeConnection));
         services.AddScoped<IModuleDbContext>(sp => sp.GetRequiredService<AuditingDbContext>());
+
+        // Read context — NoTracking, no migrations
+        services.AddDbContext<AuditingReadDbContext>(opts =>
+            opts.UseNpgsql(readConnection)
+                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
         services.AddScoped<AuditableInterceptor>();
         services.AddScoped<IAuditService, AuditService>();
+
+        // Query implementations
+        services.AddScoped<IGetAuditLogsPagedQuery, AuditLogQuery>();
+        services.AddScoped<IGetLoginEventsPagedQuery, LoginEventQuery>();
 
         // MediatR pipeline behaviors — order matters: Performance runs first (outermost),
         // then AuditBehavior runs after the handler returns.

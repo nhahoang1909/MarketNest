@@ -7,7 +7,7 @@ public class GenderConfiguration : ReferenceDataConfiguration<Gender>
 {
     public override void Configure(EntityTypeBuilder<Gender> builder)
     {
-        builder.ToTable("genders", TableConstants.Schema.Default);
+        builder.ToTable(TableConstants.ReferenceTable.Gender, TableConstants.Schema.Default);
         base.Configure(builder);
     }
 }

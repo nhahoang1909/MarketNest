@@ -8,7 +8,7 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
 {
     public void Configure(EntityTypeBuilder<ProductVariant> builder)
     {
-        builder.ToTable("variants");
+        builder.ToTable(TableConstants.CatalogTable.Variant, TableConstants.Schema.Catalog);
         builder.HasKey(v => v.Id);
         builder.Property(v => v.Id).HasColumnName("variant_id");
 

@@ -20,9 +20,9 @@ public static class OrdersServiceExtensions
         services.AddScoped<IModuleDbContext>(sp => sp.GetRequiredService<OrdersDbContext>());
 
         // Business Config — Tier 2 (IOrderPolicyConfig + IOrderPolicyConfigWriter → same singleton service)
-        services.AddScoped<OrderPolicyConfigService>();
-        services.AddScoped<IOrderPolicyConfig>(sp => sp.GetRequiredService<OrderPolicyConfigService>());
-        services.AddScoped<IOrderPolicyConfigWriter>(sp => sp.GetRequiredService<OrderPolicyConfigService>());
+        services.AddScoped<OrderPolicyConfigProvider>();
+        services.AddScoped<IOrderPolicyConfig>(sp => sp.GetRequiredService<OrderPolicyConfigProvider>());
+        services.AddScoped<IOrderPolicyConfigWriter>(sp => sp.GetRequiredService<OrderPolicyConfigProvider>());
 
         return services;
     }

@@ -9,7 +9,7 @@ namespace MarketNest.Web.Infrastructure;
 ///     Registered as Singleton in <c>Program.cs</c>.
 ///     Source of truth is always the DB — Redis is a read-through cache only.
 /// </summary>
-public sealed class RedisCacheService : ICacheService
+public sealed class RedisCacheStore : ICacheService
 {
     private readonly IDatabase _db;
 
@@ -18,7 +18,7 @@ public sealed class RedisCacheService : ICacheService
         PropertyNameCaseInsensitive = true
     };
 
-    public RedisCacheService(IConnectionMultiplexer redis)
+    public RedisCacheStore(IConnectionMultiplexer redis)
     {
         _db = redis.GetDatabase();
     }
