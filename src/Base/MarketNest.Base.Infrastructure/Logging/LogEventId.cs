@@ -388,6 +388,9 @@ public enum LogEventId
     JobRunnerJobFailed = 120003,
     JobRunnerStopping = 120004,
     JobRunnerStopped = 120005,
+    JobRunnerTxBegin = 120006,
+    JobRunnerTxCommitted = 120007,
+    JobRunnerTxRolledBack = 120008,
 
     // TestTimerJob — 121000-121099
     TestTimerJobStart = 121000,
