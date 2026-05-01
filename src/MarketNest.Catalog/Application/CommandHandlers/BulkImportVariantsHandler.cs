@@ -8,11 +8,11 @@ namespace MarketNest.Catalog.Application;
 ///     UnitOfWork is committed automatically by the transaction filter — no SaveChanges here.
 /// </summary>
 [Audited("CATALOG.BULK_IMPORT_VARIANTS")]
-public partial class BulkImportVariantsHandler(
+public partial class BulkImportVariantsCommandHandler(
     IExcelService excel,
     IAntivirusScanner virusScanner,
     IVariantRepository variants,
-    IAppLogger<BulkImportVariantsHandler> logger)
+    IAppLogger<BulkImportVariantsCommandHandler> logger)
     : ICommandHandler<BulkImportVariantsCommand, BulkImportVariantsResult>
 {
     public async Task<Result<BulkImportVariantsResult, Error>> Handle(

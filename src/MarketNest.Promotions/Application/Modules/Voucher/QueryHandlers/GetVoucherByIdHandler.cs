@@ -1,6 +1,6 @@
 namespace MarketNest.Promotions.Application;
 
-public class GetVoucherByIdHandler(IVoucherQuery query) : IQueryHandler<GetVoucherByIdQuery, VoucherDto?>
+public class GetVoucherByIdQueryHandler(IVoucherQuery query) : IQueryHandler<GetVoucherByIdQuery, VoucherDto?>
 {
     public async Task<VoucherDto?> Handle(GetVoucherByIdQuery request, CancellationToken cancellationToken)
     {

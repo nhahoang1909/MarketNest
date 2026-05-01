@@ -2,7 +2,7 @@ using MarketNest.Base.Common;
 
 namespace MarketNest.Promotions.Application;
 
-public class GetVouchersPagedHandler(IGetVouchersPagedQuery query)
+public class GetVouchersPagedQueryHandler(IGetVouchersPagedQuery query)
     : IQueryHandler<GetVouchersPagedQuery, PagedResult<VoucherDto>>
 {
     public Task<PagedResult<VoucherDto>> Handle(GetVouchersPagedQuery request, CancellationToken cancellationToken)
