@@ -13,7 +13,7 @@
 3. [Event Bus Abstraction](#3-event-bus-abstraction)
 4. [Transaction Attribute & Write/Read Split](#4-transaction-attribute--writeread-split)
 5. [Unit of Work — Domain Event Lifecycle](#5-unit-of-work--domain-event-lifecycle)
-6. [Permission-Based Authorization (`[Access]`)](#6-permission-based-authorization-access)
+6. [Permission-Based Authorization (`[Access]`) — ADR-044](#6-permission-based-authorization-access--adr-044)
 7. [File Upload Pipeline](#7-file-upload-pipeline)
 8. [HTTP Context & Request Utilities](#8-http-context--request-utilities)
 9. [Error Handling Infrastructure](#9-error-handling-infrastructure)
@@ -253,51 +253,159 @@ public abstract class AggregateRoot : Entity<Guid>
 
 ---
 
-## 6. Permission-Based Authorization (`[Access]`)
+## 6. Permission-Based Authorization (`[Access]`) — ADR-044
 
-### Permission Enum
+### Permission Enums — `[Flags]` per Module
+
+Each module defines its own `[Flags] enum : long` in `Base.Common/Authorization/`. Permissions are bitwise-combined and stored as a single `bigint` per module per role.
 
 ```csharp
-public enum Permission
+// Base.Common/Authorization/Permissions.cs
+
+[Flags] public enum OrderPermission : long
 {
-    Order_Read = 100, Order_Write = 101, Order_Cancel = 102, Order_Refund = 103,
-    Product_Read = 200, Product_Write = 201, Product_Delete = 202,
-    Storefront_Read = 300, Storefront_Write = 301, Storefront_Suspend = 302,
-    Dispute_Read = 400, Dispute_Open = 401, Dispute_Respond = 402, Dispute_Arbitrate = 403,
-    Review_Read = 500, Review_Write = 501, Review_Hide = 502,
-    Payout_Read = 600, Payout_Process = 601,
-    User_Read = 700, User_Suspend = 701, User_Delete = 702,
-    Config_Read = 800, Config_Write = 801,
+    None = 0, View = 1 << 0, Edit = 1 << 1, Cancel = 1 << 2,
+    Refund = 1 << 3, Export = 1 << 4,
+    All = View | Edit | Cancel | Refund | Export
+}
+
+[Flags] public enum CatalogPermission : long
+{
+    None = 0, View = 1 << 8, Edit = 1 << 9, Delete = 1 << 10, Publish = 1 << 11,
+    All = View | Edit | Delete | Publish
+}
+
+[Flags] public enum StorefrontPermission : long
+{
+    None = 0, View = 1 << 16, Edit = 1 << 17, Suspend = 1 << 18,
+    All = View | Edit | Suspend
+}
+
+[Flags] public enum DisputePermission : long
+{
+    None = 0, View = 1 << 24, Open = 1 << 25, Respond = 1 << 26, Arbitrate = 1 << 27,
+    All = View | Open | Respond | Arbitrate
+}
+
+[Flags] public enum ReviewPermission : long
+{
+    None = 0, View = 1 << 32, Write = 1 << 33, Hide = 1 << 34,
+    All = View | Write | Hide
+}
+
+[Flags] public enum PaymentPermission : long
+{
+    None = 0, ViewPayout = 1 << 40, ProcessPayout = 1 << 41, Refund = 1 << 42,
+    All = ViewPayout | ProcessPayout | Refund
+}
+
+[Flags] public enum UserPermission : long
+{
+    None = 0, View = 1 << 48, Suspend = 1 << 49, Delete = 1 << 50, Manage = 1 << 51,
+    All = View | Suspend | Delete | Manage
+}
+
+[Flags] public enum ConfigPermission : long
+{
+    None = 0, View = 1 << 56, Write = 1 << 57,
+    All = View | Write
+}
+
+[Flags] public enum PromotionPermission : long
+{
+    None = 0, View = 1 << 60, Create = 1 << 61, Pause = 1 << 62,
+    All = View | Create | Pause
+}
+
+public enum PermissionModule
+{
+    Order = 1, Catalog = 2, Storefront = 3, Dispute = 4, Review = 5,
+    Payment = 6, User = 7, Config = 8, Promotion = 9,
 }
 ```
 
-### `[Access]` Attribute & PermissionMatrix
+### `[Access]` Attribute — Typed Per-Module
 
 ```csharp
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = true)]
-public class AccessAttribute(params Permission[] permissions) : Attribute
+public sealed class AccessAttribute : Attribute
 {
-    public Permission[] Permissions { get; } = permissions;
-    public bool RequireAll { get; init; } = false; // true = ALL required, false = ANY
+    // One constructor per permission enum
+    public AccessAttribute(OrderPermission order) { ... }
+    public AccessAttribute(CatalogPermission catalog) { ... }
+    public AccessAttribute(DisputePermission dispute) { ... }
+    public AccessAttribute(UserPermission user) { ... }
+    public AccessAttribute(ConfigPermission config) { ... }
+    // ... etc.
+    internal PermissionRequirement Requirement { get; }
 }
-
-// PermissionMatrix: single source of truth for role → permissions mapping
-// Buyer, Seller, Admin roles with specific permission sets
-// Admin has ALL permissions
 ```
 
 ### Usage
 
 ```csharp
-[Access(Permission.Order_Write)]
-[Transaction]
-public async Task<IActionResult> PlaceOrder(...) { ... }
+[Access(OrderPermission.View)]
+public async Task<IActionResult> OnGetAsync(...) { }
 
-[Access(Permission.Dispute_Arbitrate)]  // Admin only
-public async Task<IActionResult> ResolveDispute(...) { ... }
+[Access(OrderPermission.Edit | OrderPermission.Cancel)]   // user needs BOTH flags
+public async Task<IActionResult> OnPostCancelAsync(...) { }
 
-// Resource ownership: checked in handler via ICurrentUserService, not just permission attribute
+[Access(DisputePermission.Arbitrate)]   // Administrator only
+public async Task<IActionResult> OnPostArbitrateAsync(...) { }
+
+// Multiple [Access] attributes on the same handler are ANDed across modules
+[Access(UserPermission.Manage)]
+[Access(ConfigPermission.Write)]
+public async Task<IActionResult> OnPostPromoteToAdmin(...) { }
 ```
+
+### Permission Resolution at Login
+
+```
+1. Load User with Roles (include RolePermissions + UserPermissionOverrides)
+2. For each PermissionModule M:
+     effective[M] = 0
+     foreach role in user.Roles: effective[M] |= role.GetFlags(M)
+     override = user.Overrides.Find(M, not expired)
+     if override: effective[M] = (effective[M] | override.Granted) & ~override.Denied
+3. Emit JWT claim "mn.perm.{module}" = effective[M].ToString() (only if non-zero)
+```
+
+### JWT Claim Layout
+
+```
+Standard:  sub, email, name, role (array: ["Buyer", "Seller"])
+Custom:    mn.store = storefrontId (Sellers only)
+Perms:     mn.perm.order = "23", mn.perm.catalog = "3840", ...
+Security:  jti, iat, exp (15 min)
+```
+
+### AccessFilter (IAsyncAuthorizationFilter)
+
+```
+Request → AuthN middleware → RuntimeContext (builds ICurrentUser with perm claims)
+       → AccessFilter: reads [Access] attrs, bitwise-checks each against ICurrentUser
+       → 401 if not authenticated, 403 if permission denied
+       → Handler: horizontal ownership check inline
+```
+
+### Horizontal Authorization (in handlers)
+
+```csharp
+// Ownership check pattern — admin bypasses
+if (!currentUser.IsAdmin)
+{
+    if (order.BuyerId != currentUser.RequireId() && order.StoreId != currentUser.SellerStoreId)
+        return Error.Forbidden("You do not have access to this order");
+}
+```
+
+### Admin Permission Override
+
+Admin can add/remove per-user permissions via `PUT /admin/users/{id}/permissions`:
+- `SetUserPermissionOverrideCommand(UserId, Module, GrantedFlags, DeniedFlags, AdminId)`
+- Effect takes place on user's next token issuance (login or refresh)
+- Optional `ExpiresAt` for temporary grants
 
 ---
 

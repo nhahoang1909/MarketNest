@@ -20,6 +20,17 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-05-01 - docs(identity): ADR-044 Identity RBAC solution design integrated into project docs
+- **Status**: Completed
+- **Description**: Integrated the Identity RBAC solution design (ADR-044) into all project documentation: multi-role users, bitwise [Flags] permissions per module, per-user permission overrides, seller application flow, SystemAdmin built-in user.
+- **Key deliverables**:
+  - `docs/domain-and-business-rules.md` — Added §3.10 User Aggregate, §3.11 Role Entity, §3.12 SellerApplication Aggregate, §5.6 Identity RBAC business rules, Identity domain events in §6
+  - `docs/backend-infrastructure.md` §6 — Replaced old flat `Permission` enum with new `[Flags]` per-module design + AccessFilter + JWT claims + horizontal auth
+  - `docs/functional-specifications/identity.md` — Updated to v2.0: new actor table, US-IDENT-002 rewritten (seller application flow), US-IDENT-003 updated (OTP-based), US-IDENT-004a added (token refresh)
+  - `docs/functional-specifications/admin.md` — Updated to v2.0: US-ADMIN-005 expanded (suspend/reinstate), 005a (role management), 005b (permission overrides), 005c (seller application review), 005d (role permissions)
+  - `docs/project_notes/decisions.md` — ADR-044 full entry added
+- **Notes**: Full solution design source: `identity-rbac-solution-design.md`. Code implementation deferred — docs-first approach.
+
 ### 2026-05-01 - feat(base): [BackgroundJobTransaction] attribute — automatic TX lifecycle for background jobs
 - **Status**: Completed
 - **Description**: Added `[BackgroundJobTransaction]` attribute so jobs opt-in to automatic transaction management without writing boilerplate UoW code.
