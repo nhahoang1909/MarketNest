@@ -76,24 +76,7 @@ jobs:
       - name: Build Base.Utility
         run: dotnet build src/Base/MarketNest.Base.Utility --no-restore -c ${{ env.CONFIGURATION }}
 
-  build-core:
-    name: "🔨 Build / Core"
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-      - uses: actions/cache/restore@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
-          restore-keys: ${{ runner.os }}-nuget-
-      - name: Restore
-        run: dotnet restore src/MarketNest.Core
-      - name: Build Core
-        run: dotnet build src/MarketNest.Core --no-restore -c ${{ env.CONFIGURATION }}
+  # NOTE: MarketNest.Core project does not exist. Removed to prevent CI failures.
 
   build-identity:
     name: "🔨 Build / Identity"
@@ -314,7 +297,6 @@ jobs:
     name: "🔨 Build / Web Host (full solution)"
     needs:
       - build-base
-      - build-core
       - build-identity
       - build-catalog
       - build-cart
