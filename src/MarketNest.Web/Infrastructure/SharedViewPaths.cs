@@ -13,6 +13,7 @@ public static class SharedViewPaths
     public const string EmptyState = "~/Pages/Shared/Display/_EmptyState.cshtml";
     public const string ImportPreview = "~/Pages/Shared/Display/_ImportPreview.cshtml";
     public const string ImportErrorTable = "~/Pages/Shared/Display/_ImportErrorTable.cshtml";
+    public const string AnnouncementBanner = "~/Pages/Shared/Display/_AnnouncementBanner.cshtml";
 
     // ── Form Components ─────────────────────────────────────────────────
     public const string TextField = "~/Pages/Shared/Forms/_TextField.cshtml";

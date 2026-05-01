@@ -14,6 +14,7 @@ public static class AppRoutes
     public const string Error = "/Error";
     public const string NotFound = "/not-found";
     public const string Health = "/health";
+    public const string AnnouncementBanner = "/Shared/AnnouncementBanner";
 
     // ── Whitelist: all allowed path prefixes ─────────────────────────
     /// <summary>
@@ -29,6 +30,7 @@ public static class AppRoutes
         Error,
         NotFound,
         Health,
+        AnnouncementBanner,
         Auth.Login,
         Auth.Register,
         Auth.ForgotPassword,
@@ -51,6 +53,7 @@ public static class AppRoutes
         Admin.Storefronts,
         Admin.Disputes,
         Admin.Notifications,
+        Admin.Announcements,
         Admin.ConfigPrefix,
         Checkout.Index,
         Api.SetLanguage,
@@ -134,6 +137,7 @@ public static class AppRoutes
         public const string Storefronts = "/admin/storefronts";
         public const string Disputes = "/admin/disputes";
         public const string Notifications = "/admin/notifications";
+        public const string Announcements = "/admin/announcements";
         public const string ConfigPrefix = "/admin/config";
         public const string ConfigCommission = "/admin/config/commission";
         public const string ConfigCountry = "/admin/config/country";
