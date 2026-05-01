@@ -1,10 +1,11 @@
 ﻿# MarketNest — Domain Design & Business Rules
 
-> Version: 0.4 | Status: Draft | Date: 2026-05-01
+> Version: 0.5 | Status: Draft | Date: 2026-05-01
 > Consolidated from: `domain-design.md` + `business-logic-requirements.md`
 > Updated: Added Promotions/Voucher domain (§3.8), Order financial calculation spec (§3.4–§3.5), updated invariants, domain events, and notification triggers.
 > Updated 2026-04-29: §3.2 ProductVariant updated to reflect Phase 1 implementation (ADR-024 Sale Price inline fields, simplified inventory, computed helpers). §5.4 Sale Price business rules added. §6/§7 updated with new events and invariants.
 > Updated 2026-05-01: Announcement feature foundation documented in ADR-043 (admin-managed site-wide banners with scheduling).
+> Updated 2026-05-01: Identity RBAC system (ADR-044) — §2 Actors expanded, §3.10–3.12 User/Role/SellerApplication aggregates, §5.6 RBAC business rules, §6 domain events expanded.
 
 ---
 
@@ -34,10 +35,10 @@
 │  │              │    │                      │    │                         │   │
 │  │  User        │    │  Storefront          │    │  Cart                   │   │
 │  │  Role        │    │  Product             │    │  CartItem               │   │
-│  │  RefreshToken│    │  ProductVariant      │    │  (Redis reservations)   │   │
-│  └──────────────┘    │  InventoryItem       │    └──────────┬──────────────┘   │
-│         │            └──────────┬───────────┘               │                  │
-│         │                       │                    checkout│                  │
+│  │  Permission  │    │  ProductVariant      │    │  (Redis reservations)   │   │
+│  │  SellerApp   │    │  InventoryItem       │    └──────────┬──────────────┘   │
+│  │  RefreshToken│    └──────────┬───────────┘               │                  │
+│  └──────────────┘               │                    checkout│                  │
 │         │            ┌──────────▼───────────┐               │                  │
 │         │            │        Orders        │◄──────────────┘                  │
 │         │            │  Order, OrderLine    │                                   │
@@ -61,9 +62,12 @@
 | Actor | Description | Permissions |
 |-------|-------------|-------------|
 | **Guest** | Unauthenticated visitor | Browse catalog, view storefronts |
-| **Buyer** | Registered customer | Place orders, write reviews (after purchase), open disputes |
-| **Seller** | Merchant with storefront | Manage products/inventory, fulfill orders, respond to disputes |
-| **Admin** | Platform operator | Arbitrate disputes, manage commissions, ban users |
+| **Buyer** | Registered customer (default role on registration) | Place orders, write reviews (after purchase), open disputes |
+| **Seller** | Buyer who completed seller application approval | Manage products/inventory, fulfill orders, respond to disputes (retains all Buyer permissions) |
+| **Administrator** | Platform operator | Full resource access, arbitrate disputes, manage commissions, manage users/roles/permissions |
+| **SystemAdmin** | Built-in system identity (background jobs, migrations) | Never a real human login; used for audit trail attribution in automated operations |
+
+> **Multi-role model (ADR-044):** Users accumulate roles over time. A Seller is always also a Buyer. An Administrator can also be a Buyer. Permissions are the **union** of all assigned roles, plus per-user overrides (grant/deny). See §5.6 for the full RBAC business rules.
 
 ---
 
@@ -579,6 +583,141 @@ Discount never makes a component negative:
 
 **Note:** Not an Aggregate Root — no child entities. Simple Entity owned by Admin module.
 
+### 3.10 User Aggregate (Identity Module — ADR-044)
+
+> Updated 2026-05-01: Full RBAC design with multi-role, bitwise permissions, and per-user overrides.
+
+```
+User (Aggregate Root)
+├── Id: Guid
+├── Email: string (max 254)
+├── NormalizedEmail: string (uppercase, unique partial index WHERE status != Deleted)
+├── DisplayName: string (max 255)
+├── PasswordHash: string (ASP.NET Core Identity PBKDF2)
+├── EmailVerified: bool
+├── EmailVerifiedAt: DateTimeOffset?
+├── PhoneNumber: string? (E.164 format)
+├── AvatarFileId: Guid? (FK to UploadedFile)
+├── PublicBio: string? (max 500, seller only)
+├── Status: UserStatus { Active | Suspended | Deleted }
+├── SuspensionReason: string? (max 2000)
+├── SuspendedAt: DateTimeOffset?
+├── DeletedAt: DateTimeOffset? (soft delete)
+├── AccessFailedCount: int (lockout after 5 failures)
+├── LockoutEnd: DateTimeOffset?
+│
+├── Roles: List<UserRole> (join entity — many-to-many with Role)
+│   └── UserRole
+│       ├── UserId: Guid
+│       ├── RoleId: Guid
+│       ├── GrantedBy: Guid? (null = system-assigned at registration)
+│       └── GrantedAt: DateTimeOffset
+│
+└── PermissionOverrides: List<UserPermissionOverride>
+    └── UserPermissionOverride (per-user permission grant/deny on top of role)
+        ├── Id: Guid
+        ├── UserId: Guid
+        ├── Module: PermissionModule enum
+        ├── GrantedFlags: long (added on top of role flags)
+        ├── DeniedFlags: long (removed even if role grants it)
+        ├── GrantedBy: Guid
+        ├── GrantedAt: DateTimeOffset
+        └── ExpiresAt: DateTimeOffset? (null = no expiry)
+
+Domain Events:
+  UserRegisteredEvent, EmailVerifiedEvent, RoleAssignedEvent, RoleRevokedEvent,
+  UserSuspendedEvent, UserReinstatedEvent, UserDeletedEvent, PasswordChangedEvent
+
+Domain Methods:
+  Register(email, displayName, passwordHash)  → static factory
+  VerifyEmail()
+  AssignRole(role, grantedByAdminId)          → Result<Unit, Error>
+  RevokeRole(roleId, revokedByAdminId)        → Result<Unit, Error>
+  GrantPermissionOverride(request, adminId)   → upsert per module
+  Suspend(reason, adminId)
+  Reinstate(adminId)
+  SoftDelete(adminId)
+  ChangePassword(currentHash, newHash)        → Result<Unit, Error>
+  RecordLoginFailure()                        → lockout after 5 attempts (15 min)
+  RecordSuccessfulLogin()                     → resets failed count
+```
+
+**Business Rules (User):**
+- Email is unique (case-insensitive via NormalizedEmail)
+- NormalizedEmail freed on soft delete (`DELETED_{id}_{email}`) to allow re-registration
+- Roles are additive — permission check passes if ANY role grants it
+- `SystemAdmin` role is never grantable via Admin UI
+- `Administrator` can only be granted by another Administrator
+- `Seller` can only be granted after SellerApplication is approved
+- Revoking `Seller` role raises domain event → products archived
+- Per-user permission overrides: `effective = (union of roles) | GrantedFlags & ~DeniedFlags`
+- Lockout: 5 failed attempts → 15 min lockout
+- Password change revokes all refresh tokens (force re-login on other devices)
+
+### 3.11 Role Entity (Identity Module — ADR-044)
+
+```
+Role (Entity, NOT aggregate root)
+├── Id: Guid
+├── Name: string (max 100)
+├── NormalizedName: string (uppercase, unique)
+├── Description: string? (max 500)
+├── IsSystem: bool (true → cannot be deleted via UI)
+│
+└── Permissions: List<RolePermission>
+    └── RolePermission (child entity — one per module)
+        ├── Id: Guid
+        ├── RoleId: Guid
+        ├── Module: PermissionModule enum
+        └── Flags: long (bitwise combined [Flags] value)
+
+Domain Method:
+  SetPermission(module, flags)  → upsert (removes if flags == 0)
+```
+
+**Built-in Roles (seeded, `IsSystem = true`):**
+
+| Role | Purpose |
+|------|---------|
+| `SystemAdmin` | Background jobs, migrations — never a real human login. Cannot be granted via Admin UI. |
+| `Administrator` | Platform operator — full Admin panel access, manages users and platform config. |
+| `Seller` | Buyer who completed seller application. Additive — always retains Buyer role. |
+| `Buyer` | Default role on registration. Any authenticated non-Seller user. |
+
+### 3.12 SellerApplication Aggregate (Identity Module — ADR-044)
+
+```
+SellerApplication (Aggregate Root)
+├── Id: Guid
+├── ApplicantUserId: Guid
+├── Status: SellerApplicationStatus { Pending | UnderReview | Approved | Rejected | Cancelled }
+├── BusinessName: string (max 255)
+├── TaxId: string? (max 50)
+├── BusinessLicenseFileId: Guid? (UploadedFile reference)
+├── IdentityDocFileId: Guid? (UploadedFile reference)
+├── AdditionalNotes: string? (max 2000)
+├── ReviewedByAdminId: Guid?
+├── ReviewNote: string? (max 2000)
+├── ReviewedAt: DateTimeOffset?
+├── SubmittedAt: DateTimeOffset
+└── UpdatedAt: DateTimeOffset
+
+Domain Events:
+  SellerApplicationSubmittedEvent, SellerApplicationApprovedEvent, SellerApplicationRejectedEvent
+
+State Machine:
+  Pending → UnderReview → Approved
+                       ↘ Rejected
+  Pending → Cancelled (applicant withdraws)
+  Rejected: applicant can re-apply (new SellerApplication entity)
+```
+
+**Business Rules (SellerApplication):**
+- Only verified Buyers can submit an application
+- Approval fires `SellerApplicationApprovedEvent` → domain event handler assigns Seller role + creates Storefront draft
+- Rejection fires `SellerApplicationRejectedEvent` → notification sent to applicant
+- Application has own lifecycle — separate from User aggregate (user may apply multiple times)
+
 ---
 
 ## 4. Value Objects
@@ -780,12 +919,79 @@ public record DiscountResult(
 - No impression tracking or click analytics
 - Dismiss is browser-local (not persisted to DB) — Phase 2 can add DB-backed user dismiss preferences
 
+### 5.6 Identity — RBAC & Permission Business Rules (ADR-044)
+
+> **Implementation:** `MarketNest.Identity` module. Permission enums in `Base.Common/Authorization/`.
+
+**Role Assignment Rules:**
+- `Buyer` auto-assigned on registration (via `RegisterCommand`)
+- `Seller` granted only after `SellerApplication` is approved (domain event handler)
+- `Administrator` can only be granted by another `Administrator`
+- `SystemAdmin` is never shown in Admin UI and cannot be granted via any endpoint
+- Roles are additive — a user accumulates roles over time (Buyer + Seller, Buyer + Administrator)
+- Revoking `Seller` raises a domain event → all active products archived
+
+**Permission System (Vertical Authorization):**
+- Each module has a `[Flags] enum : long` defining its own permission set (compile-time safe, no runtime invention)
+- Permissions stored per role as `bigint` flags in `identity.role_permissions`
+- User's effective permission = union of all role flags, then apply per-user overrides:
+  ```
+  effective[module] = (∪ role.Flags) | override.GrantedFlags & ~override.DeniedFlags
+  ```
+- Permission claims embedded in JWT (`mn.perm.{module}` = flags as decimal string) — computed at login, no per-request DB lookup
+- `[Access(ModulePermission.Action)]` attribute on endpoints checks bitwise; `AccessFilter` returns 403 if not satisfied
+- Admin bypasses all horizontal checks (ownership) via `ICurrentUser.IsAdmin`
+
+**Permission Override Rules:**
+- Admin can add/remove specific permissions for individual users via `SetUserPermissionOverrideCommand`
+- Overrides are per-module (one override row per user per module)
+- `GrantedFlags` bits are OR'd into the effective permission (add permissions)
+- `DeniedFlags` bits are cleared from the effective permission (revoke even if role grants)
+- Overrides can optionally expire (`ExpiresAt`) — expired overrides are ignored at login
+
+**Horizontal Authorization (Resource Ownership):**
+- Checked INSIDE command/query handlers (not in filter) via `ICurrentUser`
+- Administrator bypasses all ownership checks
+- Pattern: `if (!currentUser.IsAdmin) { /* verify ownership */ }`
+- Ownership rules: Order → BuyerId or StoreId; Product → StoreId; Storefront → SellerId; Dispute → BuyerId or SellerId
+
+**Seller Onboarding Flow:**
+1. Register as Buyer → `UserRegisteredEvent` → email verification
+2. Submit SellerApplication → `SellerApplicationSubmittedEvent` → admin notified
+3. Admin approves → `SellerApplicationApprovedEvent` → handler assigns Seller role + creates Storefront draft
+4. Next login JWT contains `[Buyer, Seller]` + expanded permissions + `mn.store` claim
+
+**Password & Account Security:**
+- PBKDF2 (HMACSHA512, 600k iterations) via ASP.NET Core `PasswordHasher<User>`
+- Max 5 failed login attempts → 15-minute lockout
+- JWT access token: 15 min, RS256 signed
+- Refresh token: 7 days, HttpOnly cookie, SameSite=Strict, rotation on each refresh
+- Password change → revoke all refresh tokens (immediate session kill on other devices)
+- Soft delete frees the email for re-registration via `DELETED_{id}_{email}` normalization
+
+**SystemAdmin Built-in User:**
+- Seeded on first startup with well-known ID (e.g., `00000000-0000-0000-0000-000000000001`)
+- `DisplayName = "System Administrator"` — appears in audit trail: "Modified by: System Administrator"
+- Used by `BackgroundJobRuntimeContext.ForSystemJob(jobKey)` for background job attribution
+- Cannot login via web UI
+
 ---
 
 ## 6. Domain Events Summary
 
 | Event | Raised By | Handled By |
 |-------|-----------|-----------|
+| `UserRegisteredEvent` | User.Register() | Notifications (verification email) |
+| `EmailVerifiedEvent` | User.VerifyEmail() | (audit log) |
+| `RoleAssignedEvent` | User.AssignRole() | (audit log) |
+| `RoleRevokedEvent` | User.RevokeRole() | Catalog (archive products if Seller revoked) |
+| `UserSuspendedEvent` | User.Suspend() | Catalog (suspend storefront), Notifications |
+| `UserReinstatedEvent` | User.Reinstate() | (audit log) |
+| `UserDeletedEvent` | User.SoftDelete() | (audit log, token revocation) |
+| `PasswordChangedEvent` | User.ChangePassword() | Notifications (security alert) |
+| `SellerApplicationSubmittedEvent` | SellerApplication.Submit() | Notifications (admin) |
+| `SellerApplicationApprovedEvent` | SellerApplication.Approve() | AssignSellerRoleHandler (assigns role + creates Storefront) |
+| `SellerApplicationRejectedEvent` | SellerApplication.Reject() | Notifications (applicant) |
 | `StorefrontActivatedEvent` | Storefront | Notifications |
 | `ProductPublishedEvent` | Product | (future: search index) |
 | `InventoryLowEvent` | InventoryItem | Notifications → Seller |

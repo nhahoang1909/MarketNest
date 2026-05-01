@@ -23,6 +23,7 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 - **Branch**: `p1-main-nhahoang` (working branch; PRs target `p1-main`)
 - **Target**: Phase 1 exit by month 3 (real user can browse → register → create storefront → list product → another user buys → order fulfilled)
 - **Latest updates (2026-05-01)**: 
+  - ADR-044: Identity RBAC solution design — multi-role, bitwise permissions, seller application flow
   - `[BackgroundJobTransaction]` attribute for automatic job transaction management
   - `ITrackable` interface + `TrackableInterceptor` for automatic audit-trail stamping (CreatedAt/ModifiedAt)
   - Three-stage CI/CD test pipeline with sequential gating
@@ -42,7 +43,7 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 | `src/Base/MarketNest.Base.Infrastructure` | Shared infra: `IAppLogger<T>`, `AppLogger<T>`, `LogEventId` enum, `BaseRepository<TEntity,TKey,TContext>`, `IBaseRepository<TEntity,TKey>`, `BaseQuery<TEntity,TKey,TContext>`, `DddModelBuilderExtensions`, `ITrackable` + `TrackableInterceptor`, `UpdateTokenInterceptor`, `PgQueryBuilder` |
 | `src/Base/MarketNest.Base.Utility` | Utility helpers: slug generation, date extensions |
 | `src/MarketNest.Core` | Shared kernel: `Result<T,Error>`, `Error`, CQRS interfaces, `IModuleDbContext`, `IDataSeeder`, validation extensions, domain constants, status names |
-| `src/MarketNest.Identity` | Auth: users, roles, JWT, refresh tokens, user preferences, notification preferences |
+| `src/MarketNest.Identity` | Auth: users, roles, permissions (RBAC — ADR-044), JWT, refresh tokens, seller applications, user preferences, notification preferences |
 | `src/MarketNest.Catalog` | Storefronts, products, variants, inventory |
 | `src/MarketNest.Cart` | Cart, CartItem, Redis-backed reservation |
 | `src/MarketNest.Orders` | Orders, order lines, fulfillment, shipment state machine; owns `OrderPolicyConfig` |
@@ -137,6 +138,27 @@ marketnest:admin:config:{key}             TTL: 30m   — platform config
 | HTMX no-cache | `HtmxNoCacheMiddleware` | HTMX partial responses | no-store |
 | HTTP OutputCache | `AddOutputCache` + `CachePolicies` | Anonymous Razor Pages | 1–5 min |
 | Application Redis | `ICacheService` (`RedisCacheService`) | Business data per module | 30s–24h |
+
+---
+
+## Identity & RBAC (ADR-044)
+
+**Built-in Roles** (seeded, `IsSystem = true`):
+
+| Role | Purpose |
+|------|---------|
+| `SystemAdmin` | Background jobs, migrations — never a real human login. Well-known ID for audit trail. |
+| `Administrator` | Full platform operator. Granted by another Administrator only. |
+| `Seller` | Buyer + approved SellerApplication. Additive — retains Buyer. |
+| `Buyer` | Default role on registration. |
+
+**SystemAdmin well-known ID**: `00000000-0000-0000-0000-000000000001` — seeded by `AdminUserSeeder`. `DisplayName = "System Administrator"`.
+
+**Permission model**: `[Flags] enum : long` per module. Stored in `identity.role_permissions` as `bigint`. JWT claims: `mn.perm.{module}` = effective flags (decimal string). Per-user overrides in `identity.user_permission_overrides`.
+
+**Permission modules**: Order, Catalog, Storefront, Dispute, Review, Payment, User, Config, Promotion.
+
+**Seller onboarding**: Register (Buyer) → SellerApplication → Admin approve → Seller role + Storefront draft auto-created.
 
 ---
 
