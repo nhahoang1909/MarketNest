@@ -703,7 +703,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-unit-reviews-disputes-notifications
-           path: ./test-results/*.trx
+          path: ./test-results/*.trx
 
   # ┌──────────────────────────────────────────────────────────────────────────┐
   # │  GATE: Unit tests stage must pass before proceeding to integration tests  │
@@ -780,7 +780,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-integration
-           path: ./test-results/*.trx
+          path: ./test-results/*.trx
 
 
   # ┌──────────────────────────────────────────────────────────────────────────┐
