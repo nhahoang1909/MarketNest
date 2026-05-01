@@ -5,8 +5,9 @@
 ///     Reference data is static lookup values (Country, Gender, etc.) seeded from JSON,
 ///     owned by the Admin module, consumed by other modules via <c>IReferenceDataReadService</c>.
 ///     Uses <c>int</c> PK (identity column) — reference data does not need Guid.
+///     Implements <see cref="ITrackable"/> so the Admin UI can display who last modified each record.
 /// </summary>
-public abstract class ReferenceData : Entity<int>
+public abstract class ReferenceData : Entity<int>, ITrackable
 {
     /// <summary>Machine-readable business key: "VN", "MALE". Immutable after creation.</summary>
     public string Code { get; private set; }
@@ -19,6 +20,28 @@ public abstract class ReferenceData : Entity<int>
 
     /// <summary>Soft-deactivation. Inactive records are filtered by EF query filter.</summary>
     public bool IsActive { get; private set; }
+
+    // ── ITrackable ────────────────────────────────────────────────────────
+
+    /// <inheritdoc />
+    public DateTimeOffset CreatedAt { get; private set; }
+
+    /// <inheritdoc cref="ITrackable.CreatedBy"/>
+    /// <remarks>null for records seeded from JSON files — no user actor.</remarks>
+    public Guid? CreatedBy { get; private set; }
+
+    /// <inheritdoc cref="ITrackable.ModifiedAt"/>
+    /// <remarks>null until the record is first edited after initial seeding.</remarks>
+    public DateTimeOffset? ModifiedAt { get; private set; }
+
+    /// <inheritdoc cref="ITrackable.ModifiedBy"/>
+    /// <remarks>null until the record is first edited after initial seeding.</remarks>
+    public Guid? ModifiedBy { get; private set; }
+
+    void ITrackable.StampCreated(DateTimeOffset at, Guid? by) { CreatedAt = at; CreatedBy = by; }
+    void ITrackable.StampModified(DateTimeOffset at, Guid? by) { ModifiedAt = at; ModifiedBy = by; }
+
+    // ── Constructors ──────────────────────────────────────────────────────
 
     /// <summary>Required by EF Core.</summary>
 #pragma warning disable CS8618 // Non-nullable field — EF Core uses this constructor

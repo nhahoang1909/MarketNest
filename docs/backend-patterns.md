@@ -711,18 +711,43 @@ public interface ISoftDeletable
 }
 ```
 
-### Audit Trail Interceptor
-```csharp
-// Sets CreatedAt/CreatedBy on Added, UpdatedAt/UpdatedBy on Modified
-public class AuditInterceptor(ICurrentUserService currentUser) : SaveChangesInterceptor { ... }
+### Trackable Interceptor (Audit Trail Stamping)
 
-public interface IAuditable
+Automatic CreatedAt/ModifiedAt stamping for entities implementing `ITrackable` interface.
+
+```csharp
+// Sets CreatedAt/CreatedBy on Added, ModifiedAt/ModifiedBy on Modified
+public sealed class TrackableInterceptor : SaveChangesInterceptor { ... }
+
+public interface ITrackable
 {
-    DateTime CreatedAt { get; set; }
-    Guid? CreatedBy { get; set; }
-    DateTime? UpdatedAt { get; set; }
-    Guid? UpdatedBy { get; set; }
+    DateTimeOffset CreatedAt { get; }
+    Guid? CreatedBy { get; }         // null for system/seeded records
+    DateTimeOffset? ModifiedAt { get; }
+    Guid? ModifiedBy { get; }        // null until first modification
+    
+    void StampCreated(DateTimeOffset at, Guid? by);
+    void StampModified(DateTimeOffset at, Guid? by);
 }
+```
+
+**Registration** in module DbContext:
+```csharp
+protected override void OnConfiguring(DbContextOptionsBuilder options)
+{
+    options.AddInterceptors(new TrackableInterceptor());
+}
+```
+
+**Usage**: Implement `ITrackable` on aggregate roots or entities needing automatic audit trails. Declare properties as `{ get; private set; }`, implement explicit interface methods that set the backing properties. The interceptor calls `StampCreated`/`StampModified` automatically on every save — application code never calls them.
+
+### Audit Trail Interceptor (Detailed Change Logging)
+```csharp
+// Captures detailed change snapshots for entities marked [Auditable]
+public partial class AuditableInterceptor(IAppLogger<AuditableInterceptor> logger) : SaveChangesInterceptor { ... }
+
+// Mark entities: [Auditable] public class Product : AggregateRoot { }
+// Interceptor writes change snapshots to AuditLog entity
 ```
 
 ### BaseEntityConfiguration

@@ -91,5 +91,38 @@ public static class DddModelBuilderExtensions
 
         return modelBuilder;
     }
+
+    /// <summary>
+    ///     Registers a global EF Core query filter (<c>WHERE is_deleted = FALSE</c>) on every entity
+    ///     type that implements <see cref="ISoftDeletable"/>. Soft-deleted rows become invisible to
+    ///     all normal LINQ queries without any per-query opt-out.
+    /// </summary>
+    /// <remarks>
+    ///     To query soft-deleted records intentionally, call <c>dbSet.IgnoreQueryFilters()</c>
+    ///     on the query. This is useful for restore, admin views, or cascade cleanup.
+    ///     Call this in each module's <c>OnModelCreating</c> after
+    ///     <see cref="ApplyDddPropertyAccessConventions"/>.
+    /// </remarks>
+    public static ModelBuilder ApplySoftDeleteQueryFilters(this ModelBuilder modelBuilder)
+    {
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (!typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType))
+                continue;
+
+            // Build a lambda: (ISoftDeletable e) => !e.IsDeleted
+            // We use the concrete CLR type so EF Core maps to the right table column.
+            var clrType = entityType.ClrType;
+            var parameter = Expression.Parameter(clrType, "e");
+            var isDeletedProperty = Expression.Property(
+                parameter, nameof(ISoftDeletable.IsDeleted));
+            var notDeleted = Expression.Not(isDeletedProperty);
+            var lambda = Expression.Lambda(notDeleted, parameter);
+
+            modelBuilder.Entity(clrType).HasQueryFilter(lambda);
+        }
+
+        return modelBuilder;
+    }
 }
 
