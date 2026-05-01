@@ -34,3 +34,6 @@ MN030 | Architecture | Warning | InjectInterfaceNotConcreteClass
 MN031 | Architecture | Error | QueryHandlerMustNotCallSaveChanges
 MN032 | Architecture | Warning | DeepIncludeChainExceedsThreeLevels
 MN033 | Architecture | Error | CacheUsageInDomainLayer
+MN034 | Architecture | Error | CommandHandlerMustNotInjectQuerySideTypes
+MN035 | Architecture | Error | QueryHandlerMustNotInjectWriteSideOrHandlerTypes
+

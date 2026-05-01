@@ -1,7 +1,7 @@
 # MarketNest Roslyn Analyzers Reference
 
 > Design spec: `docs/superpowers/specs/2026-04-27-roslyn-analyzers-design.md`
-> Status: **Updated** (2026-04-30) — all 33 rules + 6 code fixes implemented, wired to all src/ projects
+> Status: **Updated** (2026-05-01) — all 35 rules implemented, wired to all src/ projects
 
 ## Overview
 
@@ -58,6 +58,8 @@ The analyzer is wired to every project under `src/` via `src/Directory.Build.tar
 | MN031 | Query handler calls `SaveChanges`/`CommitAsync` (queries must be read-only) | Architecture | Error | ❌ |
 | MN032 | `.Include()` chain exceeds 3 levels deep | Architecture | Warning | ❌ |
 | MN033 | Cache usage (`ICacheService`, `CacheKeys`) in Domain layer | Architecture | Error | ❌ |
+| MN034 | `CommandHandler` injects query-side type (`I*Query`, `IQueryHandler`) | Architecture | Error | ❌ |
+| MN035 | `QueryHandler` injects write-side type (`I*Repository`, `ICommandHandler`) or another `QueryHandler` | Architecture | Error | ❌ |
 
 > `TreatWarningsAsErrors=true` is set in `Directory.Build.props`, so all warnings also fail the build.
 
@@ -74,10 +76,11 @@ src/MarketNest.Analyzers/
                        FireAndForgetAnalyzer
     Logging/           DirectLoggerCallAnalyzer, LoggingClassPartialAnalyzer, AppLoggerInjectionAnalyzer
     Architecture/      FlatNamespaceAnalyzer, DateTimeUsageAnalyzer, ServiceLocatorAnalyzer, EntityPublicSetterAnalyzer, InsecureHashAnalyzer,
-                       HandlerEntityReturnAnalyzer, HandlerQueryProjectionAnalyzer, HandlerSaveChangesAnalyzer,
-                       HandlerTransactionAnalyzer, DomainInfrastructureReferenceAnalyzer, RepositoryIQueryableAnalyzer,
-                       EntityInitAccessorAnalyzer, QueryHandlerNoTrackingAnalyzer, ConcreteInjectionAnalyzer,
-                       QueryHandlerSaveChangesAnalyzer, DeepIncludeChainAnalyzer, DomainCacheUsageAnalyzer
+                        HandlerEntityReturnAnalyzer, HandlerQueryProjectionAnalyzer, HandlerSaveChangesAnalyzer,
+                        HandlerTransactionAnalyzer, DomainInfrastructureReferenceAnalyzer, RepositoryIQueryableAnalyzer,
+                        EntityInitAccessorAnalyzer, QueryHandlerNoTrackingAnalyzer, ConcreteInjectionAnalyzer,
+                        QueryHandlerSaveChangesAnalyzer, DeepIncludeChainAnalyzer, DomainCacheUsageAnalyzer,
+                        CommandHandlerQueryInjectionAnalyzer, QueryHandlerWriteInjectionAnalyzer
   CodeFixes/           PrivateFieldNamingCodeFix, AsyncVoidCodeFix, LoggingClassPartialCodeFix,
                        AppLoggerInjectionCodeFix, TaskFromResultCodeFix, InsecureHashCodeFix
   DiagnosticIds.cs     All 33 ID constants
@@ -391,6 +394,37 @@ _db.Orders.Select(o => new OrderDetailDto { ... }).ToListAsync(ct);
 `ICacheService`, `CacheKeys`, `IDistributedCache`, and `IMemoryCache` must not be used in `*.Domain` namespaces. Caching is an infrastructure concern.
 
 ---
+
+### MN034 — CommandHandler injects query-side type
+
+`CommandHandler` implementations must not inject `I*Query` interfaces or `IQueryHandler`. A handler that handles writes must not depend on the read side. If shared logic is needed, extract it to a dedicated helper class.
+
+```csharp
+// ❌ Violates MN034 — mixing write and read side in one handler
+class CreateOrderHandler(IGetOrdersQuery q, IOrderRepository repo)
+    : ICommandHandler<CreateOrderCommand, Guid> { ... }
+
+// ✅ Fixed — extract shared logic to a helper
+class OrderCalculator { ... }                          // shared helper
+class CreateOrderHandler(IOrderRepository repo, OrderCalculator calc)
+    : ICommandHandler<CreateOrderCommand, Guid> { ... }
+```
+
+### MN035 — QueryHandler injects write-side type or another QueryHandler
+
+`QueryHandler` implementations must not inject `I*Repository` interfaces, `ICommandHandler`, or another `IQueryHandler` (handler chaining). For cross-aggregate reads within the same module, inject an `I*Query` interface instead.
+
+```csharp
+// ❌ Violates MN035 — repository is write-side
+class GetOrderHandler(IOrderRepository repo) : IQueryHandler<GetOrderQuery, OrderDto> { ... }
+
+// ❌ Violates MN035 — chaining QueryHandlers is forbidden
+class GetOrderHandler(IQueryHandler<GetItemsQuery, IReadOnlyList<ItemDto>> inner)
+    : IQueryHandler<GetOrderQuery, OrderDto> { ... }
+
+// ✅ Fixed — inject an I*Query for cross-aggregate reads
+class GetOrderHandler(IOrderItemQuery itemQuery) : IQueryHandler<GetOrderQuery, OrderDto> { ... }
+```
 
 ## Testing
 
