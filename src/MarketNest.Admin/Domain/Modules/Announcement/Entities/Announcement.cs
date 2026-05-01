@@ -35,6 +35,8 @@ public class Announcement : Entity<Guid>
         LinkUrl = linkUrl;
         LinkText = linkText;
         IsPublished = false;
+
+        EnsureInvariants();
     }
 
     public string Title { get; private set; }
@@ -82,6 +84,22 @@ public class Announcement : Entity<Guid>
         SortOrder = sortOrder;
         LinkUrl = linkUrl;
         LinkText = linkText;
+
+        EnsureInvariants();
+    }
+
+    // ── Invariants ─────────────────────────────────────────────────────
+
+    protected override void EnsureInvariants()
+    {
+        if (string.IsNullOrWhiteSpace(Title))
+            throw new DomainException("Announcement title must not be empty.");
+
+        if (string.IsNullOrWhiteSpace(Message))
+            throw new DomainException("Announcement message must not be empty.");
+
+        if (StartDateUtc >= EndDateUtc)
+            throw new DomainException("Announcement start date must be before end date.");
     }
 }
 
