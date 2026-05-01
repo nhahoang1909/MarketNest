@@ -13,7 +13,10 @@ public sealed partial class HandlebarsTemplateRenderer : ITemplateRenderer
     {
         return VariablePattern().Replace(template, match =>
         {
+            // MN036: Group 1 is guaranteed by the regex pattern @"\{\{(\w+)\}\}"
+#pragma warning disable MN036
             var key = match.Groups[1].Value;
+#pragma warning restore MN036
             return variables.TryGetValue(key, out var value) ? value : match.Value;
         });
     }
