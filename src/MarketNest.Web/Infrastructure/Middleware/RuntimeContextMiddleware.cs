@@ -32,8 +32,10 @@ public sealed partial class RuntimeContextMiddleware(
             .GetRequiredService<HttpRuntimeContext>();
 
         // 1. CorrelationId: inbound header → ASP.NET TraceIdentifier → auto-generate
-        var correlationId = (string?)(context.Request.Headers[CorrelationIdHeader].FirstOrDefault()
-            ?? context.TraceIdentifier)
+        var correlationId = (context.Request.Headers.TryGetValue(CorrelationIdHeader, out var corrIdHeader)
+                ? corrIdHeader.FirstOrDefault()
+                : null)
+            ?? context.TraceIdentifier
             ?? Guid.NewGuid().ToString("N")[..ShortCorrelationLength];
 
         // 2. Build current user from JWT claims (authentication already ran before this middleware)
@@ -43,7 +45,7 @@ public sealed partial class RuntimeContextMiddleware(
 
         // 3. Populate the scoped context
         runtimeCtx.CorrelationIdValue = correlationId;
-        runtimeCtx.RequestIdValue = context.TraceIdentifier;
+        runtimeCtx.RequestIdValue = context.TraceIdentifier ?? string.Empty;
         runtimeCtx.StartedAtValue = DateTimeOffset.UtcNow;
         runtimeCtx.CurrentUserValue = currentUser;
         runtimeCtx.ClientIpValue = ResolveClientIp(context.Request);
@@ -90,9 +92,12 @@ public sealed partial class RuntimeContextMiddleware(
     private static string ResolveClientIp(HttpRequest request)
     {
         // Prefer X-Forwarded-For (first entry = original client, Nginx-aware)
-        var forwarded = request.Headers[XForwardedForHeader].FirstOrDefault();
-        if (!string.IsNullOrWhiteSpace(forwarded))
-            return forwarded.Split(',')[0].Trim();
+        if (request.Headers.TryGetValue(XForwardedForHeader, out var forwarded))
+        {
+            var firstValue = forwarded.FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(firstValue))
+                return firstValue.Split(',')[0].Trim();
+        }
 
         return request.HttpContext.Connection.RemoteIpAddress?.ToString() ?? UnknownIp;
     }

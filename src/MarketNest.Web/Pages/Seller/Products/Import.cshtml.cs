@@ -130,7 +130,7 @@ public partial class ImportModel(
             return Content("<p class='text-danger-600 text-sm'>Session expired. Please re-upload your file.</p>", "text/html");
 
         var key = $"import_{SessionIdInput}";
-        if (TempData[key] is not string json)
+        if (!TempData.TryGetValue(key, out var tempValue) || tempValue is not string json)
             return Content("<p class='text-danger-600 text-sm'>Session not found or expired. Please re-upload your file.</p>", "text/html");
 
         TempData.Remove(key);
