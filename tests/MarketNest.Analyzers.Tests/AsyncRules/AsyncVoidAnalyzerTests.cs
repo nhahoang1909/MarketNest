@@ -70,7 +70,13 @@ public class AsyncVoidAnalyzerTests
                 public async void {|MN003:HandleOrder|}() { }
             }
             """;
-        var fixedSource = "using System.Threading.Tasks;\n\nclass C {\n    public async Task HandleOrder() { }\n}";
+        var fixedSource = """
+using System.Threading.Tasks;
+
+class C {
+    public async Task HandleOrder() { }
+}
+""";
         await VerifyFix<AsyncVoidAnalyzer, AsyncVoidCodeFix>.CodeFixAsync(source, fixedSource);
     }
 }

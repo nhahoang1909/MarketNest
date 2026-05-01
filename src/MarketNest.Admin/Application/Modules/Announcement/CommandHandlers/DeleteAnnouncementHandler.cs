@@ -4,9 +4,9 @@
 namespace MarketNest.Admin.Application;
 #pragma warning restore IDE0130
 
-public partial class DeleteAnnouncementHandler(
+public partial class DeleteAnnouncementCommandHandler(
     IAnnouncementRepository repository,
-    IAppLogger<DeleteAnnouncementHandler> logger) : ICommandHandler<DeleteAnnouncementCommand, Unit>
+    IAppLogger<DeleteAnnouncementCommandHandler> logger) : ICommandHandler<DeleteAnnouncementCommand, Unit>
 {
     public async Task<Result<Unit, Error>> Handle(DeleteAnnouncementCommand request, CancellationToken cancellationToken)
     {

@@ -2,9 +2,9 @@ using MarketNest.Base.Infrastructure;
 
 namespace MarketNest.Promotions.Application;
 
-public partial class PauseVoucherHandler(
+public partial class PauseVoucherCommandHandler(
     IVoucherRepository repository,
-    IAppLogger<PauseVoucherHandler> logger) : ICommandHandler<PauseVoucherCommand, bool>
+    IAppLogger<PauseVoucherCommandHandler> logger) : ICommandHandler<PauseVoucherCommand, bool>
 {
     public async Task<Result<bool, Error>> Handle(PauseVoucherCommand request, CancellationToken cancellationToken)
     {
