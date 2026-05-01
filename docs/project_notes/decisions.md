@@ -52,6 +52,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-041 | Optimistic Concurrency Control via IConcurrencyAware + UpdateToken | 2026-04-30 |
 | ADR-042 | MN019/MN020 — Handler Entity Return & QueryHandler Select-Projection Analyzer Rules | 2026-04-30 |
 | ADR-043 | Announcement Feature Foundation — Admin-managed site-wide announcements with scheduling | 2026-05-01 |
+| ADR-044 | Identity RBAC — Multi-Role, Bitwise Permissions, Per-User Overrides, Seller Application Flow | 2026-05-01 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -1158,18 +1159,8 @@ Implement opt-in optimistic concurrency using a `Guid UpdateToken` field:
 - ✅ Opt-in per entity — no performance overhead on entities that don't need it
 - ✅ Bulk operations report exactly which records are stale
 - ✅ Zero changes required in read-side DbContexts
-- ❌ Requires all read DTOs to include `UpdateToken` for updatable entities
+- ❌ All read DTOs must include `UpdateToken` for updatable entities
 - ❌ Each module must call `ApplyConcurrencyTokenConventions()` in `OnModelCreating`
-
-**Implementation:**
-- Interface: `src/Base/MarketNest.Base.Domain/IConcurrencyAware.cs`
-- Interceptor: `src/Base/MarketNest.Base.Infrastructure/Persistence/Persistence/UpdateTokenInterceptor.cs`
-- Model config: `ApplyConcurrencyTokenConventions()` in `DddModelBuilderExtensions.cs`
-- Guard: `src/Base/MarketNest.Base.Infrastructure/Persistence/Persistence/ConcurrencyGuard.cs`
-- Exception: `src/Base/MarketNest.Base.Infrastructure/Persistence/Persistence/ConcurrencyConflictException.cs`
-- Error factories: `Error.ConcurrencyConflict(entity, id)`, `Error.BulkConcurrencyConflict(entity, staleIds)`
-- Validator: `ValidatorExtensions.MustBeValidUpdateToken()` in `Base.Common`
-- Filter handling: `RazorPageTransactionFilter` + `TransactionActionFilter` catch `ConcurrencyConflictException` → 409
 
 ---
 
@@ -1249,3 +1240,51 @@ Implement opt-in optimistic concurrency using a `Guid UpdateToken` field:
 - `src/MarketNest.Web/Pages/Shared/Display/_AnnouncementBanner.cshtml`
 - `src/MarketNest.Web/Pages/Shared/AnnouncementBanner.cshtml` + `.cs` (HTMX endpoint page)
 - Modified: `AdminDbContext`, `AdminReadDbContext`, `DependencyInjection.cs`, `LogEventId.cs`, `AppRoutes.cs`, `SharedViewPaths.cs`, `_Layout.cshtml`
+
+---
+
+### ADR-044: Identity RBAC — Multi-Role, Bitwise Permissions, Per-User Overrides, Seller Application Flow (2026-05-01)
+
+**Context:**
+- Phase 1 needs a complete authorization model: multi-role per user, fine-grained permission control at module level, admin override capabilities, and a structured seller onboarding pipeline.
+- The previous simple `Permission` enum (flat integer list) was insufficient for combining permissions cleanly and didn't support per-user grants/denials.
+- Seller registration was too simple — needed a formal application + admin review process.
+
+**Decision:**
+- **Multi-role model**: Users accumulate roles (`Buyer`, `Seller`, `Administrator`). Plus `SystemAdmin` for system-level audit attribution. Roles additive — permission is union of all roles' flags.
+- **Bitwise `[Flags]` enum per module**: Each module (Order, Catalog, Storefront, Dispute, Review, Payment, User, Config, Promotion) has its own `[Flags] enum : long` with non-overlapping bit ranges. Stored as `bigint` in `identity.role_permissions`.
+- **Per-user permission overrides**: `identity.user_permission_overrides` table with `GrantedFlags` (OR'd in) and `DeniedFlags` (cleared out). Supports optional expiry.
+- **JWT permission claims**: Resolution at login (`mn.perm.{module}` = effective flags as decimal string). No per-request DB lookup needed.
+- **`[Access(ModulePermission.Action)]` attribute**: Typed per-module constructors. `AccessFilter` does bitwise check at request time. Multiple `[Access]` attributes AND'd.
+- **Horizontal authorization inline**: Ownership checks inside handlers with `if (!currentUser.IsAdmin)` pattern. Never in the filter.
+- **SellerApplication aggregate**: Formal application with state machine (Pending → UnderReview → Approved/Rejected). Approval triggers domain event → assigns Seller role + creates Storefront.
+- **SystemAdmin built-in user**: Seeded with well-known ID. Used by `BackgroundJobRuntimeContext.ForSystemJob()`. Audit trail shows "System Administrator" for automated operations.
+- **Permission resolution**: `effective[M] = (∪ role.Flags) | override.GrantedFlags & ~override.DeniedFlags`
+
+**Alternatives Considered:**
+- String-based permissions (`"orders:view"`) → Rejected: type-unsafe, O(n) string matching, typo-prone.
+- Separate `PermissionResource` + `PermissionAction` dual-enum → Rejected: over-engineered for a marketplace. Actions differ per resource (Arbitrate only for Disputes, Publish only for Catalog). One enum per module is simpler and equally extensible.
+- Permission inheritance trees (role hierarchies) → Deferred to Phase 3: flat explicit grants are simpler for Phase 1 and avoid the "which level does this permission come from?" debugging nightmare.
+- Centralized `IAuthorizationService` for horizontal checks → Rejected: would duplicate DB queries (load resource once to check ownership, then again in handler). Inline pattern is simpler.
+
+**Consequences:**
+- ✅ O(1) permission checks via bitwise operations on JWT claims.
+- ✅ Admin can fine-tune any user's access without creating custom roles (override system).
+- ✅ Adding a new module's permissions = add a new `[Flags]` enum + seeder update. No runtime schema changes.
+- ✅ SellerApplication produces a clean audit trail of who applied, why they were approved/rejected, and by whom.
+- ✅ `SystemAdmin` provides clear audit attribution for automated operations (background jobs, migrations).
+- ✅ JWT is self-contained — scales to read replicas without shared session state.
+- ❌ Permission changes require user re-login (or token refresh) to take effect.
+- ❌ `[Flags] enum : long` has max 63 permissions per module — adequate for Phase 1–3.
+- ❌ No runtime-inventable permissions — admin can only assign/adjust code-defined flags. Acceptable per design principle "permissions are a domain concept."
+
+**Key files (to implement):**
+- `src/Base/MarketNest.Base.Common/Authorization/Permissions.cs` (all `[Flags]` enums)
+- `src/Base/MarketNest.Base.Common/Authorization/PermissionModule.cs`
+- `src/Base/MarketNest.Base.Common/Contracts/ICurrentUser.cs` (extended with `HasPermission<T>`)
+- `src/MarketNest.Identity/Domain/` (User, Role, RolePermission, UserPermissionOverride, SellerApplication)
+- `src/MarketNest.Identity/Infrastructure/Services/PermissionResolver.cs`
+- `src/MarketNest.Identity/Infrastructure/Services/JwtTokenService.cs`
+- `src/MarketNest.Web/Infrastructure/Authorization/AccessAttribute.cs`, `AccessFilter.cs`
+- `src/MarketNest.Web/Infrastructure/Services/HttpCurrentUser.cs`
+

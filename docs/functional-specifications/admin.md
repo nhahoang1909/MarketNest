@@ -1,16 +1,17 @@
 ﻿# Admin Module — Functional Specification
 
-> Module: `MarketNest.Admin` | Schema: `admin` | Version: 1.0 | Date: 2026-05-01
+> Module: `MarketNest.Admin` | Schema: `admin` | Version: 2.0 | Date: 2026-05-01
+> Updated: ADR-044 — RBAC user/role/permission management use cases added.
 
 ## Module Overview
 
-The Admin module provides back-office management for platform operators. It covers storefront/product moderation, commission and payment configuration, user management, prohibited categories, voucher oversight, and platform-wide announcements.
+The Admin module provides back-office management for platform operators. It covers storefront/product moderation, commission and payment configuration, user management (roles, permissions, suspend/reinstate), seller application review, prohibited categories, voucher oversight, and platform-wide announcements.
 
 ## Actors
 
 | Actor | Relevant Actions |
 |-------|-----------------|
-| Admin | All actions in this module |
+| Administrator | All actions in this module (requires appropriate `UserPermission` / `ConfigPermission` flags) |
 
 ---
 
@@ -139,30 +140,168 @@ Phase 1
 
 ---
 
-## US-ADMIN-005: Ban User
+## US-ADMIN-005: Suspend / Reinstate User
 
-**As an** admin, **I want to** ban a user from the platform, **so that** bad actors are removed.
+**As an** admin, **I want to** suspend or reinstate a user account, **so that** bad actors are removed and recovered users regain access.
 
 ### Acceptance Criteria
 
-- [ ] Given I ban a user, When saved, Then their account is flagged as banned
-- [ ] Given a banned user tries to login, Then they see "Account suspended — contact support"
-- [ ] Given a banned seller, Then their storefront is automatically suspended
-- [ ] Given I ban a user, Then all their refresh tokens are revoked (forced logout)
+- [ ] Given I suspend a user with a reason, When saved, Then their status changes to `Suspended`
+- [ ] Given a suspended user tries to login, Then they see "Account suspended — contact support"
+- [ ] Given a suspended seller, Then their storefront is automatically suspended (via domain event)
+- [ ] Given I suspend a user, Then all their refresh tokens are revoked (forced logout)
+- [ ] Given I reinstate a suspended user, Then their status returns to `Active` and they can login again
+- [ ] Given I reinstate a suspended seller, Then their storefront is NOT auto-reactivated (manual step)
 
 ### Business Rules
 
-- Banned users cannot login
-- Banned sellers: storefront auto-suspended
+- Suspended users cannot login
+- Suspended sellers: storefront auto-suspended via `UserSuspendedEvent`
 - Existing orders: continue to completion (fulfillment not blocked)
-- All refresh tokens revoked on ban (immediate session kill)
-- Ban reason stored for audit
+- All refresh tokens revoked on suspend (immediate session kill)
+- Suspension reason stored for audit (mandatory)
+- Reinstatement does not auto-reactivate storefront — seller must request reactivation
+- Permission required: `UserPermission.Suspend`
 
 ### Technical Notes
 
-- Cross-module: Identity (ban flag, token revocation), Catalog (storefront suspension)
-- May use domain event: `UserBannedEvent` → handlers in relevant modules
-- Audit: `[Audited("USER_BANNED")]`
+- Domain events: `UserSuspendedEvent` → Catalog (storefront), Notifications (user)
+- Domain event: `UserReinstatedEvent` → audit log
+- Audit: `[Audited("USER_SUSPENDED")]` / `[Audited("USER_REINSTATED")]`
+
+### Priority
+
+Phase 1
+
+---
+
+## US-ADMIN-005a: Assign / Revoke Roles
+
+**As an** admin, **I want to** assign or revoke roles from users, **so that** I can control their platform access level.
+
+### Acceptance Criteria
+
+- [ ] Given I assign the `Administrator` role to a user, When saved, Then they gain full admin permissions on next login
+- [ ] Given I try to assign `SystemAdmin` role, Then I see an error "SystemAdmin cannot be assigned via UI"
+- [ ] Given I try to assign `Seller` role directly (without approved application), Then I see an error "Seller role requires approved application"
+- [ ] Given I revoke `Seller` role from a user, Then all their active products are archived (domain event)
+- [ ] Given the user already has the role, When I try to assign it again, Then I see "Role already assigned"
+- [ ] Given I revoke a role, Then the user's next JWT reflects reduced permissions
+
+### Business Rules
+
+- `SystemAdmin` cannot be assigned via any endpoint
+- `Administrator` can only be granted by another Administrator (`UserPermission.Manage`)
+- `Seller` is normally assigned via seller application approval — manual grant is a fallback for admin override
+- Revoking `Seller` archives all active products (via `RoleRevokedEvent` → handler)
+- Role changes take effect on next login/refresh (JWT re-issued)
+
+### Technical Notes
+
+- Commands: `AssignRoleCommand(UserId, RoleId, AdminId)`, `RevokeRoleCommand(UserId, RoleId, AdminId)`
+- Domain events: `RoleAssignedEvent`, `RoleRevokedEvent`
+- Endpoint: `POST /admin/users/{id}/roles/assign`, `DELETE /admin/users/{id}/roles/{roleId}`
+- Permission required: `UserPermission.Manage`
+
+### Priority
+
+Phase 1
+
+---
+
+## US-ADMIN-005b: Manage User Permission Overrides
+
+**As an** admin, **I want to** grant or deny specific permissions to individual users beyond their role defaults, **so that** I can fine-tune access without creating new roles.
+
+### Acceptance Criteria
+
+- [ ] Given I grant `Refund` permission to a seller (normally admin-only), When saved, Then that seller can process refunds on next login
+- [ ] Given I deny `Publish` permission from a seller, When saved, Then they cannot publish products even though their Seller role normally grants it
+- [ ] Given I set an expiry date on an override, When the date passes, Then the override is ignored at next token refresh
+- [ ] Given I clear all overrides for a user/module, When saved, Then they revert to pure role-based permissions
+- [ ] Given I view a user's effective permissions, Then I see the final computed permissions (roles + overrides)
+
+### Business Rules
+
+- Overrides are per-module per-user (one row per user per `PermissionModule`)
+- `GrantedFlags` are OR'd into effective permissions (add capabilities)
+- `DeniedFlags` are cleared from effective permissions (remove capabilities)
+- Overrides support optional expiry (`ExpiresAt`) — expired overrides ignored
+- Only `UserPermission.Manage` holders can set overrides
+- Admin can manage ALL resource permissions for ALL users
+
+### Technical Notes
+
+- Command: `SetUserPermissionOverrideCommand(UserId, Module, GrantedFlags, DeniedFlags, AdminId)`
+- Endpoint: `PUT /admin/users/{id}/permissions`
+- Domain method: `user.GrantPermissionOverride(request, adminId)` — upserts per module
+- Effect visible on next login/refresh (JWT re-computed)
+- Admin UI: checkbox grid per module showing current effective permissions
+
+### Priority
+
+Phase 1
+
+---
+
+## US-ADMIN-005c: Review Seller Applications
+
+**As an** admin, **I want to** review and approve or reject seller applications, **so that** only qualified sellers can sell on the platform.
+
+### Acceptance Criteria
+
+- [ ] Given there are pending applications, When I view the queue, Then I see them sorted by submission date
+- [ ] Given I view an application, Then I see business name, documents, tax ID, and applicant info
+- [ ] Given I approve an application with an optional note, Then the applicant receives Seller role and a Storefront draft is created
+- [ ] Given I reject an application with a mandatory reason, Then the applicant is notified with the reason
+- [ ] Given an application is already approved/rejected, Then I cannot change its status
+
+### Business Rules
+
+- Approval: `SellerApplicationApprovedEvent` → assigns Seller role + creates Storefront draft
+- Rejection: `SellerApplicationRejectedEvent` → notification to applicant
+- Admin review note stored for audit
+- Applications in `Approved` or `Rejected` status cannot be re-reviewed
+- Permission required: `UserPermission.Manage`
+
+### Technical Notes
+
+- Commands: `ApproveSellerApplicationCommand`, `RejectSellerApplicationCommand`
+- Endpoints: `POST /admin/seller-applications/{id}/approve`, `POST /admin/seller-applications/{id}/reject`
+- Page: `/admin/seller-applications` (list + detail)
+- Domain event handler `AssignSellerRoleHandler` handles the role + storefront creation
+
+### Priority
+
+Phase 1
+
+---
+
+## US-ADMIN-005d: Manage Role Permissions
+
+**As an** admin, **I want to** view and modify the permission flags assigned to each role, **so that** I can adjust platform access without code changes.
+
+### Acceptance Criteria
+
+- [ ] Given I view a role's detail page, Then I see a matrix of module × permissions with current flags
+- [ ] Given I toggle a permission flag for a role (e.g., add `Export` to Seller's Order permissions), When saved, Then the role's flags are updated
+- [ ] Given a system role (`IsSystem = true`), Then I cannot delete it but can modify its permissions
+- [ ] Given I update a role's permissions, Then all users with that role get updated permissions on next login
+
+### Business Rules
+
+- Permission flags are code-defined (`[Flags]` enums) — admin cannot invent new permissions at runtime
+- Admin can only adjust which flags are assigned to which roles
+- Changes take effect on next JWT issuance (login or refresh) for affected users
+- System roles cannot be deleted
+- Permission required: `ConfigPermission.Write`
+
+### Technical Notes
+
+- Command: `UpdateRolePermissionsCommand(RoleId, Module, Flags, AdminId)`
+- Endpoint: `PUT /admin/roles/{id}/permissions`
+- Page: `/admin/roles` (list), `/admin/roles/{id}` (edit)
+- UI: checkbox grid with module rows × action columns
 
 ### Priority
 

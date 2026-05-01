@@ -1,19 +1,21 @@
 ﻿# Identity Module — Functional Specification
 
-> Module: `MarketNest.Identity` | Schema: `identity` | Version: 1.0 | Date: 2026-05-01
+> Module: `MarketNest.Identity` | Schema: `identity` | Version: 2.0 | Date: 2026-05-01
+> Updated: ADR-044 — RBAC system with multi-role, bitwise permissions, per-user overrides, seller application flow.
 
 ## Module Overview
 
-The Identity module handles user registration, authentication, profile management, and user preferences. It is the central authority for user accounts, roles (Admin, Seller, Buyer), and cross-module user identity contracts.
+The Identity module handles user registration, authentication, profile management, role/permission management, and the seller onboarding pipeline. It is the central authority for user accounts, multi-role assignments (SystemAdmin, Administrator, Seller, Buyer), bitwise permission flags (per module), per-user permission overrides, and cross-module user identity contracts.
 
 ## Actors
 
 | Actor | Relevant Actions |
 |-------|-----------------|
 | Guest | Register, login, password reset |
-| Buyer | Manage profile, addresses, preferences, privacy settings |
+| Buyer | Manage profile, addresses, preferences, privacy settings, apply to become seller |
 | Seller | All Buyer actions + public bio, storefront activation prerequisite |
-| Admin | Ban users, manage roles |
+| Administrator | Manage users, assign/revoke roles, grant/deny permissions, approve/reject seller applications |
+| SystemAdmin | Background jobs, migrations — never a real login (audit trail identity only) |
 
 ---
 
@@ -48,29 +50,44 @@ Phase 1
 
 ---
 
-## US-IDENT-002: Seller Registration
+## US-IDENT-002: Seller Application (Seller Onboarding)
 
-**As a** registered buyer, **I want to** upgrade my account to a seller role, **so that** I can create a storefront and sell products.
+**As a** verified buyer, **I want to** submit a seller application with business details, **so that** after admin approval I can create a storefront and sell products.
 
 ### Acceptance Criteria
 
-- [ ] Given I am a verified buyer, When I request seller upgrade, Then I must accept the Terms of Service (checkbox + timestamp)
-- [ ] Given I accept the terms, When the upgrade is processed, Then my account gains the `Seller` role
-- [ ] Given I have not verified my email, When I try to upgrade, Then I see an error requiring email verification first
-- [ ] Given upgrade succeeds, Then I can proceed to create a Storefront (Catalog module)
+- [ ] Given I am a verified buyer, When I submit a seller application with business name and documents, Then a `SellerApplication` is created with status `Pending`
+- [ ] Given I have not verified my email, When I try to apply, Then I see an error requiring email verification first
+- [ ] Given my application is approved by admin, Then I receive the `Seller` role and a Storefront draft is auto-created
+- [ ] Given my application is rejected, Then I receive a notification with the rejection reason
+- [ ] Given I already have an active or pending application, When I try to submit again, Then I see "Application already submitted"
+- [ ] Given my application was previously rejected, Then I can submit a new application (new entity)
+- [ ] Given I submit the application, Then admin is notified via `SellerApplicationSubmittedEvent`
 
 ### Business Rules
 
-- Email must be verified before seller upgrade
-- Terms of Service acceptance is mandatory (recorded with timestamp)
+- Email must be verified before applying
+- Application requires: BusinessName (mandatory), TaxId (optional), BusinessLicenseFileId (optional), IdentityDocFileId (optional), AdditionalNotes (optional)
+- Each application is a separate aggregate with its own lifecycle
+- Approval triggers `SellerApplicationApprovedEvent` → domain event handler assigns Seller role + creates Storefront draft
 - Seller role is additive — user retains Buyer role
 - Each seller can have exactly one Storefront
 
+### State Machine
+
+```
+Pending → UnderReview → Approved
+                     ↘ Rejected
+Pending → Cancelled (applicant withdraws)
+Rejected → (new application) → Pending
+```
+
 ### Technical Notes
 
-- Domain event: `UserRoleUpgradedEvent`
-- `SellerTermsAcceptance` value object stores consent timestamp
-- Storefront creation is a separate operation in Catalog module
+- Domain events: `SellerApplicationSubmittedEvent`, `SellerApplicationApprovedEvent`, `SellerApplicationRejectedEvent`
+- `AssignSellerRoleHandler` (domain event handler): assigns Seller role + creates Storefront draft + notifies user
+- File uploads pass through `IAntivirusScanner`
+- Storefront creation is triggered automatically on approval
 
 ### Priority
 
@@ -80,25 +97,27 @@ Phase 1
 
 ## US-IDENT-003: Email Verification
 
-**As a** registered user, **I want to** verify my email address via a confirmation link, **so that** I can access full platform features.
+**As a** registered user, **I want to** verify my email address via a 6-digit OTP code, **so that** I can access full platform features.
 
 ### Acceptance Criteria
 
-- [ ] Given I registered, When I click the verification link in my email, Then my `EmailVerified` flag is set to `true`
-- [ ] Given the verification token has expired (24h), When I click the link, Then I see an error with option to resend
-- [ ] Given I request a resend, When I click "Resend verification email", Then a new token is generated and emailed
-- [ ] Given I am already verified, When I click an old verification link, Then I see a message "Already verified"
+- [ ] Given I registered, When I receive the OTP email and enter the code, Then my `EmailVerified` flag is set to `true`
+- [ ] Given the verification code has expired (15 min), When I enter it, Then I see an error with option to resend
+- [ ] Given I request a resend, When I click "Resend code", Then a new code is generated and emailed
+- [ ] Given I am already verified, When I try to verify again, Then I see a message "Already verified"
 
 ### Business Rules
 
-- Verification token valid for 24 hours
+- Verification OTP: 6-character numeric code, valid for 15 minutes
 - Max 3 resend attempts per hour (rate limiting)
-- Email verification is required for: seller upgrade, storefront activation
+- Email verification is required for: seller application, storefront activation
+- Codes are stored hashed in `identity.email_verification_codes`
 
 ### Technical Notes
 
 - Security notification — bypasses user notification preferences
-- Template key: `security.email-verification`
+- Template key: `security.email-verify`
+- `POST /auth/verify-email { userId, code }`
 
 ### Priority
 
@@ -130,6 +149,36 @@ Phase 1
 - Security notification: `security.new-login` template — always sent, bypasses preferences
 - Guest cart merge: handled via `CartMergeService` (Cart module contract)
 - Refresh token stored hashed in DB
+- JWT contains permission claims (`mn.perm.{module}`) resolved at login via `PermissionResolver`
+- Token rotation on each refresh (old token invalidated)
+
+### Priority
+
+Phase 1
+
+---
+
+## US-IDENT-004a: Token Refresh
+
+**As an** authenticated user, **I want** my session to silently refresh without re-entering credentials, **so that** I have a seamless experience within the 7-day refresh window.
+
+### Acceptance Criteria
+
+- [ ] Given a valid refresh token cookie, When I call refresh, Then I receive a new access token + new refresh token
+- [ ] Given the old refresh token after rotation, When someone tries to use it, Then it's rejected (token rotation)
+- [ ] Given the refresh token is expired or revoked, When I try to refresh, Then I receive 401 and must re-login
+
+### Business Rules
+
+- Refresh token rotation: each refresh invalidates the previous token
+- Refresh re-resolves permissions (picks up any role/permission changes since last login)
+- Expired/revoked tokens immediately rejected
+- Redis blacklist for revoked JTIs (TTL = remaining access token expiry)
+
+### Technical Notes
+
+- `POST /auth/refresh` — cookie-based, no body needed
+- `RefreshTokenCommandHandler` re-runs `PermissionResolver` to pick up role/permission changes
 
 ### Priority
 
