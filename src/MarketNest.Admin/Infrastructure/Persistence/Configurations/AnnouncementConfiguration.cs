@@ -6,7 +6,7 @@ public class AnnouncementConfiguration : IEntityTypeConfiguration<Announcement>
 {
     public void Configure(EntityTypeBuilder<Announcement> builder)
     {
-        builder.ToTable("Announcements");
+        builder.ToTable(TableConstants.AdminTable.Announcement, TableConstants.Schema.Admin);
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();
 

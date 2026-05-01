@@ -20,6 +20,19 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-05-01 - fix(build): Resolve all 13 Roslyn analyzer errors (MN020/MN021/MN029/MN030)
+- **Status**: Completed
+- **Description**: Fixed full solution build that had 13 errors across 5 modules and the Web host. All caused by new/stricter Roslyn analyzer rules.
+- **Fixes applied**:
+  - **MN021** (banned `Service` suffix — must implement `I{ClassName}`): Renamed 4 module config classes from `*ConfigService` → `*ConfigProvider` (Payments: `CommissionConfigProvider`, Orders: `OrderPolicyConfigProvider`, Reviews: `ReviewPolicyConfigProvider`, Catalog: `StorefrontPolicyConfigProvider`). Renamed 5 Web-layer classes: `JobRunnerHostedService` → `BackgroundJobRunner`, `ClosedXmlExcelService` → `ClosedXmlExcelProcessor`, `RedisCacheService` → `RedisCacheStore`, `TrixHtmlSanitizerService` → `TrixHtmlSanitizer`, `PostgresSequenceService` → `PostgresSequenceProvider`. Updated all DI registrations and `Program.cs` references.
+  - **MN030** (handler injects concrete DbContext — use interface): Introduced proper query pattern for Auditing module — created `AuditingReadDbContext`, module `BaseQuery<T,K>` wrapper, `IGetAuditLogsPagedQuery` + `IGetLoginEventsPagedQuery` interfaces (Application), `AuditLogQuery` + `LoginEventQuery` implementations (Infrastructure). Refactored `GetAuditLogsQueryHandler` and `GetLoginEventsQueryHandler` into thin delegating handlers. Updated `DependencyInjection.cs` to register ReadDbContext + queries.
+  - **MN020** (no `.Select()` projection) + **MN029** (no `AsNoTracking()`) in `VoucherQuery`: Added `AsNoTracking()` to `GetByCodeAsync`; inlined `Select(v => new VoucherDto(...))` into the LINQ chain in `ExecuteAsync` (eliminating in-memory `MapToDto` and the false-positive `ToList()` call); suppressed MN020 on `GetByCodeAsync` via `#pragma` (interface returns full entity for domain use).
+- **Files created**: `AuditingReadDbContext.cs`, `BaseQuery.cs` (Auditing), `AuditLogQuery.cs`, `LoginEventQuery.cs`, `IGetAuditLogsPagedQuery.cs`, `IGetLoginEventsPagedQuery.cs`
+- **Files modified**: `CommissionConfigService.cs`, `OrderPolicyConfigService.cs`, `Reviews/DependencyInjection.cs`, `Catalog/DependencyInjection.cs`, `Payments/DependencyInjection.cs`, `Orders/DependencyInjection.cs`, `Auditing/DependencyInjection.cs`, `GetAuditLogsQuery.cs`, `GetLoginEventsQuery.cs`, `VoucherQuery.cs`, `JobRunnerHostedService.cs`, `ClosedXmlExcelService.cs`, `RedisCacheService.cs`, `TrixHtmlSanitizerService.cs`, `PostgresSequenceService.cs`, `SequenceServiceExtensions.cs`, `Program.cs`
+- **Build**: `dotnet build` → 0 errors, 0 warnings ✅
+
+---
+
 ### 2026-05-01 - feat(admin): Announcement feature — Phase 1 foundation (domain + CQRS + display banner)
 - **Status**: Completed
 - **Description**: Implemented the Announcement feature foundation in the Admin module. Admin can create, edit, publish, and delete announcements with scheduling (start/end dates). Active announcements are displayed as a dismissible banner below the navbar on every public page, loaded lazily via HTMX.

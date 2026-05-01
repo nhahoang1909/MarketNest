@@ -9,19 +9,20 @@ public class AnnouncementQuery(AdminReadDbContext db)
     public async Task<PagedResult<AnnouncementDto>> ExecuteAsync(
         GetAnnouncementsPagedQuery request, CancellationToken ct)
     {
+        var utcNow = DateTimeOffset.UtcNow;
         IQueryable<Announcement> query = Db.Announcements;
 
         if (!string.IsNullOrWhiteSpace(request.SearchTitle))
             query = query.Where(x => x.Title.Contains(request.SearchTitle));
 
-        int total = await query.CountAsync(ct);
-
-        var utcNow = DateTimeOffset.UtcNow;
+        int total = await query.AsNoTracking().CountAsync(ct);
 
         List<AnnouncementDto> items = await query
+            .AsNoTracking()
             .OrderByDescending(x => x.SortOrder)
             .ThenByDescending(x => x.StartDateUtc)
-            .Skip(request.Skip).Take(request.PageSize)
+            .Skip(request.Skip)
+            .Take(request.PageSize)
             .Select(x => new AnnouncementDto
             {
                 Id = x.Id,
@@ -52,6 +53,7 @@ public class AnnouncementQuery(AdminReadDbContext db)
         var utcNow = DateTimeOffset.UtcNow;
 
         return await Db.Announcements
+            .AsNoTracking()
             .Where(x => x.IsPublished && x.StartDateUtc <= utcNow && x.EndDateUtc > utcNow)
             .OrderByDescending(x => x.SortOrder)
             .ThenByDescending(x => x.StartDateUtc)
@@ -67,4 +69,3 @@ public class AnnouncementQuery(AdminReadDbContext db)
             }).ToListAsync(ct);
     }
 }
-
