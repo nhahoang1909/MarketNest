@@ -13,7 +13,7 @@ The CI pipeline is restructured into **5 main stages** with **3 dedicated test s
 - **Time**: ~2-3 minutes
 
 ### Stage 2: Build
-- **Parallel Jobs**: `build-base`, `build-core`, `build-identity`, `build-catalog`, `build-cart`, `build-orders`, `build-payments`, `build-reviews-disputes`, `build-notifications`, `build-admin`, `build-auditing`, `build-promotions`, `build-analyzers`, `build-web`
+- **Parallel Jobs**: `build-base`, `build-identity`, `build-catalog`, `build-cart`, `build-orders`, `build-payments`, `build-reviews-disputes`, `build-notifications`, `build-admin`, `build-auditing`, `build-promotions`, `build-analyzers`, `build-web`
 - **Purpose**: Compile all modules individually  
 - **Depends On**: `restore`
 - **Early Feedback**: Each module fails independently = clear visibility
