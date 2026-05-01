@@ -1,9 +1,7 @@
-﻿<![CDATA[<div align="center">
-
-# 🛒 MarketNest
-
-**A production-grade multi-vendor marketplace** built to evolve from Modular Monolith → Microservices → Kubernetes
-
+﻿<div align="center">
+<h1>🛒 MarketNest</h1>
+<p><strong>A production-grade multi-vendor marketplace</strong> built to evolve from Modular Monolith → Microservices → Kubernetes</p>
+<p>
 <img src="https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet" alt=".NET 10">
 <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL">
 <img src="https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white" alt="Redis">
@@ -11,23 +9,21 @@
 <img src="https://img.shields.io/badge/HTMX-2-3D72D7" alt="HTMX">
 <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker">
 <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
-
-*Etsy / Shopee-style marketplace — solo learning project demonstrating enterprise backend patterns, DDD, and phased distributed-systems migration*
-
-**[Features](#-features) · [Architecture](#-architecture) · [Tech Stack](#-tech-stack) · [Quick Start](#-quick-start) · [Docs](#-documentation)**
-
+</p>
+<p><em>Etsy / Shopee-style marketplace — solo learning project demonstrating enterprise backend patterns, DDD, and phased distributed-systems migration</em></p>
+<p><strong><a href="#-what-is-this">About</a> · <a href="#-features">Features</a> · <a href="#-architecture">Architecture</a> · <a href="#-tech-stack">Tech Stack</a> · <a href="#-quick-start">Quick Start</a> · <a href="#-documentation">Docs</a></strong></p>
 </div>
 
 ---
 
 ## 🎯 What Is This?
 
-MarketNest is a full-featured multi-vendor marketplace where buyers browse products, sellers manage storefronts, and admins oversee the platform. Built **solo** over 9 months as a structured learning journey through:
+MarketNest is a full-featured multi-vendor marketplace where buyers browse products, sellers manage storefronts, and admins oversee the platform. Built **solo** as a structured learning journey through:
 
 - ✅ **Domain-Driven Design** with bounded contexts, aggregates, and rich domain events
 - ✅ **CQRS + MediatR** with a full pipeline behavior chain (validation → audit → performance → transaction)
 - ✅ **Custom Roslyn Analyzers** — 33 project-specific rules enforced at build time
-- ✅ **Phased architecture** — the same codebase is designed to graduate from Docker Compose to Kubernetes without rewriting modules
+- ✅ **Phased architecture** — the same codebase graduates from Docker Compose to Kubernetes without rewriting modules
 - ✅ **42+ Architecture Decision Records (ADRs)** — every non-trivial design choice is justified and documented
 
 ---
@@ -35,6 +31,7 @@ MarketNest is a full-featured multi-vendor marketplace where buyers browse produ
 ## ✨ Features
 
 ### Business Domain
+
 | Module | Capabilities |
 |--------|-------------|
 | **Identity** | JWT auth, refresh tokens, role-based access (Buyer / Seller / Admin) |
@@ -52,20 +49,22 @@ MarketNest is a full-featured multi-vendor marketplace where buyers browse produ
 ### Engineering Highlights
 
 #### 🏗️ Modular Monolith with Clean Architecture
+
 Each of the 10 business modules follows a strict 3-layer structure (`Domain` / `Application` / `Infrastructure`) with **schema-per-module** in PostgreSQL — ready for microservice extraction at Phase 3.
 
 ```
 src/
-├── Base/                      # Shared kernel packages
-│   ├── MarketNest.Base.Domain/        # Entity<T>, AggregateRoot, ValueObject
-│   ├── MarketNest.Base.Common/        # Result<T,Error>, CQRS contracts, shared DTOs
-│   ├── MarketNest.Base.Infrastructure/# BaseQuery, BaseRepository, UoW, logging
-│   └── MarketNest.Base.Api/           # ReadApiV1ControllerBase, WriteApiV1ControllerBase
-├── MarketNest.{Module}/        # 10 business modules (Identity, Catalog, Cart, …)
-└── MarketNest.Web/             # ASP.NET Core host (composition root, Razor Pages)
+├── Base/                               # Shared kernel packages
+│   ├── MarketNest.Base.Domain/         # Entity<T>, AggregateRoot, ValueObject
+│   ├── MarketNest.Base.Common/         # Result<T,Error>, CQRS contracts, shared DTOs
+│   ├── MarketNest.Base.Infrastructure/ # BaseQuery, BaseRepository, UoW, logging
+│   └── MarketNest.Base.Api/            # ReadApiV1ControllerBase, WriteApiV1ControllerBase
+├── MarketNest.{Module}/                # 10 business modules (Identity, Catalog, Cart, …)
+└── MarketNest.Web/                     # ASP.NET Core host (composition root, Razor Pages)
 ```
 
 #### 🤖 Custom Roslyn Analyzer — 33 Project-Specific Rules
+
 A `netstandard2.0` analyzer project (`MarketNest.Analyzers`) enforces architecture rules at **compile time**. Six rules include Quick-Action auto-fixes.
 
 | Category | Example Rules |
@@ -73,10 +72,11 @@ A `netstandard2.0` analyzer project (`MarketNest.Analyzers`) enforces architectu
 | **Naming** | `_camelCase` private fields (MN001), banned suffixes `Manager`/`Helper`/`Impl` (MN002/MN022), CQRS naming convention (MN012–MN015) |
 | **Architecture** | Namespace depth limit (MN008), domain layer cannot reference EF/Redis (MN026), no `IQueryable<T>` leaking from repositories (MN027), `init` accessor banned on entities (MN028) |
 | **Async** | `async void` banned (MN003), blocking `.Result`/`.Wait()` banned (MN004), fire-and-forget unawaited tasks (MN023) |
-| **DDD** | Handler must not inject `DbContext` directly (MN030), `SaveChangesAsync` called directly in handler (MN024), query handler missing `AsNoTracking()` (MN029) |
+| **DDD** | Handler must not inject `DbContext` directly (MN030), `SaveChangesAsync` in handler banned (MN024), query handler missing `AsNoTracking()` (MN029) |
 | **Security** | Weak hash algorithms `MD5`/`SHA1` banned (MN018) |
 
 #### ⚡ CQRS Pipeline with Full Behavior Chain
+
 Every command/query passes through a composable MediatR pipeline:
 
 ```
@@ -87,30 +87,34 @@ Request → ValidationBehavior (FluentValidation)
         → Handler
 ```
 
-#### 🔒 Result<T, Error> — No Exceptions for Business Logic
-All handlers return `Result<T, Error>` — business failures are values, never thrown exceptions. The `Error` record carries a typed `ErrorType` (Validation / NotFound / Conflict / Unauthorized / Unexpected).
+#### 🔒 Result\<T, Error\> — No Exceptions for Business Logic
+
+All handlers return `Result<T, Error>` — business failures are values, never thrown exceptions.
 
 ```csharp
-// Domain method
 public Result<Unit, Error> ApplySalePrice(decimal salePrice, DateTimeOffset start, DateTimeOffset end)
 {
     if (salePrice >= Price) return Error.Validation("Sale price must be lower than base price");
     if (end <= start)       return Error.Validation("Sale end must be after start");
     SalePrice = salePrice;
-    // ...
+    RaiseDomainEvent(new VariantSalePriceSetEvent(Id, salePrice, start, end));
     return Result.Success();
 }
 ```
 
 #### 🔄 Unit of Work + Transaction Filters (ADR-027)
-Handlers **never** call `SaveChangesAsync` directly. A global `RazorPageTransactionFilter` wraps all `OnPost*` page handlers in a DB transaction; `TransactionActionFilter` wraps API write controllers. Domain events split into:
+
+Handlers **never** call `SaveChangesAsync` directly. A global `RazorPageTransactionFilter` wraps all `OnPost*` page handlers; `TransactionActionFilter` wraps API write controllers. Domain events split into:
+
 - **Pre-commit** (`IPreCommitDomainEvent`) — dispatched inside the open transaction for atomic side-effects
 - **Post-commit** (`IDomainEvent`) — dispatched after commit for cross-module notifications
 
 #### 📊 Two-Connection-String Strategy (ADR-031)
-`DefaultConnection` (write) + `ReadConnection` (read). In Phase 1 they're the same; in Phase 2 `ReadConnection` points to a PostgreSQL read replica — **zero code change required** in any module.
+
+`DefaultConnection` (write) + `ReadConnection` (read). Phase 1: same DB. Phase 2: `ReadConnection` points to a PostgreSQL read replica — **zero code change required** in any module.
 
 #### 🛡️ Centralized Validation Infrastructure
+
 `FieldLimits`, `ValidationMessages`, and `ValidatorExtensions` provide reusable FluentValidation rules (`MustBeSlug()`, `MustBeValidEmail()`, `MustBePositiveMoney()`, …) — no inline string literals or magic numbers in validators.
 
 ---
@@ -120,14 +124,13 @@ Handlers **never** call `SaveChangesAsync` directly. A global `RazorPageTransact
 ### Phased Roadmap
 
 ```
-Phase 1 (Month 1–3)         Phase 2 (Month 4–5)         Phase 3 (Month 6–7)
-┌──────────────────┐         ┌──────────────────┐         ┌────────────────────────┐
-│  .NET 10 Monolith│   ──►   │ + Observability  │   ──►   │ YARP API Gateway       │
-│  Docker Compose  │         │   (OTel/Seq)     │         │ RabbitMQ + MassTransit │
-│  GitHub Actions  │         │ + Nginx SSL      │         │ Outbox pattern         │
-│                  │         │ + Read Replica   │         │ Notification Service   │
-└──────────────────┘         └──────────────────┘         └────────────────────────┘
-
+Phase 1 (Month 1–3)          Phase 2 (Month 4–5)          Phase 3 (Month 6–7)
+┌───────────────────┐         ┌───────────────────┐         ┌──────────────────────────┐
+│  .NET 10 Monolith │   ──►   │ + Observability   │   ──►   │ YARP API Gateway         │
+│  Docker Compose   │         │   (OTel / Seq)    │         │ RabbitMQ + MassTransit   │
+│  GitHub Actions   │         │ + Nginx SSL       │         │ Outbox pattern           │
+│                   │         │ + Read Replica    │         │ Notification Service     │
+└───────────────────┘         └───────────────────┘         └──────────────────────────┘
 Phase 4 (Month 8–9)
 ┌──────────────────────────────────────────────────────┐
 │  Kubernetes (kind locally → AKS/EKS)                 │
@@ -159,7 +162,8 @@ Phase 4 (Month 8–9)
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Module Internal Structure (Clean Architecture)
+### Module Internal Structure
+
 ```
 MarketNest.{Module}/
 ├── Domain/           # Entities, Aggregates, Value Objects, Domain Events, Enums
@@ -172,6 +176,7 @@ MarketNest.{Module}/
 ## 🛠️ Tech Stack
 
 ### Backend
+
 | Technology | Version | Role |
 |------------|---------|------|
 | .NET / ASP.NET Core | **10 LTS** | Runtime + Razor Pages |
@@ -184,6 +189,7 @@ MarketNest.{Module}/
 | OpenTelemetry | 1.x | Distributed tracing + metrics |
 
 ### Frontend
+
 | Technology | Role |
 |------------|------|
 | Razor Pages | Server-rendered HTML |
@@ -193,6 +199,7 @@ MarketNest.{Module}/
 | Chart.js | Seller analytics dashboards |
 
 ### Infrastructure (Docker Compose)
+
 | Service | Role |
 |---------|------|
 | PostgreSQL 16 | Primary datastore (schema-per-module) |
@@ -203,6 +210,7 @@ MarketNest.{Module}/
 | Nginx | Reverse proxy + SSL termination |
 
 ### Testing
+
 | Tool | Role |
 |------|------|
 | xUnit + FluentAssertions | Unit & integration tests |
@@ -215,41 +223,44 @@ MarketNest.{Module}/
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - [Node.js 20+](https://nodejs.org/) (for Tailwind CSS build)
 
 ### 1. Clone & configure
-```bash
-git clone https://github.com/your-username/marketnest.git
-cd marketnest
 
+```bash
+git clone https://github.com/nhahoang1909/MarketNest.git
+cd MarketNest
 # Windows PowerShell
 Copy-Item -Path src/MarketNest.Web/.env.example -Destination src/MarketNest.Web/.env
-# Fill in secrets (JWT key, DB password, etc.)
 ```
 
 ### 2. Start infrastructure
+
 ```bash
 docker compose up -d   # PostgreSQL + Redis + RabbitMQ + MailHog + Seq
 ```
 
 ### 3. Run the app
+
 ```bash
 dotnet run --project src/MarketNest.Web
-# App: http://localhost:5000
-# Seq: http://localhost:5341
+# App:     http://localhost:5000
+# Seq:     http://localhost:5341
 # MailHog: http://localhost:8025
+# Scalar:  http://localhost:5000/scalar
 ```
 
-### 4. Build CSS (optional — pre-built output is committed)
+### 4. Build CSS (optional)
+
 ```bash
-cd src/MarketNest.Web
-npm install
-npm run watch:css   # JIT watcher for development
+cd src/MarketNest.Web && npm install && npm run watch:css
 ```
 
 ### 5. Run tests
+
 ```bash
 dotnet test
 ```
@@ -258,21 +269,21 @@ dotnet test
 
 ## 📐 Key Engineering Decisions (ADRs)
 
-> 42+ Architecture Decision Records documented in `docs/architecture.md` and `docs/project_notes/decisions.md`
+> 42+ Architecture Decision Records documented in [`docs/architecture.md`](docs/architecture.md) and [`docs/project_notes/decisions.md`](docs/project_notes/decisions.md)
 
 | ADR | Decision | Why It Matters |
 |-----|----------|---------------|
 | ADR-001 | Modular Monolith first | Prevent premature distributed complexity; boundaries proven before extraction |
 | ADR-007 | DDD property accessor policy | `{ get; private set; }` on entities enforces domain invariants via methods only |
-| ADR-024 | Sale price inline on `ProductVariant` | Avoids a join table; atomic with the variant; `EffectivePrice()` is the single read path |
-| ADR-025 | Canonical `BaseQuery`/`BaseRepository` | One place for boilerplate; modules can't drift from the pattern |
+| ADR-024 | Sale price inline on `ProductVariant` | Avoids join table; `EffectivePrice()` is the single read path at checkout |
+| ADR-025 | Canonical `BaseQuery`/`BaseRepository` | One place for boilerplate; modules cannot drift from the pattern |
 | ADR-027 | UoW + Transaction filters | Handlers never call `SaveChangesAsync` — transaction lifecycle owned by infrastructure |
-| ADR-028 | `IRuntimeContext` unified ambient context | Single injection for `CorrelationId`, user identity, timing — no `IHttpContextAccessor` spread |
+| ADR-028 | `IRuntimeContext` unified ambient context | Single injection for `CorrelationId`, user identity, timing |
 | ADR-031 | Two connection strings only | Zero code change when adding a read replica in Phase 2 |
 | ADR-032 | `PgQueryBuilder` safe raw SQL | Parameterized values, quoted identifiers — SQL injection impossible by construction |
 | ADR-037 | Excel import via `IExcelService` | 4-layer validation: extension → antivirus → header → row parsing |
-| ADR-039 | Nullable as a business decision | Every `?` has a domain-reason comment; no `= null!` / `= string.Empty` sentinels |
-| ADR-041 | Optimistic concurrency via `UpdateToken` | `IConcurrencyAware` entities expose EF row version; stale-data conflicts surface cleanly |
+| ADR-039 | Nullable as a business decision | Every `?` has a domain-reason comment; no `= null!` sentinels |
+| ADR-041 | Optimistic concurrency via `UpdateToken` | EF row version; stale-data conflicts surface cleanly |
 | ADR-043 | HTMX lazy-load announcements | Banners load after the page without blocking TTFB |
 
 ---
@@ -283,23 +294,18 @@ dotnet test
 marketnest/
 ├── src/
 │   ├── Base/                       # Shared kernel (Domain, Common, Infrastructure, Api, Utility)
-│   ├── MarketNest.Core/            # Legacy shared kernel (being migrated to Base/)
 │   ├── MarketNest.{Module}/        # 10 business modules
 │   ├── MarketNest.Analyzers/       # Custom Roslyn analyzer (33 rules, 6 code fixes)
 │   └── MarketNest.Web/             # ASP.NET Core host
 │       ├── Infrastructure/         # AppConstants, AppRoutes, Filters, Middleware, DI
 │       ├── Pages/                  # Razor Pages (Buyer, Seller, Admin areas)
-│       │   └── Shared/             # Reusable components (Forms, Display, Navigation, …)
 │       └── wwwroot/                # Tailwind CSS, HTMX, Alpine.js, Chart.js
 ├── tests/
 │   ├── MarketNest.UnitTests/
-│   ├── MarketNest.IntegrationTests/     # Testcontainers real DB/Redis
+│   ├── MarketNest.IntegrationTests/     # Testcontainers — real DB/Redis
 │   └── MarketNest.ArchitectureTests/    # NetArchTest layer enforcement
 ├── docs/                               # 15+ specification documents + ADRs
 │   └── project_notes/                  # bugs.md · decisions.md · key_facts.md · issues.md
-├── skills/                             # AI agent review skill files
-├── agents/                             # Agent guidelines + coding rules
-├── infra/nginx/                        # Nginx reverse-proxy config
 ├── docker-compose.yml                  # Dev infrastructure
 └── docker-compose.prod.yml             # Production Compose
 ```
@@ -328,15 +334,13 @@ marketnest/
 | [`docs/frontend-guide.md`](docs/frontend-guide.md) | HTMX/Alpine patterns, component library, page inventory |
 | [`docs/code-rules.md`](docs/code-rules.md) | All naming conventions, DDD principles, banned patterns |
 | [`docs/analyzers.md`](docs/analyzers.md) | All 33 Roslyn analyzer rules with suppression patterns |
-| [`docs/test-driven-design.md`](docs/test-driven-design.md) | TDD guidelines, test patterns, Testcontainers setup |
-| [`docs/nullable-management.md`](docs/nullable-management.md) | Nullable management policy (ADR-039) |
 | [`docs/project_notes/decisions.md`](docs/project_notes/decisions.md) | Full ADR log with context and trade-offs |
 
 ---
 
 ## 🗺️ Roadmap
 
-- [x] **Phase 1** — Modular Monolith (in progress)
+- [x] **Phase 1** — Modular Monolith *(in progress)*
   - [x] Core kernel, base packages, `Result<T,Error>` CQRS
   - [x] Identity module (JWT auth, roles)
   - [x] Catalog module (storefronts, products, variants, sale pricing)
@@ -347,16 +351,10 @@ marketnest/
   - [x] Custom Roslyn Analyzers (33 rules)
   - [x] Excel import/export infrastructure
   - [x] Optimistic concurrency (`IConcurrencyAware`)
-  - [ ] Cart + Orders + Payments domain (in progress)
+  - [ ] Cart + Orders + Payments domain *(in progress)*
 - [ ] **Phase 2** — Observability, integration tests, Nginx SSL, read replica
 - [ ] **Phase 3** — YARP API Gateway, RabbitMQ, Outbox pattern, Notification service extraction
 - [ ] **Phase 4** — Kubernetes (kind → AKS/EKS), Helm, ArgoCD GitOps
-
----
-
-## 🤝 Contributing
-
-This is a solo learning project, but feedback and discussion are welcome. Open an issue to share thoughts or suggestions.
 
 ---
 
@@ -367,10 +365,6 @@ This is a solo learning project, but feedback and discussion are welcome. Open a
 ---
 
 <div align="center">
-
-*Built with ❤️ as a structured journey from Modular Monolith to Microservices to Kubernetes*
-
-**Star ⭐ the repo if you find the architecture patterns useful!**
-
+<p><em>Built with ❤️ as a structured journey from Modular Monolith to Microservices to Kubernetes</em></p>
+<p><strong>⭐ Star the repo if you find the architecture patterns useful!</strong></p>
 </div>
-]]>
