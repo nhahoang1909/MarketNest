@@ -35,14 +35,17 @@ public class CommissionPolicy : Entity<Guid>
                 new Error("COMMISSION.INVALID_RATE",
                     $"Commission rate must be between {MinRate:P0} and {MaxRate:P0}"));
 
-        return Result<CommissionPolicy, Error>.Success(new CommissionPolicy
+        var policy = new CommissionPolicy
         {
             Id = Guid.NewGuid(),
             StorefrontId = null,
             Rate = rate,
             EffectiveFrom = DateTimeOffset.UtcNow,
             SetByAdminId = adminId
-        });
+        };
+
+        policy.EnsureInvariants();
+        return Result<CommissionPolicy, Error>.Success(policy);
     }
 
     /// <summary>Creates a per-seller commission override.</summary>
@@ -54,14 +57,27 @@ public class CommissionPolicy : Entity<Guid>
                 new Error("COMMISSION.INVALID_RATE",
                     $"Commission rate must be between {MinRate:P0} and {MaxRate:P0}"));
 
-        return Result<CommissionPolicy, Error>.Success(new CommissionPolicy
+        var policy = new CommissionPolicy
         {
             Id = Guid.NewGuid(),
             StorefrontId = storefrontId,
             Rate = rate,
             EffectiveFrom = effectiveFrom,
             SetByAdminId = adminId
-        });
+        };
+
+        policy.EnsureInvariants();
+        return Result<CommissionPolicy, Error>.Success(policy);
+    }
+
+    // ── Invariants ─────────────────────────────────────────────────────
+
+    protected override void EnsureInvariants()
+    {
+        if (Rate is < MinRate or > MaxRate)
+            throw new DomainException($"Commission rate must be between {MinRate:P0} and {MaxRate:P0}.");
+
+        if (SetByAdminId == Guid.Empty)
+            throw new DomainException("Commission policy must have a valid admin ID.");
     }
 }
-
