@@ -37,4 +37,5 @@ internal static class DiagnosticIds
     public const string MN033 = "MN033";
     public const string MN034 = "MN034";
     public const string MN035 = "MN035";
+    public const string MN036 = "MN036";
 }
