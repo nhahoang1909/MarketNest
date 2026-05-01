@@ -20,6 +20,24 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-05-01 - refactor(catalog): Module folder structure + centralized audit event types (ADR-035 alignment)
+- **Status**: Completed
+- **Description**: Restructured `MarketNest.Catalog` (and updated documentation to reflect correct pattern). Created `CatalogAuditEvents.cs` static class to centralize audit event type constants (e.g., `CatalogAuditEvents.Variant.BulkImport = "CATALOG.VARIANT_BULK_IMPORT"`), replacing magic strings in `[Audited(...)]` attributes. Reorganized folder structure to match the canonical `Admin` module pattern: `Application/Common/` (module-wide shared items like `CatalogAuditEvents`, `CatalogSequences`) + `Application/Modules/Variant/` (feature-specific CQRS). Mirrored in Infrastructure layer: `Repositories/Modules/Variant/`. All namespaces remain flat at layer level per ADR-039.
+- **Key changes**:
+  - Created `src/MarketNest.Catalog/Application/Common/` with `CatalogAuditEvents.cs`, `CatalogSequences.cs` (moved from root Application dir)
+  - Reorganized variant-related files into `Modules/Variant/{CommandHandlers,Commands,ImportExport,Repositories,Validators,Timer}/`
+  - Reorganized variant repository into `Infrastructure/Repositories/Modules/Variant/VariantRepository.cs`
+  - Updated `BulkImportVariantsHandler.cs`: `[Audited("CATALOG.BULK_IMPORT_VARIANTS")]` → `[Audited(CatalogAuditEvents.Variant.BulkImport)]`
+  - Updated 4 documentation files:
+    - `docs/architecture.md` §14 — rewrote "Feature Folder Layout" to document `Common/` + `Modules/{Feature}/` pattern with concrete examples
+    - `CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md` — updated "Module folder layout vs namespace mapping" sections with correct structure
+- **Files restructured**: 19 Catalog application + infrastructure files
+- **Files updated**: 4 documentation files
+- **Build**: `dotnet build src/MarketNest.Catalog/` → 0 errors, 0 warnings ✅
+- **Notes**: This pattern should be applied to all other modules (Orders, Payments, Identity, Cart, etc.) as they grow beyond single features. Audit event constants pattern (`CatalogAuditEvents`, `OrdersAuditEvents`, etc.) enforces ADR-005 (no magic strings) at the audit layer.
+
+---
+
 ### 2026-05-01 - fix(build): Resolve all 13 Roslyn analyzer errors (MN020/MN021/MN029/MN030)
 - **Status**: Completed
 - **Description**: Fixed full solution build that had 13 errors across 5 modules and the Web host. All caused by new/stricter Roslyn analyzer rules.

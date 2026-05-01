@@ -488,22 +488,54 @@ Concrete classes override only what is module-specific (e.g., loading with `Incl
 
 ### Feature Folder Layout (within layers)
 
+Each module's Application and Infrastructure layers use a two-level structure:
+- `Common/` — module-wide shared constants, DTOs, sequences, audit event types
+- `Modules/{Feature}/` — feature-specific commands, handlers, validators, repositories
+
 ```
-Application/Submodule/{Feature}/
-  Commands/                     # ICommand<T> records
-  CommandHandlers/              # ICommandHandler implementations
-  QueryHandlers/                # IQueryHandler implementations
-  Queries/                      # IQuery<T> records + IBaseQuery interfaces + DTOs
-  Repositories/                 # IBaseRepository interfaces
-  Validators/                   # FluentValidation validators
-  DomainEventHandlers/          # IDomainEventHandler implementations
-  IntegrationEventHandlers/     # Integration event handlers
+Application/
+  Common/                        # Module-wide shared items
+    {Module}AuditEvents.cs         # Centralized audit event type constants
+    {Module}Sequences.cs           # Sequence descriptors
+    SharedDtos.cs                  # Shared DTOs across features in this module
+  Modules/{Feature}/             # Feature-specific CQRS
+    Commands/                      # ICommand<T> records
+    CommandHandlers/               # ICommandHandler implementations
+    Queries/                       # IQuery<T> records + IBaseQuery interfaces + DTOs
+    QueryHandlers/                 # IQueryHandler implementations
+    Repositories/                  # IBaseRepository interfaces (contracts)
+    Validators/                    # FluentValidation validators
+    ImportExport/                  # Excel template definitions (if applicable)
+    Timer/                         # Background job implementations
+    DomainEventHandlers/           # IDomainEventHandler implementations
+    IntegrationEventHandlers/      # Integration event handlers
 
 Infrastructure/
-  Api/{Feature}/                # ReadController + WriteController
-  Queries/{Feature}/            # IBaseQuery implementations
-  Repositories/{Feature}/       # IBaseRepository implementations
-  Persistence/                  # DbContexts, BaseRepository, BaseQuery, Configurations/
+  Api/Modules/{Feature}/         # ReadController + WriteController
+  Queries/Modules/{Feature}/     # IBaseQuery implementations
+  Repositories/Modules/{Feature}/ # IBaseRepository implementations
+  Persistence/                   # DbContexts, BaseRepository, BaseQuery, Configurations/
+```
+
+Example (Admin module — Announcement feature):
+```
+src/MarketNest.Admin/
+  Application/
+    Common/              # (future: AdminAuditEvents.cs, etc.)
+    Modules/
+      Announcement/
+        Commands/
+        CommandHandlers/
+        Queries/
+        QueryHandlers/
+        Repositories/
+        Validators/
+        Dtos/
+    Timer/               # Module-level timer jobs (not feature-specific)
+  Infrastructure/
+    Queries/Modules/Announcement/
+    Repositories/Modules/Announcement/
+    Persistence/
 ```
 
 ---

@@ -7,7 +7,7 @@ namespace MarketNest.Catalog.Application;
 ///     validates file, parses rows, upserts <see cref="ProductVariant"/> entities.
 ///     UnitOfWork is committed automatically by the transaction filter — no SaveChanges here.
 /// </summary>
-[Audited("CATALOG.BULK_IMPORT_VARIANTS")]
+[Audited(CatalogAuditEvents.Variant.BulkImport)]
 public partial class BulkImportVariantsCommandHandler(
     IExcelService excel,
     IAntivirusScanner virusScanner,
