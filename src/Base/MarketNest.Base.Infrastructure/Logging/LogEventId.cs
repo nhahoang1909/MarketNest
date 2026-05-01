@@ -293,6 +293,18 @@ public enum LogEventId
     AdminGetTestsPagedStart = 102030,
     AdminGetTestsPagedSuccess = 102031,
 
+    // Announcement handlers — 102100-102199
+    AdminCreateAnnouncementStart = 102100,
+    AdminCreateAnnouncementSuccess = 102101,
+    AdminUpdateAnnouncementStart = 102110,
+    AdminUpdateAnnouncementSuccess = 102111,
+    AdminDeleteAnnouncementStart = 102120,
+    AdminDeleteAnnouncementSuccess = 102121,
+    AdminPublishAnnouncementStart = 102130,
+    AdminPublishAnnouncementSuccess = 102131,
+    AdminGetAnnouncementsPagedStart = 102140,
+    AdminGetActiveAnnouncementsStart = 102150,
+
     // Reserved Application — 102500-105999
 
     // Admin Pages — 106000-106999
@@ -319,6 +331,8 @@ public enum LogEventId
     AdminDisputesIndexSuccess = 106131,
     AdminNotificationsIndexStart = 106140,
     AdminNotificationsIndexSuccess = 106141,
+    AdminAnnouncementsIndexStart = 106150,
+    AdminAnnouncementsIndexSuccess = 106151,
 
     // Seller Pages — 107000-107499
     SellerDashboardStart = 107000,

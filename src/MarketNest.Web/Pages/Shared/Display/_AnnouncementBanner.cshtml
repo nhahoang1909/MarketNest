@@ -1,0 +1,65 @@
+﻿@using MarketNest.Admin.Application
+@using MarketNest.Admin.Domain
+@model IReadOnlyList<ActiveAnnouncementDto>
+@*
+    Announcement banner — displayed below the navbar.
+    Renders all currently active announcements as dismissible top-bars.
+    Dismiss state is stored in localStorage via Alpine.js.
+*@
+
+@if (Model is { Count: > 0 })
+{
+    <div id="announcement-banners">
+        @foreach (var announcement in Model)
+        {
+            var bgClass = announcement.Type switch
+            {
+                AnnouncementType.Promotion => "bg-accent-100 border-accent-300 text-accent-800",
+                AnnouncementType.Warning => "bg-amber-50 border-amber-300 text-amber-800",
+                AnnouncementType.Urgent => "bg-red-50 border-red-300 text-red-800",
+                _ => "bg-blue-50 border-blue-300 text-blue-800"
+            };
+
+            var iconSvg = announcement.Type switch
+            {
+                AnnouncementType.Promotion => "<path stroke-linecap='round' stroke-linejoin='round' d='M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z'/>",
+                AnnouncementType.Warning => "<path stroke-linecap='round' stroke-linejoin='round' d='M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z M12 15.75h.007v.008H12v-.008z'/>",
+                AnnouncementType.Urgent => "<path stroke-linecap='round' stroke-linejoin='round' d='M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z'/>",
+                _ => "<path stroke-linecap='round' stroke-linejoin='round' d='m11.25 11.25.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z'/>"
+            };
+
+            <div x-data="{ dismissed: localStorage.getItem('mn-dismiss-@announcement.Id') === '1' }"
+                 x-show="!dismissed"
+                 x-cloak
+                 class="border-b @bgClass">
+                <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center gap-3">
+                    <svg class="w-5 h-5 shrink-0 opacity-80" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        @Html.Raw(iconSvg)
+                    </svg>
+                    <div class="flex-1 flex items-center gap-2 text-sm font-medium">
+                        <span class="font-semibold">@announcement.Title</span>
+                        <span class="hidden sm:inline opacity-80">— @announcement.Message</span>
+                        @if (!string.IsNullOrEmpty(announcement.LinkUrl))
+                        {
+                            <a href="@announcement.LinkUrl"
+                               class="underline underline-offset-2 hover:opacity-70 transition-opacity ml-1">
+                                @(announcement.LinkText ?? "Learn more")
+                            </a>
+                        }
+                    </div>
+                    @if (announcement.IsDismissible)
+                    {
+                        <button @@click="localStorage.setItem('mn-dismiss-@announcement.Id', '1'); dismissed = true"
+                                class="shrink-0 p-1 rounded-full hover:bg-black/10 transition-colors"
+                                aria-label="Dismiss announcement">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+

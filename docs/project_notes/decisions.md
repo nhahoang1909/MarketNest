@@ -51,6 +51,7 @@ Architectural Decision Records (ADRs) for MarketNest. Number sequentially. Keep 
 | ADR-040 | Period-Scoped PostgreSQL Sequences for Running Numbers | 2026-04-30 |
 | ADR-041 | Optimistic Concurrency Control via IConcurrencyAware + UpdateToken | 2026-04-30 |
 | ADR-042 | MN019/MN020 — Handler Entity Return & QueryHandler Select-Projection Analyzer Rules | 2026-04-30 |
+| ADR-043 | Announcement Feature Foundation — Admin-managed site-wide announcements with scheduling | 2026-05-01 |
 
 > **Note**: ADR-017, ADR-018, ADR-019 are reserved/not yet assigned.
 
@@ -1200,3 +1201,51 @@ Implement opt-in optimistic concurrency using a `Guid UpdateToken` field:
 - Tests: `tests/MarketNest.Analyzers.Tests/Architecture/HandlerQueryProjectionAnalyzerTests.cs` (7 tests)
 - Docs: `docs/analyzers.md` — table + rule reference sections updated
 
+---
+
+### ADR-043: Announcement Feature Foundation — Admin-Managed Site-Wide Announcements (2026-05-01)
+
+**Status**: Implemented ✅ (Phase 1 Foundation)
+
+**Context:**
+- Admin needs to broadcast promotional and operational announcements (Black Friday, voucher launches, maintenance windows) across the entire marketplace.
+- Announcements must appear in two prominent locations: the announcement banner below the navbar (every page) and optionally in the hero section of the homepage.
+- Phase 1 needs a solid foundation: entity model, CQRS stack, scheduling, and display — without building the full admin management UI yet.
+
+**Decision:**
+- `Announcement` entity lives in `MarketNest.Admin` module (`admin` schema) — Admin is the correct owner for platform-wide content.
+- **Entity fields**: `Title`, `Message`, `AnnouncementType` (Info/Promotion/Warning/Urgent), `LinkUrl?`, `LinkText?`, `StartDateUtc`, `EndDateUtc`, `IsPublished`, `IsDismissible`, `SortOrder`.
+- **Domain methods**: `Publish()`, `Unpublish()`, `Update()`, `IsActive(DateTimeOffset utcNow)`.
+- **CQRS**: 4 write commands (`Create/Update/Delete/PublishAnnouncement`) + 2 read queries (`GetAnnouncementsPaged` for admin list, `GetActiveAnnouncements` for public display).
+- `IQuery<TResult>` pattern — query handlers return `TResult` directly (no `Result<T,E>` wrapper) per project convention.
+- **Display strategy**: `_AnnouncementBanner.cshtml` Razor partial loaded via HTMX on every page (`hx-get="/Shared/AnnouncementBanner" hx-trigger="load"`). This avoids blocking the initial page render and adds zero latency to page generation.
+- **Banner dismissal**: Alpine.js + `localStorage` keyed by announcement ID (`mn-dismiss-{id}`). Stateless server side — no user preferences table needed in Phase 1.
+- **Styling**: Type-based color classes (Promotion → accent, Warning → amber, Urgent → red, Info → blue). Dismiss button hidden when `IsDismissible = false`.
+- **Routing**: `/Shared/AnnouncementBanner` Razor Page (with `Layout = null`) serves the partial — discovered by the route whitelist.
+- **LogEventId block**: 102100–102159 (Announcement handlers within Admin 102xxx Application range).
+
+**Alternatives Considered:**
+- Notifications module → Rejected: Notifications is for user-targeted messages (email/inbox). Site-wide banners are platform content — belongs in Admin.
+- ViewComponent for banner injection → Considered: ViewComponents are cleaner but add a compile-time dependency; HTMX lazy-load achieves the same result with zero render blocking.
+- Server-side dismiss with user preference → Rejected: Phase 1 complexity; localStorage is sufficient for anonymous + logged-in users alike. Phase 2 can add DB-backed dismiss if needed.
+- CMS/markdown content → Rejected: raw text + optional URL link is sufficient for Phase 1 use cases (Black Friday, voucher codes).
+
+**Consequences:**
+- ✅ Every page can show announcements with zero change to individual page models.
+- ✅ Scheduling: announcements auto-appear and auto-expire based on `StartDateUtc`/`EndDateUtc` — no manual unpublish required.
+- ✅ `GetActiveAnnouncements` query filters entirely in the DB (indexed on `IsPublished + StartDateUtc + EndDateUtc`) — one small read per page load.
+- ✅ Admin CRUD UI (`/admin/announcements` Razor Page) is the logical next step — all backend is ready.
+- ✅ Phase 2: add OutputCache (1–2 min TTL) on `GetActiveAnnouncements` to reduce DB reads on high-traffic pages.
+- ❌ localStorage dismiss is per-browser, not per-user — logged-in users will see dismissed announcements again on other devices.
+- ❌ No hero-section integration yet — `AnnouncementHero` partial is the next UI task.
+
+**Implementation files:**
+- `src/MarketNest.Admin/Domain/Modules/Announcement/Entities/Announcement.cs`
+- `src/MarketNest.Admin/Domain/Modules/Announcement/Entities/AnnouncementType.cs`
+- `src/MarketNest.Admin/Application/Modules/Announcement/` (DTOs, Commands, Queries, Handlers, Validators, Repository interface)
+- `src/MarketNest.Admin/Infrastructure/Persistence/Configurations/AnnouncementConfiguration.cs`
+- `src/MarketNest.Admin/Infrastructure/Repositories/Modules/Announcement/AnnouncementRepository.cs`
+- `src/MarketNest.Admin/Infrastructure/Queries/Modules/Announcement/AnnouncementQuery.cs`
+- `src/MarketNest.Web/Pages/Shared/Display/_AnnouncementBanner.cshtml`
+- `src/MarketNest.Web/Pages/Shared/AnnouncementBanner.cshtml` + `.cs` (HTMX endpoint page)
+- Modified: `AdminDbContext`, `AdminReadDbContext`, `DependencyInjection.cs`, `LogEventId.cs`, `AppRoutes.cs`, `SharedViewPaths.cs`, `_Layout.cshtml`

@@ -10,6 +10,9 @@ public class AdminReadDbContext(DbContextOptions<AdminReadDbContext> options) : 
     public DbSet<TestEntity> Tests { get; set; } = null!;
     public DbSet<TestSubEntity> TestSubEntities { get; set; } = null!;
 
+    // ── Announcements ───────────────────────────────────────────────────
+    public DbSet<Announcement> Announcements { get; set; } = null!;
+
     // ── Tier 1 — Reference Data ──────────────────────────────────────────
     public DbSet<Country> Countries { get; set; } = null!;
     public DbSet<Gender> Genders { get; set; } = null!;
