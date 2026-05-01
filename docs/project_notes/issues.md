@@ -20,6 +20,23 @@ Keep a reference: _"See `issues-archive-2026.md` for older entries."_
 
 ## Entries
 
+### 2026-05-01 - feat(admin): Announcement feature — Phase 1 foundation (domain + CQRS + display banner)
+- **Status**: Completed
+- **Description**: Implemented the Announcement feature foundation in the Admin module. Admin can create, edit, publish, and delete announcements with scheduling (start/end dates). Active announcements are displayed as a dismissible banner below the navbar on every public page, loaded lazily via HTMX.
+- **Key deliverables**:
+  - **Domain**: `Announcement` entity (Admin module, `admin` schema), `AnnouncementType` enum (Info/Promotion/Warning/Urgent), domain methods `Publish/Unpublish/IsActive/Update`
+  - **Application**: `CreateAnnouncementCommand`, `UpdateAnnouncementCommand`, `DeleteAnnouncementCommand`, `PublishAnnouncementCommand` + handlers; `GetAnnouncementsPagedQuery`, `GetActiveAnnouncementsQuery` + handlers; `IGetAnnouncementsPagedQuery`, `IGetActiveAnnouncementsQuery` interfaces; `IAnnouncementRepository`; FluentValidation validators using `FieldLimits`/`ValidationMessages`
+  - **Infrastructure**: `AnnouncementConfiguration` (EF, composite index on `IsPublished+Start+End`), `AnnouncementRepository`, `AnnouncementQuery`; services registered in `DependencyInjection.cs`
+  - **Web display**: `_AnnouncementBanner.cshtml` partial (type-based color, Alpine.js localStorage dismiss, SVG icons); `/Shared/AnnouncementBanner` Razor Page (HTMX endpoint with `Layout = null`); banner injected into `_Layout.cshtml` via `hx-get="/Shared/AnnouncementBanner" hx-trigger="load"`
+  - **Infrastructure plumbing**: `LogEventId` entries 102100–102151; `AppRoutes.Admin.Announcements`, `AppRoutes.AnnouncementBanner` + whitelist; `SharedViewPaths.AnnouncementBanner` constant; `AdminDbContext`/`AdminReadDbContext` updated with `DbSet<Announcement>`
+- **Files created**: 26 new files across Domain / Application / Infrastructure / Web layers
+- **Files modified**: `AdminDbContext.cs`, `AdminReadDbContext.cs`, `DependencyInjection.cs`, `LogEventId.cs`, `AppRoutes.cs`, `SharedViewPaths.cs`, `_Layout.cshtml`
+- **Build**: `dotnet build MarketNest.Admin` + `dotnet build MarketNest.Web` → 0 warnings, 0 errors ✅
+- **ADR**: ADR-043 (see decisions.md)
+- **Next steps**: (1) EF Core migration `AddAnnouncements`, (2) Admin Razor Page `/admin/announcements` for CRUD UI, (3) Hero section announcement card for Promotion-type, (4) OutputCache (1–2 min TTL) on `GetActiveAnnouncements` query
+
+---
+
 ### 2026-04-30 - feat(analyzers): MN019 + MN020 — Handler Entity Return & QueryHandler Select-Projection rules (ADR-042)
 - **Status**: Completed
 - **Description**: Added two new Roslyn analyzer rules to `MarketNest.Analyzers`:

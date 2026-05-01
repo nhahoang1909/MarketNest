@@ -44,7 +44,7 @@ Non-sensitive project constants, endpoints, and configuration. **Never store pas
 | `src/MarketNest.Reviews` | Reviews, votes, fraud gate |
 | `src/MarketNest.Disputes` | Disputes, messages, resolution |
 | `src/MarketNest.Notifications` | Email/SMS dispatch |
-| `src/MarketNest.Admin` | Back-office: reference data (Country, Gender, Category…), admin-config UI, arbitration |
+| `src/MarketNest.Admin` | Back-office: reference data (Country, Gender, Category…), admin-config UI, arbitration, **Announcements** (`Announcement` entity + CQRS — ADR-043) |
 | `src/MarketNest.Auditing` | Audit logs, login events; `AuditableInterceptor` + `AuditBehavior<,>` |
 | `src/MarketNest.Web` | ASP.NET Core host: Razor Pages + minimal APIs, `DatabaseInitializer`, middleware, `SharedViewPaths` constants |
 | `src/MarketNest.Analyzers` | Roslyn analyzers: 20 MN rules (MN001–MN020), 6 code-fix providers |
