@@ -35,6 +35,14 @@ public static class DatabaseServiceExtensions
         // Register the UpdateTokenInterceptor as singleton (stateless — auto-rotates concurrency tokens)
         services.AddSingleton<UpdateTokenInterceptor>();
 
+        // Register TrackableInterceptor as singleton — stateless; resolves IRuntimeContext per-save
+        // from the DbContext's scoped service provider, so the user stamp is always request-scoped.
+        services.AddSingleton<TrackableInterceptor>();
+
+        // Register SoftDeleteInterceptor as singleton — converts EntityState.Deleted → Modified
+        // for ISoftDeletable entities, preventing physical row deletion.
+        services.AddSingleton<SoftDeleteInterceptor>();
+
         // Auto-discover and register all IDataSeeder implementations from provided assemblies
         foreach (Assembly assembly in seederAssemblies)
         {
@@ -67,9 +75,11 @@ public static class DatabaseServiceExtensions
         {
             configureOptions(opts);
 
-            // Add UpdateTokenInterceptor for automatic concurrency token rotation
+            // Add interceptors for all write-side module DbContexts
             var updateTokenInterceptor = sp.GetRequiredService<UpdateTokenInterceptor>();
-            opts.AddInterceptors(updateTokenInterceptor);
+            var trackableInterceptor   = sp.GetRequiredService<TrackableInterceptor>();
+            var softDeleteInterceptor  = sp.GetRequiredService<SoftDeleteInterceptor>();
+            opts.AddInterceptors(updateTokenInterceptor, trackableInterceptor, softDeleteInterceptor);
         });
 
         // Register as IModuleDbContext so DatabaseInitializer can enumerate all modules
